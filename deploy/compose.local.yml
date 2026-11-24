@@ -51,8 +51,8 @@ services:
       SEED_SAMPLE_MAIL: "true"
       SPV_SENDER_EMAIL: booking@scalepoint-ventures.com
       SPV_SENDER_NAME: ScalePoint Ventures
-      NEUTRAL_SENDER_EMAIL: booking@meetdesk24.com
-      NEUTRAL_SENDER_NAME: MeetDesk24
+      NEUTRAL_SENDER_EMAIL: booking@bookdesk24.com
+      NEUTRAL_SENDER_NAME: BookDesk24
       SPV_OWNER_PASSWORD: ${SPV_OWNER_PASSWORD}
       NEUTRAL_OWNER_PASSWORD: ${NEUTRAL_OWNER_PASSWORD}
       ELIXIR_ERL_OPTIONS: "+S 2:2"

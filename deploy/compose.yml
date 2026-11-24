@@ -56,8 +56,8 @@ services:
       SMTP_SSL: ${SMTP_SSL:-false}
       SPV_SENDER_EMAIL: ${SPV_SENDER_EMAIL:-booking@scalepoint-ventures.com}
       SPV_SENDER_NAME: ${SPV_SENDER_NAME:-ScalePoint Ventures}
-      NEUTRAL_SENDER_EMAIL: ${NEUTRAL_SENDER_EMAIL:-booking@meetdesk24.com}
-      NEUTRAL_SENDER_NAME: ${NEUTRAL_SENDER_NAME:-MeetDesk24}
+      NEUTRAL_SENDER_EMAIL: ${NEUTRAL_SENDER_EMAIL:-booking@bookdesk24.com}
+      NEUTRAL_SENDER_NAME: ${NEUTRAL_SENDER_NAME:-BookDesk24}
       NEUTRAL_BRAND_NAME: ${NEUTRAL_BRAND_NAME:-}
       BRAND_CONFIG_DIR: /etc/booking-brands
       BRAND_SEED: "true"

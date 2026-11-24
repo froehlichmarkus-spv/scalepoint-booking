@@ -101,6 +101,7 @@ COPY --from=build --chown=app:app /app/_build/prod/rel/tymeslot ./
 # Copy start script and the .env reader it sources
 COPY --chown=app:app start-docker.sh /app/start-docker.sh
 COPY --chown=app:app scripts/dotenv-reader.sh /app/dotenv-reader.sh
+COPY --chown=app:app scripts/database-url.sh /app/database-url.sh
 RUN chmod +x /app/start-docker.sh
 
 ENV LANG=C.UTF-8 \

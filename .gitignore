@@ -23,8 +23,10 @@ erl_crash.dump
 # Temporary files, for example, from tests.
 /tmp/
 
-# Ignore package tarball (built via "mix hex.build").
+# Ignore package tarball (built via "mix hex.build") and local archives.
 tymeslot-*.tar
+/*.tar
+/*.tar.gz
 
 # Ignore assets that are produced by build tools and digested assets cache.
 npm-debug.log

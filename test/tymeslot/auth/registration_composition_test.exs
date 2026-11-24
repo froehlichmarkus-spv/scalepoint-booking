@@ -166,6 +166,14 @@ defmodule Tymeslot.Auth.RegistrationCompositionTest do
       assert [hook_job] = all_enqueued(worker: UserRegisteredHookWorker)
       assert hook_job.args["user_id"] == user.id
       assert hook_job.args["metadata"] == %{"source" => "provisioning"}
+
+      # A provisioned account is marked ready by the caller. Queuing a
+      # verification mail here is what delivered "Verify your email" to a
+      # seed address that was already verified.
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_email_verification", "user_id" => user.id}
+      )
     end
   end
 

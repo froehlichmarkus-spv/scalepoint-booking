@@ -49,9 +49,10 @@ defmodule Tymeslot.BrandSeed do
     end)
   end
 
-  # The neutral example account is a local demo. Production stays on the
-  # house tenant until a real neutral domain is chosen, so it does not
-  # register host@meetdesk24.com or send that address a verification mail.
+  # BookDesk24 is the optional second tenant and stays disabled until its
+  # domain is bought. Production does not register that owner. Provisioning
+  # itself sends no verification mail; a queued "Verify your email" is what
+  # reached host@scheduler24.io after the account was already verified.
   defp brands_to_seed do
     if neutral_seed?(),
       do: Brands.enabled(),

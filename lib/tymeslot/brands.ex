@@ -58,8 +58,13 @@ defmodule Tymeslot.Brands do
     :webhook_url_env
   ]
 
-  @doc "Brands currently in effect, files overlaid by the database and env."
-  def all do
+  @doc "Enabled brands currently in effect, files overlaid by the database and env."
+  def all, do: Enum.filter(loaded(), & &1.enabled)
+
+  @doc "Every brand document, including ones marked disabled."
+  def documents, do: loaded()
+
+  defp loaded do
     now = System.monotonic_time(:millisecond)
 
     case :persistent_term.get({__MODULE__, :brands}, :miss) do
@@ -83,7 +88,6 @@ defmodule Tymeslot.Brands do
       |> db_overlay()
       |> Enum.map(&apply_env/1)
       |> Enum.map(&build/1)
-      |> Enum.filter(& &1.enabled)
 
     :persistent_term.put({__MODULE__, :brands}, brands)
     :persistent_term.put({__MODULE__, :at}, System.monotonic_time(:millisecond))
@@ -591,7 +595,7 @@ defmodule Tymeslot.Brands do
 
   # Visible prose only. A link, a hostname, or an address is an identifier:
   # replacing "scalepoint" inside `book.scalepoint-ventures.com` turns the
-  # reset link into `book.MeetDesk24-ventures.com`.
+  # reset link into `book.BookDesk24-ventures.com`.
   defp replace_visible(text, needle, replacement) when is_binary(needle) do
     replace_visible_regex(~r/#{Regex.escape(needle)}/i, text, replacement)
   end

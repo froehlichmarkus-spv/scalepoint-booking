@@ -15,6 +15,7 @@ defmodule Tymeslot.Emails.Delivery do
   require Logger
 
   alias Tymeslot.Emails.DeliveryOutsideJobError
+  alias Tymeslot.Emails.SeedRecipients
   alias Tymeslot.Emails.Shared.Sanitise
   alias Tymeslot.Infrastructure.CircuitBreaker
   alias Tymeslot.Infrastructure.CircuitBreakerSupervisor
@@ -74,7 +75,8 @@ defmodule Tymeslot.Emails.Delivery do
     email = email |> sanitise_headers() |> Tymeslot.Brands.scrub_email()
 
     with :ok <- check_text_body(email),
-         :ok <- check_email_job() do
+         :ok <- check_email_job(),
+         :ok <- check_seed_recipient(email) do
       Logger.debug("Delivering email via Mailer", recipient_domains: recipient_domains(email))
 
       breaker = Keyword.get_lazy(opts, :breaker, &CircuitBreakerSupervisor.email_breaker_name/0)
@@ -93,6 +95,22 @@ defmodule Tymeslot.Emails.Delivery do
   # does a refusal from an open circuit.
   defp delivery_result({:ok, _receipt} = result), do: result
   defp delivery_result({:error, _reason} = result), do: result
+
+  # A seed or demo address is not a failed delivery. Completing the job as
+  # suppressed stops Oban from retrying it onto a domain that only bounces.
+  defp check_seed_recipient(email) do
+    case SeedRecipients.blocked_address(email) do
+      nil ->
+        :ok
+
+      address ->
+        Logger.warning("Suppressed mail to a seed or demo address",
+          recipient_domain: address |> String.split("@") |> List.last()
+        )
+
+        {:ok, :suppressed}
+    end
+  end
 
   @doc """
   Runs `fun` as the work of the email job `job`, so that every `deliver/2`
