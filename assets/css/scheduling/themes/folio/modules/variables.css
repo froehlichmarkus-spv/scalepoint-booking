@@ -130,6 +130,14 @@
   --space-lg: 1.5rem;
   --space-xl: 2rem;
   --space-2xl: 3rem;
+  --folio-room-logo-bg: #f3f5f7;
+  --folio-room-line: rgba(243, 245, 247, 0.14);
+  --folio-room-wash: rgba(243, 245, 247, 0.04);
+  --folio-room-portrait-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  --folio-room-card-shadow: 0 16px 40px rgba(17, 30, 50, 0.08);
+  --folio-room-neutral-shadow: 0 10px 28px rgba(28, 27, 25, 0.06);
+  --folio-room-ink-muted: #65758b;
+  --folio-room-neutral-muted: #6e6a62;
 
   /* Sizes. */
   --icon-sm: 1.25rem;
