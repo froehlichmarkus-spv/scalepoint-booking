@@ -33,7 +33,7 @@ defmodule Tymeslot.Emails.SeedMailSuppress do
 
   defp cancel_pending do
     blocked = MapSet.new(SeedRecipients.blocked_addresses())
-    retired = MapSet.new(["scheduler24.io", "meetdesk24.com"])
+    retired = ["scheduler24.io", "meetdesk24.com"]
 
     Enum.count(SeedMailQueries.pending_email_jobs(@pending), fn job ->
       if seed_job?(job, blocked, retired) do
@@ -73,9 +73,11 @@ defmodule Tymeslot.Emails.SeedMailSuppress do
     normalised = address |> String.trim() |> String.downcase()
     domain = normalised |> String.split("@") |> List.last()
 
-    MapSet.member?(blocked, normalised) or
-      (is_binary(domain) and MapSet.member?(retired, domain))
+    MapSet.member?(blocked, normalised) or domain_retired?(retired, domain)
   end
 
   defp address_blocked?(_address, _blocked, _retired), do: false
+
+  defp domain_retired?(retired, domain) when is_binary(domain), do: domain in retired
+  defp domain_retired?(_retired, _domain), do: false
 end
