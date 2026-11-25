@@ -862,10 +862,10 @@ msgstr "Календар %{calendar} не вміщує всі нагадуван
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a BookDesk24 meeting."
 msgstr "Додайте гостя, щоб надіслати зустріч Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Немає (лише the scheduler)"
+msgid "None (BookDesk24 only)"
+msgstr "Немає (лише BookDesk24)"

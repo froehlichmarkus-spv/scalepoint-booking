@@ -299,13 +299,13 @@ defmodule TymeslotWeb.AuthLiveTest do
     # actually claims to be.
     @indexable_auth_pages [
       {"login", "/auth/login", "Log In · Tymeslot",
-       "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."},
+       "Sign in to your BookDesk24 account to manage scheduling links, availability, and bookings."},
       {"signup", "/auth/signup", "Create an Account · Tymeslot",
-       "Create a the scheduler account and start sharing your availability in minutes. No credit card required."},
+       "Create a BookDesk24 account and start sharing your availability in minutes. No credit card required."},
       {"reset password", "/auth/reset-password", "Reset Password · Tymeslot",
-       "Enter your email to receive a password reset link for your the scheduler account."},
+       "Enter your email to receive a password reset link for your BookDesk24 account."},
       {"reset password form", :token, "Choose a New Password · Tymeslot",
-       "Choose a strong new password for your the scheduler account."}
+       "Choose a strong new password for your BookDesk24 account."}
     ]
 
     for {name, path, title, description} <- @indexable_auth_pages do
@@ -411,7 +411,7 @@ defmodule TymeslotWeb.AuthLiveTest do
     # dropped on the floor by the template, so a rejected submission looked
     # exactly like no submission at all. These pin the failure paths to
     # something the user can actually read.
-    test "a password missing a special character is rejected visibly", %{
+    test "a common password is rejected visibly", %{
       conn: conn,
       token: token
     } do
@@ -420,12 +420,12 @@ defmodule TymeslotWeb.AuthLiveTest do
       html =
         view
         |> form("#new-password-form", %{
-          "password" => "SomePassword123",
-          "password_confirmation" => "SomePassword123"
+          "password" => "password",
+          "password_confirmation" => "password"
         })
         |> render_submit()
 
-      assert html =~ "Password must contain at least one special character"
+      assert html =~ "This password is too common. Try a short phrase only you would know."
       refute html =~ "Password Reset Successfully"
     end
 

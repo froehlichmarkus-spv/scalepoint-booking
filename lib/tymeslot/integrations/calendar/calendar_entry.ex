@@ -37,7 +37,7 @@ defmodule Tymeslot.Integrations.Calendar.CalendarEntry do
       missing key reads as `true`: every calendar blocked before the choice
       existed, so a legacy row keeps blocking.
     * `:free_busy_only` — the calendar is shared with the account as busy
-      times only (Google's `freeBusyReader`): the scheduler can block on it but
+      times only (Google's `freeBusyReader`): BookDesk24 can block on it but
       has no events to show, defaults to `false`
     * `:color` — provider display colour (Google `backgroundColor`, Outlook
       `color`, CalDAV `calendar-color`), when supplied

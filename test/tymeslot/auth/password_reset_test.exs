@@ -144,7 +144,7 @@ defmodule Tymeslot.Auth.PasswordResetTest do
                )
 
       # A second request arrives while that first email is still within the dedup window.
-      # The token is rotated unconditionally; the scheduler replaces the queued job's
+      # The token is rotated unconditionally; BookDesk24 replaces the queued job's
       # args with the new URL so job payload and DB token remain in lock-step.
       assert {:ok, :reset_initiated, _message} = PasswordReset.initiate_reset(user.email)
 

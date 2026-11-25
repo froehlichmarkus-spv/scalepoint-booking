@@ -773,30 +773,30 @@ msgstr[1] ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your the scheduler account."
+msgid "Choose a strong new password for your BookDesk24 account."
 msgstr ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
+msgid "Create a BookDesk24 account and start sharing your availability in minutes. No credit card required."
 msgstr ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your the scheduler account."
+msgid "Enter your email to receive a password reset link for your BookDesk24 account."
 msgstr ""
 
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
-msgid "Join the scheduler"
+msgid "Join BookDesk24"
 msgstr ""
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
-msgid "Log in to the scheduler"
+msgid "Log in to BookDesk24"
 msgstr ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
+msgid "Sign in to your BookDesk24 account to manage scheduling links, availability, and bookings."
 msgstr ""

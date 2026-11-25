@@ -238,7 +238,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
 
       # No ICS attachment for the organiser email. The organiser is the
-      # calendar owner — the scheduler already writes the event straight to their
+      # calendar owner — BookDesk24 already writes the event straight to their
       # CalDAV/OAuth calendar. An iTIP `METHOD:REQUEST` attachment on top of
       # that causes iMIP-aware mail servers (Zimbra, Exchange, iCloud Mail)
       # to auto-import the ICS as if it were an external invitation,

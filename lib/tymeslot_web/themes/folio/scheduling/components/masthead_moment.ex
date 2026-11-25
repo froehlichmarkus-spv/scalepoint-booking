@@ -19,9 +19,12 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
   """
   use TymeslotWeb, :live_component
 
+  alias Tymeslot.Brands
   alias Tymeslot.Demo
+  alias Tymeslot.MeetingTypes
   alias Tymeslot.Profiles
   alias TymeslotWeb.Themes.Folio.Components.Masthead
+  alias TymeslotWeb.Themes.Shared.BookingText
   alias TymeslotWeb.Themes.Shared.Blocks.SummaryBar
   alias TymeslotWeb.Themes.Shared.BookingLabels
   alias TymeslotWeb.Themes.Shared.BookingText
@@ -44,6 +47,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
         assigns.meeting_types != [] and is_nil(assigns.meeting_type) and
           long_bio?(assigns.organizer_profile)
       )
+      |> assign(:host_facts, host_facts(assigns))
 
     ~H"""
     <section
@@ -61,6 +65,21 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
       >
         <:after_intro>
           <TymeslotWeb.Brands.SalesRoom.panel profile={@organizer_profile} locale={@locale} />
+          <div :if={@host_facts} class="room room--host">
+            <p :if={@host_facts.role} class="room__role">{@host_facts.role}</p>
+            <p :if={@host_facts.company} class="room__company">{@host_facts.company}</p>
+            <ul :if={@host_facts.duration || @host_facts.place} class="room__facts">
+              <li :if={@host_facts.duration}>
+                <.icon name="hero-clock" class="room__fact-icon" />
+                <span>{@host_facts.duration}</span>
+              </li>
+              <li :if={@host_facts.place}>
+                <.icon name="hero-map-pin" class="room__fact-icon" />
+                <span>{@host_facts.place}</span>
+              </li>
+            </ul>
+            <p :if={@host_facts.bio} class="room__bio">{@host_facts.bio}</p>
+          </div>
         </:after_intro>
         <:after_intro :if={@jump?}>
           <a href="#offer-step" class="folio-jump" data-testid="folio-jump-to-offer">
@@ -106,4 +125,59 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
   end
 
   defp long_bio?(_no_profile), do: false
+
+  # A tenant document already fills this column. Everyone else gets the
+  # host's own role, company, length, place and a short line, so the
+  # portrait is not standing over an empty field.
+  defp host_facts(%{organizer_profile: profile} = assigns) when is_map(profile) do
+    if Brands.for_profile(profile) do
+      nil
+    else
+      role = present(Map.get(profile, :headline))
+
+      %{
+        role: role,
+        company: company_unless_repeated(role, present(Map.get(profile, :booking_greeting))),
+        bio: present(Map.get(profile, :booking_instruction)) || present(Map.get(profile, :bio)),
+        duration: duration_fact(assigns.meeting_type),
+        place: place_fact(assigns.meeting_type)
+      }
+    end
+  end
+
+  defp host_facts(_assigns), do: nil
+
+  defp duration_fact(nil), do: nil
+
+  defp duration_fact(meeting_type) do
+    BookingText.duration_label(%{meeting_type: meeting_type})
+  end
+
+  defp place_fact(nil), do: nil
+
+  defp place_fact(meeting_type) do
+    meeting_type
+    |> MeetingTypes.location_options()
+    |> List.first()
+    |> case do
+      %{label: label} -> present(label)
+      _other -> nil
+    end
+  end
+
+  defp present(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      text -> text
+    end
+  end
+
+  defp present(_value), do: nil
+
+  # The greeting is often the same company already named in the role line.
+  defp company_unless_repeated(role, company) when is_binary(role) and is_binary(company) do
+    if String.contains?(String.downcase(role), String.downcase(company)), do: nil, else: company
+  end
+
+  defp company_unless_repeated(_role, company), do: company
 end

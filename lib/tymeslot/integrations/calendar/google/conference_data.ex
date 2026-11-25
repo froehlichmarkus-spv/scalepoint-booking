@@ -19,7 +19,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.ConferenceData do
   def create_request, do: create_request(generate_request_id())
 
   # A booking's request is told apart from a conference added any other way
-  # (`booking_conference?/1`), so a conference the scheduler asked for can be taken
+  # (`booking_conference?/1`), so a conference BookDesk24 asked for can be taken
   # off again without touching one the organiser added in Google Calendar.
   @booking_request_prefix "tymeslot-booking-"
 

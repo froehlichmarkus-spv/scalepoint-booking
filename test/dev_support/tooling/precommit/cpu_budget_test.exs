@@ -23,7 +23,7 @@ defmodule Tymeslot.Precommit.CpuBudgetTest do
       assert CpuBudget.plan(1) == %{partitions: 1, schedulers: 1}
     end
 
-    test "a forced partition count keeps the scheduler cap to the budget" do
+    test "a forced partition count keeps BookDesk24 cap to the budget" do
       assert CpuBudget.plan(16, 8) == %{partitions: 8, schedulers: 2}
       assert CpuBudget.plan(4, 8) == %{partitions: 8, schedulers: 1}
       assert CpuBudget.plan(16, 2) == %{partitions: 2, schedulers: 8}

@@ -1,8 +1,8 @@
 defmodule Tymeslot.Emails.Templates.CalendarsRemoved do
   @moduledoc """
   MJML email template telling the owner of a calendar integration that the
-  calendar server no longer has one or more of the calendars the scheduler used,
-  so the scheduler has stopped using them.
+  calendar server no longer has one or more of the calendars BookDesk24 used,
+  so BookDesk24 has stopped using them.
 
   One email per deselection, listing every calendar that deselection
   removed; the dashboard shows the same notice until the owner dismisses it
@@ -70,8 +70,8 @@ defmodule Tymeslot.Emails.Templates.CalendarsRemoved do
       happening:
         dngettext(
           "emails_integrations",
-          "the scheduler checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected.",
-          "the scheduler checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected.",
+          "BookDesk24 checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected.",
+          "BookDesk24 checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected.",
           count,
           integration: integration.name
         ),
@@ -96,7 +96,7 @@ defmodule Tymeslot.Emails.Templates.CalendarsRemoved do
   defp reason([calendar]) do
     dgettext(
       "emails_integrations",
-      "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it.",
+      "“%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it.",
       calendar: calendar
     )
   end
@@ -104,7 +104,7 @@ defmodule Tymeslot.Emails.Templates.CalendarsRemoved do
   defp reason(_calendars) do
     dgettext(
       "emails_integrations",
-      "These calendars are no longer on your calendar server, so the scheduler has stopped using them:"
+      "These calendars are no longer on your calendar server, so BookDesk24 has stopped using them:"
     )
   end
 

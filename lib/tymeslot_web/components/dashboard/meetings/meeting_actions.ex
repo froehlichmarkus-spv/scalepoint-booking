@@ -117,7 +117,7 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingActions do
           phx-value-id={@meeting.id}
           phx-target={@target}
           data-testid="add-guests"
-          variant={:success}
+          variant={if(primary_guest?(@meeting, @join_url), do: :primary, else: :secondary)}
           size={:sm}
           icon="hero-user-plus"
           class="w-full"
@@ -132,7 +132,7 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingActions do
           phx-target={@target}
           disabled={!Helpers.can_reschedule?(@meeting)}
           tooltip={reschedule_refusal_tip(@meeting)}
-          variant={:secondary}
+          variant={:ghost}
           size={:sm}
           icon="hero-arrows-right-left"
           class="w-full"
@@ -148,7 +148,7 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingActions do
           loading={@cancelling_meeting == @meeting.id}
           loading_text={dgettext("dashboard_bookings", "Processing...")}
           disabled={!Helpers.can_cancel?(@meeting)}
-          variant={:danger_soft}
+          variant={:ghost}
           size={:sm}
           icon="hero-x-mark"
           class="w-full"
@@ -167,6 +167,13 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingActions do
       </div>
     </div>
     """
+  end
+
+  # One navy action per card. Join is that action when a call exists;
+  # otherwise adding a guest is. Reschedule and cancel stay quiet.
+  defp primary_guest?(meeting, join_url) do
+    not (is_binary(join_url) and join_url != "" and
+           not MeetingState.awaiting_new_time?(meeting))
   end
 
   # Why the Reschedule button is disabled, where the reason is one the host

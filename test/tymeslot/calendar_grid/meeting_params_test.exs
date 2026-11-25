@@ -1,6 +1,6 @@
 defmodule Tymeslot.CalendarGrid.MeetingParamsTest do
   @moduledoc """
-  A the scheduler meeting the calendar's side panel books: the drafted event
+  A BookDesk24 meeting the calendar's side panel books: the drafted event
   as `CreateParams` cast it, plus the guest's name, the language and the
   reminder emails, whether it has a main participant and where it takes
   place, turned into what `EventCreation.run_create_ad_hoc_meeting/1`

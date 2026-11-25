@@ -7,7 +7,7 @@ defmodule Tymeslot.CalendarGrid.EventVideoRoomSchema do
   held as a separate Outlook event.
 
   The event is addressed within `calendar_integration_id` by `event_uid`, the
-  uid the scheduler generated for it, and `provider_event_id`, the identifier the
+  uid BookDesk24 generated for it, and `provider_event_id`, the identifier the
   calendar provider returned when the event was written. Google and Outlook
   address an event by the latter, CalDAV servers by the former; see
   `Tymeslot.CalendarGrid.EventVideoRooms`. `provider_calendar_id` is the

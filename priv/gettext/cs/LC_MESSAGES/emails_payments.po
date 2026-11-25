@@ -294,10 +294,10 @@ msgstr "Po zrušení zbývajících termínů série se účastníkovi nepodaři
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
 msgstr "Jakmile bude Stripe spokojen, stav vašeho účtu se aktualizuje automaticky. Ze strany Tymeslotu už není potřeba nic dalšího."
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
-msgstr "Vraťte účastníkovi peníze ve svých platbách v aplikaci the scheduler nebo na nástěnce Stripe, případně mu dejte vědět, jak to bude dál."
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Vraťte účastníkovi peníze ve svých platbách v aplikaci BookDesk24 nebo na nástěnce Stripe, případně mu dejte vědět, jak to bude dál."

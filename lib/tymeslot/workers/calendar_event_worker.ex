@@ -269,7 +269,7 @@ defmodule Tymeslot.Workers.CalendarEventWorker do
     end
   end
 
-  # The organiser has no calendar the scheduler can write to (none connected, or the
+  # The organiser has no calendar BookDesk24 can write to (none connected, or the
   # one the meeting named is gone). Retrying cannot change that, so the job ends
   # here rather than failing through every attempt.
   defp handle_failure(error_type, job) do
@@ -390,7 +390,7 @@ defmodule Tymeslot.Workers.CalendarEventWorker do
     # The write is not lost. `tag_for_offline_queue/2` has already marked the
     # cache row `locally_modified`, and `CalDAV.OfflineQueue` replays it on the
     # next sync cycle under the row's conflict policy — `:keep_local` for events
-    # the scheduler owns, which force-writes and actually settles the conflict.
+    # BookDesk24 owns, which force-writes and actually settles the conflict.
     Logger.info("Calendar event changed on the server, handing the write to the offline queue")
 
     {:discard, @queued_for_replay}

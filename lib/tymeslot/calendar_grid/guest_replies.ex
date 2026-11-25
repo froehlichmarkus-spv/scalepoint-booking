@@ -5,7 +5,7 @@ defmodule Tymeslot.CalendarGrid.GuestReplies do
   A calendar event's people are its attendees, each with the reply their
   calendar last reported (`Attendee.response_status`). A booking's are the
   person who booked it (or a group meeting's participants), who owe no
-  answer, then the guests invited to it through the scheduler, with the answer
+  answer, then the guests invited to it through BookDesk24, with the answer
   each gave on the RSVP page.
 
   A reply is `:accepted`, `:declined`, `:tentative` or `:pending`

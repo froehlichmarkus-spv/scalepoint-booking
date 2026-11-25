@@ -246,7 +246,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.YouMoment do
 
       <VerificationNotice.line meeting_type={@meeting_type} />
 
-      <div class="folio-actions folio-actions--in-order">
+      <div class="folio-actions folio-actions--in-order booking-confirm-sheet">
         <SeriesSummary.price
           meeting_type={@meeting_type}
           currency={@host_currency}

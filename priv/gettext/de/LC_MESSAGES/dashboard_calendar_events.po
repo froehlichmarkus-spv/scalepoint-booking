@@ -29,17 +29,17 @@ msgstr "Das Enddatum der Wiederholung muss am oder nach dem Ereignisbeginn liege
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Too many edits. Please wait a moment."
-msgstr "Zu viele Bearbeitungen. Bitte warten Sie einen Moment."
+msgstr "Zu viele Bearbeitungen. Bitte warte einen Moment."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Too many moves. Please wait a moment."
-msgstr "Zu viele Verschiebungen. Bitte warten Sie einen Moment."
+msgstr "Zu viele Verschiebungen. Bitte warte einen Moment."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "You don't have permission to modify this event"
-msgstr "Sie haben keine Berechtigung, dieses Ereignis zu bearbeiten"
+msgstr "du hast keine Berechtigung, dieses Ereignis zu bearbeiten"
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -54,7 +54,7 @@ msgstr "Ereignis konnte nicht aktualisiert werden - Änderungen zurückgesetzt"
 #: lib/tymeslot/calendar_grid/event_creation.ex
 #, elixir-autogen, elixir-format
 msgid "Google Calendar saved the event but didn't return a Meet link — please try again or add it manually."
-msgstr "Google Calendar hat das Ereignis gespeichert, aber keinen Meet-Link zurückgegeben – bitte versuchen Sie es erneut oder fügen Sie ihn manuell hinzu."
+msgstr "Google Calendar hat das Ereignis gespeichert, aber keinen Meet-Link zurückgegeben – bitte versuche es erneut oder füge ihn manuell hinzu."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
@@ -79,7 +79,7 @@ msgstr "Das Ereignis konnte nicht verschoben werden. Es befindet sich weiterhin 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Event copied to the new calendar, but the original could not be removed. Please delete it from its original calendar."
-msgstr "Ereignis in den neuen Kalender kopiert, aber das Original konnte nicht entfernt werden. Bitte löschen Sie es aus seinem ursprünglichen Kalender."
+msgstr "Ereignis in den neuen Kalender kopiert, aber das Original konnte nicht entfernt werden. Bitte lösche es aus seinem ursprünglichen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -109,37 +109,37 @@ msgstr "Meetingraum erstellt."
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Your calendar could not be reached. The change is saved and will sync on the next attempt."
-msgstr "Ihr Kalender war nicht erreichbar. Die Änderung ist gespeichert und wird beim nächsten Versuch synchronisiert."
+msgstr "Dein Kalender war nicht erreichbar. Die Änderung ist gespeichert und wird beim nächsten Versuch synchronisiert."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Event copied to the new calendar, but the move did not finish. Please check its original calendar and delete the original if it is still there."
-msgstr "Ereignis in den neuen Kalender kopiert, aber das Verschieben wurde nicht abgeschlossen. Bitte prüfen Sie den ursprünglichen Kalender und löschen Sie das Original, falls es noch dort ist."
+msgstr "Ereignis in den neuen Kalender kopiert, aber das Verschieben wurde nicht abgeschlossen. Bitte prüfe den ursprünglichen Kalender und lösche das Original, falls es noch dort ist."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This event is a booking, so its video link belongs to the booking. Reschedule or cancel the booking to change it."
-msgstr "Dieses Ereignis ist eine Buchung, daher gehört sein Videolink zur Buchung. Verschieben oder stornieren Sie die Buchung, um ihn zu ändern."
+msgstr "Dieses Ereignis ist eine Buchung, daher gehört sein Videolink zur Buchung. Verschiebe oder storniere die Buchung, um ihn zu ändern."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Google Calendar added Google Meet to the event but has not returned its link yet. Choose Google Meet again to fetch it."
-msgstr "Google Kalender hat dem Ereignis Google Meet hinzugefügt, den Link aber noch nicht zurückgegeben. Wählen Sie Google Meet erneut, um ihn abzurufen."
+msgstr "Google Kalender hat dem Ereignis Google Meet hinzugefügt, den Link aber noch nicht zurückgegeben. Wähle Google Meet erneut, um ihn abzurufen."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Recurring Exchange events cannot be deleted here yet. Please delete this one in your calendar app."
-msgstr "Wiederkehrende Exchange-Ereignisse können hier noch nicht gelöscht werden. Bitte löschen Sie dieses Ereignis in Ihrer Kalender-App."
+msgstr "Wiederkehrende Exchange-Ereignisse können hier noch nicht gelöscht werden. Bitte lösche dieses Ereignis in deiner Kalender-App."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This event could not be deleted here. Please delete it in your calendar app."
-msgstr "Dieses Ereignis konnte hier nicht gelöscht werden. Bitte löschen Sie es in Ihrer Kalender-App."
+msgstr "Dieses Ereignis konnte hier nicht gelöscht werden. Bitte lösche es in deiner Kalender-App."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Events of a repeating series cannot be switched between all-day and timed here. Please make this change in your calendar app."
-msgstr "Ereignisse einer Serie können hier nicht zwischen ganztägig und zeitgebunden umgestellt werden. Bitte nehmen Sie diese Änderung in Ihrer Kalender-App vor."
+msgstr "Ereignisse einer Serie können hier nicht zwischen ganztägig und zeitgebunden umgestellt werden. Bitte nimm diese Änderung in deiner Kalender-App vor."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
@@ -151,23 +151,23 @@ msgstr "Diese Änderung ist für die gewählten Ereignisse nicht möglich. Eine 
 #, elixir-autogen, elixir-format
 msgid "The series was updated, but a change you made while it was saving was not applied. Please make it again."
 msgid_plural "The series was updated, but %{count} changes you made while it was saving were not applied. Please make them again."
-msgstr[0] "Die Serie wurde aktualisiert, aber eine Änderung, die Sie während des Speicherns vorgenommen haben, wurde nicht übernommen. Bitte nehmen Sie sie erneut vor."
-msgstr[1] "Die Serie wurde aktualisiert, aber %{count} Änderungen, die Sie während des Speicherns vorgenommen haben, wurden nicht übernommen. Bitte nehmen Sie sie erneut vor."
+msgstr[0] "Die Serie wurde aktualisiert, aber eine Änderung, die du während des Speicherns vorgenommen haben, wurde nicht übernommen. Bitte nimm sie erneut vor."
+msgstr[1] "Die Serie wurde aktualisiert, aber %{count} Änderungen, die du während des Speicherns vorgenommen haben, wurden nicht übernommen. Bitte nimm sie erneut vor."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This event could not be matched to its series. Refresh your calendars and try again."
-msgstr "Dieses Ereignis konnte seiner Serie nicht zugeordnet werden. Aktualisieren Sie Ihre Kalender und versuchen Sie es erneut."
+msgstr "Dieses Ereignis konnte seiner Serie nicht zugeordnet werden. Aktualisiere deine Kalender und versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "This series repeats on fixed days, such as the second Monday of the month, so it cannot be moved like this. Please make this change in your calendar app."
-msgstr "Diese Serie wiederholt sich an festen Tagen, etwa am zweiten Montag des Monats, und kann daher nicht so verschoben werden. Bitte nehmen Sie diese Änderung in Ihrer Kalender-App vor."
+msgstr "Diese Serie wiederholt sich an festen Tagen, etwa am zweiten Montag des Monats, und kann daher nicht so verschoben werden. Bitte nimm diese Änderung in deiner Kalender-App vor."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "This series' repeat rule cannot be split here. Please make this change in your calendar app."
-msgstr "Die Wiederholungsregel dieser Serie kann hier nicht aufgeteilt werden. Bitte nehmen Sie diese Änderung in Ihrer Kalender-App vor."
+msgstr "Die Wiederholungsregel dieser Serie kann hier nicht aufgeteilt werden. Bitte nimm diese Änderung in deiner Kalender-App vor."
 
 #: lib/tymeslot_web/components/calendar/series_notes.ex
 #, elixir-autogen, elixir-format
@@ -182,7 +182,7 @@ msgstr "Ein wiederkehrendes Ereignis kann nur in einen Kalender derselben Kontoa
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Could not move the series. It is still on its original calendar."
-msgstr "Die Serie konnte nicht verschoben werden. Sie befindet sich weiterhin in ihrem ursprünglichen Kalender."
+msgstr "Die Serie konnte nicht verschoben werden. Du befindet sich weiterhin in ihrem ursprünglichen Kalender."
 
 #: lib/tymeslot_web/components/calendar/series_notes.ex
 #, elixir-autogen, elixir-format
@@ -207,7 +207,7 @@ msgstr "Wiederkehrende Ereignisse in diesem Kalender können nicht in einen ande
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "That calendar cannot be written to. Please choose another calendar."
-msgstr "In diesen Kalender kann nicht geschrieben werden. Bitte wählen Sie einen anderen Kalender."
+msgstr "In diesen Kalender kann nicht geschrieben werden. Bitte wähle einen anderen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -217,7 +217,7 @@ msgstr "Die Serie befindet sich bereits in diesem Kalender."
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "The series was copied to %{calendar}, but the original series could not be removed. Please delete it from its original calendar."
-msgstr "Die Serie wurde nach %{calendar} kopiert, aber die ursprüngliche Serie konnte nicht entfernt werden. Bitte löschen Sie sie aus ihrem ursprünglichen Kalender."
+msgstr "Die Serie wurde nach %{calendar} kopiert, aber die ursprüngliche Serie konnte nicht entfernt werden. Bitte lösche sie aus ihrem ursprünglichen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -228,13 +228,13 @@ msgstr "Die Serie wurde nach %{calendar} verschoben."
 #, elixir-autogen, elixir-format
 msgid "The series was moved, but a change you made while it was moving was not applied. Please make it again."
 msgid_plural "The series was moved, but %{count} changes you made while it was moving were not applied. Please make them again."
-msgstr[0] "Die Serie wurde verschoben, aber eine Änderung, die Sie währenddessen vorgenommen haben, wurde nicht übernommen. Bitte nehmen Sie sie erneut vor."
-msgstr[1] "Die Serie wurde verschoben, aber %{count} Änderungen, die Sie währenddessen vorgenommen haben, wurden nicht übernommen. Bitte nehmen Sie sie erneut vor."
+msgstr[0] "Die Serie wurde verschoben, aber eine Änderung, die du währenddessen vorgenommen haben, wurde nicht übernommen. Bitte nimm sie erneut vor."
+msgstr[1] "Die Serie wurde verschoben, aber %{count} Änderungen, die du währenddessen vorgenommen haben, wurden nicht übernommen. Bitte nimm sie erneut vor."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "A change to this series is still saving. Please make this change once it has saved."
-msgstr "Eine Änderung an dieser Serie wird noch gespeichert. Bitte nehmen Sie diese Änderung vor, sobald sie gespeichert ist."
+msgstr "Eine Änderung an dieser Serie wird noch gespeichert. Bitte nimm diese Änderung vor, sobald sie gespeichert ist."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -245,12 +245,12 @@ msgstr "Löschen fehlgeschlagen - wird bei der nächsten Synchronisierung erneut
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "Too many new meetings. Please wait a moment."
-msgstr "Zu viele neue Termine. Bitte warten Sie einen Moment."
+msgstr "Zu viele neue Termine. Bitte warte einen Moment."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This is a group booking. Move it, cancel it or change who attends from the meeting instead."
-msgstr "Dies ist eine Gruppenbuchung. Verschieben, absagen oder ändern Sie die Teilnehmenden stattdessen über das Meeting."
+msgstr "Dies ist eine Gruppenbuchung. Verschieben, absagen oder ändern du die Teilnehmenden stattdessen über das Meeting."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -260,18 +260,17 @@ msgstr "Dieses Wiederholungsmuster kann nicht in Outlook gespeichert werden."
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
-msgstr ""
-"Outlook kann Monate, die den Tag dieser Serie nicht haben, nicht überspringen und würde diese Ereignisse auf den letzten Tag des Monats verschieben. Bitte beginnen Sie die Serie am 28. oder früher oder speichern Sie sie in einem anderen Kalender."
+msgstr "Outlook kann Monate, die den Tag dieser Serie nicht haben, nicht überspringen und würde diese Ereignisse auf den letzten Tag des Monats verschieben. Bitte beginne die Serie am 28. oder früher oder speichern du sie in einem anderen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "This series changed while you were editing it, and nothing is left of it from this event on. Nothing was saved."
-msgstr "Diese Serie wurde geändert, während Sie sie bearbeitet haben, und ab diesem Ereignis ist nichts mehr von ihr übrig. Es wurde nichts gespeichert."
+msgstr "Diese Serie wurde geändert, während du sie bearbeitet haben, und ab diesem Ereignis ist nichts mehr von ihr übrig. Es wurde nichts gespeichert."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "This series changed while you were editing it, so the events left in it can no longer be counted. Nothing was saved. Refresh the calendar and try again."
-msgstr "Diese Serie wurde geändert, während Sie sie bearbeitet haben, deshalb lassen sich die verbleibenden Ereignisse nicht mehr zählen. Es wurde nichts gespeichert. Aktualisieren Sie den Kalender und versuchen Sie es erneut."
+msgstr "Diese Serie wurde geändert, während du sie bearbeitet haben, deshalb lassen sich die verbleibenden Ereignisse nicht mehr zählen. Es wurde nichts gespeichert. Aktualisiere den Kalender und versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests.ex
 #, elixir-autogen, elixir-format
@@ -332,7 +331,7 @@ msgstr "Ada Lovelace"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
 msgid "Books the slot, emails the guest an invitation, and adds it to your calendar."
-msgstr "Bucht den Zeitraum, sendet dem Gast eine Einladung per E-Mail und trägt den Termin in Ihren Kalender ein."
+msgstr "Bucht den Zeitraum, sendet dem Gast eine Einladung per E-Mail und trägt den Termin in deinen Kalender ein."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
@@ -373,8 +372,8 @@ msgstr "Die Sprache aller E-Mails zu diesem Termin – für den Gast und alle we
 #, elixir-autogen, elixir-format
 msgid "Add up to %{count} reminder email for this meeting. The guest and anyone else invited receive it."
 msgid_plural "Add up to %{count} reminder emails for this meeting. The guest and anyone else invited receive it."
-msgstr[0] "Fügen Sie bis zu %{count} Erinnerungs-E-Mail für diesen Termin hinzu. Der Gast und alle weiteren Eingeladenen erhalten sie."
-msgstr[1] "Fügen Sie bis zu %{count} Erinnerungs-E-Mails für diesen Termin hinzu. Der Gast und alle weiteren Eingeladenen erhalten sie."
+msgstr[0] "Füge bis zu %{count} Erinnerungs-E-Mail für diesen Termin hinzu. Der Gast und alle weiteren Eingeladenen erhalten sie."
+msgstr[1] "Füge bis zu %{count} Erinnerungs-E-Mails für diesen Termin hinzu. Der Gast und alle weiteren Eingeladenen erhalten sie."
 
 #: lib/tymeslot_web/live/dashboard/calendar/undelivered_notice.ex
 #, elixir-autogen, elixir-format
@@ -385,13 +384,13 @@ msgstr "Ausblenden"
 #, elixir-autogen, elixir-format
 msgid "The latest update could not be emailed to this guest. Let them know another way."
 msgid_plural "The latest update could not be emailed to these guests. Let them know another way."
-msgstr[0] "Die letzte Änderung konnte diesem Gast nicht per E-Mail zugestellt werden. Informieren Sie ihn auf anderem Weg."
-msgstr[1] "Die letzte Änderung konnte diesen Gästen nicht per E-Mail zugestellt werden. Informieren Sie sie auf anderem Weg."
+msgstr[0] "Die letzte Änderung konnte diesem Gast nicht per E-Mail zugestellt werden. Informiere ihn auf anderem Weg."
+msgstr[1] "Die letzte Änderung konnte diesen Gästen nicht per E-Mail zugestellt werden. Informiere sie auf anderem Weg."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "Add a title. A meeting without a main participant is known by its title."
-msgstr "Geben Sie einen Titel ein. Ein Termin ohne Hauptteilnehmer wird an seinem Titel erkannt."
+msgstr "Gib einen Titel ein. Ein Termin ohne Hauptteilnehmer wird an seinem Titel erkannt."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
@@ -411,7 +410,7 @@ msgstr "Eigener Ort…"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
 msgid "Everyone is an equal guest who can accept or decline. Only you can move or cancel the meeting."
-msgstr "Alle sind gleichberechtigte Gäste und können zu- oder absagen. Nur Sie können den Termin verschieben oder absagen."
+msgstr "Alle sind gleichberechtigte Gäste und können zu- oder absagen. Nur du kannst den Termin verschieben oder absagen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
@@ -443,22 +442,22 @@ msgstr "Erscheint im Kalendereintrag und in jeder Einladung."
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "That location can no longer be used. Please choose another one."
-msgstr "Dieser Ort kann nicht mehr verwendet werden. Bitte wählen Sie einen anderen."
+msgstr "Dieser Ort kann nicht mehr verwendet werden. Bitte wähle einen anderen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
 msgid "The main participant can move or cancel the meeting. Turn this off to invite everyone as an equal guest."
-msgstr "Der Hauptteilnehmer kann den Termin verschieben oder absagen. Schalten Sie dies aus, um alle als gleichberechtigte Gäste einzuladen."
+msgstr "Der Hauptteilnehmer kann den Termin verschieben oder absagen. Schalte dies aus, um alle als gleichberechtigte Gäste einzuladen."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "This time is no longer available. Please choose another time."
-msgstr "Diese Zeit ist nicht mehr verfügbar. Bitte wählen Sie eine andere."
+msgstr "Diese Zeit ist nicht mehr verfügbar. Bitte wähle eine andere."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "The place is too long for a meeting. Keep it under 500 characters."
-msgstr "Der Ort ist für einen Termin zu lang. Verwenden Sie weniger als 500 Zeichen."
+msgstr "Der Ort ist für einen Termin zu lang. Verwende weniger als 500 Zeichen."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -473,14 +472,14 @@ msgstr "Ereignis gelöscht, aber die Teilnehmer konnten nicht benachrichtigt wer
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Syncing with your calendar. Open the event to change the whole series."
-msgstr "Wird mit Ihrem Kalender synchronisiert. Öffnen Sie das Ereignis, um die gesamte Serie zu ändern."
+msgstr "Wird mit deinem Kalender synchronisiert. Öffne das Ereignis, um die gesamte Serie zu ändern."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Diese Besprechung wird von jemand anderem organisiert. the scheduler kann eine Serie, zu der Sie nur eingeladen wurden, nicht verschieben oder aufteilen."
+msgid "Someone else organises this meeting, so BookDesk24 can't move or split a series you were only invited to."
+msgstr "Diese Besprechung wird von jemand anderem organisiert. BookDesk24 kann eine Serie, zu der du nur eingeladen wurden, nicht verschieben oder aufteilen."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This calendar is read-only. Events on it can't be changed from here."
-msgstr "Dieser Kalender ist schreibgeschützt. Ereignisse darin können nicht über the scheduler geändert werden."
+msgstr "Dieser Kalender ist schreibgeschützt. Ereignisse darin können nicht über BookDesk24 geändert werden."

@@ -752,5 +752,5 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler platform fee: %{amount}"
+msgid "BookDesk24 platform fee: %{amount}"
 msgstr ""

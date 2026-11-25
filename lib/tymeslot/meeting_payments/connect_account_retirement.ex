@@ -1,7 +1,7 @@
 defmodule Tymeslot.MeetingPayments.ConnectAccountRetirement do
   @moduledoc """
-  How a host's Connect account leaves the scheduler: the host disconnecting it
-  (`disconnect/1`), the host removing the scheduler at Stripe
+  How a host's Connect account leaves BookDesk24: the host disconnecting it
+  (`disconnect/1`), the host removing BookDesk24 at Stripe
   (`handle_deauthorized/2`), and the revocation of the platform's access that
   follows a disconnect (`schedule_revocation/1`).
 
@@ -48,7 +48,7 @@ defmodule Tymeslot.MeetingPayments.ConnectAccountRetirement do
        `paid` is not overwritten), transition the linked `awaiting_payment`
        meeting to `expired`, then soft-delete the connect_account row.
 
-  The removal also schedules the revocation of the scheduler's access to the
+  The removal also schedules the revocation of BookDesk24's access to the
   host's Stripe account, 35 minutes later (see `schedule_revocation/1`); a reconnection in the meantime cancels
   it in effect, since the worker leaves a connected account alone.
 
@@ -61,7 +61,7 @@ defmodule Tymeslot.MeetingPayments.ConnectAccountRetirement do
   acted on: these are cancelled bookings whose money the host still holds, and
   disconnecting neither settles nor cancels them. It is reported because the
   disconnect is the moment the host loses the ability to issue them from
-  the scheduler (from here on only their Stripe dashboard can settle them), so the
+  BookDesk24 (from here on only their Stripe dashboard can settle them), so the
   caller can say so rather than let the obligation disappear quietly.
 
   ## Race with checkout.session.completed
@@ -121,7 +121,7 @@ defmodule Tymeslot.MeetingPayments.ConnectAccountRetirement do
 
   @doc """
   Retires the live account of `stripe_account_id` after its host removed
-  the scheduler at Stripe (`account.application.deauthorized`).
+  BookDesk24 at Stripe (`account.application.deauthorized`).
 
   Does what `disconnect/1` does, minus what Stripe has made pointless: open
   checkout sessions are not expired (access is already gone) and no

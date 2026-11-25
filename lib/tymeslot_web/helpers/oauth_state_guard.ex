@@ -7,7 +7,7 @@ defmodule TymeslotWeb.Helpers.OAuthStateGuard do
   account (producing a signed state carrying the attacker's `user_id`), then
   trick an authenticated victim into completing the callback with a `code`
   issued for the victim's Google/Microsoft account — binding the victim's
-  calendar/video account to the attacker's the scheduler user.
+  calendar/video account to the attacker's BookDesk24 user.
   """
 
   require Logger

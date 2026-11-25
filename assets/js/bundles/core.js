@@ -46,9 +46,9 @@ let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("
 // Detect user timezone
 function getUserTimezone() {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Tallinn"
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Berlin"
   } catch (e) {
-    return "Europe/Tallinn"
+    return "Europe/Berlin"
   }
 }
 

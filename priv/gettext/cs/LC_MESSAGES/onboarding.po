@@ -204,20 +204,20 @@ msgstr "Kalendář jsme od základu přepracovali: nový vzhled, přehlednějš�
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point the scheduler at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
-msgstr "Další tři poskytovatelé videohovorů se přidávají k Zoomu, Google Meet, Teams a MiroTalku ve výběru integrací. Nasměrujte the scheduler na vlastní Jitsi nebo Nextcloud a každá rezervace dostane vlastní místnost: konverzace v Talku drží čekárnu zavřenou až do začátku schůzky, přesune se, když termín změníte, a smaže se, když ho zrušíte. kMeet nepotřebuje žádné nastavení."
+msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point BookDesk24 at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
+msgstr "Další tři poskytovatelé videohovorů se přidávají k Zoomu, Google Meet, Teams a MiroTalku ve výběru integrací. Nasměrujte BookDesk24 na vlastní Jitsi nebo Nextcloud a každá rezervace dostane vlastní místnost: konverzace v Talku drží čekárnu zavřenou až do začátku schůzky, přesune se, když termín změníte, a smaže se, když ho zrušíte. kMeet nepotřebuje žádné nastavení."
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to your the scheduler dashboard"
-msgstr "Vítejte na nástěnce the scheduler"
+msgid "Welcome to your BookDesk24 dashboard"
+msgstr "Vítejte na nástěnce BookDesk24"
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "Your dashboard, booking pages and every email are now available in Spanish. the scheduler follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
-msgstr "Váš přehled, rezervační stránky i všechny e-maily jsou teď k dispozici ve španělštině. the scheduler se řídí jazykem vašeho prohlížeče, nebo si jazyk vyberte sami v Nastavení účtu. Lidé, kteří si u vás rezervují, vidí rezervační stránky a potvrzení ve svém jazyce."
+msgid "Your dashboard, booking pages and every email are now available in Spanish. BookDesk24 follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
+msgstr "Váš přehled, rezervační stránky i všechny e-maily jsou teď k dispozici ve španělštině. BookDesk24 se řídí jazykem vašeho prohlížeče, nebo si jazyk vyberte sami v Nastavení účtu. Lidé, kteří si u vás rezervují, vidí rezervační stránky a potvrzení ve svém jazyce."
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler now speaks Spanish"
-msgstr "the scheduler teď mluví španělsky"
+msgid "BookDesk24 now speaks Spanish"
+msgstr "BookDesk24 teď mluví španělsky"

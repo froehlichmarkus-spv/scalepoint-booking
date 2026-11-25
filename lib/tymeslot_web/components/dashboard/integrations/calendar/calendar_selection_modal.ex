@@ -2,7 +2,7 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Calendar.CalendarSelecti
   @moduledoc """
   Modal for managing one connected calendar integration: what it is called,
   what colour its events are shown in, and for each of its calendars whether
-  the scheduler uses it and whether its busy time blocks the booking page.
+  BookDesk24 uses it and whether its busy time blocks the booking page.
 
   Hosts the calendar-selection chip grid. Surfacing it as an explicit "Manage
   calendars" action keeps the connection row itself flat.
@@ -114,7 +114,7 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Calendar.CalendarSelecti
             <p class="mb-2 text-token-sm text-tymeslot-500">
               {dgettext(
                 "dashboard_calendar_providers",
-                "How this calendar's events are shown in your the scheduler calendar."
+                "How this calendar's events are shown in your BookDesk24 calendar."
               )}
             </p>
             <ColourSwatches.colour_swatches
@@ -129,7 +129,7 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Calendar.CalendarSelecti
           <p class="mb-4 text-token-sm text-tymeslot-500">
             {dgettext(
               "dashboard_calendar_providers",
-              "Choose which calendars the scheduler uses, and which of them block times on your booking page."
+              "Choose which calendars BookDesk24 uses, and which of them block times on your booking page."
             )}
           </p>
 
@@ -376,7 +376,7 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Calendar.CalendarSelecti
     do:
       dgettext(
         "dashboard_calendar_providers",
-        "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
+        "Shared with you as busy times only. BookDesk24 can block these times but cannot show the events."
       )
 
   defp helper(:exchange_main, _whole_mailbox?),

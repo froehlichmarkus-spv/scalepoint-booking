@@ -183,7 +183,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.QueueWiring do
   defp reminders_change_attrs(_event_data), do: %{}
 
   # A meeting's event is a booking, and an event the grid is creating is
-  # the scheduler's own, so both are marked. Any other grid write is about an
+  # BookDesk24's own, so both are marked. Any other grid write is about an
   # event the cache row already describes, and leaves the row's flag as it
   # is: marking an organiser's edit of somebody else's event would hide it
   # from the agenda for good (a sync never clears the flag) and grant its

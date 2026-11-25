@@ -30,14 +30,14 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentationTest do
     test "documents the delivery id header that lets receivers discard duplicates" do
       html = render_component(&WebhookDocumentation.webhook_documentation/1, %{})
 
-      assert html =~ "X-the scheduler-Delivery-Id"
+      assert html =~ "X-BookDesk24-Delivery-Id"
       assert html =~ "the same on every retry of one delivery"
     end
 
     test "documents how to verify the request signature" do
       html = render_component(&WebhookDocumentation.webhook_documentation/1, %{})
 
-      assert html =~ "X-the scheduler-Signature"
+      assert html =~ "X-BookDesk24-Signature"
 
       assert html =~
                "Compute the HMAC-SHA256 of the timestamp, a full stop and the raw request body"

@@ -37,7 +37,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
 
     #{Buttons.action_button(@intent, dgettext("emails_account", "Confirm Email & Get Started"), verification_url, full_width: true, size: :large)}
 
-    #{Text.system_footer_note(dgettext("emails_account", "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email."))}
+    #{Text.system_footer_note(dgettext("emails_account", "For your security, this link expires in 24 hours. If you didn't sign up for BookDesk24, you can ignore this email."))}
 
     #{Text.divider(margin: "28px 0 16px 0")}
 
@@ -47,17 +47,17 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
     TemplateHelper.compile_system_template(
       mjml_content,
       dgettext("emails_account", "Account Verification"),
-      dgettext("emails_account", "Welcome to the scheduler - please verify your email."),
+      dgettext("emails_account", "Welcome to BookDesk24 - please verify your email."),
       intent: @intent,
       eyebrow: dgettext("emails_account", "Welcome"),
-      stage_title: dgettext("emails_account", "Welcome to the scheduler"),
+      stage_title: dgettext("emails_account", "Welcome to BookDesk24"),
       stage_subtitle: dgettext("emails_account", "Let's get you scheduling in under a minute.")
     )
   end
 
   defp text_body(user, verification_url) do
     """
-    #{dgettext("emails_account", "Welcome to the scheduler!")}
+    #{dgettext("emails_account", "Welcome to BookDesk24!")}
 
     #{Greeting.text(user)}
 
@@ -66,7 +66,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
     #{dgettext("emails_account", "Confirm Email & Get Started:")}
     #{verification_url}
 
-    #{dgettext("emails_account", "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, no further action is needed.")}
+    #{dgettext("emails_account", "For your security, this link expires in 24 hours. If you didn't sign up for BookDesk24, no further action is needed.")}
     """
   end
 end

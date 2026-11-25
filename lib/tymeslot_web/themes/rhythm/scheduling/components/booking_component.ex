@@ -170,7 +170,7 @@ defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Components.BookingComponent do
               class="booking-submit-price"
             />
 
-            <div class="slide-actions horizontal">
+            <div class="slide-actions horizontal booking-confirm-sheet">
               <button
                 type="button"
                 class="prev-button"
@@ -215,7 +215,7 @@ defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Components.BookingComponent do
     BookingLabels.submit_label(
       is_rescheduling,
       meeting_type,
-      dgettext("booking", "Submit"),
+      dgettext("booking", "Confirm booking"),
       :rhythm
     )
   end

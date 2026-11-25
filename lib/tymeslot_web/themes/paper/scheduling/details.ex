@@ -296,7 +296,7 @@ defmodule TymeslotWeb.Themes.Paper.Scheduling.Details do
       class="paper-book__price"
     />
 
-    <div class="paper-actions paper-book__actions">
+    <div class="paper-actions paper-book__actions booking-confirm-sheet">
       <button
         type="submit"
         form="booking-form"

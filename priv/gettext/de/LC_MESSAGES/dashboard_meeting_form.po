@@ -54,12 +54,12 @@ msgstr "Abbrechen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
 msgid "Choose an icon to represent this meeting type, or select \"No Icon\" for no visual indicator."
-msgstr "Wählen Sie ein Symbol für diesen Termintyp oder wählen Sie „Kein Symbol“ für keine visuelle Kennzeichnung."
+msgstr "Wähle ein Symbol für diesen Termintyp oder wähle „Kein Symbol“ für keine visuelle Kennzeichnung."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
 msgid "Choose where new bookings for this meeting type should be created."
-msgstr "Wählen Sie, wo neue Buchungen für diesen Termintyp erstellt werden sollen."
+msgstr "Wähle, wo neue Buchungen für diesen Termintyp erstellt werden sollen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/autosave.ex
 #, elixir-autogen, elixir-format
@@ -105,17 +105,17 @@ msgstr "Die Dauer muss eine gültige Zahl sein"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/guests_section.ex
 #, elixir-autogen, elixir-format
 msgid "Each guest is emailed a confirmation with their own link to accept or decline. You'll see every guest's response on your dashboard."
-msgstr "Jeder Gast erhält eine Bestätigung per E-Mail mit einem eigenen Link zum Annehmen oder Ablehnen. Sie sehen die Antwort jedes Gastes in Ihrem Dashboard."
+msgstr "Jeder Gast erhält eine Bestätigung per E-Mail mit einem eigenen Link zum Annehmen oder Ablehnen. Du sehen die Antwort jedes Gastes in deinem Dashboard."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/lengths_field.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a duration between %{min} and %{max} minutes"
-msgstr "Geben Sie eine Dauer zwischen %{min} und %{max} Minuten ein"
+msgstr "Gib eine Dauer zwischen %{min} und %{max} Minuten ein"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a valid price for this meeting type"
-msgstr "Geben Sie einen gültigen Preis für diesen Termintyp ein"
+msgstr "Gib einen gültigen Preis für diesen Termintyp ein"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
@@ -135,7 +135,7 @@ msgstr "Symbol"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/guests_section.ex
 #, elixir-autogen, elixir-format
 msgid "Let invitees add up to %{max_guests} guests to this meeting"
-msgstr "Lassen Sie eingeladene Personen bis zu %{max_guests} Gäste zu diesem Termin hinzufügen"
+msgstr "Lass eingeladene Personen bis zu %{max_guests} Gäste zu diesem Termin hinzufügen"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
@@ -171,7 +171,7 @@ msgstr "Zahlungen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
 msgid "Please select a video provider for video meetings"
-msgstr "Bitte wählen Sie einen Videoanbieter für Video-Meetings"
+msgstr "Bitte wähle einen Videoanbieter für Video-Meetings"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
@@ -206,12 +206,12 @@ msgstr "Diese Buchungen in meinem Kalender als frei anzeigen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/show_as_free_section.ex
 #, elixir-autogen, elixir-format
 msgid "The event is still created, but marked as free time so it doesn't block other bookings or appear busy to people who can see your availability."
-msgstr "Der Termin wird trotzdem erstellt, aber als freie Zeit markiert, sodass er keine anderen Buchungen blockiert und für Personen, die Ihre Verfügbarkeit sehen können, nicht als belegt erscheint."
+msgstr "Der Termin wird trotzdem erstellt, aber als freie Zeit markiert, sodass er keine anderen Buchungen blockiert und für Personen, die deine Verfügbarkeit sehen können, nicht als belegt erscheint."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
 msgid "Unable to verify subscription status. Please try again."
-msgstr "Abonnementstatus konnte nicht überprüft werden. Bitte versuchen Sie es erneut."
+msgstr "Abonnementstatus konnte nicht überprüft werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/autosave.ex
 #, elixir-autogen, elixir-format
@@ -226,7 +226,7 @@ msgstr "z. B. Kurzes Gespräch"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
 msgid "Connect Stripe on the %{payments_link} page to charge for this meeting type."
-msgstr "Verbinden Sie Stripe auf der Seite %{payments_link}, um Zahlungen für diesen Termintyp einzuziehen."
+msgstr "Verbinde Stripe auf der Seite %{payments_link}, um Zahlungen für diesen Termintyp einzuziehen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/autosave.ex
 #, elixir-autogen, elixir-format
@@ -236,7 +236,7 @@ msgstr "Zu viele Änderungen - wird in Kürze gespeichert…"
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a valid price"
-msgstr "Geben Sie einen gültigen Preis ein"
+msgstr "Gib einen gültigen Preis ein"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
@@ -246,17 +246,17 @@ msgstr "Keiner der für dieses Konto ausgewählten Kalender kann Buchungen anneh
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "None of the calendars you selected for this account can accept bookings. Update your calendar selection in Integration settings, or choose a different account."
-msgstr "Keiner der für dieses Konto ausgewählten Kalender kann Buchungen annehmen. Aktualisieren Sie Ihre Kalenderauswahl in den Integrationseinstellungen oder wählen Sie ein anderes Konto."
+msgstr "Keiner der für dieses Konto ausgewählten Kalender kann Buchungen annehmen. Aktualisiere deine Kalenderauswahl in den Integrationseinstellungen oder wähle ein anderes Konto."
 
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "Please select a calendar account"
-msgstr "Bitte wählen Sie ein Kalenderkonto aus"
+msgstr "Bitte wähle ein Kalenderkonto aus"
 
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "Please select a target calendar"
-msgstr "Bitte wählen Sie einen Zielkalender aus"
+msgstr "Bitte wähle einen Zielkalender aus"
 
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
@@ -276,12 +276,12 @@ msgstr "Der ausgewählte Videoanbieter ist ungültig oder inaktiv"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
 msgid "Update your calendar selection"
-msgstr "Aktualisieren Sie Ihre Kalenderauswahl"
+msgstr "Aktualisiere deine Kalenderauswahl"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
 msgid "or choose a different account."
-msgstr "oder wählen Sie ein anderes Konto."
+msgstr "oder wähle ein anderes Konto."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/limits_section.ex
 #, elixir-autogen, elixir-format
@@ -291,7 +291,7 @@ msgstr "Buchungslimits"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/limits_section.ex
 #, elixir-autogen, elixir-format
 msgid "Cap how many bookings of this type you accept. Leave a field empty for no limit."
-msgstr "Begrenzen Sie die Anzahl der Buchungen für diesen Termintyp. Lassen Sie ein Feld leer, wenn es kein Limit geben soll."
+msgstr "Begrenze die Anzahl der Buchungen für diesen Termintyp. Lass ein Feld leer, wenn es kein Limit geben soll."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_limit_fields.ex
 #, elixir-autogen, elixir-format
@@ -346,7 +346,7 @@ msgstr "Verfügbarkeit"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/availability_section.ex
 #, elixir-autogen, elixir-format
 msgid "Choose the hours this meeting type can be booked in. The default schedule applies unless you pick another one."
-msgstr "Wählen Sie die Zeiten, in denen dieser Termintyp gebucht werden kann. Es gilt der Standardzeitplan, sofern Sie keinen anderen wählen."
+msgstr "Wähle die Zeiten, in denen dieser Termintyp gebucht werden kann. Es gilt der Standardzeitplan, sofern du keinen anderen wählen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/availability_section.ex
 #, elixir-autogen, elixir-format
@@ -366,7 +366,7 @@ msgstr "Zeitplan aktualisiert und gespeichert"
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "Selected schedule is not one of yours"
-msgstr "Der gewählte Zeitplan gehört nicht zu Ihrem Konto"
+msgstr "Der gewählte Zeitplan gehört nicht zu deinem Konto"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/approval_section.ex
 #, elixir-autogen, elixir-format
@@ -386,18 +386,18 @@ msgstr "Jede Buchung selbst bestätigen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/approval_section.ex
 #, elixir-autogen, elixir-format
 msgid "If you don't answer in time the request lapses, the slot is released, and the invitee is told. Silence never confirms a booking. Leave blank to use %{default} hours."
-msgstr "Wenn Sie nicht rechtzeitig antworten, verfällt die Anfrage, der Termin wird freigegeben und der Gast wird benachrichtigt. Schweigen bestätigt nie eine Buchung. Leer lassen für %{default} Stunden."
+msgstr "Wenn du nicht rechtzeitig antworten, verfällt die Anfrage, der Termin wird freigegeben und der Gast wird benachrichtigt. Schweigen bestätigt nie eine Buchung. Leer lassen für %{default} Stunden."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/approval_section.ex
 #, elixir-autogen, elixir-format
 msgid "Invitees get a \"request received\" email instead of a confirmation, and the slot is held so nobody else can take it. They get the confirmation and the calendar invite once you accept."
-msgstr "Gäste erhalten statt einer Bestätigung eine E-Mail „Anfrage eingegangen“, und der Termin wird reserviert, damit ihn niemand sonst buchen kann. Die Bestätigung und die Kalendereinladung folgen, sobald Sie zusagen."
+msgstr "Gäste erhalten statt einer Bestätigung eine E-Mail „Anfrage eingegangen“, und der Termin wird reserviert, damit ihn niemand sonst buchen kann. Die Bestätigung und die Kalendereinladung folgen, sobald du zusagen."
 
 #: lib/tymeslot_web/helpers/context_errors.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a whole number of hours, or leave blank to use the default."
-msgstr "Geben Sie eine ganze Zahl von Stunden ein, oder lassen Sie das Feld leer, um den Standardwert zu verwenden."
+msgstr "Gib eine ganze Zahl von Stunden ein, oder lass das Feld leer, um den Standardwert zu verwenden."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/approval_section.ex
 #, elixir-autogen, elixir-format
@@ -450,18 +450,18 @@ msgstr "Startzeiten werden alle %{minutes} Minuten angeboten: %{examples}…"
 #, elixir-autogen, elixir-format
 msgid "Add up to %{count} reminder email for this meeting type. We recommend using only one."
 msgid_plural "Add up to %{count} reminder emails for this meeting type. We recommend using only one."
-msgstr[0] "Fügen Sie bis zu %{count} Erinnerungs-E-Mail für diesen Termintyp hinzu. Wir empfehlen, nur eine zu verwenden."
-msgstr[1] "Fügen Sie bis zu %{count} Erinnerungs-E-Mails für diesen Termintyp hinzu. Wir empfehlen, nur eine zu verwenden."
+msgstr[0] "Füge bis zu %{count} Erinnerungs-E-Mail für diesen Termintyp hinzu. Wir empfehlen, nur eine zu verwenden."
+msgstr[1] "Füge bis zu %{count} Erinnerungs-E-Mails für diesen Termintyp hinzu. Wir empfehlen, nur eine zu verwenden."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
 msgid "The calendar this meeting type books into is no longer on this account. Choose another calendar."
-msgstr "Der Kalender, in den dieser Termintyp bucht, ist nicht mehr mit diesem Konto verbunden. Wählen Sie einen anderen Kalender."
+msgstr "Der Kalender, in den dieser Termintyp bucht, ist nicht mehr mit diesem Konto verbunden. Wähle einen anderen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/components/booking_components.ex
 #, elixir-autogen, elixir-format
 msgid "The calendar this meeting type books into is now read-only. Choose another calendar."
-msgstr "Der Kalender, in den dieser Termintyp bucht, ist jetzt schreibgeschützt. Wählen Sie einen anderen Kalender."
+msgstr "Der Kalender, in den dieser Termintyp bucht, ist jetzt schreibgeschützt. Wähle einen anderen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
@@ -471,7 +471,7 @@ msgstr "Der Preis von %{amount} bleibt erhalten und gilt wieder, sobald Stripe v
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "A selected location is not one of yours"
-msgstr "Ein ausgewählter Ort gehört nicht zu Ihrem Konto"
+msgstr "Ein ausgewählter Ort gehört nicht zu deinem Konto"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/form_view.ex
 #, elixir-autogen, elixir-format
@@ -486,7 +486,7 @@ msgstr "Termintyp erstellen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/form_view.ex
 #, elixir-autogen, elixir-format
 msgid "Create the meeting type to set up the rest."
-msgstr "Erstellen Sie den Termintyp, um den Rest einzurichten."
+msgstr "Erstelle den Termintyp, um den Rest einzurichten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/form_view.ex
 #, elixir-autogen, elixir-format
@@ -506,7 +506,7 @@ msgstr "Gruppenbuchungen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "Let multiple people book the same time slot"
-msgstr "Lassen Sie mehrere Personen dasselbe Zeitfenster buchen"
+msgstr "Lass mehrere Personen dasselbe Zeitfenster buchen"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
@@ -531,42 +531,42 @@ msgstr "Teilnehmerlimit muss mindestens %{min} betragen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off group bookings to require payment."
-msgstr "Deaktivieren Sie Gruppenbuchungen, um Zahlungen zu verlangen."
+msgstr "Deaktiviere Gruppenbuchungen, um Zahlungen zu verlangen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off payments to enable group bookings."
-msgstr "Deaktivieren Sie Zahlungen, um Gruppenbuchungen zu aktivieren."
+msgstr "Deaktiviere Zahlungen, um Gruppenbuchungen zu aktivieren."
 
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings are not included in your current plan."
-msgstr "Gruppenbuchungen sind in Ihrem aktuellen Tarif nicht enthalten."
+msgstr "Gruppenbuchungen sind in deinem aktuellen Tarif nicht enthalten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings cannot ask each booker for their phone number. Edit the location to publish a number for them to call instead."
-msgstr "Gruppenbuchungen können nicht jede buchende Person nach ihrer Telefonnummer fragen. Bearbeiten Sie den Ort und veröffentlichen Sie stattdessen eine Nummer, die sie anrufen können."
+msgstr "Gruppenbuchungen können nicht jede buchende Person nach ihrer Telefonnummer fragen. Bearbeite den Ort und veröffentliche stattdessen eine Nummer, die sie anrufen können."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need a single video provider. Edit the location so it uses just one."
-msgstr "Gruppenbuchungen brauchen einen einzigen Videoanbieter. Bearbeiten Sie den Ort, sodass er nur einen verwendet."
+msgstr "Gruppenbuchungen brauchen einen einzigen Videoanbieter. Bearbeite den Ort, sodass er nur einen verwendet."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need exactly one location, so everyone in a slot meets in the same place. Remove the other locations to enable them."
-msgstr "Gruppenbuchungen brauchen genau einen Ort, damit sich alle in einem Zeitfenster am selben Ort treffen. Entfernen Sie die anderen Orte, um sie zu aktivieren."
+msgstr "Gruppenbuchungen brauchen genau einen Ort, damit sich alle in einem Zeitfenster am selben Ort treffen. Entferne die anderen Orte, um sie zu aktivieren."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off approval to enable group bookings."
-msgstr "Deaktivieren Sie die Bestätigung, um Gruppenbuchungen zu aktivieren."
+msgstr "Deaktiviere die Bestätigung, um Gruppenbuchungen zu aktivieren."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/approval_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off group bookings to require approval."
-msgstr "Deaktivieren Sie Gruppenbuchungen, um eine Bestätigung zu verlangen."
+msgstr "Deaktiviere Gruppenbuchungen, um eine Bestätigung zu verlangen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
@@ -576,37 +576,37 @@ msgstr "Jedes Zeitfenster bleibt offen, bis das Teilnehmerlimit erreicht ist, un
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings cannot ask each booker for their phone number. Turn this off and publish a number for them to call instead."
-msgstr "Gruppenbuchungen können nicht jede buchende Person nach ihrer Telefonnummer fragen. Schalten Sie dies aus und veröffentlichen Sie stattdessen eine Nummer, die sie anrufen können."
+msgstr "Gruppenbuchungen können nicht jede buchende Person nach ihrer Telefonnummer fragen. Schalte dies aus und veröffentliche stattdessen eine Nummer, die sie anrufen können."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings meet in one place. Keep just one saved location."
-msgstr "Gruppenbuchungen finden an einem Ort statt. Behalten Sie nur einen gespeicherten Ort."
+msgstr "Gruppenbuchungen finden an einem Ort statt. Behalte nur einen gespeicherten Ort."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need a single saved location. Edit the location so it names just one."
-msgstr "Gruppenbuchungen brauchen einen einzigen gespeicherten Ort. Bearbeiten Sie den Ort, sodass er nur einen nennt."
+msgstr "Gruppenbuchungen brauchen einen einzigen gespeicherten Ort. Bearbeite den Ort, sodass er nur einen nennt."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need a single video provider. Keep just one."
-msgstr "Gruppenbuchungen brauchen einen einzigen Videoanbieter. Behalten Sie nur einen."
+msgstr "Gruppenbuchungen brauchen einen einzigen Videoanbieter. Behalte nur einen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need exactly one location. Change the existing location instead of adding another."
-msgstr "Gruppenbuchungen brauchen genau einen Ort. Ändern Sie den vorhandenen Ort, statt einen weiteren hinzuzufügen."
+msgstr "Gruppenbuchungen brauchen genau einen Ort. Ändern du den vorhandenen Ort, statt einen weiteren hinzuzufügen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need the address up front. Choose one saved location."
-msgstr "Gruppenbuchungen brauchen die Adresse im Voraus. Wählen Sie einen gespeicherten Ort."
+msgstr "Gruppenbuchungen brauchen die Adresse im Voraus. Wähle einen gespeicherten Ort."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings need the address up front. Edit the location and choose a saved location."
-msgstr "Gruppenbuchungen brauchen die Adresse im Voraus. Bearbeiten Sie den Ort und wählen Sie einen gespeicherten Ort."
+msgstr "Gruppenbuchungen brauchen die Adresse im Voraus. Bearbeite den Ort und wähle einen gespeicherten Ort."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/slot_interval_field.ex
 #, elixir-autogen, elixir-format
@@ -618,12 +618,12 @@ msgstr[1] "%{time} (+%{count} Tage)"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
 msgid "Your Stripe account's currency, %{currency}, is not supported for meeting payments. Choose a supported currency on the %{payments_link} page to charge for this meeting type."
-msgstr "Die Währung Ihres Stripe-Kontos, %{currency}, wird für Terminzahlungen nicht unterstützt. Wählen Sie auf der Seite %{payments_link} eine unterstützte Währung, um Zahlungen für diesen Termintyp einzuziehen."
+msgstr "Die Währung deines Stripe-Kontos, %{currency}, wird für Terminzahlungen nicht unterstützt. Wähle auf der Seite %{payments_link} eine unterstützte Währung, um Zahlungen für diesen Termintyp einzuziehen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
 msgid "Prices can no longer be set in your Stripe account's currency, %{currency}. Choose a supported currency on the %{payments_link} page to change what this meeting type charges."
-msgstr "In der Währung Ihres Stripe-Kontos, %{currency}, lassen sich keine Preise mehr festlegen. Wählen Sie auf der Seite %{payments_link} eine unterstützte Währung, um den Preis dieses Termintyps zu ändern."
+msgstr "In der Währung deines Stripe-Kontos, %{currency}, lassen sich keine Preise mehr festlegen. Wähle auf der Seite %{payments_link} eine unterstützte Währung, um den Preis dieses Termintyps zu ändern."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
@@ -633,7 +633,7 @@ msgstr "Der aktuelle Preis beträgt %{amount}. Beim Wechsel zu einer unterstütz
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "The calendar this meeting type books into is no longer available. Reload the page and try again."
-msgstr "Der Kalender, in den dieser Termintyp bucht, ist nicht mehr verfügbar. Laden Sie die Seite neu und versuchen Sie es erneut."
+msgstr "Der Kalender, in den dieser Termintyp bucht, ist nicht mehr verfügbar. Lade die Seite neu und versuche es erneut."
 
 #: lib/tymeslot/meeting_types/input_validation.ex
 #, elixir-autogen, elixir-format
@@ -805,7 +805,7 @@ msgstr "Wochen beginnen am Sonntag, wie in den Kalendereinstellungen festgelegt.
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "Cancel the planned dates to turn group bookings off."
-msgstr "Sagen Sie die geplanten Termine ab, um Gruppenbuchungen auszuschalten."
+msgstr "Sage die geplanten Termine ab, um Gruppenbuchungen auszuschalten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/scheduling_rules_section.ex
 #, elixir-autogen, elixir-format
@@ -825,7 +825,7 @@ msgstr "Puffer davor (Minuten)"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/scheduling_rules_section.ex
 #, elixir-autogen, elixir-format
 msgid "Buffers and notice come from the schedule above. Enter a value to use a different one for this meeting type, or leave a field empty to keep the schedule's."
-msgstr "Puffer und Vorlaufzeit stammen aus dem oben gewählten Zeitplan. Geben Sie einen Wert ein, um für diesen Termintyp einen anderen zu verwenden, oder lassen Sie das Feld leer, um den Wert des Zeitplans zu behalten."
+msgstr "Puffer und Vorlaufzeit stammen aus dem oben gewählten Zeitplan. Gib einen Wert ein, um für diesen Termintyp einen anderen zu verwenden, oder lass das Feld leer, um den Wert des Zeitplans zu behalten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/scheduling_rules_section.ex
 #, elixir-autogen, elixir-format
@@ -850,12 +850,12 @@ msgstr "Zeitplan: %{value}"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "Remove the offered times to enable group bookings."
-msgstr "Entfernen Sie die angebotenen Zeiten, um Gruppenbuchungen zu aktivieren."
+msgstr "Entferne die angebotenen Zeiten, um Gruppenbuchungen zu aktivieren."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "This type still has offered times. Turn on fixed dates and remove them to enable group bookings."
-msgstr "Dieser Termintyp hat noch angebotene Zeiten. Schalten Sie feste Termine ein und entfernen Sie die Zeiten, um Gruppenbuchungen zu aktivieren."
+msgstr "Dieser Termintyp hat noch angebotene Zeiten. Schalte feste Termine ein und entferne die Zeiten, um Gruppenbuchungen zu aktivieren."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/visibility_section.ex
 #, elixir-autogen, elixir-format
@@ -870,7 +870,7 @@ msgstr "Auf %{address} anzeigen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/visibility_section.ex
 #, elixir-autogen, elixir-format
 msgid "Choose a username on your Profile page first: your booking pages' addresses are built from it, so this meeting type can't be booked until you have one."
-msgstr "Wählen Sie zuerst auf der Seite „Profil“ einen Nutzernamen: Aus ihm werden die Adressen Ihrer Buchungsseiten gebildet, daher ist dieser Termintyp bis dahin nicht buchbar."
+msgstr "Wähle zuerst auf der Seite „Profil“ einen Nutzernamen: Aus ihm werden die Adressen deiner Buchungsseiten gebildet, daher ist dieser Termintyp bis dahin nicht buchbar."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/guests_section.ex
 #, elixir-autogen, elixir-format
@@ -881,13 +881,13 @@ msgstr "Gäste pro Buchung festlegen"
 #, elixir-autogen, elixir-format
 msgid "Without a number of your own, each booking may bring up to %{count} guest. Set one to allow fewer, or up to %{max}."
 msgid_plural "Without a number of your own, each booking may bring up to %{count} guests. Set one to allow fewer, or up to %{max}."
-msgstr[0] "Ohne eigene Angabe darf jede Buchung bis zu %{count} Gast mitbringen. Legen Sie weniger oder bis zu %{max} fest."
-msgstr[1] "Ohne eigene Angabe darf jede Buchung bis zu %{count} Gäste mitbringen. Legen Sie weniger oder bis zu %{max} fest."
+msgstr[0] "Ohne eigene Angabe darf jede Buchung bis zu %{count} Gast mitbringen. Lege weniger oder bis zu %{max} fest."
+msgstr[1] "Ohne eigene Angabe darf jede Buchung bis zu %{count} Gäste mitbringen. Lege weniger oder bis zu %{max} fest."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/visibility_section.ex
 #, elixir-autogen, elixir-format
 msgid "Hidden from your booking pages. Each invitation link books one appointment."
-msgstr "Auf Ihren Buchungsseiten ausgeblendet. Mit jedem Einladungslink kann ein Termin gebucht werden."
+msgstr "Auf deinen Buchungsseiten ausgeblendet. Mit jedem Einladungslink kann ein Termin gebucht werden."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_rules.ex
 #, elixir-autogen, elixir-format
@@ -912,26 +912,26 @@ msgstr "E-Mail-Bestätigung"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/email_verification_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off payments to ask invitees to confirm their email. Paying already confirms who they are."
-msgstr "Deaktivieren Sie Zahlungen, um Gäste ihre E-Mail-Adresse bestätigen zu lassen. Mit der Zahlung steht bereits fest, wer sie sind."
+msgstr "Deaktiviere Zahlungen, um Gäste ihre E-Mail-Adresse bestätigen zu lassen. Mit der Zahlung steht bereits fest, wer sie sind."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/email_verification_section.ex
 #, elixir-autogen, elixir-format
 msgid "Bookings count only once the invitee clicks the link we email them. Until then the time is held for up to %{count} minute, and you are not notified."
 msgid_plural "Bookings count only once the invitee clicks the link we email them. Until then the time is held for up to %{count} minutes, and you are not notified."
-msgstr[0] "Eine Buchung zählt erst, wenn der Gast auf den Link in unserer E-Mail klickt. Bis dahin bleibt die Zeit bis zu %{count} Minute reserviert, und Sie erhalten keine Benachrichtigung."
-msgstr[1] "Eine Buchung zählt erst, wenn der Gast auf den Link in unserer E-Mail klickt. Bis dahin bleibt die Zeit bis zu %{count} Minuten reserviert, und Sie erhalten keine Benachrichtigung."
+msgstr[0] "Eine Buchung zählt erst, wenn der Gast auf den Link in unserer E-Mail klickt. Bis dahin bleibt die Zeit bis zu %{count} Minute reserviert, und du erhalten keine Benachrichtigung."
+msgstr[1] "Eine Buchung zählt erst, wenn der Gast auf den Link in unserer E-Mail klickt. Bis dahin bleibt die Zeit bis zu %{count} Minuten reserviert, und du erhalten keine Benachrichtigung."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/payments_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off email confirmation to require payment."
-msgstr "Deaktivieren Sie die E-Mail-Bestätigung, um Zahlungen zu verlangen."
+msgstr "Deaktiviere die E-Mail-Bestätigung, um Zahlungen zu verlangen."
 
 #: lib/tymeslot_web/helpers/context_errors.ex
 #, elixir-autogen, elixir-format
 msgid "Recurring bookings are not included in your current plan."
-msgstr "Wiederkehrende Buchungen sind in Ihrem aktuellen Tarif nicht enthalten."
+msgstr "Wiederkehrende Buchungen sind in deinem aktuellen Tarif nicht enthalten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/email_verification_section.ex
 #, elixir-autogen, elixir-format
 msgid "Turn off series booking to ask invitees to confirm their email. A series confirms all its sessions at once."
-msgstr "Deaktivieren Sie die Serienbuchung, um Gäste ihre E-Mail-Adresse bestätigen zu lassen. Bei einer Serie werden alle Termine auf einmal bestätigt."
+msgstr "Deaktiviere die Serienbuchung, um Gäste ihre E-Mail-Adresse bestätigen zu lassen. Bei einer Serie werden alle Termine auf einmal bestätigt."

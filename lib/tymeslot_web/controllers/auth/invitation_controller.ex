@@ -127,7 +127,7 @@ defmodule TymeslotWeb.InvitationController do
         conn
         |> put_flash(
           :success,
-          dgettext("auth_invitation", "Welcome to the scheduler! Your password is set.")
+          dgettext("auth_invitation", "Welcome to BookDesk24! Your password is set.")
         )
         |> redirect(to: Config.success_redirect_path())
 

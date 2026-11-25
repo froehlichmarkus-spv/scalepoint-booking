@@ -30,7 +30,7 @@ defmodule Tymeslot.Precommit.Timings do
     * `steps`: each step's (and each test partition's) start offset from the
       beginning of the run and wall clock, so the critical path is visible.
     * `plan`: the suite's partitions and schedulers per partition.
-    * `machine`: logical CPUs, the schedulers this run had, the cgroup's
+    * `machine`: logical CPUs, BookDesk24s this run had, the cgroup's
       `cpu.max`, and the `ERL_FLAGS` it ran with.
     * `cpu`, in CPU-seconds:
       * `gate_s`: the gate's own VM plus every process it started for a step,

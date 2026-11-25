@@ -2,9 +2,9 @@ defmodule TymeslotWeb.ZoomDeauthController do
   @moduledoc """
   Receives Zoom's app deauthorization webhook.
 
-  When a user uninstalls the the scheduler app from their Zoom account, Zoom POSTs
+  When a user uninstalls the BookDesk24 app from their Zoom account, Zoom POSTs
   here. We verify the request signature against the Marketplace Secret Token,
-  then strip every the scheduler integration referencing that Zoom account so the
+  then strip every BookDesk24 integration referencing that Zoom account so the
   stale OAuth tokens are removed promptly — Zoom requires this for production
   app approval.
 

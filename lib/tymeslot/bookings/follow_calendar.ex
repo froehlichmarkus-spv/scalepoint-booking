@@ -8,7 +8,7 @@ defmodule Tymeslot.Bookings.FollowCalendar do
   provider's video room, reminders re-pinned to the new time, the reschedule
   emails to the attendee, the organiser and the guests, and the webhook,
   Telegram and Slack dispatches. What `Tymeslot.Bookings.Reschedule` checks
-  before it moves a booking is left out, because only the scheduler choosing the
+  before it moves a booking is left out, because only BookDesk24 choosing the
   time needs it: the host picked this time in their calendar, so no policy,
   availability, calendar or conflict check second-guesses it, no approval
   gate applies and the location stays. The calendar already holds the time,

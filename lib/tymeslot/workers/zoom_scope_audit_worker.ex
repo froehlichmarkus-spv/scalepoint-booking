@@ -1,7 +1,7 @@
 defmodule Tymeslot.Workers.ZoomScopeAuditWorker do
   @moduledoc """
   Nightly audit flagging Zoom integrations whose OAuth grant cannot perform
-  every meeting operation the scheduler needs.
+  every meeting operation BookDesk24 needs.
 
   Zoom's granular apps issue one scope per action, and a grant only ever holds
   the scopes that were requested when the user consented. Widening the request
@@ -14,7 +14,7 @@ defmodule Tymeslot.Workers.ZoomScopeAuditWorker do
   flagging the integration through the same path the runtime rejection uses, so
   the dashboard shows "Reconnect" and the account owner is emailed once.
 
-  A gap is only the user's to close when the scope is one the scheduler actually
+  A gap is only the user's to close when the scope is one BookDesk24 actually
   asks Zoom for. A scope absent from the authorize request is absent from every
   grant, so it says nothing about any particular user's consent and no amount
   of reconnecting will produce it: that is the Zoom app's shortfall, and it is
@@ -72,7 +72,7 @@ defmodule Tymeslot.Workers.ZoomScopeAuditWorker do
 
   # The first operation the user could restore by reconnecting, in lifecycle
   # order, so the message names the earliest thing that will break. Only scopes
-  # the scheduler actually asks Zoom for qualify: the rest are missing from every
+  # BookDesk24 actually asks Zoom for qualify: the rest are missing from every
   # grant and would mask a gap that reconnecting can close.
   defp stale_operation(scope) do
     Scopes.operations()
@@ -88,7 +88,7 @@ defmodule Tymeslot.Workers.ZoomScopeAuditWorker do
   end
 
   defp flag_and_report(integration, operation) do
-    Logger.warning("Zoom grant is missing a scope the scheduler needs",
+    Logger.warning("Zoom grant is missing a scope BookDesk24 needs",
       integration_id: integration.id,
       operation: operation,
       required_scope: Scopes.required_description(operation)

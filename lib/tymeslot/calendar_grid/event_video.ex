@@ -100,7 +100,7 @@ defmodule Tymeslot.CalendarGrid.EventVideo do
       it is not this case, and a real room is provisioned for it instead;
     * `{:error, :not_found}` when the video integration is not the organiser's;
     * `{:error, :linked_to_booking}` when the event is the calendar copy of a
-      the scheduler booking (see `ensure_video_changeable/1`). Nothing is changed;
+      BookDesk24 booking (see `ensure_video_changeable/1`). Nothing is changed;
     * `{:error, :missing_meeting_url}` when the provider created a room but
       returned no join URL, in which case the event keeps its current link;
     * `{:error, :meet_link_pending}` when Google took the request for a Meet
@@ -169,7 +169,7 @@ defmodule Tymeslot.CalendarGrid.EventVideo do
 
   @doc """
   Whether the video of `event` may be changed from the grid: not when the
-  event is the calendar copy of a the scheduler booking, whose room belongs to the
+  event is the calendar copy of a BookDesk24 booking, whose room belongs to the
   meeting. A room made here would be unrelated to the meeting's own, so the
   booking's confirmation, reminder and reschedule emails would keep pointing
   at the old one while the calendar showed the new one.

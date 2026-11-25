@@ -85,7 +85,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Errors do
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The event changed on the calendar server since the scheduler last synced it."
+        "The event changed on the calendar server since BookDesk24 last synced it."
       )
 
   def describe_error(:rate_limited),
@@ -99,28 +99,28 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Errors do
     do:
       dgettext_noop(
         "integrations_calendar",
-        "the scheduler could not reach the calendar server. the scheduler will retry automatically."
+        "BookDesk24 could not reach the calendar server. BookDesk24 will retry automatically."
       )
 
   def describe_error(:invalid_response),
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The calendar server returned a response the scheduler could not understand."
+        "The calendar server returned a response BookDesk24 could not understand."
       )
 
   def describe_error(:response_too_large),
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The calendar server returned more data than the scheduler can process at once."
+        "The calendar server returned more data than BookDesk24 can process at once."
       )
 
   def describe_error(:server_error),
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The calendar server reported an error. the scheduler will retry automatically."
+        "The calendar server reported an error. BookDesk24 will retry automatically."
       )
 
   def describe_error(:service_unavailable), do: describe_error(:server_error)
@@ -129,14 +129,14 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Errors do
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The calendar server did not respond. the scheduler will retry automatically."
+        "The calendar server did not respond. BookDesk24 will retry automatically."
       )
 
   def describe_error(:timeout),
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The calendar server took too long to respond. the scheduler will retry automatically."
+        "The calendar server took too long to respond. BookDesk24 will retry automatically."
       )
 
   def describe_error(_other), do: unknown_error_description()
@@ -144,7 +144,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Errors do
   defp unknown_error_description do
     dgettext_noop(
       "integrations_calendar",
-      "the scheduler could not complete the request against the calendar server."
+      "BookDesk24 could not complete the request against the calendar server."
     )
   end
 

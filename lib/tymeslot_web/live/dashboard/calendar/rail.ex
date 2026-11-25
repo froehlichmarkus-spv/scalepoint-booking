@@ -2,7 +2,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.Rail do
   @moduledoc """
   The collapsible left rail of the calendar surface: a mini-month of the
   visible range, then the organiser's calendars grouped by account, each with
-  a colour checkbox, a lock when the scheduler cannot write to it, an eye when
+  a colour checkbox, a lock when BookDesk24 cannot write to it, an eye when
   it is shown but does not block bookings ("Doesn't block", spelt out in
   the Calendars sheet), and its sync status: a spinner while it syncs, a
   warning while it has a problem (explained in the banner), and Sync now. With no calendar connected it

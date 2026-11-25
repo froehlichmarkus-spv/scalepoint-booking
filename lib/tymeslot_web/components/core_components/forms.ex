@@ -506,10 +506,13 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
 
     ~H"""
     <div id="password-requirements" class={["mt-2 text-xs sm:text-sm space-y-1.5", @class]}>
-      <p class="text-tymeslot-500 font-bold uppercase tracking-wider text-token-2xs">
-        {dgettext("common", "Password must contain:")}
+      <div class="strength" data-strength aria-hidden="true">
+        <i></i><i></i><i></i><i></i>
+      </div>
+      <p class="strength-label text-tymeslot-500" data-strength-label>
+        {dgettext("common", "Password strength")}
       </p>
-      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 sm:gap-x-4">
+      <ul class="grid grid-cols-1 gap-y-1">
         <li
           :for={rule <- @rules}
           id={"req-#{rule.key}"}
@@ -529,8 +532,12 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
             class="hidden w-3.5 h-3.5 mr-1.5 shrink-0 stroke-2"
           />
           <span class="text-xs">{password_rule_label(rule.key)}</span>
+          <span class="sr-only" data-rule-state></span>
         </li>
       </ul>
+      <p class="caps" data-caps-hint hidden>
+        {dgettext("common", "Caps Lock is on")}
+      </p>
     </div>
     """
   end
@@ -538,10 +545,11 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
   defp password_rule_label(:length),
     do: dgettext("common", "At least %{count} characters", count: PasswordValidator.min_length())
 
-  defp password_rule_label(:lowercase), do: dgettext("common", "One lowercase letter")
-  defp password_rule_label(:uppercase), do: dgettext("common", "One uppercase letter")
-  defp password_rule_label(:number), do: dgettext("common", "One number")
-  defp password_rule_label(:special), do: dgettext("common", "One special character")
+  defp password_rule_label(:breached),
+    do: dgettext("common", "Not a common or breached password")
+
+  defp password_rule_label(:email),
+    do: dgettext("common", "Doesn't contain your email name")
 
   # ========== FORM LAYOUT ==========
 

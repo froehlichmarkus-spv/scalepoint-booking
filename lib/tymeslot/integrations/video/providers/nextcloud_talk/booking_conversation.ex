@@ -210,7 +210,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalk.BookingConversatio
   defp sync_lobby(_credentials, _room, _wanted, _config), do: :ok
 
   # A conversation this version created already carries them. One an older
-  # the scheduler made, back when the creating call said nothing about
+  # BookDesk24 made, back when the creating call said nothing about
   # permissions, hands out the server's defaults, which let a guest start a
   # call.
   defp sync_permissions(

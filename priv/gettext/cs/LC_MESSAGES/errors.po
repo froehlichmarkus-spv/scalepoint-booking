@@ -939,5 +939,5 @@ msgstr "Typy schůzek, které žádají pozvané o potvrzení e-mailu, nelze rez
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Přejít na the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Přejít na BookDesk24"

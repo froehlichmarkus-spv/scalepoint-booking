@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.MjmlEmail do
   @moduledoc """
-  Base MJML template for the scheduler transactional emails.
+  Base MJML template for BookDesk24 transactional emails.
 
   ## Anatomy
 
@@ -78,7 +78,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Creates a base Swoosh email pre-configured for the given tracking category
-  and with the the scheduler logo attached inline (CID `tymeslot-logo.png`) so the
+  and with the BookDesk24 logo attached inline (CID `tymeslot-logo.png`) so the
   system layout's logo header renders identically in every email client
   without needing an external URL.
 
@@ -145,7 +145,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Attaches the instance logo as an inline image — the custom logo when a
-  self-hosted instance has uploaded one, the stock the scheduler logo otherwise.
+  self-hosted instance has uploaded one, the stock BookDesk24 logo otherwise.
   Swallowed silently if neither PNG can be read: the email still sends, the
   logo simply won't render.
 
@@ -329,7 +329,11 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
           letter-spacing="0.02em"
           css-class="email-ink-muted"
         >
-          <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark email-ink-link suite-footer" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">BOOKDESK_SUITE_FOOTER</a>
+          <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark email-ink-link suite-footer" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">BOOKDESK_SUITE_FOOTER</a><br/>
+          ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finland · Business ID 3620767-9<br/>
+          <a href="https://scalepoint-ventures.com/growthos/legal/terms" style="color: #3a7872;">Terms</a>
+          · <a href="https://scalepoint-ventures.com/growthos/legal/privacy" style="color: #3a7872;">Privacy</a>
+          · <a href="https://scalepoint-ventures.com/growthos/legal/notice" style="color: #3a7872;">Legal notice</a>
         </mj-text>
       </mj-column>
     </mj-section>

@@ -19,9 +19,9 @@ defmodule Tymeslot.Integrations.Calendar.CalendarEventBuilder do
   alias Tymeslot.Utils.MapKeys
   alias TymeslotWeb.Endpoint
 
-  # the scheduler's own reminder pipeline sends the reminder emails, so alarms
+  # BookDesk24's own reminder pipeline sends the reminder emails, so alarms
   # written out to a provider are always `:popup`. An EMAIL alarm would make
-  # the calendar server send its own copy on top of the one the scheduler already
+  # the calendar server send its own copy on top of the one BookDesk24 already
   # schedules, so the attendee would be reminded twice.
   @alarm_method :popup
 
@@ -37,7 +37,7 @@ defmodule Tymeslot.Integrations.Calendar.CalendarEventBuilder do
   `ORGANIZER` line with `SCHEDULE-AGENT=CLIENT` (RFC 6638 §7.1) — without
   them, scheduling-aware CalDAV servers (Zimbra, Nextcloud/Sabre, Apple
   iCloud) inject their own ORGANIZER and fire the iTIP pipeline, which
-  duplicates the invitation email the scheduler already sends.
+  duplicates the invitation email BookDesk24 already sends.
 
   Accepts an `:attendees` option (a list of `%{name:, email:}`-shaped
   entries, defaulting to `[]`) used to list group-meeting participants in

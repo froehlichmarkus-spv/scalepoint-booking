@@ -180,7 +180,7 @@ defmodule TymeslotWeb.Themes.Quill.Scheduling.Components.BookingComponent do
                     class="booking-submit-price"
                   />
 
-                  <div class="booking-actions">
+                  <div class="booking-actions booking-confirm-sheet">
                     <.action_button
                       type="button"
                       phx-click="back_step"
@@ -233,7 +233,7 @@ defmodule TymeslotWeb.Themes.Quill.Scheduling.Components.BookingComponent do
     BookingLabels.submit_label(
       is_rescheduling,
       meeting_type,
-      dgettext("booking", "Book Meeting"),
+      dgettext("booking", "Confirm booking"),
       :quill
     )
   end

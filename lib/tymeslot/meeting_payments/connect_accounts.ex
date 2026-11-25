@@ -69,7 +69,7 @@ defmodule Tymeslot.MeetingPayments.ConnectAccounts do
 
   Once the exchange has named an account no other host holds, its revocation
   is scheduled an hour ahead, before anything else can fail: whatever stops
-  the connection from being saved, the scheduler does not keep access to an
+  the connection from being saved, BookDesk24 does not keep access to an
   account it has no row for. A connection that is saved leaves that job to
   find a live row and do nothing.
 

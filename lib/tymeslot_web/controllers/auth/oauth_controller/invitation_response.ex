@@ -25,7 +25,7 @@ defmodule TymeslotWeb.OAuthController.InvitationResponse do
     authed_conn
     |> put_flash(
       :success,
-      dgettext("auth_oauth", "Welcome to the scheduler! You'll sign in with %{provider}.",
+      dgettext("auth_oauth", "Welcome to BookDesk24! You'll sign in with %{provider}.",
         provider: Providers.name(provider)
       )
     )
@@ -71,7 +71,7 @@ defmodule TymeslotWeb.OAuthController.InvitationResponse do
     do:
       dgettext(
         "auth_oauth",
-        "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in.",
+        "This %{provider} account already signs in to another BookDesk24 account. Use a different one, or choose another way to sign in.",
         provider: Providers.name(provider)
       )
 

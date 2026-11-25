@@ -14,12 +14,12 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event_fields.ex
 #, elixir-autogen, elixir-format
 msgid "Add a saved location or connect a video service to hold an event."
-msgstr "Legen Sie einen gespeicherten Ort an oder verbinden Sie einen Videodienst, um eine Veranstaltung abzuhalten."
+msgstr "Lege einen gespeicherten Ort an oder verbinde einen Videodienst, um eine Veranstaltung abzuhalten."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "Allow between %{min} and %{max} participants."
-msgstr "Erlauben Sie zwischen %{min} und %{max} Teilnehmern."
+msgstr "Erlaube zwischen %{min} und %{max} Teilnehmern."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
@@ -34,12 +34,12 @@ msgstr "Ort wählen"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "Choose where the event takes place."
-msgstr "Wählen Sie, wo die Veranstaltung stattfindet."
+msgstr "Wähle, wo die Veranstaltung stattfindet."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event_fields.ex
 #, elixir-autogen, elixir-format
 msgid "Creates a one-off event with its own booking link. People sign up until registration closes, and it is on your calendar at once."
-msgstr "Legt eine einmalige Veranstaltung mit eigenem Buchungslink an. Bis zum Anmeldeschluss können sich Teilnehmer anmelden, und sie steht sofort in Ihrem Kalender."
+msgstr "Legt eine einmalige Veranstaltung mit eigenem Buchungslink an. Bis zum Anmeldeschluss können sich Teilnehmer anmelden, und sie steht sofort in deinem Kalender."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_form.ex
 #, elixir-autogen, elixir-format
@@ -49,12 +49,12 @@ msgstr "Beschreibung (optional)"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "Event created. Its booking link: %{link}"
-msgstr "Veranstaltung angelegt. Ihr Buchungslink: %{link}"
+msgstr "Veranstaltung angelegt. Dein Buchungslink: %{link}"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "Give the event a title."
-msgstr "Geben Sie der Veranstaltung einen Titel."
+msgstr "Gib der Veranstaltung einen Titel."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event_fields.ex
 #, elixir-autogen, elixir-format
@@ -64,7 +64,7 @@ msgstr "Gruppenveranstaltung"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "Group events are not included in your plan."
-msgstr "Gruppenveranstaltungen sind in Ihrem Tarif nicht enthalten."
+msgstr "Gruppenveranstaltungen sind in deinem Tarif nicht enthalten."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event_fields.ex
 #, elixir-autogen, elixir-format
@@ -94,7 +94,7 @@ msgstr "Gespeicherte Orte"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "The event could not be created. Please try again."
-msgstr "Die Veranstaltung konnte nicht angelegt werden. Bitte versuchen Sie es erneut."
+msgstr "Die Veranstaltung konnte nicht angelegt werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
@@ -114,9 +114,9 @@ msgstr "Eine Veranstaltung dauert ein Vielfaches von %{step} Minuten."
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar first: people book the event on your booking page, which needs one."
-msgstr "Verbinden Sie zuerst einen Kalender: Die Veranstaltung wird auf Ihrer Buchungsseite gebucht, und die braucht einen."
+msgstr "Verbinde zuerst einen Kalender: Die Veranstaltung wird auf deiner Buchungsseite gebucht, und die braucht einen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_group_event.ex
 #, elixir-autogen, elixir-format
 msgid "This time is no longer available. Please choose another time."
-msgstr "Diese Zeit ist nicht mehr verfügbar. Bitte wählen Sie eine andere."
+msgstr "Diese Zeit ist nicht mehr verfügbar. Bitte wähle eine andere."

@@ -207,7 +207,7 @@ defmodule TymeslotWeb.Integrations.OAuthCallbackHandler do
   defp failure_message(:calendar_scope_missing, config) do
     dgettext(
       "dashboard_integrations",
-      "%{service} wasn't connected because Calendar permission was not granted. Please try again and tick the box for \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - the scheduler needs this to create meetings and Google Meet links.",
+      "%{service} wasn't connected because Calendar permission was not granted. Please try again and tick the box for \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - BookDesk24 needs this to create meetings and Google Meet links.",
       service: config.name
     )
   end
@@ -242,7 +242,7 @@ defmodule TymeslotWeb.Integrations.OAuthCallbackHandler do
       config.microsoft? and MicrosoftOAuth.microsoft_admin_consent_error?(description) ->
         dgettext(
           "dashboard_integrations",
-          "Your Microsoft organisation requires admin approval before the scheduler can be connected. Please ask your IT administrator to grant consent for the app."
+          "Your Microsoft organisation requires admin approval before BookDesk24 can be connected. Please ask your IT administrator to grant consent for the app."
         )
 
       error == "access_denied" ->

@@ -859,10 +859,10 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a BookDesk24 meeting."
 msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
+msgid "None (BookDesk24 only)"
 msgstr ""

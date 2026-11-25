@@ -8,10 +8,10 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
   as a key/value table so self-hosters and operators can copy the report
   verbatim into an issue tracker.
 
-  Always English, unlike the mail the scheduler sends to users. It goes to the
+  Always English, unlike the mail BookDesk24 sends to users. It goes to the
   operator's configured alert address, not to a user with a stored locale,
   and its subject is a contract: inbox rules file and page on the
-  `[SEVERITY] the scheduler:` prefix. Keeping operator mail untranslated is a
+  `[SEVERITY] BookDesk24:` prefix. Keeping operator mail untranslated is a
   deliberate decision, so the text below is plain English with no gettext.
   """
 
@@ -22,7 +22,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
 
   @doc """
   The alert email to the operator at `recipient`. Its subject is
-  `"[<SEVERITY>] the scheduler: <category>"`, so an inbox rule can file or page on
+  `"[<SEVERITY>] BookDesk24: <category>"`, so an inbox rule can file or page on
   the severity; only an error carries the warning sign.
   """
   @spec render(
@@ -34,14 +34,14 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
         ) :: Email.t()
   def render(recipient, category, severity, message, metadata) do
     MjmlEmail.base_email()
-    |> Email.to({"the scheduler Operator", recipient})
+    |> Email.to({"BookDesk24 Operator", recipient})
     |> Email.subject(subject(category, severity))
     |> Email.html_body(html_body(category, severity, message, metadata))
     |> Email.text_body(text_body(category, severity, message, metadata))
   end
 
-  defp subject(category, :error), do: "[ERROR] ⚠️ the scheduler: #{category}"
-  defp subject(category, severity), do: "[#{severity_label(severity)}] the scheduler: #{category}"
+  defp subject(category, :error), do: "[ERROR] ⚠️ BookDesk24: #{category}"
+  defp subject(category, severity), do: "[#{severity_label(severity)}] BookDesk24: #{category}"
 
   defp html_body(category, severity, message, metadata) do
     callout_intent = severity_to_intent(severity)
@@ -60,7 +60,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
 
     TemplateHelper.compile_system_template(
       mjml_content,
-      "the scheduler Admin Alert",
+      "BookDesk24 Admin Alert",
       "#{category}: #{message}",
       intent: @intent,
       eyebrow: "Admin",

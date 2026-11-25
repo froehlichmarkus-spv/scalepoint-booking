@@ -1,1 +1,59 @@
-:root{--spv-navy:#111E32;--spv-navy-dark:#09101B;--spv-navy-light:#1C2B40;--spv-teal:#469189;--spv-teal-strong:#3A7872;--spv-teal-light:#6BC7BE;--spv-text-light:#F3F5F7;--spv-muted:#5A687C;--spv-white:#FFFFFF;--spv-logo-navy:#012148;--spv-font-ui:'Inter',system-ui,sans-serif;--spv-font-display:'DM Serif Display',Georgia,serif;--spv-radius:8px;}
+:root{
+  --spv-navy:#111E32;
+  --spv-navy-dark:#09101B;
+  --spv-navy-light:#1C2B40;
+  --spv-teal:#469189;
+  --spv-teal-strong:#3A7872;
+  --spv-teal-light:#6BC7BE;
+  --spv-text-light:#F3F5F7;
+  --spv-muted:#5A687C;
+  --spv-white:#FFFFFF;
+  --spv-logo-navy:#012148;
+  --spv-font-ui:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --spv-font-display:'DM Serif Display',Georgia,"Times New Roman",serif;
+  --spv-radius:8px;
+
+  /* Product surfaces, type and elevation (reference kit). */
+  --c-bg:#FFFFFF;
+  --c-bg-subtle:#F7F9FB;
+  --c-bg-warm:#F5F7F9;
+  --c-bg-hover:#F2F5F8;
+  --c-bg-selected:#EEF6F5;
+  --c-ink:#111E32;
+  --c-ink-2:#3B4A5E;
+  --c-ink-3:#5A687C;
+  --c-link:#3A7872;
+  --c-line:#E4E9EF;
+  --c-line-2:#EEF2F6;
+  --c-line-strong:#CBD3DD;
+  --c-input-border:#8492A6;
+  --c-danger:#B42318;
+  --c-danger-soft:#FEF3F2;
+  --c-warn:#93370D;
+  --c-warn-soft:#FFFAEB;
+  --c-success:#067647;
+  --c-success-soft:#ECFDF3;
+  --r-xs:4px;
+  --r-sm:6px;
+  --r:8px;
+  --r-lg:12px;
+  --r-xl:16px;
+  --r-full:999px;
+  --sh-xs:0 1px 2px rgba(17,30,50,.05);
+  --sh-sm:0 1px 2px rgba(17,30,50,.06),0 1px 3px rgba(17,30,50,.08);
+  --sh-md:0 2px 4px -1px rgba(17,30,50,.06),0 6px 16px -4px rgba(17,30,50,.10);
+  --sh-lg:0 4px 8px -2px rgba(17,30,50,.06),0 16px 32px -8px rgba(17,30,50,.16);
+  --sh-xl:0 8px 16px -4px rgba(17,30,50,.08),0 32px 64px -16px rgba(17,30,50,.24);
+  --sh-inset-btn:inset 0 1px 0 rgba(255,255,255,.10);
+  --focus-ring:0 0 0 2px #FFFFFF,0 0 0 4px #469189;
+  --dur-1:120ms;
+  --dur-2:160ms;
+  --dur-3:200ms;
+  --dur-4:280ms;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --sidebar-w:248px;
+  --topbar-h:56px;
+}
+@media (prefers-reduced-motion:reduce){
+  :root{--dur-1:0ms;--dur-2:0ms;--dur-3:0ms;--dur-4:0ms}
+}

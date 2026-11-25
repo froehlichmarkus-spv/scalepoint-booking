@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.PanelMeetingReminders do
   @moduledoc """
-  The reminder emails of a the scheduler meeting booked from the side panel's New
+  The reminder emails of a BookDesk24 meeting booked from the side panel's New
   event state (`PanelMeeting`): the shared reminder picker
   (`TymeslotWeb.Components.Shared.ReminderPicker`), as the meeting type form
   and polls offer it, so any lead time a meeting type could have, up to

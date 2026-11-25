@@ -26,7 +26,7 @@ defmodule TymeslotWeb.Themes.Folio.VoiceTest do
 
   test "says the spec's personal lines" do
     assert Voice.line(FolioVoice, :heading, %{}, &shared/0) == "Ways to work with me"
-    assert Voice.line(FolioVoice, :submit, %{}, &shared/0) == "Book our session"
+    assert Voice.line(FolioVoice, :submit, %{}, &shared/0) == "Confirm booking"
     assert Voice.line(FolioVoice, :submit_request, %{}, &shared/0) == "Request this time"
 
     assert Voice.line(FolioVoice, :slot_taken, %{}, &shared/0) ==

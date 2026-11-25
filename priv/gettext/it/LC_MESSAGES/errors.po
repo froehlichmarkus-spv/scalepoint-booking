@@ -916,5 +916,5 @@ msgstr "I tipi di riunione che chiedono agli invitati di confermare la loro emai
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Vai a the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Vai a BookDesk24"

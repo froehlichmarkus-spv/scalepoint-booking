@@ -51,15 +51,8 @@ defmodule TymeslotWeb.Dashboard.DashboardOverview.ComponentView do
           </div>
         </div>
 
-        <%!-- Onboarding checklist — only while setup is incomplete and not dismissed --%>
-        <OnboardingChecklist.onboarding_checklist
-          :if={OnboardingChecklist.visible?(@current_user, @integration_status, @profile)}
-          integration_status={@integration_status}
-          current_user={@current_user}
-          profile={@profile}
-        />
-
-        <%!-- Live agenda --%>
+        <%!-- Live agenda. The setup checklist follows it, collapsed, so a
+             host who still has a step open sees the day first. --%>
         <.card class="min-w-0">
           <:header>
             <div class="flex items-center gap-3">
@@ -168,6 +161,14 @@ defmodule TymeslotWeb.Dashboard.DashboardOverview.ComponentView do
           </.link>
         </.card>
 
+        <OnboardingChecklist.onboarding_checklist
+          :if={OnboardingChecklist.visible?(@current_user, @integration_status, @profile)}
+          variant={:compact}
+          integration_status={@integration_status}
+          current_user={@current_user}
+          profile={@profile}
+        />
+
         <%!-- Appointment detail modal --%>
         <AgendaDetailModal.agenda_detail_modal
           :if={@selected_entry}
@@ -201,11 +202,6 @@ defmodule TymeslotWeb.Dashboard.DashboardOverview.ComponentView do
     ~H"""
     <div
       {open_attrs(@entry, @myself)}
-      aria-label={
-        dgettext("dashboard_common", "View details for %{title}",
-          title: DashboardFormat.title(@entry.title)
-        )
-      }
       class="relative overflow-hidden rounded-token-2xl bg-linear-to-br from-turquoise-600 via-cyan-600 to-blue-600 p-6 text-white shadow-xl shadow-turquoise-500/20 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-white/60"
     >
       <div class="dashboard-sheen dashboard-sheen--wide" aria-hidden="true"></div>

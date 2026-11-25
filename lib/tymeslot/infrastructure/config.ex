@@ -1,6 +1,6 @@
 defmodule Tymeslot.Infrastructure.Config do
   @moduledoc """
-  Configuration module for the the scheduler application.
+  Configuration module for the BookDesk24 application.
   Provides centralized access to configuration values to reduce duplication
   and ensure consistency across the codebase.
   """

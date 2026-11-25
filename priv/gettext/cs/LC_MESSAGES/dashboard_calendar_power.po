@@ -499,5 +499,5 @@ msgstr "Prohlížeč oznámení nepovolil, takže oznámení na ploše zůstáva
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Odeslat jako schůzku the scheduler"
+msgid "Send as a BookDesk24 meeting"
+msgstr "Odeslat jako schůzku BookDesk24"

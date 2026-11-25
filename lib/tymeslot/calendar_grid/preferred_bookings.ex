@@ -1,7 +1,7 @@
 defmodule Tymeslot.CalendarGrid.PreferredBookings do
   @moduledoc """
-  The calendar draws a the scheduler booking as the booking, never as
-  the calendar copy the scheduler wrote for it: the booking knows its guest, its
+  The calendar draws a BookDesk24 booking as the booking, never as
+  the calendar copy BookDesk24 wrote for it: the booking knows its guest, its
   meeting type and whether it is still a request, and its preview can act on
   it. `merge/4` drops each copy from the calendar events and records on the
   booking which calendar the copy sits in (`copy`), so the preview can still
@@ -10,7 +10,7 @@ defmodule Tymeslot.CalendarGrid.PreferredBookings do
   A copy is matched to its booking by `Tymeslot.Meetings.CalendarEventLink`'s
   rule (any shared identifier). A copy on a calendar the organiser has
   deselected still matches: the booking stays on the grid, since it belongs
-  to the scheduler rather than to that calendar.
+  to BookDesk24 rather than to that calendar.
 
   The organiser may give a copy a repeat rule. The booking still stands for
   the copy's own date, but not for the series' later occurrences, previewed

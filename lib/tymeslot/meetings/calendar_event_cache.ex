@@ -20,7 +20,7 @@ defmodule Tymeslot.Meetings.CalendarEventCache do
   Always returns `:ok`; see the comment below.
   """
   # Keeps the cache row (and any live calendar-grid viewers subscribed via
-  # PubSub) in sync with a the scheduler-initiated change, instead of waiting on
+  # PubSub) in sync with a BookDesk24-initiated change, instead of waiting on
   # the next inbound sync cycle to notice the drift.
   #
   # The inbound counterpart is

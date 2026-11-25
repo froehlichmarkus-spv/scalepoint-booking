@@ -7,18 +7,18 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Format do
   logic lives here.
   """
 
-  # The mark of an event the scheduler created. The CalDAV and ICS syncs know
+  # The mark of an event BookDesk24 created. The CalDAV and ICS syncs know
   # nothing else about who made an event, so a uid carries it only when the
-  # event really is the scheduler's (`uid_origin/1`).
+  # event really is BookDesk24's (`uid_origin/1`).
   @tymeslot_suffix "@tymeslot.com"
 
   @doc """
   Generates a unique identifier for an event.
 
-  An event of the scheduler's own (`:tymeslot`, the default) gets
+  An event of BookDesk24's own (`:tymeslot`, the default) gets
   `{random-hex}@tymeslot.com`. A new copy of somebody else's event
   (`:foreign`), such as one moved to another calendar, gets the bare
-  `{random-hex}`, so the copy is not taken for the scheduler's on the next sync.
+  `{random-hex}`, so the copy is not taken for BookDesk24's on the next sync.
   """
   @spec generate_uid(:tymeslot | :foreign) :: String.t()
   def generate_uid(origin \\ :tymeslot)
@@ -29,7 +29,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Format do
 
   @doc """
   Who created the event `uid` names, as far as the uid tells: `:tymeslot`
-  for one `generate_uid/1` marked as the scheduler's, `:foreign` for any other.
+  for one `generate_uid/1` marked as BookDesk24's, `:foreign` for any other.
   """
   @spec uid_origin(String.t() | nil) :: :tymeslot | :foreign
   def uid_origin(uid) when is_binary(uid) do

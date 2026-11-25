@@ -1039,5 +1039,5 @@ msgstr "Zmiany w tej ankiecie nie zostały jeszcze zapisane. Jeśli teraz wyjdzi
 
 #: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
 #, elixir-autogen, elixir-format
-msgid "Guests vote on a page that opens once your calendar is connected, so the scheduler can flag the times you're busy and book the winner without double-booking you."
-msgstr "Goście głosują na stronie, która otwiera się dopiero po podłączeniu kalendarza. Dzięki temu the scheduler może oznaczyć zajęte terminy i zarezerwować zwycięski termin bez podwójnej rezerwacji."
+msgid "Guests vote on a page that opens once your calendar is connected, so BookDesk24 can flag the times you're busy and book the winner without double-booking you."
+msgstr "Goście głosują na stronie, która otwiera się dopiero po podłączeniu kalendarza. Dzięki temu BookDesk24 może oznaczyć zajęte terminy i zarezerwować zwycięski termin bez podwójnej rezerwacji."

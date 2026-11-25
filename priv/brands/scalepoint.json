@@ -16,7 +16,7 @@
   "suite_title_env": "BOOKING_SUITE_TITLE",
   "byline": "by ScalePoint",
   "byline_env": "BOOKING_BYLINE",
-  "sender_name": "ScalePoint Ventures",
+  "sender_name": "ScalePoint Growth OS",
   "sender_email": "booking@scalepoint-ventures.com",
   "sender_email_env": "SPV_SENDER_EMAIL",
   "sender_name_env": "SPV_SENDER_NAME",

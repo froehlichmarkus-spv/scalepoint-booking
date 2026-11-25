@@ -292,7 +292,7 @@ defmodule Tymeslot.Integrations.Calendar.TokenRefreshJob do
   defp refresh_failure_message do
     dgettext_noop(
       "integrations_calendar",
-      "the scheduler could not renew its access to this calendar. It will try again shortly."
+      "BookDesk24 could not renew its access to this calendar. It will try again shortly."
     )
   end
 

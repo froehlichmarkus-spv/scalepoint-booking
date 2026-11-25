@@ -646,5 +646,5 @@ msgstr "Platnost tohoto odkazu vypršela, takže ho nelze znovu otevřít. Vytvo
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Každý odkaz rezervuje jednu schůzku. the scheduler neposílá žádný e-mail: zkopírujte odkaz a pošlete ho sami."
+msgid "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
+msgstr "Každý odkaz rezervuje jednu schůzku. BookDesk24 neposílá žádný e-mail: zkopírujte odkaz a pošlete ho sami."

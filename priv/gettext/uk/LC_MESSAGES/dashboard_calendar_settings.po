@@ -434,16 +434,16 @@ msgstr "Щоб скористатися цим, оберіть «Блокува�
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
-msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
-msgstr[0] "%{count} календар зник з вашого сервера календаря, тому the scheduler більше його не використовує: %{calendars}"
-msgstr[1] "%{count} календарі зникли з вашого сервера календаря, тому the scheduler більше їх не використовує: %{calendars}"
-msgstr[2] "%{count} календарів зникли з вашого сервера календаря, тому the scheduler більше їх не використовує: %{calendars}"
+msgid "%{count} calendar is no longer on your calendar server, so BookDesk24 has stopped using it: %{calendars}"
+msgid_plural "%{count} calendars are no longer on your calendar server, so BookDesk24 has stopped using them: %{calendars}"
+msgstr[0] "%{count} календар зник з вашого сервера календаря, тому BookDesk24 більше його не використовує: %{calendars}"
+msgstr[1] "%{count} календарі зникли з вашого сервера календаря, тому BookDesk24 більше їх не використовує: %{calendars}"
+msgstr[2] "%{count} календарів зникли з вашого сервера календаря, тому BookDesk24 більше їх не використовує: %{calendars}"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
-msgstr "Підключіть календар, щоб the scheduler міг перевіряти вашу доступність і запобігати бронюванню зустрічей на час, коли ви вже зайняті."
+msgid "Connect a calendar so BookDesk24 can read your availability and stop meetings being booked when you're already busy."
+msgstr "Підключіть календар, щоб BookDesk24 міг перевіряти вашу доступність і запобігати бронюванню зустрічей на час, коли ви вже зайняті."
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -452,5 +452,5 @@ msgstr "Needs attention"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "Календар «%{calendar}» зник з вашого сервера календаря, тому the scheduler більше його не використовує."
+msgid "“%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it."
+msgstr "Календар «%{calendar}» зник з вашого сервера календаря, тому BookDesk24 більше його не використовує."

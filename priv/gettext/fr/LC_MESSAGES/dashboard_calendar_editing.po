@@ -859,10 +859,10 @@ msgstr "%{calendar} ne peut pas conserver tous les rappels de l’événement, c
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a BookDesk24 meeting."
 msgstr "Ajoutez un invité pour envoyer une réunion Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Aucun (the scheduler uniquement)"
+msgid "None (BookDesk24 only)"
+msgstr "Aucun (BookDesk24 uniquement)"

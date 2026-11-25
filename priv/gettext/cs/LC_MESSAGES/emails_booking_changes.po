@@ -669,8 +669,8 @@ msgstr "V původním termínu nemá nikdo další potvrzené místo, takže tamn
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr "Pokud se schůzka neuskuteční, zrušte ji prosím ve službě the scheduler, aby byl účastník informován a termín se uvolnil."
+msgid "If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
+msgstr "Pokud se schůzka neuskuteční, zrušte ji prosím ve službě BookDesk24, aby byl účastník informován a termín se uvolnil."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -684,8 +684,8 @@ msgstr "Please review the group meeting in %{product}."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
-msgstr "Skupinová schůzka „%{title}“ byla přesunuta ve vašem externím kalendáři. Služba the scheduler stále eviduje původní čas pro všechny účastníky a skupinovou schůzku nelze přesunout pro všechny najednou."
+msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
+msgstr "Skupinová schůzka „%{title}“ byla přesunuta ve vašem externím kalendáři. Služba BookDesk24 stále eviduje původní čas pro všechny účastníky a skupinovou schůzku nelze přesunout pro všechny najednou."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -694,35 +694,35 @@ msgstr "The meeting \"%{title}\" was deleted from your external calendar but is 
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was deleted from your external calendar. the scheduler still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
-msgstr "Schůzka „%{title}“ byla smazána z vašeho externího kalendáře. Služba the scheduler tuto rezervaci stále eviduje – zkontrolujte ji prosím a pokud se schůzka neuskuteční, zrušte ji zde."
+msgid "The meeting \"%{title}\" was deleted from your external calendar. BookDesk24 still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
+msgstr "Schůzka „%{title}“ byla smazána z vašeho externího kalendáře. Služba BookDesk24 tuto rezervaci stále eviduje – zkontrolujte ji prosím a pokud se schůzka neuskuteční, zrušte ji zde."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking - please review the details and update or cancel it accordingly."
-msgstr "Schůzka „%{title}“ byla přesunuta ve vašem externím kalendáři. Služba the scheduler stále eviduje původní rezervaci – zkontrolujte prosím údaje a rezervaci podle toho upravte nebo zrušte."
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking - please review the details and update or cancel it accordingly."
+msgstr "Schůzka „%{title}“ byla přesunuta ve vašem externím kalendáři. Služba BookDesk24 stále eviduje původní rezervaci – zkontrolujte prosím údaje a rezervaci podle toho upravte nebo zrušte."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking shown below."
-msgstr "Schůzka „%{title}“ byla přesunuta ve vašem externím kalendáři. Služba the scheduler stále eviduje původní rezervaci uvedenou níže."
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking shown below."
+msgstr "Schůzka „%{title}“ byla přesunuta ve vašem externím kalendáři. Služba BookDesk24 stále eviduje původní rezervaci uvedenou níže."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
-msgstr "Tato skupinová schůzka byla <strong>přesunuta ve vašem externím kalendáři</strong>. Služba the scheduler výše stále zobrazuje původní čas a účastníci s ním stále počítají. Chcete-li zachovat původní čas, vraťte událost ve svém kalendáři zpět. Chcete-li ho změnit, pošlete účastníkům z nástěnky žádost o přesunutí, nebo tam schůzku zrušte, aby byl každý účastník informován."
+msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
+msgstr "Tato skupinová schůzka byla <strong>přesunuta ve vašem externím kalendáři</strong>. Služba BookDesk24 výše stále zobrazuje původní čas a účastníci s ním stále počítají. Chcete-li zachovat původní čas, vraťte událost ve svém kalendáři zpět. Chcete-li ho změnit, pošlete účastníkům z nástěnky žádost o přesunutí, nebo tam schůzku zrušte, aby byl každý účastník informován."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
+msgstr "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "This meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: the scheduler then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
-msgstr "Tato schůzka byla <strong>přesunuta ve vašem externím kalendáři</strong>. Služba the scheduler výše stále zobrazuje původní čas. Chcete-li rezervaci přesunout na nový čas, otevřete ji ve svém přehledu a zvolte <strong>Přesunout rezervaci</strong>: the scheduler pak přeplánuje své připomínky a pošle účastníkovi e-mailem nový čas. Pokud tam možnost <strong>Přesunout rezervaci</strong> není, pošlete účastníkovi ze svého přehledu žádost o přesunutí."
+msgid "This meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: BookDesk24 then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
+msgstr "Tato schůzka byla <strong>přesunuta ve vašem externím kalendáři</strong>. Služba BookDesk24 výše stále zobrazuje původní čas. Chcete-li rezervaci přesunout na nový čas, otevřete ji ve svém přehledu a zvolte <strong>Přesunout rezervaci</strong>: BookDesk24 pak přeplánuje své připomínky a pošle účastníkovi e-mailem nový čas. Pokud tam možnost <strong>Přesunout rezervaci</strong> není, pošlete účastníkovi ze svého přehledu žádost o přesunutí."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "You changed when \"%{title}\" ends in your external calendar, so the scheduler updated the booking: it now ends at %{to} instead of %{from}."
-msgstr "Ve svém externím kalendáři jste změnili konec schůzky „%{title}“, the scheduler proto upravil rezervaci: nyní končí v %{to} místo v %{from}."
+msgid "You changed when \"%{title}\" ends in your external calendar, so BookDesk24 updated the booking: it now ends at %{to} instead of %{from}."
+msgstr "Ve svém externím kalendáři jste změnili konec schůzky „%{title}“, BookDesk24 proto upravil rezervaci: nyní končí v %{to} místo v %{from}."

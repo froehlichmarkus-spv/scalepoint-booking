@@ -53,7 +53,6 @@ defmodule TymeslotWeb.Components.Dashboard.Appointments.AppointmentRow do
     <div
       {@on_open}
       {@rest}
-      aria-label={dgettext("dashboard_common", "View details for %{title}", title: @title)}
       class={[
         "flex-1 min-w-0 mb-3 flex items-center gap-3 p-4 rounded-token-2xl border-2 transition-all group cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-turquoise-400",
         @highlight && "bg-white border-turquoise-200 shadow-md shadow-turquoise-500/10",
@@ -100,7 +99,6 @@ defmodule TymeslotWeb.Components.Dashboard.Appointments.AppointmentRow do
     <div
       {@on_open}
       {@rest}
-      aria-label={dgettext("dashboard_common", "View details for %{title}", title: @title)}
       class="flex items-center gap-3 py-1.5 px-2 -mx-2 rounded-token-xl cursor-pointer hover:bg-tymeslot-50 focus:outline-hidden focus:ring-2 focus:ring-turquoise-400 transition-colors"
     >
       <div class="w-14 shrink-0 text-token-xs font-black tabular-nums text-tymeslot-400">
@@ -136,7 +134,6 @@ defmodule TymeslotWeb.Components.Dashboard.Appointments.AppointmentRow do
     <li
       {@on_open}
       {@rest}
-      aria-label={dgettext("dashboard_common", "%{event}, %{time}", event: @title, time: @time)}
       class="flex items-start gap-3 rounded-token-md px-2 py-2 cursor-pointer hover:bg-tymeslot-50 focus:outline-hidden focus:ring-2 focus:ring-turquoise-400"
     >
       <span

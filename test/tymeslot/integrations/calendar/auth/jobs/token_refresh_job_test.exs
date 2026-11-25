@@ -299,7 +299,7 @@ defmodule Tymeslot.Integrations.Calendar.TokenRefreshJobTest do
       # Retried rather than flagged: the job fails, and the owner sees only that
       # the refresh is failing, not the provider's refusal.
       assert updated.sync_error ==
-               "the scheduler could not renew its access to this calendar. It will try again shortly."
+               "BookDesk24 could not renew its access to this calendar. It will try again shortly."
 
       refute_enqueued(worker: EmailWorker)
     end
@@ -322,7 +322,7 @@ defmodule Tymeslot.Integrations.Calendar.TokenRefreshJobTest do
       # Retried rather than flagged: the job fails, and the owner sees only that
       # the refresh is failing, not the provider's refusal.
       assert updated.sync_error ==
-               "the scheduler could not renew its access to this calendar. It will try again shortly."
+               "BookDesk24 could not renew its access to this calendar. It will try again shortly."
 
       assert updated.access_token_encrypted == integration.access_token_encrypted
 
@@ -361,7 +361,7 @@ defmodule Tymeslot.Integrations.Calendar.TokenRefreshJobTest do
 
       # A fixed sentence the card can translate, never the exception's text.
       assert stored ==
-               "the scheduler could not renew its access to this calendar. It will try again shortly."
+               "BookDesk24 could not renew its access to this calendar. It will try again shortly."
 
       assert KnownMsgid.known?(stored)
     end

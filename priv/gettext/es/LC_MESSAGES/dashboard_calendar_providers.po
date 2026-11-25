@@ -478,7 +478,7 @@ msgstr "Sincronizar las horas ocupadas y las reservas con un Exchange Server loc
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "This mailbox is read from and written to: it blocks the times you're already busy, and confirmed bookings are added to the calendar you choose as your booking destination. Exchange does not report which calendars your account may write to, so if you choose one it cannot write to, the first booking sent there fails."
-msgstr "the scheduler lee este buzón y también escribe en él. Así, the scheduler bloquea las horas que ya tienes ocupadas y agrega las reservas confirmadas al calendario que elijas como destino de tus reservas. Exchange no indica en qué calendarios puede escribir tu cuenta. Si eliges uno en el que no puede escribir, fallará la primera reserva que se envíe ahí."
+msgstr "BookDesk24 lee este buzón y también escribe en él. Así, BookDesk24 bloquea las horas que ya tienes ocupadas y agrega las reservas confirmadas al calendario que elijas como destino de tus reservas. Exchange no indica en qué calendarios puede escribir tu cuenta. Si eliges uno en el que no puede escribir, fallará la primera reserva que se envíe ahí."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
@@ -645,12 +645,12 @@ msgstr "iCloud necesita una contraseña específica para la app, no la contrase�
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Elige qué calendarios usa the scheduler y cuáles bloquean horas en tu página de reservas."
+msgid "Choose which calendars BookDesk24 uses, and which of them block times on your booking page."
+msgstr "Elige qué calendarios usa BookDesk24 y cuáles bloquean horas en tu página de reservas."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
+msgid "How this calendar's events are shown in your BookDesk24 calendar."
 msgstr "Cómo se muestran los eventos de este calendario en tu calendario de Tymeslot."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
@@ -660,5 +660,5 @@ msgstr "Conserva esta contraseña mientras uses Tymeslot. Si la revocas o cambia
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "De este calendario solo se compartieron contigo las horas ocupadas. the scheduler puede bloquear esas horas, pero no puede mostrar los eventos."
+msgid "Shared with you as busy times only. BookDesk24 can block these times but cannot show the events."
+msgstr "De este calendario solo se compartieron contigo las horas ocupadas. BookDesk24 puede bloquear esas horas, pero no puede mostrar los eventos."

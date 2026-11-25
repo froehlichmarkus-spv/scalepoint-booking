@@ -33,33 +33,31 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidatorTest do
   end
 
   describe "validate/2" do
-    test "returns :ok for valid passwords" do
+    test "returns :ok for valid passwords without composition rules" do
       assert :ok = PasswordValidator.validate("StrongPass123!")
       assert :ok = PasswordValidator.validate("Another@456")
-      assert :ok = PasswordValidator.validate("P@ssw0rd2026")
+      assert :ok = PasswordValidator.validate("correct horse")
+      assert :ok = PasswordValidator.validate("nouppercase")
     end
 
-    test "returns error for missing special character" do
-      assert {:error, "Password must contain at least one special character"} =
-               PasswordValidator.validate("StrongPass123")
+    test "rejects a common or breached password" do
+      assert {:error, "This password is too common. Try a short phrase only you would know."} =
+               PasswordValidator.validate("password")
 
-      assert {:error, "Password must contain at least one special character"} =
-               PasswordValidator.validate("NoSpecialChars1")
+      assert {:error, "This password is too common. Try a short phrase only you would know."} =
+               PasswordValidator.validate("Password")
     end
 
-    test "returns error for missing number" do
-      assert {:error, "Password must contain at least one number"} =
-               PasswordValidator.validate("StrongPass!")
+    test "rejects a password that contains the email name" do
+      assert {:error, "Choose a password that does not contain your email name."} =
+               PasswordValidator.validate("lena-harbor-2026", email: "lena@nordlicht-mail.io")
     end
 
-    test "returns error for missing uppercase" do
-      assert {:error, "Password must contain at least one uppercase letter"} =
-               PasswordValidator.validate("weakpass123!")
-    end
-
-    test "returns error for missing lowercase" do
-      assert {:error, "Password must contain at least one lowercase letter"} =
-               PasswordValidator.validate("STRONGPASS123!")
+    test "accepts a password that does not contain the email name" do
+      assert :ok =
+               PasswordValidator.validate("correct horse battery",
+                 email: "lena@nordlicht-mail.io"
+               )
     end
 
     test "returns error for short password" do

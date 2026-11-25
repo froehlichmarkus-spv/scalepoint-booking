@@ -1,0 +1,486 @@
+/* BookDesk24 product surface. Loaded after the bridge so the app shell,
+   auth cards, tables and plan screens read as one calm product:
+   subtle canvas, white cards with a hairline and a navy-tinted shadow,
+   DM Serif only on headlines, Inter everywhere else. */
+
+body {
+  background: var(--c-bg-subtle);
+  color: var(--c-ink-2);
+  font-family: var(--spv-font-ui);
+  letter-spacing: -0.011em;
+}
+
+h1,
+.auth-title,
+.dashboard-title,
+.display-xl,
+.display-lg,
+.display-md {
+  font-family: var(--spv-font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+  line-height: 1.15;
+}
+
+h1,
+.auth-title {
+  font-size: clamp(28px, 4vw, 34px);
+}
+
+/* The "24" accent has to clear 4.5:1 on the white header. The bright teal does not. */
+.gos-wordmark-accent {
+  color: var(--spv-teal-strong);
+}
+
+/* Teal links on white must clear 4.5:1. The bright teal is 3.7:1. */
+a.text-turquoise-600,
+.text-turquoise-600,
+button.text-turquoise-600 {
+  color: var(--spv-teal-strong);
+}
+
+/* The progress pill's teal on a teal wash is 4.0:1. Navy on that wash clears it. */
+.bg-turquoise-100.text-turquoise-700 {
+  color: var(--spv-navy);
+}
+
+.skeleton {
+  display: block;
+  background: color-mix(in srgb, var(--c-ink) 10%, white);
+  border-radius: var(--r-sm, 8px);
+  animation: skeleton-sheen 1.2s ease-in-out infinite;
+}
+
+.skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.skeleton-row__title {
+  height: 14px;
+  width: 42%;
+}
+
+.skeleton-row__line {
+  height: 10px;
+  width: 70%;
+}
+
+@keyframes skeleton-sheen {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.dashboard-title,
+.page-title {
+  font-size: 32px;
+}
+
+h2,
+h3,
+.section-header,
+.dashboard-nav-link,
+button,
+input,
+label,
+table {
+  font-family: var(--spv-font-ui);
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+#dashboard-root {
+  background: var(--c-bg-subtle);
+}
+
+#dashboard-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: saturate(1.6) blur(10px);
+  border-bottom: 1px solid var(--c-line);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#dashboard-top-nav .h-16,
+#dashboard-top-nav nav .h-16 {
+  height: var(--topbar-h);
+}
+
+.dashboard-sidebar {
+  background: var(--c-bg-subtle);
+  color: var(--c-ink-2);
+  border-right: 1px solid var(--c-line);
+  width: var(--sidebar-w);
+}
+
+.dashboard-sidebar .dashboard-nav-link,
+.dashboard-sidebar a {
+  color: var(--c-ink-2);
+  min-height: 34px;
+  border-radius: var(--r);
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+
+.dashboard-sidebar .dashboard-nav-link:hover {
+  background: var(--c-bg-hover);
+  color: var(--c-ink);
+}
+
+.dashboard-sidebar .dashboard-nav-link--active,
+.dashboard-sidebar .dashboard-nav-link--active:hover {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  border-color: var(--c-line);
+  box-shadow: var(--sh-xs), 0 0 0 1px var(--c-line);
+}
+
+.dashboard-sidebar .dashboard-nav-link svg {
+  width: 16px;
+  height: 16px;
+  color: var(--c-ink-3);
+  flex: none;
+}
+
+.dashboard-sidebar .dashboard-nav-link--active svg,
+.dashboard-sidebar .dashboard-nav-link--active .heroicon {
+  color: var(--spv-teal);
+}
+
+/* The overview welcome band is a calm card, not a teal gradient. */
+.bg-linear-to-br.from-turquoise-600 {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  border: 1px solid var(--c-line);
+  box-shadow: var(--sh-xs);
+  border-radius: var(--r-lg);
+}
+
+.bg-linear-to-br.from-turquoise-600 p,
+.bg-linear-to-br.from-turquoise-600 .text-white\/90 {
+  color: var(--c-ink-2);
+  font-family: var(--spv-font-display);
+  font-weight: 400;
+}
+
+.dashboard-sidebar .dashboard-nav-section-title {
+  color: var(--c-ink-3);
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.dashboard-sidebar .dashboard-nav-section-title::after {
+  background: var(--c-line);
+}
+
+.dashboard-sidebar .gos-wordmark,
+.dashboard-sidebar .gos-byline,
+.dashboard-sidebar .gos-suite-line {
+  color: var(--c-ink);
+}
+
+.dashboard-sidebar .gos-byline,
+.dashboard-sidebar .gos-suite-line {
+  color: var(--c-ink-3);
+}
+
+#dashboard-content-container {
+  background: transparent;
+}
+
+#dashboard-content-container > div,
+#dashboard-content-container > main {
+  padding-top: 8px;
+}
+
+#dashboard-content-container main {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 8px 0 32px;
+}
+
+.card-glass,
+.card-glass--flat,
+.card-glass--muted,
+.gos-plan-card,
+.auth-glass-card {
+  background: var(--c-bg);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-xs);
+  transition: box-shadow var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+
+a.card-glass:hover,
+.card-glass.interactive:hover {
+  box-shadow: var(--sh-md);
+  border-color: var(--c-line-strong);
+  transform: translateY(-1px);
+}
+
+.auth-glass-card {
+  border-radius: var(--r-xl);
+  padding: 40px 36px;
+  box-shadow: var(--sh-lg);
+}
+
+.auth-title {
+  font-weight: 400;
+}
+
+.action-button--primary,
+.btn-primary,
+button.action-button--primary {
+  background-image: none;
+  background-color: var(--spv-navy);
+  color: var(--c-bg);
+  border: 1px solid var(--spv-navy);
+  border-radius: var(--r);
+  box-shadow: var(--sh-inset-btn), var(--sh-xs);
+  min-height: 40px;
+  transition: background-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+
+.action-button--primary:hover:not(:disabled, [aria-disabled="true"]),
+.btn-primary:hover:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--spv-navy-dark);
+  border-color: var(--spv-navy-dark);
+  color: var(--c-bg);
+  box-shadow: var(--sh-inset-btn), var(--sh-sm);
+}
+
+.action-button--primary:active:not(:disabled),
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+.action-button--secondary,
+.btn-secondary {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--r);
+  box-shadow: var(--sh-xs);
+  min-height: 40px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+textarea,
+select {
+  border-color: var(--c-input-border);
+  border-radius: var(--r);
+  min-height: 44px;
+  box-shadow: var(--sh-xs);
+  transition: border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: #6d7b8f;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--spv-teal);
+  box-shadow: 0 0 0 3px rgba(70, 145, 137, 0.22);
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.gos-plan-table th,
+table thead th {
+  height: 36px;
+  background: var(--c-bg-subtle);
+  color: var(--c-ink-3);
+  font-weight: 500;
+  font-size: 12px;
+  border-bottom: 1px solid var(--c-line);
+}
+
+.gos-plan-table td,
+table tbody td {
+  height: 48px;
+  border-bottom: 1px solid var(--c-line-2);
+  color: var(--c-ink-2);
+}
+
+table tbody tr {
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
+table tbody tr:hover {
+  background: var(--c-bg-subtle);
+}
+
+[data-empty-state] {
+  padding: 64px 24px;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--c-bg), var(--c-bg-subtle));
+  box-shadow: none;
+}
+
+[data-empty-state] h2,
+[data-empty-state] p[class*="title"],
+[data-empty-state] .tracking-tight {
+  font-family: var(--spv-font-ui);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--c-ink);
+}
+
+.gos-plan-notice,
+.gos-trial,
+.gos-downgrade {
+  border-radius: var(--r);
+  border: 1px solid var(--c-line);
+  background: var(--c-bg);
+  box-shadow: var(--sh-xs);
+  padding: 16px 18px;
+  color: var(--c-ink-2);
+}
+
+.gos-trial {
+  background: var(--c-bg-selected);
+  border-color: color-mix(in srgb, var(--spv-teal) 35%, var(--c-line));
+}
+
+.gos-downgrade {
+  background: var(--c-warn-soft);
+  border-color: #fdebc0;
+  color: var(--c-warn);
+}
+
+.phx-submit-loading,
+.phx-click-loading {
+  cursor: progress;
+}
+
+[aria-busy="true"] {
+  position: relative;
+}
+
+.gos-skeleton,
+.sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eef2f6 0%, #f6f8fa 40%, #eef2f6 80%);
+  background-size: 200% 100%;
+  animation: gos-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes gos-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.strength {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.strength i {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--c-line);
+}
+
+.strength[data-score="1"] i:nth-child(-n + 1) { background: var(--c-danger); }
+.strength[data-score="2"] i:nth-child(-n + 2) { background: #dc6803; }
+.strength[data-score="3"] i:nth-child(-n + 3) { background: var(--spv-teal); }
+.strength[data-score="4"] i { background: var(--c-success); }
+
+.caps {
+  color: var(--c-warn);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.caps[hidden] { display: none; }
+
+.booking-confirm-sheet {
+  scroll-margin-bottom: 96px;
+}
+
+@media (max-width: 639px) {
+  #dashboard-content-container main {
+    padding: 16px;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    min-height: 0;
+  }
+
+  .action-button,
+  .btn,
+  button[type="submit"] {
+    min-height: 44px;
+  }
+
+  .booking-confirm-sheet {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    margin-top: 16px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--c-line);
+    box-shadow: var(--sh-xl);
+  }
+
+  .booking-confirm-sheet::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--c-line-strong);
+    margin: 0 auto 10px;
+  }
+
+  .booking-confirm-sheet button[type="submit"],
+  .booking-confirm-sheet .action-button--primary {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gos-skeleton,
+  .sk {
+    animation: none;
+  }
+}

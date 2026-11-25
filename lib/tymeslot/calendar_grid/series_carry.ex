@@ -1,13 +1,13 @@
 defmodule Tymeslot.CalendarGrid.SeriesCarry do
   @moduledoc """
-  Carries what only the scheduler knows about a recurring series across a write
+  Carries what only BookDesk24 knows about a recurring series across a write
   that drops the series' cached rows for a sync to bring back: an edit of
   every occurrence, a split for an edit of one occurrence and every following
   one (`Tymeslot.CalendarGrid.SeriesEdit`), and a move of the whole series to
   another calendar (`Tymeslot.CalendarGrid.SeriesTransfer`). A series just
   created from the grid is carried the same way into its first sync.
 
-  Three things about a series live in the scheduler alone:
+  Three things about a series live in BookDesk24 alone:
 
     * its video, the `video_link` and `video_integration_id` of its rows. No
       sync writes them: `ProviderCalendarEventQueries.replace_fields/0` leaves

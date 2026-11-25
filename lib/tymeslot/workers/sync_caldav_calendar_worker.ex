@@ -105,7 +105,7 @@ defmodule Tymeslot.Workers.SyncCalDavCalendarWorker do
   @no_calendar "CalDAV integration has no calendar selected — user action required"
   @server_error "CalDAV server returned a server error; the next scheduled sync will retry"
   @server_unreachable "CalDAV server did not respond; the next scheduled sync will retry"
-  @too_large "CalDAV server returned more data than the scheduler can process at once"
+  @too_large "CalDAV server returned more data than BookDesk24 can process at once"
   @free_busy_unreadable "A CalDAV calendar shared as busy times only could not be read; its last busy times are kept and the next scheduled sync will retry"
   @server_refused "CalDAV server refused the sync request"
 

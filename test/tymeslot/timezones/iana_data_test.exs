@@ -2,7 +2,7 @@ defmodule Tymeslot.Timezones.IanaDataTest do
   @moduledoc """
   Guards the vendored IANA time zone release.
 
-  Every slot the scheduler offers is derived from this data, so a stale release
+  Every slot BookDesk24 offers is derived from this data, so a stale release
   silently shifts bookings by an hour rather than failing loudly. The `tz`
   package bundles whichever release it shipped with, so Core pins its own
   vendored copy (`config :tz, :iana_version` plus `priv/tz/`). These tests fail

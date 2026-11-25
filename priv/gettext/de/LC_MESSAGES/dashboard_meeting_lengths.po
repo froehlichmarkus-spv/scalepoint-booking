@@ -44,7 +44,7 @@ msgstr "Weitere Dauer anbieten"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/group_bookings_section.ex
 #, elixir-autogen, elixir-format
 msgid "Remove the additional durations to enable group bookings."
-msgstr "Entfernen Sie die weiteren Dauern, um Gruppenbuchungen zu aktivieren."
+msgstr "Entferne die weiteren Dauern, um Gruppenbuchungen zu aktivieren."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/lengths_field.ex
 #, elixir-autogen, elixir-format
@@ -59,4 +59,4 @@ msgstr "Die Startzeiten richten sich nach der gewählten Dauer, sodass jede Daue
 #: lib/tymeslot/meeting_types/input_validation.ex
 #, elixir-autogen, elixir-format
 msgid "You can offer at most %{max} durations"
-msgstr "Sie können höchstens %{max} verschiedene Dauern anbieten"
+msgstr "du kannst höchstens %{max} verschiedene Dauern anbieten"

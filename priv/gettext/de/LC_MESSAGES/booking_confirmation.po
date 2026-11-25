@@ -21,28 +21,28 @@ msgstr "%{minutes} Min."
 #: lib/tymeslot_web/themes/quill/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
 msgid "%{name}, your meeting %{organizer} has been rescheduled."
-msgstr "%{name}, Ihr Termin %{organizer} wurde verschoben."
+msgstr "%{name}, dein Termin %{organizer} wurde verschoben."
 
 #: lib/tymeslot_web/themes/quill/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
 msgid "%{name}, your meeting %{organizer} is all set."
-msgstr "%{name}, Ihr Termin %{organizer} ist bestätigt."
+msgstr "%{name}, dein Termin %{organizer} ist bestätigt."
 
 #: lib/tymeslot_web/themes/folio/scheduling/components/confirmation_component.ex
 #: lib/tymeslot_web/themes/rhythm/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
 msgid "%{name}, your meeting %{organizer} is confirmed"
-msgstr "%{name}, Ihr Termin %{organizer} ist bestätigt"
+msgstr "%{name}, dein Termin %{organizer} ist bestätigt"
 
 #: lib/tymeslot_web/themes/shared/confirmation_text.ex
 #, elixir-autogen, elixir-format
 msgid "%{name}, your request has been sent."
-msgstr "%{name}, Ihre Anfrage wurde gesendet."
+msgstr "%{name}, deine Anfrage wurde gesendet."
 
 #: lib/tymeslot_web/themes/shared/confirmation_text.ex
 #, elixir-autogen, elixir-format
 msgid "%{name}, your request to %{organizer_name} has been sent."
-msgstr "%{name}, Ihre Anfrage an %{organizer_name} wurde gesendet."
+msgstr "%{name}, deine Anfrage an %{organizer_name} wurde gesendet."
 
 #: lib/tymeslot_web/themes/folio/scheduling/components/confirmation_component.ex
 #: lib/tymeslot_web/themes/paper/scheduling/components/confirmation_component.ex
@@ -77,7 +77,7 @@ msgstr "Buchung bestätigt"
 #: lib/tymeslot_web/themes/rhythm/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
 msgid "Changed your mind? Your request email has a link to withdraw it."
-msgstr "Meinung geändert? Ihre Anfrage-E-Mail enthält einen Link zum Zurückziehen."
+msgstr "Meinung geändert? Deine Anfrage-E-Mail enthält einen Link zum Zurückziehen."
 
 #: lib/tymeslot_web/themes/quill/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
@@ -132,12 +132,12 @@ msgstr "Termin verschoben!"
 #: lib/tymeslot_web/themes/rhythm/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
 msgid "Need to make changes? Check your email for reschedule options"
-msgstr "Möchten Sie etwas ändern? In Ihrer E-Mail finden Sie Optionen zum Verschieben"
+msgstr "Möchtest du etwas ändern? In deiner E-Mail findest du Optionen zum Verschieben"
 
 #: lib/tymeslot_web/themes/quill/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
 msgid "Need to reschedule? Check your confirmation email."
-msgstr "Möchten Sie den Termin verschieben? Prüfen Sie bitte Ihre Bestätigungs-E-Mail."
+msgstr "Möchtest du den Termin verschieben? Prüfe bitte deine Bestätigungs-E-Mail."
 
 #: lib/tymeslot_web/themes/rhythm/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
@@ -200,7 +200,7 @@ msgstr "mit %{name}"
 #: lib/tymeslot_web/themes/shared/confirmation_text.ex
 #, elixir-autogen, elixir-format
 msgid "Check your inbox"
-msgstr "Prüfen Sie Ihren Posteingang"
+msgstr "Prüfe deinen Posteingang"
 
 #: lib/tymeslot_web/themes/shared/components/verification_notice.ex
 #, elixir-autogen, elixir-format
@@ -225,29 +225,29 @@ msgstr "Erneut gesendet. Es kann einen Moment dauern, bis die E-Mail ankommt."
 #: lib/tymeslot_web/themes/shared/components/verification_notice.ex
 #, elixir-autogen, elixir-format
 msgid "The email could not be sent. Please try again."
-msgstr "Die E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+msgstr "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/themes/shared/components/verification_notice.ex
 #, elixir-autogen, elixir-format
 msgid "The time was released because the booking was not confirmed in time. Please book again."
-msgstr "Die Zeit wurde freigegeben, weil die Buchung nicht rechtzeitig bestätigt wurde. Bitte buchen Sie erneut."
+msgstr "Die Zeit wurde freigegeben, weil die Buchung nicht rechtzeitig bestätigt wurde. Bitte buche erneut."
 
 #: lib/tymeslot_web/themes/shared/components/verification_notice.ex
 #, elixir-autogen, elixir-format
 msgid "This booking is no longer waiting for your confirmation, so there is nothing to resend."
-msgstr "Diese Buchung wartet nicht mehr auf Ihre Bestätigung, daher gibt es nichts erneut zu senden."
+msgstr "Diese Buchung wartet nicht mehr auf deine Bestätigung, daher gibt es nichts erneut zu senden."
 
 #: lib/tymeslot_web/themes/shared/components/verification_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Too many attempts. Try again in a moment."
-msgstr "Zu viele Versuche. Bitte versuchen Sie es gleich noch einmal."
+msgstr "Zu viele Versuche. Bitte versuche es gleich noch einmal."
 
 #: lib/tymeslot_web/themes/shared/components/verification_notice.ex
 #, elixir-autogen, elixir-format
 msgid "We cannot send the email again. If it has not arrived, check your spam folder."
-msgstr "Wir können die E-Mail nicht noch einmal senden. Falls sie nicht angekommen ist, sehen Sie in Ihrem Spam-Ordner nach."
+msgstr "Wir können die E-Mail nicht noch einmal senden. Falls sie nicht angekommen ist, sehst du in deinem Spam-Ordner nach."
 
 #: lib/tymeslot_web/themes/shared/confirmation_text.ex
 #, elixir-autogen, elixir-format
 msgid "We have sent a link to %{email}. Click it by %{deadline} to confirm your booking. Until then the time is held for you."
-msgstr "Wir haben einen Link an %{email} gesendet. Klicken Sie bis zum %{deadline} darauf, um Ihre Buchung zu bestätigen. Bis dahin ist die Zeit für Sie reserviert."
+msgstr "Wir haben einen Link an %{email} gesendet. Klicke bis zum %{deadline} darauf, um deine Buchung zu bestätigen. Bis dahin ist die Zeit für dich reserviert."

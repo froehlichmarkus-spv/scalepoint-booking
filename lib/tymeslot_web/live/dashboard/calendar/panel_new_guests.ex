@@ -11,7 +11,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewGuests do
   organiser's own, stops the create with its reason. A refusal is said under the
   guest field (the panel's `"guest"` error), not in a toast.
 
-  While "Send as a the scheduler meeting" is ticked the meeting's own limit
+  While "Send as a BookDesk24 meeting" is ticked the meeting's own limit
   holds at Add (`max/1`): the guest it is with and `Guests.max_guests/0`
   others, or that many guests without a main participant. At the limit
   the guest field gives way (`full?/1`).
@@ -80,7 +80,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewGuests do
   Adds the address left in the guest field, if any, before a create:
   `{:ok, socket}` to go on (nothing typed, the address added, or one the
   draft already has), `{:error, socket}` when it is refused, which says why.
-  `meeting?` is whether the form was a the scheduler meeting when Create was
+  `meeting?` is whether the form was a BookDesk24 meeting when Create was
   pressed, its button saying "Create and invite": such a draft is refused
   rather than made a plain event if it no longer has a guest.
   """
@@ -184,7 +184,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewGuests do
     do: if(full?(form), do: {:error, :meeting_full}, else: :ok)
 
   defp no_guest,
-    do: dgettext("dashboard_calendar_editing", "Add a guest to send a the scheduler meeting.")
+    do: dgettext("dashboard_calendar_editing", "Add a guest to send a BookDesk24 meeting.")
 
   defp meeting_full,
     do: dgettext("dashboard_calendar_editing", "No more guests can be added to this meeting.")

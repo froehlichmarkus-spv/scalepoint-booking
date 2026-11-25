@@ -4,7 +4,7 @@ defmodule Tymeslot.Integrations.Calendar.FreebusyGenerator do
   user's busy intervals so external calendar systems can overlay their
   availability.
 
-  Times are emitted in UTC with a `Z` suffix, matching the rest of the scheduler's
+  Times are emitted in UTC with a `Z` suffix, matching the rest of BookDesk24's
   iCalendar emission policy (no `VTIMEZONE`). Each busy interval becomes a
   `FREEBUSY;FBTYPE=BUSY` line carrying an RFC 5545 PERIOD (`start/end`).
   """

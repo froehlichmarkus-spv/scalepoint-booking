@@ -4,7 +4,7 @@ defmodule Tymeslot.Integrations.Calendar.ColourOverride do
   provider sync cache (which re-sync overwrites), so the choice survives
   re-sync and works even where the provider has no per-event colour (Outlook).
 
-  Exactly one target is set: a the scheduler booking (`meeting_id`) or an external
+  Exactly one target is set: a BookDesk24 booking (`meeting_id`) or an external
   event (`calendar_integration_id` + `provider_uid`).
   """
   use Gettext, backend: TymeslotWeb.Gettext

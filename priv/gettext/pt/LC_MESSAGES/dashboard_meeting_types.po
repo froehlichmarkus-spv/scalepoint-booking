@@ -641,5 +641,5 @@ msgstr "Este link expirou, por isso não pode ser reaberto. Crie um novo em vez 
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Cada link agenda um único compromisso. O the scheduler não envia e-mails: copie o link e envie você mesmo."
+msgid "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
+msgstr "Cada link agenda um único compromisso. O BookDesk24 não envia e-mails: copie o link e envie você mesmo."

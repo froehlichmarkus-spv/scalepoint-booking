@@ -93,7 +93,7 @@ defmodule Tymeslot.Integrations.Shared.OAuth.State do
 
   This is the domain's own guard: binding the signed state to the acting user
   is what stops a code issued for one person's account being connected to
-  another person's the scheduler user, so it cannot be left to the web layer.
+  another person's BookDesk24 user, so it cannot be left to the web layer.
   """
   @spec verify(term(), OAuthConfig.provider(), user_id()) ::
           {:ok, validated()} | {:error, :state_user_mismatch | String.t()}

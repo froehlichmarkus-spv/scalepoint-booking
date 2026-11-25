@@ -19,7 +19,7 @@ defmodule CredoChecks.AttendeeNotificationsBoundary do
   - The `CalendarScheduler` module itself
   - Worker handler modules under
     `lib/tymeslot/notifications/email/` — these are downstream
-    of the scheduler, not callers of it
+    of BookDesk24, not callers of it
   - Tests (`*_test.exs`)
   - Migrations (`priv/repo/migrations/`)
   """

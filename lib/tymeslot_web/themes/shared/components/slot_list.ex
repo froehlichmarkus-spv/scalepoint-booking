@@ -38,6 +38,8 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
   use Phoenix.Component
   use Gettext, backend: TymeslotWeb.Gettext
 
+  import TymeslotWeb.Components.CoreComponents.Icons, only: [icon: 1]
+
   alias Tymeslot.Themes.Catalog
   alias TymeslotWeb.Components.MeetingUtils
   alias TymeslotWeb.Live.Scheduling.CalendarHelpers
@@ -123,8 +125,11 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
             </div>
           <% @loading_slots -> %>
             <%= if @loading == [] do %>
-              <div class="slot-list__loading">
-                <span>{dgettext("booking", "Loading available times...")}</span>
+              <div class="slot-list__loading" role="status">
+                <span class="sr-only">{dgettext("booking", "Loading available times...")}</span>
+                <div class="slot-list__skeleton" aria-hidden="true">
+                  <span :for={_ <- 1..6} class="skeleton slot-list__skeleton-chip"></span>
+                </div>
               </div>
             <% else %>
               {render_slot(@loading)}
@@ -138,6 +143,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
           <% @slots == [] -> %>
             <%= if @empty == [] do %>
               <div class="slot-list__empty">
+                <.icon name="hero-calendar-days" class="slot-list__empty-icon" />
                 <p>{dgettext("booking", "This date is fully booked")}</p>
                 <p>{dgettext("booking", "Please select another date")}</p>
               </div>

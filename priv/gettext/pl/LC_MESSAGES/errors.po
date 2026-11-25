@@ -936,5 +936,5 @@ msgstr "Typów spotkań, które proszą zaproszonych o potwierdzenie adresu e-ma
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Przejdź do the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Przejdź do BookDesk24"

@@ -216,7 +216,7 @@ msgstr "Escribe la URL del feed del calendario."
 #: lib/tymeslot/integrations/calendar/credential_fields.ex
 #, elixir-autogen, elixir-format
 msgid "Enter the mailbox address to check availability for"
-msgstr "Escribe la dirección del buzón del que the scheduler revisará la disponibilidad"
+msgstr "Escribe la dirección del buzón del que BookDesk24 revisará la disponibilidad"
 
 #: lib/tymeslot/integrations/calendar/providers/provider_config/metadata.ex
 #, elixir-autogen, elixir-format
@@ -744,86 +744,86 @@ msgstr "iCloud rechazó la contraseña específica para la app guardada. Lo más
 
 #: lib/tymeslot/integrations/calendar/shared/error_messages.ex
 #, elixir-autogen, elixir-format
-msgid "%{provider} did not respond in time. If the server is only reachable from your organisation's network or over a VPN, the scheduler cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes."
-msgstr "%{provider} no respondió a tiempo. Si el servidor solo es accesible desde la red de tu organización o a través de una VPN, the scheduler no puede conectarse a él: pide a tu administrador que haga accesible desde internet la URL del calendario. En caso contrario, puede que el servidor esté ocupado; inténtalo de nuevo en unos minutos."
+msgid "%{provider} did not respond in time. If the server is only reachable from your organisation's network or over a VPN, BookDesk24 cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes."
+msgstr "%{provider} no respondió a tiempo. Si el servidor solo es accesible desde la red de tu organización o a través de una VPN, BookDesk24 no puede conectarse a él: pide a tu administrador que haga accesible desde internet la URL del calendario. En caso contrario, puede que el servidor esté ocupado; inténtalo de nuevo en unos minutos."
 
 #: lib/tymeslot/integrations/calendar/ics/feed.ex
 #, elixir-autogen, elixir-format
-msgid "Calendar subscription sync failed while saving a fetched event. the scheduler will try again on the next sync."
-msgstr "Falló la sincronización de la suscripción a calendario al guardar un evento descargado. the scheduler lo volverá a intentar en la próxima sincronización."
+msgid "Calendar subscription sync failed while saving a fetched event. BookDesk24 will try again on the next sync."
+msgstr "Falló la sincronización de la suscripción a calendario al guardar un evento descargado. BookDesk24 lo volverá a intentar en la próxima sincronización."
 
 #: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
 #, elixir-autogen, elixir-format
-msgid "The Exchange server answered the free/busy request with nothing the scheduler could read. Retrying rather than treating your diary as free."
-msgstr "El servidor Exchange respondió a la consulta de disponibilidad con datos que the scheduler no pudo leer. Se vuelve a intentar, en lugar de tratar tu calendario como libre."
+msgid "The Exchange server answered the free/busy request with nothing BookDesk24 could read. Retrying rather than treating your diary as free."
+msgstr "El servidor Exchange respondió a la consulta de disponibilidad con datos que BookDesk24 no pudo leer. Se vuelve a intentar, en lugar de tratar tu calendario como libre."
 
 #: lib/tymeslot/integrations/calendar/shared/error_messages.ex
 #, elixir-autogen, elixir-format
-msgid "The calendar server at %{url} listed more items than the scheduler can process at once. If this address points at a single calendar, enter your account's server address instead, and the scheduler will find your calendars there."
-msgstr "El servidor de calendario de %{url} devolvió más elementos de los que the scheduler puede procesar de una vez. Si esta dirección apunta a un solo calendario, escribe en su lugar la dirección del servidor de tu cuenta. the scheduler encontrará allí tus calendarios."
+msgid "The calendar server at %{url} listed more items than BookDesk24 can process at once. If this address points at a single calendar, enter your account's server address instead, and BookDesk24 will find your calendars there."
+msgstr "El servidor de calendario de %{url} devolvió más elementos de los que BookDesk24 puede procesar de una vez. Si esta dirección apunta a un solo calendario, escribe en su lugar la dirección del servidor de tu cuenta. BookDesk24 encontrará allí tus calendarios."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "The calendar server did not respond. the scheduler will retry automatically."
-msgstr "El servidor de calendario no respondió. the scheduler volverá a intentarlo automáticamente."
+msgid "The calendar server did not respond. BookDesk24 will retry automatically."
+msgstr "El servidor de calendario no respondió. BookDesk24 volverá a intentarlo automáticamente."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
 msgid "The calendar server is rate-limiting this booking page. It will retry automatically."
-msgstr "El servidor de calendario está limitando las solicitudes de Tymeslot. the scheduler volverá a intentarlo automáticamente."
+msgstr "El servidor de calendario está limitando las solicitudes de Tymeslot. BookDesk24 volverá a intentarlo automáticamente."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "The calendar server reported an error. the scheduler will retry automatically."
-msgstr "El servidor de calendario devolvió un error. the scheduler volverá a intentarlo automáticamente."
+msgid "The calendar server reported an error. BookDesk24 will retry automatically."
+msgstr "El servidor de calendario devolvió un error. BookDesk24 volverá a intentarlo automáticamente."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "The calendar server returned a response the scheduler could not understand."
-msgstr "El servidor de calendario devolvió una respuesta que the scheduler no pudo interpretar."
+msgid "The calendar server returned a response BookDesk24 could not understand."
+msgstr "El servidor de calendario devolvió una respuesta que BookDesk24 no pudo interpretar."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #: lib/tymeslot/integrations/calendar/shared/error_messages.ex
 #, elixir-autogen, elixir-format
-msgid "The calendar server returned more data than the scheduler can process at once."
-msgstr "El servidor de calendario devolvió más datos de los que the scheduler puede procesar de una vez."
+msgid "The calendar server returned more data than BookDesk24 can process at once."
+msgstr "El servidor de calendario devolvió más datos de los que BookDesk24 puede procesar de una vez."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "The calendar server took too long to respond. the scheduler will retry automatically."
-msgstr "El servidor de calendario tardó demasiado en responder. the scheduler volverá a intentarlo automáticamente."
+msgid "The calendar server took too long to respond. BookDesk24 will retry automatically."
+msgstr "El servidor de calendario tardó demasiado en responder. BookDesk24 volverá a intentarlo automáticamente."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "The event changed on the calendar server since the scheduler last synced it."
+msgid "The event changed on the calendar server since BookDesk24 last synced it."
 msgstr "El evento cambió en el servidor de calendario desde la última sincronización de Tymeslot."
 
 #: lib/tymeslot/integrations/calendar/domain/management.ex
 #, elixir-autogen, elixir-format
-msgid "Your calendar connection does not allow the scheduler to add bookings to it. Please reconnect the integration and allow the scheduler to create and edit events."
-msgstr "La conexión con tu calendario no permite que the scheduler agregue reservas. Vuelve a conectar la integración y permite que the scheduler cree y edite eventos."
+msgid "Your calendar connection does not allow BookDesk24 to add bookings to it. Please reconnect the integration and allow BookDesk24 to create and edit events."
+msgstr "La conexión con tu calendario no permite que BookDesk24 agregue reservas. Vuelve a conectar la integración y permite que BookDesk24 cree y edite eventos."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not complete the request against the calendar server."
-msgstr "the scheduler no pudo completar la solicitud al servidor de calendario."
+msgid "BookDesk24 could not complete the request against the calendar server."
+msgstr "BookDesk24 no pudo completar la solicitud al servidor de calendario."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not reach the calendar server. the scheduler will retry automatically."
-msgstr "the scheduler no pudo conectar con el servidor de calendario. Volverá a intentarlo automáticamente."
+msgid "BookDesk24 could not reach the calendar server. BookDesk24 will retry automatically."
+msgstr "BookDesk24 no pudo conectar con el servidor de calendario. Volverá a intentarlo automáticamente."
 
 #: lib/tymeslot/integrations/calendar/auth/jobs/token_refresh_job.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not renew its access to this calendar. It will try again shortly."
-msgstr "the scheduler no pudo renovar su acceso a este calendario. Lo volverá a intentar en breve."
+msgid "BookDesk24 could not renew its access to this calendar. It will try again shortly."
+msgstr "BookDesk24 no pudo renovar su acceso a este calendario. Lo volverá a intentar en breve."
 
 #: lib/tymeslot/integrations/calendar/caldav/offline_queue.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not send this change to the calendar server."
-msgstr "the scheduler no pudo enviar este cambio al servidor de calendario."
+msgid "BookDesk24 could not send this change to the calendar server."
+msgstr "BookDesk24 no pudo enviar este cambio al servidor de calendario."
 
 #: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler needs the mailbox's email address to read its free/busy time. Please reconnect the integration and provide it."
-msgstr "the scheduler necesita la dirección de correo del buzón para leer su disponibilidad. Vuelve a conectar la integración e indícala."
+msgid "BookDesk24 needs the mailbox's email address to read its free/busy time. Please reconnect the integration and provide it."
+msgstr "BookDesk24 necesita la dirección de correo del buzón para leer su disponibilidad. Vuelve a conectar la integración e indícala."

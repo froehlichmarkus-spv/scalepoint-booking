@@ -916,5 +916,5 @@ msgstr "%{minutes} min"
 
 #: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your account is now set up."
-msgstr "Witaj w the scheduler! Konto jest już gotowe."
+msgid "Welcome to BookDesk24! Your account is now set up."
+msgstr "Witaj w BookDesk24! Konto jest już gotowe."

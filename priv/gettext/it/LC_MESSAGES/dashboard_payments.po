@@ -513,8 +513,8 @@ msgstr "C'è un pagamento in corso nella tua valuta attuale. Riprova tra qualche
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
-msgstr "Scollegare il tuo account Stripe da the scheduler? I pagamenti esistenti restano visibili, ma le nuove prenotazioni a pagamento falliranno fino a quando non ricollegherai l'account."
+msgid "Disconnect your Stripe account from BookDesk24? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+msgstr "Scollegare il tuo account Stripe da BookDesk24? I pagamenti esistenti restano visibili, ma le nuove prenotazioni a pagamento falliranno fino a quando non ricollegherai l'account."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -523,18 +523,18 @@ msgstr "Scollega il tuo account Stripe da Tymeslot. I pagamenti esistenti restan
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account is already connected to another the scheduler account."
+msgid "That Stripe account is already connected to another BookDesk24 account."
 msgstr "Questo account Stripe è già collegato a un altro account Tymeslot."
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
-msgstr "Questo account Stripe usa una valuta che the scheduler non supporta ancora per i pagamenti."
+msgid "That Stripe account uses a currency BookDesk24 doesn't support for payments yet."
+msgstr "Questo account Stripe usa una valuta che BookDesk24 non supporta ancora per i pagamenti."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
 #, elixir-autogen, elixir-format
-msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
-msgstr "Il partecipante riceve l'intero importo rimborsato. La commissione della piattaforma di the scheduler viene stornata in modo proporzionale; le commissioni di elaborazione di Stripe sull'addebito originale restano a tuo carico."
+msgid "The attendee receives the full amount you refund. BookDesk24's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
+msgstr "Il partecipante riceve l'intero importo rimborsato. La commissione della piattaforma di BookDesk24 viene stornata in modo proporzionale; le commissioni di elaborazione di Stripe sull'addebito originale restano a tuo carico."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format

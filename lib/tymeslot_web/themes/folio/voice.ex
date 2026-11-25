@@ -27,7 +27,7 @@ defmodule TymeslotWeb.Themes.Folio.Voice do
   # No instruction label. An empty line, not a msgid: nothing to translate.
   def text(:instruction, _bindings), do: ""
 
-  def text(:submit, _bindings), do: dpgettext("booking_voice", "folio", "Book our session")
+  def text(:submit, _bindings), do: dpgettext("booking_voice", "folio", "Confirm booking")
 
   def text(:submit_request, _bindings),
     do: dpgettext("booking_voice", "folio", "Request this time")

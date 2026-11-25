@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Cards do
   @moduledoc """
-  Content card and data-grid components for the scheduler emails.
+  Content card and data-grid components for BookDesk24 emails.
 
   Where `Callouts` draws the eye with a tinted background and an intent accent,
   `Cards` lay out structured information — key/value tables, long-form

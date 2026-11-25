@@ -87,10 +87,10 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventMapper do
   def requires_conference_data_version?(_other), do: false
 
   @doc """
-  Marks `body` as the scheduler's unless `event_data` says the event belongs to
+  Marks `body` as BookDesk24's unless `event_data` says the event belongs to
   someone else (`created_by_tymeslot: false`, which the calendar grid sends
   for an event it did not create). Anything that does not say so is a
-  booking or an event the scheduler is creating, and is marked: a booking whose
+  booking or an event BookDesk24 is creating, and is marked: a booking whose
   mark was dropped would be read back by the next sync as an external event.
   """
   @spec put_provenance(map(), map()) :: map()
@@ -98,10 +98,10 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventMapper do
   def put_provenance(body, _event_data), do: add_tymeslot_fingerprint(body)
 
   @doc """
-  Adds the scheduler provenance markers to a Google Calendar event body.
+  Adds BookDesk24 provenance markers to a Google Calendar event body.
 
   Sets `source` and `extendedProperties.private.createdBy` so events created
-  by the scheduler can be identified later during sync. Other properties already
+  by BookDesk24 can be identified later during sync. Other properties already
   in the body's `extendedProperties` are kept.
   """
   @spec add_tymeslot_fingerprint(map()) :: map()
@@ -112,14 +112,14 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventMapper do
     # The instance that created the event, not the hosted service, so a
     # self-hoster's attendees are pointed at their own site.
     Map.merge(body, %{
-      "source" => %{"title" => "the scheduler", "url" => UrlBuilder.base_url()},
+      "source" => %{"title" => "BookDesk24", "url" => UrlBuilder.base_url()},
       "extendedProperties" => Map.put(properties, "private", private)
     })
   end
 
   @doc """
   Copies onto `body` the fields of the event as Google last gave it
-  (`event_data[:provider_metadata]`, the cached raw event) that the scheduler does
+  (`event_data[:provider_metadata]`, the cached raw event) that BookDesk24 does
   not model. `events.update` is a `PUT`, so a field left out of its body is
   reset: other apps' `extendedProperties` would be deleted and the guest
   permissions returned to Google's defaults on every edit.
@@ -344,7 +344,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventMapper do
     end
   end
 
-  # The canonical `:colour` field carries a the scheduler palette key (e.g.
+  # The canonical `:colour` field carries a BookDesk24 palette key (e.g.
   # `"tomato"`). Google events use a numeric `colorId` ("1".."11"), so the key
   # is mapped at the boundary. An unrecognised value (e.g. a raw inbound
   # colorId round-tripped from the cache) maps to nil and is omitted, leaving

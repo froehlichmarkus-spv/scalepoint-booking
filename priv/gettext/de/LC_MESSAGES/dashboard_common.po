@@ -20,7 +20,7 @@ msgstr "Konto"
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #, elixir-autogen, elixir-format
 msgid "Add a meeting type so guests have something to book"
-msgstr "Fügen Sie einen Termintyp hinzu, damit Gäste etwas buchen können"
+msgstr "Füge einen Termintyp hinzu, damit Gäste etwas buchen können"
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #: lib/tymeslot_web/helpers/page_titles.ex
@@ -161,7 +161,7 @@ msgstr "Abmelden"
 #: lib/tymeslot_web/live/dashboard/component_dispatch.ex
 #, elixir-autogen, elixir-format
 msgid "This feature (%{feature_name}) is not available on your current plan."
-msgstr "Diese Funktion (%{feature_name}) ist in Ihrem aktuellen Tarif nicht verfügbar."
+msgstr "Diese Funktion (%{feature_name}) ist in deinem aktuellen Tarif nicht verfügbar."
 
 #: lib/tymeslot_web/components/user_dropdown_component.ex
 #, elixir-autogen, elixir-format
@@ -186,12 +186,12 @@ msgstr "Kalender-Integration"
 #: lib/tymeslot/scheduling/link_access_policy.ex
 #, elixir-autogen, elixir-format
 msgid "Complete setup to enable this feature"
-msgstr "Schließen Sie die Einrichtung ab, um diese Funktion zu aktivieren"
+msgstr "Schließe die Einrichtung ab, um diese Funktion zu aktivieren"
 
 #: lib/tymeslot/scheduling/link_access_policy.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar in Calendar settings to enable this feature"
-msgstr "Verbinden Sie einen Kalender in den Kalendereinstellungen, um diese Funktion zu aktivieren"
+msgstr "Verbinde einen Kalender in den Kalendereinstellungen, um diese Funktion zu aktivieren"
 
 #: lib/tymeslot_web/helpers/page_titles.ex
 #, elixir-autogen, elixir-format
@@ -206,7 +206,7 @@ msgstr "Zahlungen"
 #: lib/tymeslot/scheduling/link_access_policy.ex
 #, elixir-autogen, elixir-format
 msgid "Set a username in Settings to enable this feature"
-msgstr "Legen Sie einen Nutzernamen in den Einstellungen fest, um diese Funktion zu aktivieren"
+msgstr "Lege einen Nutzernamen in den Einstellungen fest, um diese Funktion zu aktivieren"
 
 #: lib/tymeslot_web/helpers/page_titles.ex
 #, elixir-autogen, elixir-format
@@ -227,17 +227,17 @@ msgstr "Umfragen"
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar and a video provider to finish setup"
-msgstr "Verbinden Sie einen Kalender und einen Video-Anbieter, um die Einrichtung abzuschließen"
+msgstr "Verbinde einen Kalender und einen Video-Anbieter, um die Einrichtung abzuschließen"
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar to finish setup"
-msgstr "Verbinden Sie einen Kalender, um die Einrichtung abzuschließen"
+msgstr "Verbinde einen Kalender, um die Einrichtung abzuschließen"
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a video provider to finish setup"
-msgstr "Verbinden Sie einen Video-Anbieter, um die Einrichtung abzuschließen"
+msgstr "Verbinde einen Video-Anbieter, um die Einrichtung abzuschließen"
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #: lib/tymeslot_web/helpers/page_titles.ex
@@ -361,13 +361,13 @@ msgstr "Erneut verbinden"
 #, elixir-autogen, elixir-format
 msgid "%{names} needs reconnecting. Until you reconnect it, your booking page may not offer times or take bookings."
 msgid_plural "%{names} need reconnecting. Until you reconnect them, your booking page may not offer times or take bookings."
-msgstr[0] "Die Integration %{names} muss erneut verbunden werden. Solange Sie sie nicht erneut verbinden, bietet Ihre Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
-msgstr[1] "Die Integrationen %{names} müssen erneut verbunden werden. Solange Sie sie nicht erneut verbinden, bietet Ihre Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
+msgstr[0] "Die Integration %{names} muss erneut verbunden werden. Solange du sie nicht erneut verbinden, bietet deine Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
+msgstr[1] "Die Integrationen %{names} müssen erneut verbunden werden. Solange du sie nicht erneut verbinden, bietet deine Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #, elixir-autogen, elixir-format
 msgid "Reconnect %{names}: until you do, your booking page may not take bookings"
-msgstr "Verbinden Sie %{names} erneut: Bis dahin nimmt Ihre Buchungsseite möglicherweise keine Buchungen an"
+msgstr "Verbinde %{names} erneut: Bis dahin nimmt deine Buchungsseite möglicherweise keine Buchungen an"
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #: lib/tymeslot_web/helpers/page_titles.ex
@@ -379,7 +379,7 @@ msgstr "Buchungsseiten"
 #: lib/tymeslot_web/components/dashboard/public_page_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Anyone who opens your link is told the page isn't available until you connect a calendar."
-msgstr "Wer Ihren Link öffnet, erfährt, dass die Seite nicht verfügbar ist, bis Sie einen Kalender verbinden."
+msgstr "Wer deinen Link öffnet, erfährt, dass die Seite nicht verfügbar ist, bis du einen Kalender verbinden."
 
 #: lib/tymeslot_web/components/dashboard/public_page_notice.ex
 #, elixir-autogen, elixir-format
@@ -394,17 +394,17 @@ msgstr "Kalenderverbindung reparieren"
 #: lib/tymeslot_web/components/dashboard/public_page_notice.ex
 #, elixir-autogen, elixir-format
 msgid "None of your calendars can take a booking right now, so anyone who opens your link is told the page isn't available. Check your calendar connection to fix it."
-msgstr "Derzeit kann keiner Ihrer Kalender eine Buchung annehmen, daher erfährt jeder, der Ihren Link öffnet, dass die Seite nicht verfügbar ist. Prüfen Sie Ihre Kalenderverbindung, um das zu beheben."
+msgstr "Derzeit kann keiner deiner Kalender eine Buchung annehmen, daher erfährt jeder, der deinen Link öffnet, dass die Seite nicht verfügbar ist. Prüfe deine Kalenderverbindung, um das zu beheben."
 
 #: lib/tymeslot_web/components/dashboard/public_page_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking page has stopped taking bookings"
-msgstr "Ihre Buchungsseite nimmt keine Buchungen mehr an"
+msgstr "Deine Buchungsseite nimmt keine Buchungen mehr an"
 
 #: lib/tymeslot_web/components/dashboard/public_page_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking page isn't taking bookings yet"
-msgstr "Ihre Buchungsseite nimmt noch keine Buchungen an"
+msgstr "Deine Buchungsseite nimmt noch keine Buchungen an"
 
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #: lib/tymeslot_web/helpers/page_titles.ex
@@ -415,7 +415,7 @@ msgstr "Sprachen"
 #: lib/tymeslot_web/components/dashboard/autosave.ex
 #, elixir-autogen, elixir-format
 msgid "Changes save when you leave a field."
-msgstr "Änderungen werden gespeichert, sobald Sie ein Feld verlassen."
+msgstr "Änderungen werden gespeichert, sobald du ein Feld verlassen."
 
 #: lib/tymeslot_web/components/dashboard/autosave.ex
 #, elixir-autogen, elixir-format
@@ -444,5 +444,5 @@ msgstr "Menü ausklappen"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Über Ihre the scheduler-Seite gebucht"
+msgid "Booked through your BookDesk24 page"
+msgstr "Über deine BookDesk24-Seite gebucht"

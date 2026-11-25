@@ -3,7 +3,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Patcher do
   Property-level patching of a stored iCalendar document.
 
   `ICalBuilder.build_simple_event/3` serialises the whole event from
-  the scheduler's payload, which is right for an event the scheduler authored and wrong
+  BookDesk24's payload, which is right for an event BookDesk24 authored and wrong
   for one it merely synced: everything the payload does not model (`ATTENDEE`
   and its `PARTSTAT`/`ROLE`/`RSVP` parameters, `CATEGORIES`, `SEQUENCE`,
   `X-` properties, an `ORGANIZER` the server set) disappears from the
@@ -47,17 +47,17 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Patcher do
       regard to case, as the grid compares them.
     * A guest who is new is written the way the caller's `mode` says (see
       `CalDAV.Scheduling`): `ATTENDEE;SCHEDULE-AGENT=CLIENT` in `:attendee`
-      mode, so the server stores them without mailing them, since the scheduler
+      mode, so the server stores them without mailing them, since BookDesk24
       sends its own invitation.
     * An `ATTENDEE` whose address is not a `mailto:` URI (a room, a group, a
       `urn:uuid:` principal) cannot be named by the payload's list, which the
       sync builds from `mailto:` addresses only, and is kept.
     * In `{:organiser_attendee, _}` mode the `ATTENDEE` naming the account's
       owner (`Scheduling.owner_attendee_address/2`, read from the stored
-      `ORGANIZER`) is kept whatever the list says, and in the scheduler's own
+      `ORGANIZER`) is kept whatever the list says, and in BookDesk24's own
       block is added when missing: that server adds its calendar's owner
       back under their primary address the moment the line goes. In
-      the scheduler's own block an `ATTENDEE` naming the organiser is dropped when
+      BookDesk24's own block an `ATTENDEE` naming the organiser is dropped when
       the owner line carries another address, so an event listing the
       organiser beside the owner the server added loses the duplicate. An
       event someone else organised keeps the line naming its organiser.
@@ -85,7 +85,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Patcher do
 
   A payload without the key keeps every alarm.
 
-  the scheduler's own block, told apart by the `X-TYMESLOT-ATTENDEES` marker
+  BookDesk24's own block, told apart by the `X-TYMESLOT-ATTENDEES` marker
   `build_simple_event/3` emits beside it or by the absence of any `ATTENDEE`
   at all, also has its `CONTACT` lines rewritten. In `:contact` mode such a
   block is rebuilt as `CONTACT` lines outright, so a document written under
@@ -257,8 +257,8 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Patcher do
     kept ++ added ++ patched_alarms(alarms, properties, patch_set.event_data)
   end
 
-  # Both spellings are always replaced in a block of the scheduler's own, never just
-  # the one being written, so a document the scheduler wrote under the other mode,
+  # Both spellings are always replaced in a block of BookDesk24's own, never just
+  # the one being written, so a document BookDesk24 wrote under the other mode,
   # or before this project emitted `ATTENDEE` at all, converges on the current
   # one instead of carrying the attendee twice.
   @rewritten_attendee_properties ["CONTACT", "ATTENDEE", "X-TYMESLOT-ATTENDEES"]
@@ -329,12 +329,12 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Patcher do
 
   defp owner_address(_organiser, _mode), do: nil
 
-  # See the moduledoc: the scheduler's own block keeps the organiser only as the
+  # See the moduledoc: BookDesk24's own block keeps the organiser only as the
   # owner line, an event someone else organised keeps its organiser's line.
   defp kept_organiser(_organiser, true = _ours), do: []
   defp kept_organiser(organiser, false = _ours), do: [organiser]
 
-  # Only the scheduler's own block gains the owner's line. An event someone else
+  # Only BookDesk24's own block gains the owner's line. An event someone else
   # organised, synced into the grid, is theirs to describe. Answers the
   # organiser the line is rendered from: `Properties.build_attendee_lines/2`
   # picks the owner's address from it the same way.

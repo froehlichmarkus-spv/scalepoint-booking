@@ -17,10 +17,10 @@ defmodule Tymeslot.Meetings.CalendarMove do
   - `:not_confirmed` — only a confirmed booking has a time to move; an
     unapproved or cancelled one is handled by its own lifecycle.
   - `:awaiting_new_time` — a pending reschedule request voided the slot and
-    the scheduler deleted (or is deleting) the event on purpose, so a leftover
+    BookDesk24 deleted (or is deleting) the event on purpose, so a leftover
     cached row is not a time the host chose; moving would clear the request
     with no event in the calendar.
-  - `:calendar_write_pending` — the scheduler's own queued calendar write has not
+  - `:calendar_write_pending` — BookDesk24's own queued calendar write has not
     landed, so the cache may still hold the old time and the flag may be an
     echo of our own change. Offering would move the booking back.
   - `:event_not_found` — the cache has no row to read a time from.

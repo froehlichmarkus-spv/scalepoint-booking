@@ -744,13 +744,13 @@ msgstr "Dispara uma vez quando você recusa um pedido de série, em vez de «Age
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "Configurar no the scheduler"
+msgid "Configure in BookDesk24"
+msgstr "Configurar no BookDesk24"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Conecte o the scheduler ao n8n, Zapier, Make ou aos seus próprios fluxos de automação"
+msgid "Connect BookDesk24 to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Conecte o BookDesk24 ao n8n, Zapier, Make ou aos seus próprios fluxos de automação"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format

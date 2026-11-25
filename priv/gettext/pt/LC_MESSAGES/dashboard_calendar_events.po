@@ -477,8 +477,8 @@ msgstr "Sincronizando com seu calendário. Abra o evento para alterar a série i
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Outra pessoa organiza esta reunião, então o the scheduler não pode mover nem dividir a série: você só recebeu o convite."
+msgid "Someone else organises this meeting, so BookDesk24 can't move or split a series you were only invited to."
+msgstr "Outra pessoa organiza esta reunião, então o BookDesk24 não pode mover nem dividir a série: você só recebeu o convite."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format

@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Styles do
   @moduledoc """
-  Public facade for the the scheduler email design system.
+  Public facade for the BookDesk24 email design system.
 
   The system is split across three focused sub-modules:
 
@@ -114,7 +114,11 @@ defmodule Tymeslot.Emails.Shared.Styles do
 
   @doc "Legacy pill radius used by buttons."
   @spec button_radius() :: String.t()
-  def button_radius, do: Tokens.radius(:pill)
+  def button_radius, do: Tokens.radius(:sm)
+
+  @doc "Navy call-to-action. One primary colour on every mail."
+  @spec cta_background() :: String.t()
+  def cta_background, do: "#111e32"
 
   @doc "Legacy card radius."
   @spec card_radius() :: String.t()

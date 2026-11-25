@@ -66,7 +66,19 @@
   --theme-primary-focus: color-mix(in srgb, var(--theme-primary) 20%, transparent);
   --theme-primary-tint: color-mix(in srgb, var(--theme-primary) 22%, transparent);
   --theme-primary-glow: color-mix(in srgb, var(--theme-primary) 35%, transparent);
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 25%, transparent);
+  /* Kit focus ring: 2px surface gap, then a 2px teal accent. Teal is non-text. */
+  --focus-ring: 0 0 0 2px var(--theme-surface, #ffffff), 0 0 0 4px var(--theme-accent, #469189);
+  --c-input-border: #8492a6;
+  --sh-xs: 0 1px 2px rgba(17, 30, 50, 0.05);
+  --sh-sm: 0 1px 2px rgba(17, 30, 50, 0.06), 0 1px 3px rgba(17, 30, 50, 0.08);
+  --sh-md: 0 2px 4px -1px rgba(17, 30, 50, 0.06), 0 6px 16px -4px rgba(17, 30, 50, 0.1);
+  --sh-lg: 0 4px 8px -2px rgba(17, 30, 50, 0.06), 0 16px 32px -8px rgba(17, 30, 50, 0.16);
+  --sh-xl: 0 8px 16px -4px rgba(17, 30, 50, 0.08), 0 32px 64px -16px rgba(17, 30, 50, 0.24);
+  --dur-1: 120ms;
+  --dur-2: 160ms;
+  --dur-3: 200ms;
+  --dur-4: 280ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Coloured shadows: theme geometry, palette colour. */
   --shadow-primary-sm: var(--shadow-geometry-sm) color-mix(in srgb, var(--theme-primary) 30%, transparent);
@@ -146,4 +158,13 @@
   --chrome-ink: #ffffff;
 
   --print-line: #cccccc;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+    --dur-4: 0ms;
+  }
 }

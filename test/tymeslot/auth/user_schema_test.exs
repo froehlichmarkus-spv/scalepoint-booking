@@ -11,10 +11,8 @@ defmodule Tymeslot.Auth.UserSchemaTest do
     test "enforces strong password requirements" do
       test_cases = [
         {"short", "Password must be at least 8 characters long"},
-        {"alllowercase1!", "Password must contain at least one uppercase letter"},
-        {"ALLUPPERCASE1!", "Password must contain at least one lowercase letter"},
-        {"NoNumbers!Ab", "Password must contain at least one number"},
-        {"NoSpecial1Ab", "Password must contain at least one special character"}
+        {"password", "This password is too common. Try a short phrase only you would know."},
+        {"test-phrase-ok", "Choose a password that does not contain your email name."}
       ]
 
       for {password, expected_error} <- test_cases do
@@ -31,7 +29,7 @@ defmodule Tymeslot.Auth.UserSchemaTest do
     end
 
     test "securely hashes passwords during registration" do
-      plain_password = "SecurePassword123!"
+      plain_password = "harbor-horse-battery"
 
       attrs = %{
         email: "secure@example.com",

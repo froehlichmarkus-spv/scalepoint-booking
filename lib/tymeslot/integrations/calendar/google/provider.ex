@@ -117,7 +117,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.Provider do
     %{
       uid: google_event["id"],
       # The key sync caches the event under (`EventNormaliser`), which Google
-      # assigns itself: it is not derived from the id, even one the scheduler chose.
+      # assigns itself: it is not derived from the id, even one BookDesk24 chose.
       ical_uid: google_event["iCalUID"],
       summary: google_event["summary"],
       description: google_event["description"],

@@ -34,7 +34,7 @@ defmodule TymeslotWeb.AuthLive.PageMetaHelper do
       {dgettext("auth", "Log In"),
        dgettext(
          "auth",
-         "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
+         "Sign in to your BookDesk24 account to manage scheduling links, availability, and bookings."
        )}
 
   defp page_meta_for_state(:signup),
@@ -42,7 +42,7 @@ defmodule TymeslotWeb.AuthLive.PageMetaHelper do
       {dgettext("auth", "Create an Account"),
        dgettext(
          "auth",
-         "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
+         "Create a BookDesk24 account and start sharing your availability in minutes. No credit card required."
        )}
 
   defp page_meta_for_state(:reset_password),
@@ -50,13 +50,13 @@ defmodule TymeslotWeb.AuthLive.PageMetaHelper do
       {dgettext("auth", "Reset Password"),
        dgettext(
          "auth",
-         "Enter your email to receive a password reset link for your the scheduler account."
+         "Enter your email to receive a password reset link for your BookDesk24 account."
        )}
 
   defp page_meta_for_state(:reset_password_form),
     do:
       {dgettext("auth", "Choose a New Password"),
-       dgettext("auth", "Choose a strong new password for your the scheduler account.")}
+       dgettext("auth", "Choose a strong new password for your BookDesk24 account.")}
 
   defp page_meta_for_state(_state), do: nil
 end

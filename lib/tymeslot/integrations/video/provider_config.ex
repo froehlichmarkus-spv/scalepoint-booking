@@ -54,7 +54,7 @@ defmodule Tymeslot.Integrations.Video.ProviderConfig do
   #     against the organiser's server first (a metered connection test);
   #   * `rooms` — what its rooms are like:
   #       - `:deleted_after_meeting`: the room persists on the organiser's own
-  #         server until something deletes it, so the scheduler deletes it some days
+  #         server until something deletes it, so BookDesk24 deletes it some days
   #         after its meeting ends;
   #       - `:held_as_calendar_event`: the room is an event of its own in the
   #         organiser's calendar holding the meeting's title, start and end (a
@@ -382,7 +382,7 @@ defmodule Tymeslot.Integrations.Video.ProviderConfig do
   def oauth_provider?(provider), do: in_family?(provider, :oauth)
 
   @doc """
-  The providers, in their stored string form, whose rooms the scheduler deletes
+  The providers, in their stored string form, whose rooms BookDesk24 deletes
   some days after the meeting ends.
   """
   @spec rooms_deleted_after_meeting() :: [String.t()]
@@ -409,7 +409,7 @@ defmodule Tymeslot.Integrations.Video.ProviderConfig do
   The providers, in their stored string form, whose rooms made for events on
   the dashboard calendar grid are recorded
   (`Tymeslot.CalendarGrid.EventVideoRooms`), so that they follow their event:
-  those the scheduler deletes some days after the meeting, and those held as
+  those BookDesk24 deletes some days after the meeting, and those held as
   calendar events of their own.
   """
   @spec rooms_recorded_for_grid_events() :: [String.t()]

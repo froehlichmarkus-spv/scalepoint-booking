@@ -196,7 +196,7 @@ defmodule Tymeslot.Payments.SubscriptionInvoiceQueries do
   period has ended: every row anonymised by `anonymise_for_host/2` and issued
   before `cutoff` (or created before it, for a row with no issue date).
 
-  This removes only the scheduler's copy. The document Stripe hosts behind
+  This removes only BookDesk24's copy. The document Stripe hosts behind
   `hosted_invoice_url` and `invoice_pdf_url` is Stripe's, and is untouched.
   """
   @spec delete_retained_before(DateTime.t()) :: {non_neg_integer(), nil}

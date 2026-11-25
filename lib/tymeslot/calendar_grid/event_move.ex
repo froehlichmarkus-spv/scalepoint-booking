@@ -328,7 +328,7 @@ defmodule Tymeslot.CalendarGrid.EventMove do
   # Ownership is read off the cached row, since the event handed in may be an
   # optimistic copy, and only an explicit `false` makes the event somebody
   # else's, as in `ProviderPayload`. It decides the uid: the CalDAV and ICS
-  # syncs take any `@tymeslot.com` uid for the scheduler's, so somebody else's
+  # syncs take any `@tymeslot.com` uid for BookDesk24's, so somebody else's
   # event must not be given one on its way to a new calendar.
   defp moved_event(event, stored, integration, calendar_id) do
     owned? = Map.get(stored, :created_by_tymeslot) != false

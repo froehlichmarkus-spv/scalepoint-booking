@@ -646,5 +646,5 @@ msgstr "Термін дії цього посилання минув, тому �
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Кожне посилання бронює одну зустріч. the scheduler не надсилає листів: скопіюйте посилання й надішліть його самі."
+msgid "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
+msgstr "Кожне посилання бронює одну зустріч. BookDesk24 не надсилає листів: скопіюйте посилання й надішліть його самі."

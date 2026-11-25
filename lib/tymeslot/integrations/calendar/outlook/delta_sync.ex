@@ -89,7 +89,7 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.DeltaSync do
     api_module = Config.outlook_calendar_api_module()
 
     # Taken before the read, not after it: the events are stamped with it, and
-    # reconciliation treats a the scheduler calendar write that finished at or after
+    # reconciliation treats a BookDesk24 calendar write that finished at or after
     # it as possibly missing from what was read (see
     # `Tymeslot.Meetings.ExternalCalendarChanges`). Stamped any later, a write
     # landing while the pages were still being fetched would go unnoticed.
@@ -195,7 +195,7 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.DeltaSync do
 
     # Writes through `Sync.upsert_cache/2` rather than straight to the queries
     # module so this path gets ownership flagging like every other. A booking
-    # the scheduler wrote to an Outlook calendar carries a bare UUID uid, which the
+    # BookDesk24 wrote to an Outlook calendar carries a bare UUID uid, which the
     # payload-level `tymeslot_origin?/1` check cannot recognise, so without
     # this the delta sweep cached every one of them as server-owned.
     with {:ok, _count} <- Sync.upsert_cache(integration, calendar_events),

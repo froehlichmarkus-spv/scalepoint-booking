@@ -37,7 +37,7 @@ defmodule Tymeslot.Integrations.Video.Zoom.ZoomOAuthHelper do
   # with its error rather than holding the request.
   @profile_retry [max_rate_limit_wait: 2_000]
 
-  # Granular scopes are one per action, so each write the scheduler performs has to
+  # Granular scopes are one per action, so each write BookDesk24 performs has to
   # be asked for by name. `Scopes` owns which ones this deployment asks for and
   # why one of them is conditional; keeping the list there is what lets the
   # pre-flight tell "your grant is stale" apart from "this Zoom app cannot do

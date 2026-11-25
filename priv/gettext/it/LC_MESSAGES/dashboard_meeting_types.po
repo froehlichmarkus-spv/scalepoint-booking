@@ -641,5 +641,5 @@ msgstr "Questo link è scaduto, quindi non può essere riaperto. Creane invece u
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Ogni link prenota un solo appuntamento. the scheduler non invia email: copia il link e mandalo tu."
+msgid "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
+msgstr "Ogni link prenota un solo appuntamento. BookDesk24 non invia email: copia il link e mandalo tu."

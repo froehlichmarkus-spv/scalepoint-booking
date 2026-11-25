@@ -167,7 +167,7 @@ defmodule Tymeslot.Emails.Delivery do
   end
 
   # `BreakerOutcome`'s default classifier only recognises a narrow set of
-  # transport/HTTP error shapes; the scheduler supports several mail adapters
+  # transport/HTTP error shapes; BookDesk24 supports several mail adapters
   # (Postmark, SendGrid, Mailgun, AhaSend, SMTP) whose error reasons don't
   # share one shape (Postmark's is a bare `{status, body}`, not the
   # `{:http_error, status, body}` tuple the default classifier looks for).

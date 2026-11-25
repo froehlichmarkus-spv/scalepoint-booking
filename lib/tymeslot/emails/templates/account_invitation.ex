@@ -24,7 +24,7 @@ defmodule Tymeslot.Emails.Templates.AccountInvitation do
     RecipientLocale.with_user_locale(user, fn ->
       MjmlEmail.base_email()
       |> Email.to({user.name || user.email, user.email})
-      |> Email.subject(dgettext("emails_account", "You're invited to the scheduler"))
+      |> Email.subject(dgettext("emails_account", "You're invited to BookDesk24"))
       |> Email.html_body(html_body(user, invitation_url))
       |> Email.text_body(text_body(user, invitation_url))
     end)
@@ -34,7 +34,7 @@ defmodule Tymeslot.Emails.Templates.AccountInvitation do
     mjml_content = """
     #{Text.centered_html(Greeting.html(user), padding: "8px 0 4px 0", font_size: "16px")}
 
-    #{Text.centered_text(dgettext("emails_account", "An administrator has created a the scheduler account for you. Accept the invitation to choose how you'll sign in and set up your booking page."), padding: "0 0 20px 0")}
+    #{Text.centered_text(dgettext("emails_account", "An administrator has created a BookDesk24 account for you. Accept the invitation to choose how you'll sign in and set up your booking page."), padding: "0 0 20px 0")}
 
     #{Buttons.action_button(@intent, dgettext("emails_account", "Accept invitation"), invitation_url, full_width: true, size: :large)}
 
@@ -51,22 +51,22 @@ defmodule Tymeslot.Emails.Templates.AccountInvitation do
       dgettext("emails_account", "Invitation"),
       dgettext(
         "emails_account",
-        "Your the scheduler account is ready. Accept the invitation to sign in."
+        "Your BookDesk24 account is ready. Accept the invitation to sign in."
       ),
       intent: @intent,
       eyebrow: dgettext("emails_account", "Invitation"),
-      stage_title: dgettext("emails_account", "You're invited to the scheduler"),
+      stage_title: dgettext("emails_account", "You're invited to BookDesk24"),
       stage_subtitle: dgettext("emails_account", "Your account is ready and waiting.")
     )
   end
 
   defp text_body(user, invitation_url) do
     """
-    #{dgettext("emails_account", "You're invited to the scheduler")}
+    #{dgettext("emails_account", "You're invited to BookDesk24")}
 
     #{Greeting.text(user)}
 
-    #{dgettext("emails_account", "An administrator has created a the scheduler account for you. Accept the invitation to choose how you'll sign in and set up your booking page.")}
+    #{dgettext("emails_account", "An administrator has created a BookDesk24 account for you. Accept the invitation to choose how you'll sign in and set up your booking page.")}
 
     #{dgettext("emails_account", "Accept invitation:")}
     #{invitation_url}

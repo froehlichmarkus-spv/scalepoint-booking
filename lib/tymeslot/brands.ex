@@ -658,7 +658,14 @@ defmodule Tymeslot.Brands do
 
   defp hex(_, fallback), do: fallback
 
-  defp font(value) when is_binary(value) and value in @fonts, do: value
+  # A multi-word family has to be a quoted string inside the custom
+  # property. `DM Serif Display` as bare idents is not a valid font-family
+  # once substituted, so the declaration is dropped and the headline falls
+  # through to the next stack (Georgia, then Times).
+  defp font(value) when is_binary(value) and value in @fonts do
+    if String.contains?(value, " "), do: "\"#{value}\"", else: value
+  end
+
   defp font(_), do: "Inter"
 
   # Visible prose only. A link, a hostname, or an address is an identifier:

@@ -4,7 +4,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.InvitationsComponent do
   meeting type editor in place of its direct booking link.
 
   The host creates one single-use link at a time and sends it themselves:
-  the scheduler sends no email. Below the form, the type's invitations, newest
+  BookDesk24 sends no email. Below the form, the type's invitations, newest
   first, each with its derived status (`Tymeslot.Invitations.list/2`) and the
   actions that status allows: copy and revoke an available link, reopen a
   used one whose appointment no longer holds a slot, or a revoked one that
@@ -214,7 +214,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.InvitationsComponent do
         <p class="text-token-sm text-tymeslot-500">
           {dgettext(
             "dashboard_meeting_types",
-            "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
+            "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
           )}
         </p>
       </div>

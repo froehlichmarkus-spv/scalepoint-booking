@@ -151,7 +151,7 @@ defmodule Tymeslot.Security.RateLimiterThemeCustomizationTest do
       # burst never gets past the limit, but the limiter records a hit before
       # it counts the window, so two hits racing for the last slot can both be
       # refused: how many of a burst into a part-full window get through
-      # depends on the scheduler. Past the limit there is no race left, and
+      # depends on BookDesk24. Past the limit there is no race left, and
       # every further hit is refused whichever order they land in.
       for _i <- 1..150 do
         assert :ok = RateLimiter.check(:theme_customization, user_id)

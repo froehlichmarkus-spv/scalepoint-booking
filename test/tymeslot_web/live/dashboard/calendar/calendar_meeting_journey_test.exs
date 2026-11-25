@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.CalendarMeetingJourneyTest do
   @moduledoc """
-  A the scheduler meeting booked from the calendar's side panel reaches its
+  A BookDesk24 meeting booked from the calendar's side panel reaches its
   guests: the extra guest is invited in the language the organiser chose,
   with the note, by the organiser.
   """

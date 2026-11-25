@@ -445,5 +445,5 @@ msgstr "Rozbalit menu"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Zarezervováno přes vaši stránku the scheduler"
+msgid "Booked through your BookDesk24 page"
+msgstr "Zarezervováno přes vaši stránku BookDesk24"

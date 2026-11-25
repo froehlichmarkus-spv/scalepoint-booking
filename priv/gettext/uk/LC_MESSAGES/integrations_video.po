@@ -602,10 +602,10 @@ msgstr "Booked through %{product}."
 
 #: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
 #, elixir-autogen, elixir-format
-msgid "Nextcloud is refusing requests from the scheduler for now, usually after too many failed logins. Wait a few minutes before trying again."
-msgstr "Nextcloud тимчасово відхиляє запити від the scheduler, зазвичай після забагатьох невдалих спроб входу. Зачекайте кілька хвилин, перш ніж спробувати ще раз."
+msgid "Nextcloud is refusing requests from BookDesk24 for now, usually after too many failed logins. Wait a few minutes before trying again."
+msgstr "Nextcloud тимчасово відхиляє запити від BookDesk24, зазвичай після забагатьох невдалих спроб входу. Зачекайте кілька хвилин, перш ніж спробувати ще раз."
 
 #: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
 #, elixir-autogen, elixir-format
-msgid "This Nextcloud Talk is too old. the scheduler needs Talk 21.1 or later."
-msgstr "Ця версія Nextcloud Talk застаріла. the scheduler потребує Talk 21.1 або новішої версії."
+msgid "This Nextcloud Talk is too old. BookDesk24 needs Talk 21.1 or later."
+msgstr "Ця версія Nextcloud Talk застаріла. BookDesk24 потребує Talk 21.1 або новішої версії."

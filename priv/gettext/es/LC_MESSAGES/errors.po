@@ -921,5 +921,5 @@ msgstr "Los tipos de reunión que piden a quien reserve que confirme su correo n
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Ir a the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Ir a BookDesk24"

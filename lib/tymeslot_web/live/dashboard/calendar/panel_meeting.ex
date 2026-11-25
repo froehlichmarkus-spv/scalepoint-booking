@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.PanelMeeting do
   @moduledoc """
-  "Send as a the scheduler meeting" in the side panel's New event state: the
+  "Send as a BookDesk24 meeting" in the side panel's New event state: the
   draft becomes an ad hoc booking (`Bookings.CreateAdHoc`) instead of a
   bare calendar event. The first guest is the one the meeting is with and
   gives it their name; the others are invited as its guests; every email

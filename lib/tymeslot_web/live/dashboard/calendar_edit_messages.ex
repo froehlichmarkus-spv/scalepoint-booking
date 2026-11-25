@@ -273,7 +273,7 @@ defmodule TymeslotWeb.Dashboard.CalendarEditMessages do
   def not_organiser_message do
     dgettext(
       "dashboard_calendar_events",
-      "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+      "Someone else organises this meeting, so BookDesk24 can't move or split a series you were only invited to."
     )
   end
 

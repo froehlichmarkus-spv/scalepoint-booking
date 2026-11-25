@@ -15,7 +15,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerificationTest do
 
       assert html =~ "<html"
       assert html =~ "</html>"
-      assert html =~ "Welcome to the scheduler"
+      assert html =~ "Welcome to BookDesk24"
     end
 
     test "includes user name in greeting" do

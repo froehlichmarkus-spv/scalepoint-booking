@@ -517,8 +517,8 @@ msgstr "V aktuální měně právě probíhá platba. Zkuste to znovu za několi
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
-msgstr "Opravdu chcete odpojit svůj účet Stripe od služby the scheduler? Stávající platby zůstanou viditelné, ale nové placené rezervace budou selhávat, dokud jej znovu nepřipojíte."
+msgid "Disconnect your Stripe account from BookDesk24? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+msgstr "Opravdu chcete odpojit svůj účet Stripe od služby BookDesk24? Stávající platby zůstanou viditelné, ale nové placené rezervace budou selhávat, dokud jej znovu nepřipojíte."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -527,18 +527,18 @@ msgstr "Odpojte svůj účet Stripe od služby Tymeslot. Stávající platby zů
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account is already connected to another the scheduler account."
+msgid "That Stripe account is already connected to another BookDesk24 account."
 msgstr "Tento účet Stripe je už připojený k jinému účtu Tymeslot."
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
-msgstr "Tento účet Stripe používá měnu, kterou the scheduler pro platby zatím nepodporuje."
+msgid "That Stripe account uses a currency BookDesk24 doesn't support for payments yet."
+msgstr "Tento účet Stripe používá měnu, kterou BookDesk24 pro platby zatím nepodporuje."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
 #, elixir-autogen, elixir-format
-msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
-msgstr "Účastník obdrží celou vrácenou částku. Poplatek platformy the scheduler se vrací poměrně; transakční poplatky Stripe z původní platby zůstávají vám."
+msgid "The attendee receives the full amount you refund. BookDesk24's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
+msgstr "Účastník obdrží celou vrácenou částku. Poplatek platformy BookDesk24 se vrací poměrně; transakční poplatky Stripe z původní platby zůstávají vám."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format

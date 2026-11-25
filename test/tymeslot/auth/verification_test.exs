@@ -235,7 +235,7 @@ defmodule Tymeslot.Auth.VerificationTest do
                )
 
       # The user hammers "resend" while that first email is still in the dedup window.
-      # The token is rotated unconditionally; the scheduler replaces the queued job's
+      # The token is rotated unconditionally; BookDesk24 replaces the queued job's
       # args with the new URL so job payload and DB token remain in lock-step.
       assert :ok =
                Verification.resend_verification_email_by_email(

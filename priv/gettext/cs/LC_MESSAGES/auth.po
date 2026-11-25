@@ -775,30 +775,30 @@ msgstr[2] "Vítejte zpět. Váš účet byl obnoven, ale integrace %{names} je p
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your the scheduler account."
+msgid "Choose a strong new password for your BookDesk24 account."
 msgstr "Zvolte si silné nové heslo pro svůj účet Tymeslot."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
-msgstr "Vytvořte si účet the scheduler a během několika minut začněte sdílet svou dostupnost. Bez platební karty."
+msgid "Create a BookDesk24 account and start sharing your availability in minutes. No credit card required."
+msgstr "Vytvořte si účet BookDesk24 a během několika minut začněte sdílet svou dostupnost. Bez platební karty."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your the scheduler account."
+msgid "Enter your email to receive a password reset link for your BookDesk24 account."
 msgstr "Zadejte svůj e-mail a pošleme vám odkaz pro obnovení hesla k účtu Tymeslot."
 
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
-msgid "Join the scheduler"
-msgstr "Vytvořte si účet the scheduler"
+msgid "Join BookDesk24"
+msgstr "Vytvořte si účet BookDesk24"
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
-msgid "Log in to the scheduler"
-msgstr "Přihlášení do služby the scheduler"
+msgid "Log in to BookDesk24"
+msgstr "Přihlášení do služby BookDesk24"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
-msgstr "Přihlaste se ke svému účtu the scheduler a spravujte rezervační odkazy, dostupnost a rezervace."
+msgid "Sign in to your BookDesk24 account to manage scheduling links, availability, and bookings."
+msgstr "Přihlaste se ke svému účtu BookDesk24 a spravujte rezervační odkazy, dostupnost a rezervace."

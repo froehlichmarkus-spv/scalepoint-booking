@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Layouts do
   @moduledoc """
-  High-level MJML layouts for the scheduler emails.
+  High-level MJML layouts for BookDesk24 emails.
 
   Two layouts:
 
@@ -8,7 +8,7 @@ defmodule Tymeslot.Emails.Shared.Layouts do
     which opens with an intent stage band and an organiser strip. Used by
     meeting emails.
   - `system_layout/2` wraps content in a system frame — a stage band with the
-    the scheduler wordmark, a warm surface, and a hairline footer. Used by account
+    BookDesk24 wordmark, a warm surface, and a hairline footer. Used by account
     emails (verification, password reset, subscription, etc).
 
   Both layouts require the caller to declare `:intent` and `:eyebrow`. There
@@ -94,7 +94,11 @@ defmodule Tymeslot.Emails.Shared.Layouts do
           line-height="1.7"
           letter-spacing="0.02em"
         >
-          © #{Date.utc_today().year} <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark suite-footer" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">BOOKDESK_SUITE_FOOTER</a>
+          © #{Date.utc_today().year} <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark suite-footer" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">BOOKDESK_SUITE_FOOTER</a><br/>
+          ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finland · Business ID 3620767-9<br/>
+          <a href="https://scalepoint-ventures.com/growthos/legal/terms" style="color: #3a7872;">Terms</a>
+          · <a href="https://scalepoint-ventures.com/growthos/legal/privacy" style="color: #3a7872;">Privacy</a>
+          · <a href="https://scalepoint-ventures.com/growthos/legal/notice" style="color: #3a7872;">Legal notice</a>
         </mj-text>
       </mj-column>
     </mj-section>

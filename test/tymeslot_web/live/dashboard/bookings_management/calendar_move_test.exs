@@ -145,7 +145,7 @@ defmodule TymeslotWeb.Dashboard.BookingsManagement.CalendarMoveTest do
     html = render(view)
 
     assert html =~
-             "the scheduler is still updating your calendar for this booking. Please try again in a moment."
+             "BookDesk24 is still updating your calendar for this booking. Please try again in a moment."
 
     refute html =~ "Your calendar now has this meeting at"
     refute has_element?(view, "[phx-click=show_calendar_move_modal]")
@@ -227,7 +227,7 @@ defmodule TymeslotWeb.Dashboard.BookingsManagement.CalendarMoveTest do
 
     view |> element("[phx-click=show_calendar_move_modal]") |> render_click()
 
-    assert render(view) =~ "the scheduler is still updating your calendar"
+    assert render(view) =~ "BookDesk24 is still updating your calendar"
     refute has_element?(view, "[phx-click=show_calendar_move_modal]")
   end
 

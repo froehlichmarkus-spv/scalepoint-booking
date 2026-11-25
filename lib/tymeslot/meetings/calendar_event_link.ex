@@ -19,7 +19,7 @@ defmodule Tymeslot.Meetings.CalendarEventLink do
   So a join on `provider_event_id` alone silently matches nothing for every
   CalDAV-family integration, and one on the event UID alone matches nothing
   for Google and Outlook (whose cached `uid` is the provider's own iCalUID, not
-  the UID the scheduler generated). The rule that holds for both: **two records
+  the UID BookDesk24 generated). The rule that holds for both: **two records
   describe the same event when they share any non-blank identifier.**
 
   A meeting's event UID is its `calendar_uid`, not its `uid`. The `uid` is the

@@ -6,7 +6,7 @@
   "layout": "sales_room",
   "name": "ScalePoint Ventures",
   "product_label": "ScalePoint Booking",
-  "sender_name": "ScalePoint Ventures",
+  "sender_name": "ScalePoint Growth OS",
   "sender_email": "booking@scalepoint-ventures.com",
   "sender_email_env": "SPV_SENDER_EMAIL",
   "sender_name_env": "SPV_SENDER_NAME",

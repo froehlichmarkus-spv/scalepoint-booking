@@ -797,5 +797,5 @@ msgstr "Tu propio texto se muestra en todos los idiomas, salvo que lo traduzcas 
 
 #: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
 #, elixir-autogen, elixir-format
-msgid "Turn this off to go back to the built-in text, which is translated into every language the scheduler supports. Your own wording is discarded."
+msgid "Turn this off to go back to the built-in text, which is translated into every language BookDesk24 supports. Your own wording is discarded."
 msgstr "Desactívalo para volver al texto incluido, que está traducido a todos los idiomas de Tymeslot. Tu propio texto se descarta."
