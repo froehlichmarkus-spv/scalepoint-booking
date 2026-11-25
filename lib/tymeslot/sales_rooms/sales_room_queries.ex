@@ -33,7 +33,8 @@ defmodule Tymeslot.SalesRooms.SalesRoomQueries do
     |> Repo.update()
   end
 
-  @spec delete_room(SalesRoomSchema.t()) :: {:ok, SalesRoomSchema.t()} | {:error, Ecto.Changeset.t()}
+  @spec delete_room(SalesRoomSchema.t()) ::
+          {:ok, SalesRoomSchema.t()} | {:error, Ecto.Changeset.t()}
   def delete_room(room), do: Repo.delete(room)
 
   @spec event_types(integer()) :: [%{id: integer(), name: String.t()}]
