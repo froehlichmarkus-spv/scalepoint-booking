@@ -254,8 +254,8 @@ msgstr "Troppe nuove riunioni. Attendi un momento."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Questa riunione è organizzata da un'altra persona, quindi the scheduler non può spostare né dividere una serie a cui sei stato solo invitato."
+msgid "Someone else organises this meeting, so Tymeslot can't move or split a series you were only invited to."
+msgstr "Questa riunione è organizzata da un'altra persona, quindi Tymeslot non può spostare né dividere una serie a cui sei stato solo invitato."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -270,7 +270,7 @@ msgstr "Questo schema di ripetizione non può essere salvato in Outlook."
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
-msgstr ""
+msgstr "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
 "Outlook non può saltare i mesi che non hanno il giorno di questa serie e sposterebbe quegli eventi all'ultimo giorno del mese. Fai iniziare la serie il 28 o prima, oppure salvala in un altro calendario."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex

@@ -404,7 +404,7 @@ msgstr "Questa pausa si sovrappone a una pausa esistente"
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "You have reached the limit of %{count} schedules. Delete one to add another."
-msgstr ""
+msgstr "You have reached the limit of %{count} schedules. Delete one to add another."
 "Hai raggiunto il limite di %{count} pianificazioni. Eliminane una per "
 "aggiungerne un'altra."
 

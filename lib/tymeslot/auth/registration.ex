@@ -49,7 +49,10 @@ defmodule Tymeslot.Auth.Registration do
   ## Returns
     - `{:ok, user, message}` when a new account was created. A verification
       email that could not be sent (rate limited, or a scheduling failure)
-      does not change this: the account waits for a resend.
+      does not change this: the account waits for a resend. A `:provisioning`
+      caller is not sent one at all. The seed marks that account ready
+      itself; a verification mail to a demo address is how a placeholder
+      domain ends up bouncing.
     - `{:existing_account, message}` when no account was created because the
       address already had one, or because it has used up its own sign-up
       allowance. `message` is the same one a new account gets, and nothing
@@ -330,8 +333,15 @@ defmodule Tymeslot.Auth.Registration do
   # then rejected as a duplicate on retry and the account can never be reached.
   defp verify_and_notify_user(user, opts) do
     case create_profile_and_announce(user) do
-      :ok -> send_verification_email(user, opts[:ip])
-      {:error, _reason, _message} = error -> error
+      :ok ->
+        if via(opts) == :provisioning do
+          {:ok, user}
+        else
+          send_verification_email(user, opts[:ip])
+        end
+
+      {:error, _reason, _message} = error ->
+        error
     end
   end
 

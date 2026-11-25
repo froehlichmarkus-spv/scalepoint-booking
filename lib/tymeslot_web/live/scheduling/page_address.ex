@@ -41,6 +41,7 @@ defmodule TymeslotWeb.Live.Scheduling.PageAddress do
   import Phoenix.LiveView, only: [redirect: 2]
 
   alias Tymeslot.BookingPages
+  alias Tymeslot.Brands
   alias Tymeslot.Profiles
   alias Tymeslot.Profiles.ProfileSchema
   alias TymeslotWeb.Live.Scheduling.PreviewToken
@@ -59,7 +60,7 @@ defmodule TymeslotWeb.Live.Scheduling.PageAddress do
   def on_mount(:default, params, _session, socket) do
     case settle(params, socket.assigns[:live_action]) do
       {:ok, settled, action, organiser} ->
-        Tymeslot.Brands.bind_profile(organiser)
+        Brands.bind_profile(organiser)
 
         {:cont,
          assign(socket,

@@ -411,9 +411,16 @@ end
 from_email =
   System.get_env("EMAIL_FROM_ADDRESS") ||
     System.get_env("CLOUDRON_MAIL_FROM") ||
-    if config_env() == :prod,
-      do: raise("environment variable EMAIL_FROM_ADDRESS is missing"),
-      else: "booking@localhost"
+    cond do
+      config_env() == :prod ->
+        raise "environment variable EMAIL_FROM_ADDRESS is missing"
+
+      config_env() == :test ->
+        "hello@tymeslot.app"
+
+      true ->
+        "booking@localhost"
+    end
 
 # Cloudron's CLOUDRON_MAIL_FROM_DISPLAY_NAME requires supportsDisplayName in the manifest
 # (not currently set) — fall back to app name when sendmail addon is active

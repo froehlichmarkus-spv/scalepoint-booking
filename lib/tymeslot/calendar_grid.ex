@@ -374,7 +374,7 @@ defmodule Tymeslot.CalendarGrid do
     as: :list_ended
 
   # The grid event rooms a disconnect deletes: only those of a provider whose
-  # rooms the scheduler deletes after the meeting. A room held as a calendar event
+  # rooms Tymeslot deletes after the meeting. A room held as a calendar event
   # of its own (a separate Teams event) is recorded to follow its grid event,
   # not to be swept up with the integration.
   @doc "A video integration's grid event rooms a disconnect deletes. See `EventVideoRoomQueries.list_for_integration/5`."

@@ -45,7 +45,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalkProvider do
   The integration holds the server root in `base_url`, the login name in
   `client_id` and an app password in `client_secret`. Nextcloud counts every
   refused login against the calling address, and a throttled address is
-  throttled for every the scheduler user of that Nextcloud. So a 401 is never
+  throttled for every Tymeslot user of that Nextcloud. So a 401 is never
   retried: it flags the integration `needs_reauth`, and while that flag is set
   this module refuses to send the stored credentials anywhere, since
   `build_config/3` carries the flag into every config. Saving an edit that
@@ -59,7 +59,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalkProvider do
   creation passes `:rate_limited` on, which the room job snoozes on a growing
   interval, and a connection test reports it as `{:throttled, message}`, asking
   the user to wait. That tag is its own, not the `{:rate_limited, message}` of
-  the scheduler's own connection-test limiter, which means the test never ran. A
+  Tymeslot's own connection-test limiter, which means the test never ran. A
   reschedule or cancellation passes it on as well, and the sync job snoozes it
   the same way.
 
@@ -317,7 +317,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalkProvider do
   defp tolerate_rename_refusal(result, _config), do: result
 
   # Talk refuses to delete a conversation its owner marked to be preserved, and
-  # the owner can lift that only in Nextcloud. the scheduler has nothing left to do
+  # the owner can lift that only in Nextcloud. Tymeslot has nothing left to do
   # for it, so the deletion counts as done; otherwise every later clean-up
   # would send the same refused request again. Any other refusal stays one.
   defp tolerate_preserved({:error, {:rejected, 403, "preserved"}}, config) do
@@ -427,7 +427,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalkProvider do
        {:unreachable,
         dgettext(
           "integrations_video",
-          "This Nextcloud Talk is too old. the scheduler needs Talk 21.1 or later."
+          "This Nextcloud Talk is too old. Tymeslot needs Talk 21.1 or later."
         )}}
     end
   end
@@ -454,7 +454,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalkProvider do
     {:throttled,
      dgettext(
        "integrations_video",
-       "Nextcloud is refusing requests from the scheduler for now, usually after too many failed logins. Wait a few minutes before trying again."
+       "Nextcloud is refusing requests from Tymeslot for now, usually after too many failed logins. Wait a few minutes before trying again."
      )}
   end
 

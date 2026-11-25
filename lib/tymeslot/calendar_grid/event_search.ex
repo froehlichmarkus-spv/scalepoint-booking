@@ -13,7 +13,7 @@ defmodule Tymeslot.CalendarGrid.EventSearch do
     * Only what the grid would show: the effective visibility (hidden
       accounts, hidden calendars, the active set) applies to calendar rows;
       bookings are never hidden, as on the grid.
-    * The grid draws a booking in place of the calendar copy the scheduler wrote
+    * The grid draws a booking in place of the calendar copy Tymeslot wrote
       for it (`PreferredBookings`), so a hit on a copy becomes the booking's
       hit, and a booking found both ways is listed once.
   """

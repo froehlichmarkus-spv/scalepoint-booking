@@ -28,6 +28,7 @@ defmodule Tymeslot.Emails.Branding do
   """
 
   alias Tymeslot.AppSettings
+  alias Tymeslot.Brands
   alias Tymeslot.Infrastructure.Logging.LogFormat
   alias Tymeslot.Media.MediaValidator
   alias Tymeslot.Media.Uploads
@@ -55,7 +56,7 @@ defmodule Tymeslot.Emails.Branding do
   # `deep` clears the same 4.5:1 floor against band text that
   # `BrandPalette.@band_min_contrast` clamps *derived* families to, so a
   # self-hosted instance's custom brand band is never held to a stricter bar
-  # than the scheduler's own default one. `deep` is "#0d786c", at 5.03:1 against
+  # than Tymeslot's own default one. `deep` is "#0d786c", at 5.03:1 against
   # band text; it colours the default stage band and button.
   @stock_family %{accent: "#14b8a6", deep: "#0d786c", ink: "#0f5954", tint: "#e1f7f3"}
 
@@ -63,13 +64,19 @@ defmodule Tymeslot.Emails.Branding do
   The brand name substituted into email copy: the logo's alt text, the inbox
   preview line, the document title, and the organiser strip's fallback title.
 
-  Never returns nil — an instance that has not set one gets "the scheduler".
+  Never returns nil — an instance that has not set one gets "Tymeslot".
   """
   @spec brand_name() :: String.t()
   def brand_name do
-    case Tymeslot.Brands.mail_identity() do
-      %{name: name} when is_binary(name) and name != "" -> name
-      _ -> AppSettings.get(:email_brand_name)
+    case AppSettings.get(:email_brand_name) do
+      name when is_binary(name) and name != "" ->
+        name
+
+      _setting ->
+        case Brands.mail_identity() do
+          %{name: name} when is_binary(name) and name != "" -> name
+          _brand -> "Tymeslot"
+        end
     end
   end
 
@@ -79,9 +86,15 @@ defmodule Tymeslot.Emails.Branding do
   """
   @spec accent() :: String.t() | nil
   def accent do
-    case Tymeslot.Brands.mail_identity() do
-      %{accent: hex} when is_binary(hex) and hex != "" -> hex
-      _ -> AppSettings.get(:email_brand_accent)
+    case AppSettings.get(:email_brand_accent) do
+      hex when is_binary(hex) and hex != "" ->
+        hex
+
+      _setting ->
+        case Brands.mail_identity() do
+          %{accent: hex} when is_binary(hex) and hex != "" -> hex
+          _brand -> nil
+        end
     end
   end
 
@@ -192,19 +205,19 @@ defmodule Tymeslot.Emails.Branding do
 
   @doc """
   Bytes of the logo to attach to an email: the custom logo when one is
-  configured and readable, the stock the scheduler logo otherwise, and `:error`
+  configured and readable, the stock Tymeslot logo otherwise, and `:error`
   when neither can be read.
   """
   @spec logo_bytes() :: {:ok, binary()} | :error
   def logo_bytes do
-    case Tymeslot.Brands.email_logo_path() do
+    case Brands.email_logo_path() do
       path when is_binary(path) ->
         case read_logo(path) do
           {:ok, bytes} -> {:ok, bytes}
           :error -> read_logo(stock_logo_path())
         end
 
-      _ ->
+      _unused ->
         case custom_logo_path() do
           nil -> read_logo(stock_logo_path())
           path -> read_custom_logo(path)

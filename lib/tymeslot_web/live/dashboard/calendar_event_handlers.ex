@@ -356,7 +356,7 @@ defmodule TymeslotWeb.Dashboard.CalendarEventHandlers do
       dgettext("dashboard_calendar_events", "Could not change the video link - changes reverted")
 
   @doc """
-  Creates a the scheduler meeting with guests in the background, through
+  Creates a Tymeslot meeting with guests in the background, through
   `Tymeslot.CalendarGrid.EventCreation.run_create_ad_hoc_meeting/1`, and
   reports back with `{:create_ad_hoc_meeting_result, request, result}`, where
   `result` is `{:error, :crashed}` if the create raises (`WriteTask`). The

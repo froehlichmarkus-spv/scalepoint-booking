@@ -84,6 +84,15 @@ fi
 # ==================== SECTION 1: Environment Variable Defaults ====================
 # Set sensible defaults to avoid unbound variable errors when env vars are missing
 # These can be overridden by passing -e flags to 'docker run' or in /app/data/.env
+# Remember which discrete database variables the operator actually set.
+# The defaults below must not outrank a DATABASE_URL, and a parsed URL must
+# not outrank a value the operator set. Empty counts as unset.
+DATABASE_HOST_SET=${DATABASE_HOST:+1}
+DATABASE_PORT_SET=${DATABASE_PORT:+1}
+POSTGRES_USER_SET=${POSTGRES_USER:+1}
+POSTGRES_DB_SET=${POSTGRES_DB:+1}
+POSTGRES_PASSWORD_SET=${POSTGRES_PASSWORD:+1}
+
 POSTGRES_USER=${POSTGRES_USER:-tymeslot}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tymeslot}
 POSTGRES_DB=${POSTGRES_DB:-tymeslot}
@@ -169,6 +178,9 @@ echo ""
 # URL-derived options over the discrete ones.
 USING_EXTERNAL_DB=false
 
+# shellcheck source=scripts/database-url.sh
+. "$(dirname "$0")/database-url.sh"
+
 # A DATABASE_URL naming localhost keeps the bundled database on images that
 # ship one. Earlier releases ignored DATABASE_URL here entirely, so without this
 # guard an operator upgrading with a stale variable left over from another
@@ -176,27 +188,36 @@ USING_EXTERNAL_DB=false
 # variable makes the app fall back to the discrete POSTGRES_* credentials the
 # bundled cluster is actually created with. The slim image ships no server, so
 # there a local URL is honoured as given.
-if [ -n "${DATABASE_URL:-}" ] && [ "${TYMESLOT_EMBEDDED_DB:-true}" != "false" ]; then
-    # Strip the scheme, then any user:password@, then the path, then the port.
-    # The bracket rule unwraps an IPv6 literal such as postgres://[::1]:5432/db.
-    DATABASE_URL_HOST=$(printf '%s' "$DATABASE_URL" |
-        sed -E 's#^[^:]+://##; s#^[^@/]*@##; s#[/?].*$##; s#:[0-9]*$##; s#^\[([^]]*)\]$#\1#')
+#
+# The URL is parsed properly, including a password that contains / @ : # ? or
+# percent-encoded bytes. An operator-set DATABASE_HOST, DATABASE_PORT,
+# POSTGRES_USER, POSTGRES_DB or POSTGRES_PASSWORD replaces the matching part.
+# The value handed to the release is percent-encoded. Logs only see the
+# redacted form.
+if [ -n "${DATABASE_URL:-}" ]; then
+    if ! parse_database_url "$DATABASE_URL"; then
+        echo "✗ ERROR: DATABASE_URL could not be parsed."
+        echo "  Redacted: $(redact_database_url "$DATABASE_URL")"
+        exit 1
+    fi
+    apply_discrete_database_overrides
+    DATABASE_URL="$(build_database_url)"
 
-    case "$DATABASE_URL_HOST" in
-        localhost | 127.0.0.1 | ::1)
-            echo "⚠ DATABASE_URL points at $DATABASE_URL_HOST, which is this container."
-            echo "  Using the bundled PostgreSQL and ignoring DATABASE_URL."
-            echo "  For an external database, give DATABASE_URL a remote host or set DATABASE_HOST."
-            unset DATABASE_URL
-            ;;
-    esac
+    if [ "${TYMESLOT_EMBEDDED_DB:-true}" != "false" ]; then
+        case "$PARSED_DB_HOST" in
+            localhost | 127.0.0.1 | ::1)
+                echo "⚠ DATABASE_URL points at $PARSED_DB_HOST, which is this container."
+                echo "  Using the bundled PostgreSQL and ignoring DATABASE_URL."
+                echo "  For an external database, give DATABASE_URL a remote host or set DATABASE_HOST."
+                unset DATABASE_URL
+                ;;
+        esac
+    fi
 fi
 
 if [ -n "${DATABASE_URL:-}" ]; then
     USING_EXTERNAL_DB=true
-    # Redact the credentials before echoing the URL back to the logs.
-    REDACTED_URL=$(echo "$DATABASE_URL" | sed -E 's#://[^@/]+@#://***:***@#')
-    echo "✓ External database detected via DATABASE_URL: $REDACTED_URL"
+    echo "✓ External database detected via DATABASE_URL: $(redact_database_url "$DATABASE_URL")"
     echo "  Skipping embedded PostgreSQL initialization"
 elif [ "$DATABASE_HOST" != "localhost" ] && [ "$DATABASE_HOST" != "127.0.0.1" ]; then
     USING_EXTERNAL_DB=true
@@ -329,16 +350,13 @@ else
     # full URL via -d would leave it — password included — visible in the
     # container's process list for every poll. Probe with host and port only.
     if [ -n "${DATABASE_URL:-}" ]; then
-        # Strip the scheme, any user:password@, then the path and query; keep
-        # host[:port]. The bracket rule unwraps an IPv6 literal like [::1].
-        PG_PROBE_HOSTPORT=$(printf '%s' "$DATABASE_URL" |
-            sed -E 's#^[^:]+://##; s#^[^@/]*@##; s#[/?].*$##')
-        PG_PROBE_HOST=$(printf '%s' "$PG_PROBE_HOSTPORT" |
-            sed -E 's#:[0-9]*$##; s#^\[([^]]*)\]$#\1#')
-        PG_PROBE_PORT=$(printf '%s' "$PG_PROBE_HOSTPORT" |
-            sed -nE 's#.*:([0-9]+)$#\1#p')
-        PG_ISREADY_ARGS="-h $PG_PROBE_HOST -p ${PG_PROBE_PORT:-5432}"
-        PG_TARGET="$PG_PROBE_HOST:${PG_PROBE_PORT:-5432}"
+        # Host and port come from the parse above. Discrete DATABASE_HOST and
+        # DATABASE_PORT have already replaced the URL when the operator set
+        # them. pg_isready gets neither the user nor the password.
+        PG_PROBE_HOST="$PARSED_DB_HOST"
+        PG_PROBE_PORT="${PARSED_DB_PORT:-5432}"
+        PG_ISREADY_ARGS="-h $PG_PROBE_HOST -p $PG_PROBE_PORT"
+        PG_TARGET="$PG_PROBE_HOST:$PG_PROBE_PORT"
     else
         PG_ISREADY_ARGS="-h $DATABASE_HOST -p $DATABASE_PORT"
         PG_TARGET="$DATABASE_HOST:$DATABASE_PORT"

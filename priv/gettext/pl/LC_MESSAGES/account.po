@@ -310,8 +310,8 @@ msgstr "Do tego czasu konto jest zamrożone, a strona rezerwacji jest offline. Z
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Nadchodzące rezerwacje są usuwane z the scheduler, a goście nie są o tym powiadamiani."
+msgid "Upcoming bookings are deleted from Tymeslot and your guests are not notified."
+msgstr "Nadchodzące rezerwacje są usuwane z Tymeslot, a goście nie są o tym powiadamiani."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format

@@ -296,7 +296,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.ItemCache do
   # that moved out of the window from outside it has no row either.
   #
   # Ownership needs no flagging call here: `Sync.upsert_cache/2` does it for
-  # every caller. A booking the scheduler wrote to the mailbox comes back through
+  # every caller. A booking Tymeslot wrote to the mailbox comes back through
   # the feed as an ordinary create, so without that the row would stay unowned
   # until the daily full read happened to rewrite it.
   defp write_incremental(integration, events, deleted_ids, moved_out_ids) do

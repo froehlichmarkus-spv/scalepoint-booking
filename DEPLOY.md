@@ -71,6 +71,10 @@ Nimmt die Site aus Caddy und lädt neu. Container stoppen zusätzlich mit `SPV_S
 
 ## Marken
 
-`deploy/brands/scalepoint.json` ist die produktive Marke und der Standard. `deploy/brands/neutral.json` ist nur die optionale zweite Vorlage MeetDesk24 (`booking@meetdesk24.com`). Sie gilt, wenn ein Empfänger zu diesem Mandanten gehört. Solange `SEED_NEUTRAL_TENANT` aus ist, gibt es diesen Benutzer nicht.
+`deploy/brands/scalepoint.json` ist die produktive Marke und der Standard. `deploy/brands/neutral.json` ist die Vorlage BookDesk24 (`booking@bookdesk24.com`). Sie steht auf `enabled: false`. Die Domain ist nicht gekauft. Aktivierung, DNS und SMTP stehen in `docs/plans/bookdesk24.md`. `SEED_NEUTRAL_TENANT` bleibt in der Produktion `false`.
 
-`SEED_NEUTRAL_TENANT` steht in der Produktion auf `false`. Dann legt der Start keinen Benutzer `host@meetdesk24.com` an und verschickt keine Verifikation an diese Adresse, solange die Domain nicht registriert ist. Lokal steht das Flag auf `true`, damit die Beispielseite buchbar ist.
+Eine schon eingereihte Mail an `host@scheduler24.io` oder `host@meetdesk24.com` wird nicht mehr zugestellt. Wer die wartenden Jobs abbrechen will, tut das erst nach Freigabe und löscht dabei keine Benutzer:
+
+```sh
+CONFIRM_SUPPRESS_SEED_MAIL=yes mix run -e 'Tymeslot.Emails.SeedMailSuppress.run()'
+```

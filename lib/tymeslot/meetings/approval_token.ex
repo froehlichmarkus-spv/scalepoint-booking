@@ -2,7 +2,7 @@ defmodule Tymeslot.Meetings.ApprovalToken do
   @moduledoc """
   Signed tokens letting a host answer a booking request from their email.
 
-  Cancel and reschedule links elsewhere in the scheduler are unguessable meeting
+  Cancel and reschedule links elsewhere in Tymeslot are unguessable meeting
   UIDs scoped to the profile owner. That is proportionate for an invitee
   acting on their own booking, but not for an action that commits the host's
   calendar, so approval links are signed with `Phoenix.Token` and carry the

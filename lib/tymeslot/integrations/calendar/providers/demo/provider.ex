@@ -67,7 +67,7 @@ defmodule Tymeslot.Integrations.Calendar.DemoCalendarProvider do
     case Application.get_env(:tymeslot, :calendar_providers, %{})[:demo] do
       options when is_list(options) -> Keyword.get(options, :enabled, false)
       %{enabled: value} -> value
-      _ -> false
+      _unused -> false
     end
   end
 

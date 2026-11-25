@@ -241,7 +241,7 @@ msgstr ""
 
 #: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your account is now set up."
+msgid "Welcome to Tymeslot! Your account is now set up."
 msgstr ""
 
 #: lib/tymeslot_web/live/onboarding_live/profile_step.ex

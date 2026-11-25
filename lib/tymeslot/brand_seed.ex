@@ -9,26 +9,29 @@ defmodule Tymeslot.BrandSeed do
 
   require Logger
 
+  alias Swoosh.Email
   alias Tymeslot.Auth
-  alias Tymeslot.Auth.UserSchema
   alias Tymeslot.Availability.AvailabilityActions
   alias Tymeslot.Availability.AvailabilityScheduleQueries
   alias Tymeslot.Availability.WeeklySchedule
   alias Tymeslot.Brands
+  alias Tymeslot.BrandSeedQueries
+  alias Tymeslot.Emails.Delivery
+  alias Tymeslot.Emails.Shared.Layouts
+  alias Tymeslot.Emails.Shared.MjmlEmail
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Integrations.Calendar.IcsGenerator
   alias Tymeslot.Integrations.Calendar.Management
   alias Tymeslot.MeetingTypes
-  alias Tymeslot.MeetingTypes.MeetingTypeSchema
   alias Tymeslot.Profiles
   alias Tymeslot.Profiles.Avatars
   alias Tymeslot.Profiles.ProfileQueries
-  alias Tymeslot.Profiles.ProfileSchema
-  alias Tymeslot.Repo
   alias Tymeslot.ThemeCustomizations
+  alias Tymeslot.Webhooks
 
-  import Ecto.Query, warn: false
-
+  @spec run() :: term()
   def run do
-    {:ok, _} = Application.ensure_all_started(:tymeslot)
+    {:ok, _unused} = Application.ensure_all_started(:tymeslot)
     File.rm("/tmp/booking-owners.txt")
     Brands.reload()
 
@@ -43,15 +46,17 @@ defmodule Tymeslot.BrandSeed do
     :ok
   end
 
+  @spec deliver_samples() :: term()
   def deliver_samples do
-    Tymeslot.Emails.Delivery.allow_outside_job(fn ->
+    Delivery.allow_outside_job(fn ->
       Enum.each(brands_to_seed(), &deliver_sample/1)
     end)
   end
 
-  # The neutral example account is a local demo. Production stays on the
-  # house tenant until a real neutral domain is chosen, so it does not
-  # register host@meetdesk24.com or send that address a verification mail.
+  # BookDesk24 is the optional second tenant and stays disabled until its
+  # domain is bought. Production does not register that owner. Provisioning
+  # itself sends no verification mail; a queued "Verify your email" is what
+  # reached host@scheduler24.io after the account was already verified.
   defp brands_to_seed do
     if neutral_seed?(),
       do: Brands.enabled(),
@@ -80,13 +85,13 @@ defmodule Tymeslot.BrandSeed do
     Logger.info("brand seeded", brand: brand.key, username: brand.username)
   rescue
     error ->
-      Logger.error("brand seed failed: #{Exception.message(error)}", brand: brand.key)
+      Logger.error("brand seed failed", brand: brand.key, error: Exception.message(error))
       reraise error, __STACKTRACE__
   end
 
   defp ensure_user(brand, password) do
-    case Repo.get_by(UserSchema, email: brand.owner_email) do
-      %UserSchema{} = user ->
+    case BrandSeedQueries.user_by_email(brand.owner_email) do
+      %Auth.UserSchema{} = user ->
         mark_ready(user, brand)
         user
 
@@ -107,22 +112,21 @@ defmodule Tymeslot.BrandSeed do
   end
 
   defp mark_ready(user, brand) do
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    now = DateTime.utc_now(:second)
 
-    user
-    |> Ecto.Changeset.change(%{
+    BrandSeedQueries.mark_ready(user, %{
       verified_at: user.verified_at || now,
       onboarding_completed_at: user.onboarding_completed_at || now,
       is_admin: user.is_admin || brand.house_brand
     })
-    |> Repo.update()
   end
 
   defp profile_fields(profile, brand) do
     {:ok, profile} =
-      profile
-      |> ProfileSchema.basic_changeset(%{full_name: brand.owner_name, timezone: brand.timezone})
-      |> Repo.update()
+      BrandSeedQueries.update_profile(profile, %{
+        full_name: brand.owner_name,
+        timezone: brand.timezone
+      })
 
     {:ok, profile} = ProfileQueries.update_username(profile, brand.username)
 
@@ -151,8 +155,8 @@ defmodule Tymeslot.BrandSeed do
 
     if profile.avatar in [nil, ""] and File.exists?(path) do
       case Avatars.update_avatar(profile, %{path: path, client_name: "markus-froehlich.jpg"}) do
-        {:ok, _} -> :ok
-        other -> Logger.warning("avatar not stored: #{inspect(other)}")
+        {:ok, _unused} -> :ok
+        other -> Logger.warning("avatar not stored", reason: LogFormat.reason(other))
       end
     end
   end
@@ -168,7 +172,7 @@ defmodule Tymeslot.BrandSeed do
       "radius" => "soft"
     })
   rescue
-    error -> Logger.warning("theme defaults kept: #{Exception.message(error)}")
+    error -> Logger.warning("theme defaults kept", error: Exception.message(error))
   end
 
   defp hours(profile, brand) do
@@ -199,9 +203,7 @@ defmodule Tymeslot.BrandSeed do
   end
 
   defp ensure_event(user, brand, event) do
-    existing =
-      Repo.get_by(MeetingTypeSchema, user_id: user.id, slug: event["slug"]) ||
-        Repo.get_by(MeetingTypeSchema, user_id: user.id, name: event["name"])
+    existing = BrandSeedQueries.meeting_type(user.id, event["slug"], event["name"])
 
     availability = brand.availability || %{}
     location = if brand.house_brand, do: "Google Meet", else: "Video call"
@@ -236,11 +238,15 @@ defmodule Tymeslot.BrandSeed do
       end
 
     case result do
-      {:ok, _} ->
+      {:ok, _unused} ->
         :ok
 
       other ->
-        Logger.error("meeting type not saved: #{inspect(other)}", slug: event["slug"])
+        Logger.error("meeting type not saved",
+          slug: event["slug"],
+          reason: LogFormat.reason(other)
+        )
+
         other
     end
   end
@@ -260,10 +266,7 @@ defmodule Tymeslot.BrandSeed do
   end
 
   defp hide_blank_slugs(user) do
-    from(m in MeetingTypeSchema,
-      where: m.user_id == ^user.id and (is_nil(m.slug) or m.slug == "")
-    )
-    |> Repo.update_all(set: [is_active: false])
+    BrandSeedQueries.deactivate_blank_slugs(user.id)
   end
 
   defp maybe_calendar(user, brand) do
@@ -281,7 +284,7 @@ defmodule Tymeslot.BrandSeed do
     end
   rescue
     error ->
-      Logger.warning("demo calendar skipped: #{Exception.message(error)}", brand: brand.key)
+      Logger.warning("demo calendar skipped", brand: brand.key, error: Exception.message(error))
   end
 
   defp maybe_webhook(user, brand) do
@@ -289,45 +292,39 @@ defmodule Tymeslot.BrandSeed do
 
     case System.get_env(env) do
       url when is_binary(url) and url != "" ->
-        Tymeslot.Webhooks.create_webhook(user.id, %{
+        Webhooks.create_webhook(user.id, %{
           name: "Bookings",
           url: url,
           events: ["booking.created"]
         })
 
-      _ ->
+      _unused ->
         :ok
     end
   rescue
-    error -> Logger.warning("webhook not created: #{Exception.message(error)}")
+    error -> Logger.warning("webhook not created", error: Exception.message(error))
   end
 
   defp persist_document(brand) do
     path = Path.join(Application.app_dir(:tymeslot, "priv/brands"), brand.key <> ".json")
 
     with {:ok, body} <- File.read(path),
-         {:ok, _} <-
-           Repo.query(
-             """
-             insert into tenant_brands (key, document, inserted_at, updated_at)
-             values ($1, $2::jsonb, now(), now())
-             on conflict (key) do nothing
-             """,
-             [brand.key, body]
-           ) do
+         {:ok, _stored} <- BrandSeedQueries.insert_document(brand.key, body) do
       :ok
     else
-      _ -> :ok
+      _reason -> :ok
     end
   rescue
-    _ -> :ok
+    error ->
+      Logger.warning("brand document not stored", error: Exception.message(error))
+      :ok
   end
 
   defp deliver_sample(brand) do
     Brands.bind(brand)
 
     mjml =
-      Tymeslot.Emails.Shared.Layouts.system_layout(
+      Layouts.system_layout(
         "<mj-text>Your time is confirmed. A calendar invitation is attached to the real booking mail.</mj-text>",
         intent: :confirmed,
         eyebrow: "Confirmed",
@@ -336,7 +333,7 @@ defmodule Tymeslot.BrandSeed do
         preview: "Your time is confirmed."
       )
 
-    html = Tymeslot.Emails.Shared.MjmlEmail.compile_mjml(mjml)
+    html = MjmlEmail.compile_mjml(mjml)
 
     text = """
     You are booked.
@@ -345,32 +342,29 @@ defmodule Tymeslot.BrandSeed do
     """
 
     email =
-      Swoosh.Email.new()
-      |> Swoosh.Email.to({"Guest", "guest@example.com"})
-      |> Swoosh.Email.from(
-        {Tymeslot.Emails.Shared.MjmlEmail.fetch_from_name(),
-         Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()}
-      )
-      |> Swoosh.Email.subject("Confirmed: #{brand.name}")
-      |> Swoosh.Email.html_body(html)
-      |> Swoosh.Email.text_body(text)
-      |> Tymeslot.Emails.Shared.MjmlEmail.attach_logo()
+      Email.new()
+      |> Email.to({"Guest", "guest@example.com"})
+      |> Email.from({MjmlEmail.fetch_from_name(), MjmlEmail.fetch_from_email()})
+      |> Email.subject("Confirmed: #{brand.name}")
+      |> Email.html_body(html)
+      |> Email.text_body(text)
+      |> MjmlEmail.attach_logo()
 
-    case Tymeslot.Emails.Delivery.deliver(email) do
-      {:ok, _} ->
+    case Delivery.deliver(email) do
+      {:ok, _unused} ->
         assert_private!(brand, html <> text)
         Logger.info("sample mail accepted", brand: brand.key)
 
       other ->
-        Logger.error("sample mail failed: #{inspect(other)}", brand: brand.key)
+        Logger.error("sample mail failed", brand: brand.key, reason: LogFormat.reason(other))
     end
 
     ics =
-      Tymeslot.Integrations.Calendar.IcsGenerator.generate_ics(%{
+      IcsGenerator.generate_ics(%{
         title: "Intro call",
         description: "A short first call.",
-        start_time: DateTime.utc_now() |> DateTime.truncate(:second),
-        end_time: DateTime.utc_now() |> DateTime.add(1800, :second) |> DateTime.truncate(:second),
+        start_time: DateTime.utc_now(:second),
+        end_time: DateTime.add(DateTime.utc_now(:second), 1800, :second),
         organizer_name: brand.owner_name,
         organizer_email: brand.owner_email,
         organizer_user_id: nil,
@@ -400,12 +394,12 @@ defmodule Tymeslot.BrandSeed do
   end
 
   defp password_for(%{house_brand: true}), do: password("SPV_OWNER_PASSWORD")
-  defp password_for(_), do: password("NEUTRAL_OWNER_PASSWORD")
+  defp password_for(_unused), do: password("NEUTRAL_OWNER_PASSWORD")
 
   defp password(env) do
     case System.get_env(env) do
       value when is_binary(value) and byte_size(value) >= 12 -> value
-      _ -> Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
+      _unused -> Base.url_encode64(:crypto.strong_rand_bytes(18), padding: false)
     end
   end
 

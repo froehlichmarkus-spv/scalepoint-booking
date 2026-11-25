@@ -6,6 +6,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Ecto.UUID
+  alias Tymeslot.Brands
   alias Tymeslot.CustomFields.AnswerRenderer
   alias Tymeslot.Emails.Shared.BookingRequestLocation
   alias Tymeslot.Integrations.Calendar.ICalBuilder.ContentLines
@@ -110,7 +111,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     |> build_series_attachment(:cancel, locale, filename)
   end
 
-  defp build_series_attachment([{first, _} | _] = sessions, method, locale, filename) do
+  defp build_series_attachment([{first, _detail} | _rest] = sessions, method, locale, filename) do
     brand_of(first)
 
     ics_content =
@@ -118,7 +119,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
         sessions
         |> Enum.map(fn {details, sequence} -> {build_event(details), sequence} end)
         |> render_vcalendar(method)
-        |> Tymeslot.Brands.scrub()
+        |> Brands.scrub()
       end)
 
     calendar_attachment(ics_content, filename)
@@ -151,7 +152,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
       [{build_event(meeting_details), sequence}]
       |> render_vcalendar(method)
-      |> Tymeslot.Brands.scrub()
+      |> Brands.scrub()
     end)
   end
 
@@ -175,11 +176,11 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
 
   defp ics_uid(uid) do
     domain =
-      case Tymeslot.Brands.current() do
-        %{sender_email: email} when is_binary(email) ->
-          email |> String.split("@") |> List.last()
+      case Brands.current() do
+        %{hosts: [host | _rest]} when is_binary(host) and host != "" ->
+          host |> String.split(":") |> hd()
 
-        _ ->
+        _brand ->
           Application.get_env(:tymeslot, :email)[:domain]
       end
 
@@ -188,9 +189,9 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
 
   defp prodid do
     name =
-      case Tymeslot.Brands.current() do
+      case Brands.current() do
         %{name: name} when is_binary(name) and name != "" -> name
-        _ -> "Scheduler"
+        _unused -> "Scheduler"
       end
 
     safe = name |> String.replace(~r/[^A-Za-z0-9 ._-]/, "") |> String.trim()
@@ -199,11 +200,11 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
 
   defp brand_of(meeting_details) do
     brand =
-      Tymeslot.Brands.for_user_id(Map.get(meeting_details, :organizer_user_id)) ||
-        Tymeslot.Brands.current() ||
-        Tymeslot.Brands.neutral_default()
+      Brands.for_user_id(Map.get(meeting_details, :organizer_user_id)) ||
+        Brands.current() ||
+        Brands.neutral_default()
 
-    Tymeslot.Brands.bind(brand)
+    Brands.bind(brand)
   end
 
   # An all-day event has dates and no instants: RFC 5545 §3.3.4 date-only
@@ -221,7 +222,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     end
   end
 
-  # the scheduler emails always advertise METHOD:PUBLISH (not REQUEST/CANCEL). The
+  # Tymeslot emails always advertise METHOD:PUBLISH (not REQUEST/CANCEL). The
   # organiser's calendar is already updated via the CalDAV/OAuth write path and
   # attendee RSVP is handled by booking URLs in the email body — iTIP on the
   # wire would cause recipient-side mail servers (Zimbra, Nextcloud/Sabre,
@@ -341,16 +342,13 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
   defp status_for(_method, status), do: status
 
   defp format_organizer(meeting_details) do
-    brand = Tymeslot.Brands.current() || Tymeslot.Brands.neutral_default()
-    organizer_name = Map.get(meeting_details, :organizer_name) || brand.sender_name
+    brand = Brands.current() || Brands.neutral_default()
+    organizer_name = Map.get(meeting_details, :organizer_name)
 
     organizer_email =
-      brand.sender_email ||
-        Map.get(
-          meeting_details,
-          :organizer_email,
-          Application.get_env(:tymeslot, :email)[:from_email]
-        )
+      Map.get(meeting_details, :organizer_email) ||
+        brand.sender_email ||
+        Application.get_env(:tymeslot, :email)[:from_email]
 
     "SCHEDULE-AGENT=CLIENT#{cn_param(organizer_name)}:mailto:" <>
       Format.sanitize_ical_value(organizer_email)
@@ -441,7 +439,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     with url when is_binary(url) <- Application.get_env(:tymeslot, :ics_branding_url),
          true <- Payments.show_branding?(Map.get(meeting_details, :organizer_user_id)) do
       dgettext("emails", "Scheduled with %{brand}: %{url}",
-        brand: (Tymeslot.Brands.current() || Tymeslot.Brands.neutral_default()).name,
+        brand: (Brands.current() || Brands.neutral_default()).name,
         url: url
       )
     else

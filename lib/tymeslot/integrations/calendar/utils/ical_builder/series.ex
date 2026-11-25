@@ -250,7 +250,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Series do
 
   @doc """
   A new identifier for a copy of the series in `document`, to `reuid/2` it
-  with: marked as the scheduler's only when the series it copies is, so a copy
+  with: marked as Tymeslot's only when the series it copies is, so a copy
   of somebody else's series stays theirs on the next sync.
   """
   @spec successor_uid(String.t()) :: String.t()

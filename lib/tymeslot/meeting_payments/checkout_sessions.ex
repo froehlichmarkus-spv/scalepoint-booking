@@ -412,7 +412,7 @@ defmodule Tymeslot.MeetingPayments.CheckoutSessions do
   end
 
   @doc """
-  Maps a the scheduler attendee locale to the closest Stripe-supported locale.
+  Maps a Tymeslot attendee locale to the closest Stripe-supported locale.
   Stripe accepts `auto` plus a curated list; we expose just the locales the
   app currently ships with.
   """

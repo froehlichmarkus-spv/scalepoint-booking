@@ -828,13 +828,13 @@ msgstr "Diese Buchung kann nicht mehr auf die Zeit im Kalender verschoben werden
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is still updating your calendar for this booking. Please try again in a moment."
-msgstr "the scheduler aktualisiert gerade Ihren Kalender für diese Buchung. Bitte versuchen Sie es in einem Moment erneut."
+msgid "Tymeslot is still updating your calendar for this booking. Please try again in a moment."
+msgstr "Tymeslot aktualisiert gerade Ihren Kalender für diese Buchung. Bitte versuchen Sie es in einem Moment erneut."
 
 #: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Your calendar now has this meeting at %{time}. the scheduler will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
-msgstr "In Ihrem Kalender liegt dieser Termin jetzt auf %{time}. the scheduler verschiebt die Buchung dorthin, plant die Erinnerungen neu und informiert %{attendee_name} sowie alle Gäste per E-Mail über den neuen Zeitpunkt."
+msgid "Your calendar now has this meeting at %{time}. Tymeslot will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
+msgstr "In Ihrem Kalender liegt dieser Termin jetzt auf %{time}. Tymeslot verschiebt die Buchung dorthin, plant die Erinnerungen neu und informiert %{attendee_name} sowie alle Gäste per E-Mail über den neuen Zeitpunkt."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
@@ -843,8 +843,8 @@ msgstr "Der Termin wurde in Ihrem Kalender erneut verschoben. Prüfen Sie den ne
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not move this booking. Please try again."
-msgstr "the scheduler konnte diese Buchung nicht verschieben. Bitte versuchen Sie es erneut."
+msgid "Tymeslot could not move this booking. Please try again."
+msgstr "Tymeslot konnte diese Buchung nicht verschieben. Bitte versuchen Sie es erneut."
 
 #: lib/tymeslot_web/components/dashboard/meetings/host_move_modal.ex
 #, elixir-autogen, elixir-format

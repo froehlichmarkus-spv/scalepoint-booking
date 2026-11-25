@@ -1,7 +1,7 @@
 defmodule Tymeslot.Agenda do
   @moduledoc """
   Builds the dashboard agenda: a merged, deduplicated view of the user's
-  upcoming the scheduler bookings and synced external calendar events.
+  upcoming Tymeslot bookings and synced external calendar events.
 
   The result (`Agenda.Day`) surfaces the next appointment as a hero and groups
   the rest into Today and Tomorrow, all in the user's timezone. This is a
@@ -91,7 +91,7 @@ defmodule Tymeslot.Agenda do
   end
 
   # Bookings synced to the calendar reappear as provider events; dedup on the
-  # shared identifier so the (richer) the scheduler copy is the one we keep. Matched
+  # shared identifier so the (richer) Tymeslot copy is the one we keep. Matched
   # against every booking the user organises, not only the confirmed ones
   # listed above: a booking held back by a pending reschedule request, or past
   # the listing's limit, still has its event in the calendar and is not an

@@ -3,7 +3,7 @@ defmodule Tymeslot.Meetings.MeetingCalendarQueries do
   Database queries for calendar integration lookups and sync-status management.
 
   Handles finding meetings by external provider identifiers and updating the
-  `calendar_sync_status` field that tracks divergence between the scheduler and an
+  `calendar_sync_status` field that tracks divergence between Tymeslot and an
   external calendar provider.
   """
 

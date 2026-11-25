@@ -531,7 +531,7 @@ defmodule Tymeslot.Workers.VideoSyncWorker do
   # The provider refused the stored credentials and has flagged the integration
   # for reconnection. Retrying would replay a guaranteed refusal, and on a
   # self-hosted server such as Nextcloud each refusal also counts against the
-  # server's brute-force protection for the scheduler's address.
+  # server's brute-force protection for Tymeslot's address.
   defp handle_result({:error, :unauthorized}, action, target, _executions) do
     Logger.error(
       "Video provider refused the stored credentials, discarding job",

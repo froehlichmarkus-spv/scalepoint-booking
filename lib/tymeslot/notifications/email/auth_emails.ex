@@ -16,6 +16,7 @@ defmodule Tymeslot.Notifications.Email.AuthEmails do
   # A newer request replaced the token, or the user is gone. An unreadable link
   # is recorded.
   @verification_superseded "Verification token superseded by a newer request"
+  @already_verified "Account is already verified"
   @reset_superseded "Reset token superseded by a newer request"
   @invitation_superseded "Invitation superseded, accepted or revoked"
   @email_change_superseded "Email change token superseded or revoked"
@@ -31,6 +32,7 @@ defmodule Tymeslot.Notifications.Email.AuthEmails do
     do:
       reason in [
         @verification_superseded,
+        @already_verified,
         @reset_superseded,
         @invitation_superseded,
         @email_change_superseded,
@@ -40,16 +42,32 @@ defmodule Tymeslot.Notifications.Email.AuthEmails do
   @spec handle_email_verification(%{String.t() => term()}) ::
           :ok | {:error, term()} | {:discard, String.t()}
   def handle_email_verification(%{"user_id" => user_id} = args) do
-    with {:ok, verification_url} <- fetch_link(args, "verification_url"),
-         {:ok, user} <- fetch_user(user_id, "email verification") do
+    with {:ok, user} <- fetch_user(user_id, "email verification") do
+      if verified?(user) do
+        Logger.info("Skipping verification email for an already verified account",
+          user_id: user_id
+        )
+
+        {:discard, @already_verified}
+      else
+        send_unless_superseded(user, args)
+      end
+    end
+  end
+
+  defp send_unless_superseded(user, args) do
+    with {:ok, verification_url} <- fetch_link(args, "verification_url") do
       if token_superseded?(args, user.verification_token) do
-        Logger.info("Skipping superseded email verification job", user_id: user_id)
+        Logger.info("Skipping superseded email verification job", user_id: user.id)
         {:discard, @verification_superseded}
       else
         deliver_email_verification(user, verification_url)
       end
     end
   end
+
+  defp verified?(%{verified_at: %DateTime{}}), do: true
+  defp verified?(_user), do: false
 
   defp deliver_email_verification(user, verification_url) do
     case Config.email_service_module().send_email_verification(user, verification_url) do

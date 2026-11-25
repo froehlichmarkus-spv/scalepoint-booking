@@ -57,7 +57,7 @@ defmodule Tymeslot.Integrations.Calendar.Blocking do
 
   @typedoc """
   What the owner lets a calendar do: nothing (`:off`, not selected), appear
-  in the scheduler without taking slots (`:show`), or appear and take slots
+  in Tymeslot without taking slots (`:show`), or appear and take slots
   (`:block`).
   """
   @type state :: :off | :show | :block

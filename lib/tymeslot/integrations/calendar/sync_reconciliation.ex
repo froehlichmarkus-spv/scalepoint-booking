@@ -6,7 +6,7 @@ defmodule Tymeslot.Integrations.Calendar.SyncReconciliation do
   through `Tymeslot.Integrations.Calendar.Sync`, once its cache write has
   committed: `post_commit_reconciliation/2` for created and updated events,
   `reconcile_deletions/3` for deleted ones. Both are provider-agnostic and
-  look up linked the scheduler meetings by every identifier an event carries.
+  look up linked Tymeslot meetings by every identifier an event carries.
 
   The meeting-side consequences of a detected change (sync-status updates,
   auto-cancellation, host notifications) belong to the Meetings context and
@@ -107,7 +107,7 @@ defmodule Tymeslot.Integrations.Calendar.SyncReconciliation do
       meeting ->
         case TimingChange.classify(meeting, cal_event, host_zone) do
           :moved ->
-            # A the scheduler write to the event that finished at or after the
+            # A Tymeslot write to the event that finished at or after the
             # event's `synced_at` may be missing from it. The Outlook sweep and
             # re-bootstrap stamp `synced_at` with when their read began; other
             # paths stamp it just after the read, leaving only the read itself
@@ -145,7 +145,7 @@ defmodule Tymeslot.Integrations.Calendar.SyncReconciliation do
 
   @doc """
   Removes externally deleted provider events from the local cache and
-  reconciles any linked the scheduler meetings.
+  reconciles any linked Tymeslot meetings.
 
   This is the deletion-side counterpart of `Tymeslot.Integrations.Calendar.Sync.persist_normalised_events/2` —
   the single primitive all sync workers use when a provider reports deleted

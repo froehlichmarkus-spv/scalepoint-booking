@@ -584,8 +584,8 @@ msgstr "Usado"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Cada enlace sirve para reservar una cita. the scheduler no envía ningún correo: copia el enlace y envíalo tú."
+msgid "Each link books one appointment. Tymeslot sends no email: copy the link and send it yourself."
+msgstr "Cada enlace sirve para reservar una cita. Tymeslot no envía ningún correo: copia el enlace y envíalo tú."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format

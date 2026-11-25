@@ -98,7 +98,7 @@ defmodule Tymeslot.Integrations.Calendar.Runtime.ClientManager do
   write to.
 
   A read-only calendar the organiser selected gets a read client so that its
-  events block time, but an event the scheduler wrote can never be in it, so a
+  events block time, but an event Tymeslot wrote can never be in it, so a
   search for one leaves it out.
   """
   @spec writable_clients_for_integration(map()) :: [client()]

@@ -85,8 +85,8 @@ msgstr "Chiudi"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "Configura in the scheduler"
+msgid "Configure in Tymeslot"
+msgstr "Configura in Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_form_component.ex
 #, elixir-autogen, elixir-format
@@ -95,8 +95,8 @@ msgstr "Configura le informazioni di base del tuo webhook."
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Collega the scheduler a n8n, Zapier, Make o ai tuoi flussi di lavoro di automazione personalizzati"
+msgid "Connect Tymeslot to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Collega Tymeslot a n8n, Zapier, Make o ai tuoi flussi di lavoro di automazione personalizzati"
 
 #: lib/tymeslot_web/live/dashboard/automation/helpers.ex
 #, elixir-autogen, elixir-format

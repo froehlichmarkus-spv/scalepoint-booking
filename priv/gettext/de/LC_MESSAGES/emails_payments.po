@@ -93,8 +93,8 @@ msgstr "Termin:"
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
-msgstr "Sobald Stripe zufrieden ist, aktualisiert sich der Status Ihres Kontos automatisch. Auf Seiten von the scheduler ist nichts weiter nötig."
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
+msgstr "Sobald Stripe zufrieden ist, aktualisiert sich der Status Ihres Kontos automatisch. Auf Seiten von Tymeslot ist nichts weiter nötig."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
@@ -249,8 +249,8 @@ msgstr "Details zur Rückerstattung"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
-msgstr "Erstatten Sie dem Teilnehmer den Betrag über Ihre Zahlungen in the scheduler oder über Ihr Stripe-Dashboard, oder teilen Sie ihm mit, wie es weitergeht."
+msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
+msgstr "Erstatten Sie dem Teilnehmer den Betrag über Ihre Zahlungen in Tymeslot oder über Ihr Stripe-Dashboard, oder teilen Sie ihm mit, wie es weitergeht."
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format

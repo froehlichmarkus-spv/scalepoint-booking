@@ -2,7 +2,7 @@ defmodule Tymeslot.CalendarGrid.BookingEvents do
   @moduledoc """
   Loads the organiser's bookings for a grid window as `BookingEvent` structs.
 
-  This is the calendar grid's native view of the scheduler bookings: it reads
+  This is the calendar grid's native view of Tymeslot bookings: it reads
   through the `Meetings` context and projects each live booking into the
   grid's event shape. Deduplication against provider-synced copies of the
   same bookings happens here so callers get a list that can be concatenated

@@ -76,7 +76,7 @@ defmodule Tymeslot.Emails.EmailScheduler.IntegrationScheduler do
 
   @doc """
   Schedules the email telling an owner that the calendar server no longer has
-  `calendar_names`, so the scheduler has stopped using them.
+  `calendar_names`, so Tymeslot has stopped using them.
 
   Carries no uniqueness of its own: it is inserted in the transaction that
   deselects those calendars, which is the guarantee that one deselection

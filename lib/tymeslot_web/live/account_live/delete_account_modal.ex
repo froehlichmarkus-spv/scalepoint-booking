@@ -5,7 +5,7 @@ defmodule TymeslotWeb.AccountLive.DeleteAccountModal do
   Says plainly what happens before anything is confirmed: with a grace period,
   the date of the deletion, that the account is frozen until then and that
   signing in restores it; without one, that everything goes immediately.
-  Either way, upcoming bookings are deleted from the scheduler, guests are not
+  Either way, upcoming bookings are deleted from Tymeslot, guests are not
   notified, and existing calendar events and video links stay as they are.
 
   A password account confirms with its current password, an account without

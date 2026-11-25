@@ -60,7 +60,7 @@ defmodule TymeslotWeb.Layouts do
   scheduling page.
 
   Resolves in layers: the organiser's uploaded profile photo → a neutral
-  default avatar → the the scheduler brand card. The brand card is a defensive
+  default avatar → the Tymeslot brand card. The brand card is a defensive
   fallback used only when there is no organiser context (e.g. error pages).
   """
   @spec booking_og_image(map()) :: String.t()

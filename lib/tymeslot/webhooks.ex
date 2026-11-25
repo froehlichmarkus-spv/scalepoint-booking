@@ -165,15 +165,15 @@ defmodule Tymeslot.Webhooks do
     with {:ok, webhook} <- WebhookQueries.get_webhook(id, user_id), do: fun.(webhook)
   end
 
-  @signature_header "X-the scheduler-Signature"
+  @signature_header "X-Tymeslot-Signature"
 
   @doc """
   Builds the standard headers for a webhook request whose body is `body`, the
   exact bytes that will be posted.
 
-  With a token, the request carries it in `X-the scheduler-Token` and is signed in
-  `X-the scheduler-Signature` (see `sign/3`), so a receiver can check that the body
-  and timestamp it got are the ones the scheduler sent. The token header is kept
+  With a token, the request carries it in `X-Tymeslot-Token` and is signed in
+  `X-Tymeslot-Signature` (see `sign/3`), so a receiver can check that the body
+  and timestamp it got are the ones Tymeslot sent. The token header is kept
   for receivers that only compare the token.
   """
   @spec build_headers(binary(), String.t() | nil) :: [{String.t(), String.t()}]
@@ -182,13 +182,13 @@ defmodule Tymeslot.Webhooks do
 
     base_headers = [
       {"Content-Type", "application/json"},
-      {"User-Agent", "the scheduler-Webhooks/1.0"},
-      {"X-the scheduler-Timestamp", DateTime.to_iso8601(now)}
+      {"User-Agent", "Tymeslot-Webhooks/1.0"},
+      {"X-Tymeslot-Timestamp", DateTime.to_iso8601(now)}
     ]
 
     if token do
       [
-        {"X-the scheduler-Token", token},
+        {"X-Tymeslot-Token", token},
         {@signature_header, sign(token, DateTime.to_unix(now), body)}
         | base_headers
       ]
@@ -198,7 +198,7 @@ defmodule Tymeslot.Webhooks do
   end
 
   @doc """
-  Returns the `X-the scheduler-Signature` value for `body` sent at `timestamp`
+  Returns the `X-Tymeslot-Signature` value for `body` sent at `timestamp`
   (Unix seconds): `t=<timestamp>,v1=<signature>`, where the signature is the
   lowercase hex HMAC-SHA256 of `"<timestamp>.<body>"` keyed with the webhook
   token.

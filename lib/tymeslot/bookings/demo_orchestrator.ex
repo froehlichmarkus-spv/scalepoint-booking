@@ -256,7 +256,7 @@ defmodule Tymeslot.Bookings.DemoOrchestrator do
     %{
       uid: uid,
       title: demo_meeting_title(organizer, validated_data["name"]),
-      summary: "#{meeting_params.duration}-minute meeting scheduled via the scheduler",
+      summary: "#{meeting_params.duration}-minute meeting scheduled via Tymeslot",
       start_time: start_time,
       end_time: end_time,
       duration: meeting_params.duration,

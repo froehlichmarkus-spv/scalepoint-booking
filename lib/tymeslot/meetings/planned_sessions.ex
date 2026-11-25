@@ -112,7 +112,7 @@ defmodule Tymeslot.Meetings.PlannedSessions do
 
   `:registration_closes_at` is optional; when given it must lie in the
   future and not after the start. The session must not overlap another of
-  the host's the scheduler bookings, but the host's booking limits do not apply:
+  the host's Tymeslot bookings, but the host's booking limits do not apply:
   they meter bookings people make, and this is the host's own plan.
 
   Once it is stored, its calendar event, reminders and video room are

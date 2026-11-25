@@ -123,7 +123,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Properties do
 
   # RFC 5545 §3.8.1.1 — one `ATTACH` line per file, as a URI reference (not
   # inline binary, which would bloat the payload). `FMTTYPE` carries the MIME
-  # type when known. Hosted at a the scheduler `/uploads/...` URL.
+  # type when known. Hosted at a Tymeslot `/uploads/...` URL.
   @spec build_attachment_lines(map()) :: String.t() | nil
   def build_attachment_lines(%{attachments: attachments}) when is_list(attachments) do
     lines =
@@ -361,7 +361,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Properties do
   defp format_attendee(_other, _mode), do: nil
 
   # PARTSTAT=NEEDS-ACTION is the honest starting state: the attendee booked
-  # through the scheduler, which is not an RSVP to this calendar entry. RSVP=FALSE
+  # through Tymeslot, which is not an RSVP to this calendar entry. RSVP=FALSE
   # says not to chase one, since the server was just told not to send the
   # invitation that would ask.
   defp attendee_property(email, name, :attendee) do

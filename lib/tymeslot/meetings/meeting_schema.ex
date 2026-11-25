@@ -133,7 +133,7 @@ defmodule Tymeslot.Meetings.MeetingSchema do
 
   schema "meetings" do
     # `uid` is the booking's bearer capability: the cancel and reschedule links
-    # are built from it, so it must never leave the scheduler except in those links.
+    # are built from it, so it must never leave Tymeslot except in those links.
     # `calendar_uid` is what the booking is called in external calendars (the
     # event UID written to the organiser's calendar and to the attendee's
     # `.ics`), and grants nothing. Every calendar create, match, update and

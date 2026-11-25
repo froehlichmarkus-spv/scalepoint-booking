@@ -95,7 +95,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.Provider do
   `ProviderConfig.read_only?/1` no longer names this provider.
 
   A written item is addressed afterwards by the **item id the server assigned**,
-  never by a uid the scheduler chose: EWS ignores a `t:UID` sent on create. So
+  never by a uid Tymeslot chose: EWS ignores a `t:UID` sent on create. So
   `create_event/2` answers a `CreatedEvent` carrying that id as its
   `provider_event_id` and no iCalendar uid at all, which
   `Meetings.CalendarEventSync` persists as the meeting's `provider_event_id`

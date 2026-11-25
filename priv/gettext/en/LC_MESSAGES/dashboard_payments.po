@@ -122,7 +122,7 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+msgid "Disconnect your Stripe account from Tymeslot? Existing payments remain visible, but new paid bookings will fail until you reconnect."
 msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/status_card.ex
@@ -315,7 +315,7 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
 #, elixir-autogen, elixir-format
-msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
+msgid "The attendee receives the full amount you refund. Tymeslot's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
 msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
@@ -501,12 +501,12 @@ msgstr ""
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account is already connected to another the scheduler account."
+msgid "That Stripe account is already connected to another Tymeslot account."
 msgstr ""
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
+msgid "That Stripe account uses a currency Tymeslot doesn't support for payments yet."
 msgstr ""
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex

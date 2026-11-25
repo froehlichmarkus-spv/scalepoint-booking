@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Calendar.RemovedCalendar do
   @moduledoc """
-  A calendar the scheduler stopped using because the calendar server no longer
+  A calendar Tymeslot stopped using because the calendar server no longer
   has it, kept on its integration (`removed_calendars`) until the owner
   dismisses the notice. See `Tymeslot.Integrations.Calendar.RemovedCalendars`.
 

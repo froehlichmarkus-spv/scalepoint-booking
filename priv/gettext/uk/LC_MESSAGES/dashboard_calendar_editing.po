@@ -753,8 +753,8 @@ msgstr "Ваш календар потрібно перепідключити. �
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Немає (лише the scheduler)"
+msgid "None (Tymeslot only)"
+msgstr "Немає (лише Tymeslot)"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
@@ -862,7 +862,7 @@ msgstr "Колір"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a Tymeslot meeting."
 msgstr "Додайте гостя, щоб надіслати зустріч Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/transfer.ex

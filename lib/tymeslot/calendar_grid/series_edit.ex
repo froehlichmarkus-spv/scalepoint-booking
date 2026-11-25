@@ -319,7 +319,7 @@ defmodule Tymeslot.CalendarGrid.SeriesEdit do
   defp count_what_is_left(_scope, _stored, changes, _opts), do: {:ok, changes}
 
   # A row naming its master is one instance of it; a master's own row (a
-  # series the scheduler created) is the series, and keeps its rule.
+  # series Tymeslot created) is the series, and keeps its rule.
   defp instance_payload(payload, %{recurring_event_id: master_id})
        when is_binary(master_id) and master_id != "",
        do: Map.drop(payload, @series_only_fields)
@@ -480,7 +480,7 @@ defmodule Tymeslot.CalendarGrid.SeriesEdit do
   # The write addressed the series, so its address is known; it is read again
   # here rather than threaded through, from the same row.
   #
-  # What only the scheduler knows of the series, its video and the organiser's
+  # What only Tymeslot knows of the series, its video and the organiser's
   # colours, is read before the rows go and carried to the series as the
   # write left it (`SeriesCarry`), for the sync to find.
   defp resync_series(user_id, %{calendar_integration_id: integration_id} = stored, write) do

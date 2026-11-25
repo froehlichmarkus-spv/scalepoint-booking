@@ -2,8 +2,8 @@ defmodule TymeslotWeb.Dashboard.Calendar.TreatAs do
   @moduledoc """
   The preview's "Treat as Busy | Free" for an all-day event on a read-only
   calendar (a holiday from a feed, a colleague's away day): a choice kept in
-  the scheduler that decides whether guests can book that day, and never changes
-  the calendar. On a calendar the scheduler can write to, the preview's own
+  Tymeslot that decides whether guests can book that day, and never changes
+  the calendar. On a calendar Tymeslot can write to, the preview's own
   "Show as Busy | Free" changes the event itself, which bookings follow, so
   this control is not offered there.
 
@@ -188,7 +188,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.TreatAs do
       <p class="text-token-xs text-tymeslot-500">
         {dgettext(
           "dashboard_calendar_booking",
-          "Affects the scheduler bookings only. Your calendar doesn't change."
+          "Affects Tymeslot bookings only. Your calendar doesn't change."
         )}
       </p>
     </div>

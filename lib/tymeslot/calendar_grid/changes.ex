@@ -78,7 +78,7 @@ defmodule Tymeslot.CalendarGrid.Changes do
   defdelegate ensure_video_changeable(event), to: EventVideo
 
   @doc """
-  Deletes an event from its calendar, cancels the the scheduler meeting it was
+  Deletes an event from its calendar, cancels the Tymeslot meeting it was
   booked as, and removes its cached row; for a member of a series, `scope`
   says whether one occurrence or the whole series goes. See
   `Tymeslot.CalendarGrid.EventDeletion.delete_event/4`, also for `opts`.

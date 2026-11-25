@@ -6,7 +6,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewForm do
   The Create button names what it will do: "Create and invite" when the
   draft has guests, who are emailed once it is created.
 
-  With a guest, the form offers to send the draft as a the scheduler meeting
+  With a guest, the form offers to send the draft as a Tymeslot meeting
   (`PanelMeetingFields`, `PanelMeeting`). A meeting has times, is busy and
   takes its place from its own fields, so All day, Show as, Place and the
   event's reminders (`PanelNewReminders`) give way to the meeting's fields
@@ -17,8 +17,8 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewForm do
   its start, or one set in the repeat editor behind Custom…, so the series
   is created at once.
 
-  Without a calendar to write to, only a the scheduler meeting can be made: its
-  calendar is none (the scheduler only), Repeat, which only an event has, gives
+  Without a calendar to write to, only a Tymeslot meeting can be made: its
+  calendar is none (Tymeslot only), Repeat, which only an event has, gives
   way, and for anything else Create is off beside a note that says why.
 
   Without guests, and on a plan with group bookings, it offers to make the
@@ -73,7 +73,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewForm do
           assigns.calendar_choices != [] and
             PanelGroupEvent.offered?(assigns.group_allowed, assigns.values),
         timed: PanelMeeting.on?(assigns.values) or group,
-        # Without a calendar to write to only a the scheduler meeting can be made.
+        # Without a calendar to write to only a Tymeslot meeting can be made.
         blocked: assigns.calendar_choices == [] and not PanelMeeting.on?(assigns.values)
       )
 

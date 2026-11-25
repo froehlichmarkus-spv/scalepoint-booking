@@ -86,7 +86,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
       ])
 
     String.trim("""
-    <!-- the scheduler Inline -->
+    <!-- Tymeslot Inline -->
     <div id="tymeslot-booking" data-username="#{username}"#{attrs}></div>
     <script src="#{base_url}/embed.js" async></script>
     """)
@@ -106,7 +106,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
     # and never sees a native dialog. With the script present the click opens
     # the modal instead.
     String.trim("""
-    <!-- the scheduler Popup -->
+    <!-- Tymeslot Popup -->
     <a href="#{href}" target="_blank" rel="noopener" onclick="if(window.TymeslotBooking){event.preventDefault();TymeslotBooking.open('#{username}'#{js_options})}">#{label}</a>
     <script src="#{base_url}/embed.js" async></script>
     """)
@@ -131,7 +131,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
     js_options = build_js_options(options)
 
     String.trim("""
-    <!-- the scheduler Floating Button -->
+    <!-- Tymeslot Floating Button -->
     <script src="#{base_url}/embed.js" async></script>
     <script>
       (function() {

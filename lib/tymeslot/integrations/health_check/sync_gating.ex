@@ -16,7 +16,7 @@ defmodule Tymeslot.Integrations.HealthCheck.SyncGating do
   The threshold is configurable via
   `config :tymeslot, :sync_pause_hard_failure_threshold`. Default: 10.
   A 30-minute health check cadence turns 10 failures into roughly five hours
-  of wasted retries before the scheduler backs off — short enough that users
+  of wasted retries before Tymeslot backs off — short enough that users
   notice quickly, long enough that a transient outage misclassified as hard
   doesn't halt sync for hours.
   """

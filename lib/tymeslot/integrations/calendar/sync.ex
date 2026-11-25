@@ -10,7 +10,7 @@ defmodule Tymeslot.Integrations.Calendar.Sync do
   `post_commit_reconciliation/2`, separately. The full-refresh and
   drop-role functions cover the reads that replace a whole calendar's rows.
 
-  Reconciling linked the scheduler meetings with what the provider now shows
+  Reconciling linked Tymeslot meetings with what the provider now shows
   (time changes and deletions) lives in
   `Tymeslot.Integrations.Calendar.SyncReconciliation`; this module keeps
   delegates to it so every worker has one entry point.
@@ -93,7 +93,7 @@ defmodule Tymeslot.Integrations.Calendar.Sync do
   3. Invalidate the user's availability cache so subsequent slot lookups
      reflect the newly persisted events.
   4. Broadcast a cache update so live grids refresh.
-  5. Reconcile any linked the scheduler meetings whose times changed externally.
+  5. Reconcile any linked Tymeslot meetings whose times changed externally.
 
   This function is a convenience wrapper around `upsert_cache/2` and
   `post_commit_reconciliation/2` — callers that need to run the cache
@@ -176,7 +176,7 @@ defmodule Tymeslot.Integrations.Calendar.Sync do
 
   Pure DB write. **No `post_commit_reconciliation/2`, deliberately**, and not
   merely as the read-only-mirror argument `SyncIcsCalendarWorker` makes:
-  reconciliation resolves a vanished event to a the scheduler meeting *by uid*
+  reconciliation resolves a vanished event to a Tymeslot meeting *by uid*
   (`Meetings.ExternalCalendarChanges.find_linked_meeting/3`) and cancels it,
   notifying both parties. Rows written through here can carry a synthesised
   uid, because a busy interval arrives with no identity of any kind, so a uid

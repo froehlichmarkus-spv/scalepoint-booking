@@ -196,21 +196,21 @@ msgstr[2] ""
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "%{account} isn't responding. Its events may be out of date."
-msgstr ""
+msgstr "%{account} isn't responding. Its events may be out of date."
 "Обліковий запис %{account} не відповідає. Його події можуть бути "
 "застарілими."
 
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "%{account} isn't responding. Your change to “%{title}” is saved here and will be sent automatically."
-msgstr ""
+msgstr "%{account} isn't responding. Your change to “%{title}” is saved here and will be sent automatically."
 "Обліковий запис %{account} не відповідає. Вашу зміну в події «%{title}» "
 "збережено тут, і її буде надіслано автоматично."
 
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "%{account} needs you to sign in again. Until you do, its events may be out of date."
-msgstr ""
+msgstr "%{account} needs you to sign in again. Until you do, its events may be out of date."
 "Потрібно знову увійти в обліковий запис %{account}. Доти його події можуть "
 "бути застарілими."
 
@@ -309,7 +309,7 @@ msgstr "Інша подія саме переміщується. Спробуй�
 #: lib/tymeslot_web/live/dashboard/calendar/shortcut_help.ex
 #, elixir-autogen, elixir-format
 msgid "Arrow keys move between events. Press C to add an event at the next free time. Press Enter to open the focused event, E to edit it, and M to move it: arrow keys then shift it, Shift with the arrow keys changes its length, Enter confirms and Escape cancels. Press Delete to delete the event and Ctrl Z (Cmd Z on a Mac) to undo."
-msgstr ""
+msgstr "Arrow keys move between events. Press C to add an event at the next free time. Press Enter to open the focused event, E to edit it, and M to move it: arrow keys then shift it, Shift with the arrow keys changes its length, Enter confirms and Escape cancels. Press Delete to delete the event and Ctrl Z (Cmd Z on a Mac) to undo."
 "Клавіші зі стрілками переходять між подіями. Натисніть C, щоб додати подію "
 "на найближчий вільний час. Натисніть Enter, щоб відкрити вибрану подію, E, "
 "щоб її редагувати, і M, щоб перемістити: тоді стрілки зсувають її, Shift зі "
@@ -525,7 +525,7 @@ msgstr "Перенесено на %{when}"
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
 #, elixir-autogen, elixir-format
 msgid "Moving %{title}, %{when}. Arrow keys move it, Shift with Up or Down changes how long it lasts, Enter saves, Escape cancels."
-msgstr ""
+msgstr "Moving %{title}, %{when}. Arrow keys move it, Shift with Up or Down changes how long it lasts, Enter saves, Escape cancels."
 "Переміщення: %{title}, %{when}. Стрілки переміщують подію, Shift зі стрілкою"
 " вгору або вниз змінює тривалість, Enter зберігає, Esc скасовує."
 
@@ -708,7 +708,7 @@ msgstr "Цей календар не приймає правила повтор�
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This event is moving to another calendar. Please make the change once it has moved."
-msgstr ""
+msgstr "This event is moving to another calendar. Please make the change once it has moved."
 "Ця подія переміщується до іншого календаря. Внесіть зміну, коли переміщення "
 "завершиться."
 
@@ -725,7 +725,7 @@ msgstr "Це бронювання. Перенесіть або скасуйте 
 #: lib/tymeslot_web/live/dashboard/calendar/delete_confirm_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This is the calendar copy of a booking. Deleting it cancels the booking and tells the guest."
-msgstr ""
+msgstr "This is the calendar copy of a booking. Deleting it cancels the booking and tells the guest."
 "Це копія бронювання в календарі. Якщо її видалити, бронювання буде "
 "скасовано, а гість отримає повідомлення."
 
@@ -736,8 +736,8 @@ msgstr "Скасувати вже запізно: подію «%{title}» вже
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Бронювання the scheduler"
+msgid "Tymeslot booking"
+msgstr "Бронювання Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format
@@ -752,14 +752,14 @@ msgstr "Перегляд"
 #: lib/tymeslot_web/live/dashboard/calendar/sync_status.ex
 #, elixir-autogen, elixir-format
 msgid "You've asked for several syncs recently. Try again in a few minutes."
-msgstr ""
+msgstr "You've asked for several syncs recently. Try again in a few minutes."
 "Ви нещодавно запросили кілька синхронізацій. Спробуйте ще раз за кілька "
 "хвилин."
 
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "Your change to “%{title}” is saved here and will be sent to %{account} automatically."
-msgstr ""
+msgstr "Your change to “%{title}” is saved here and will be sent to %{account} automatically."
 "Вашу зміну в події «%{title}» збережено тут, і її буде автоматично надіслано"
 " в обліковий запис %{account}."
 

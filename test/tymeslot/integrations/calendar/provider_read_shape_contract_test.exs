@@ -164,7 +164,8 @@ defmodule Tymeslot.Integrations.Calendar.ProviderReadShapeContractTest do
   end
 
   test "every registered provider's events reach the availability read with their times" do
-    for type <- ProviderRegistry.list_providers() do
+    # Demo never reports busy events, so it has nothing for the read to place.
+    for type <- ProviderRegistry.list_providers(), type != :demo do
       provider = ProviderRegistry.get_provider!(type)
 
       assert violations(provider, answer_for(type)) == [],

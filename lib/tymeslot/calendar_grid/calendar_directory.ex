@@ -5,7 +5,7 @@ defmodule Tymeslot.CalendarGrid.CalendarDirectory do
 
   Only calendars marked `selected` in an account's `calendar_list` appear: an
   unselected calendar is not synced, so it has no events to show or hide.
-  Each row carries its colour token, whether the scheduler can write to it,
+  Each row carries its colour token, whether Tymeslot can write to it,
   whether its busy time blocks the booking page (`Blocking.blocks?/2`, which
   knows an Exchange mailbox's rule), and whether the organiser has hidden it.
   `hidden_count/1` is the number the filter chip shows when the rail is

@@ -211,7 +211,7 @@ defmodule Tymeslot.Integrations.Calendar.Runtime.EventOperations do
   end
 
   # One client per writable calendar the integration reaches, plus the booking
-  # calendar the scheduler writes new events to, which need not be among the
+  # calendar Tymeslot writes new events to, which need not be among the
   # selected ones.
   defp event_clients(integration) do
     booking = ClientManager.get_client_by_integration_id(integration.id, integration.user_id)

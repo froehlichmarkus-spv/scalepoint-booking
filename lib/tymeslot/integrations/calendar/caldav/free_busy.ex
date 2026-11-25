@@ -18,7 +18,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.FreeBusy do
   alias Tymeslot.Integrations.Calendar.CalendarEvent
 
   # Cached periods carry a synthesised uid. The meeting reconciliation
-  # resolves a vanished event to a the scheduler meeting by uid, so the namespace
+  # resolves a vanished event to a Tymeslot meeting by uid, so the namespace
   # must be one no meeting or CalDAV event can produce: none admits a colon.
   @cached_uid_prefix "tymeslot:caldav-busy:"
 

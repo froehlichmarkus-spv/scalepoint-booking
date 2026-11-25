@@ -21,8 +21,8 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.Series.Uid do
   @doc """
   A new uid for a copy of `document`'s series, of the same origin as the
   uid it replaces (`Format.uid_origin/1`). The CalDAV sync reads ownership
-  off the uid alone, so a copy of somebody else's series given a the scheduler
-  uid would be taken for the scheduler's.
+  off the uid alone, so a copy of somebody else's series given a Tymeslot
+  uid would be taken for Tymeslot's.
   """
   @spec successor(String.t()) :: String.t()
   def successor(document) do

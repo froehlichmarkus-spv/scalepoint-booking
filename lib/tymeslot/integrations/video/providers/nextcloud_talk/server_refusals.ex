@@ -17,7 +17,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalk.ServerRefusals do
       (`force_passwords`); the message beside it is translated, so only the key
       is read
 
-  A 400 whose key names a field of the request is the scheduler's own fault, not a
+  A 400 whose key names a field of the request is Tymeslot's own fault, not a
   setting the organiser can change, so it is a configuration error with no code:
   the room job discards it and nothing is recorded against the integration.
 
@@ -31,7 +31,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalk.ServerRefusals do
   alias Tymeslot.Integrations.Video.RoomCreationError
 
   # The creation request's own fields, as Talk's `CreationException` names
-  # them. A 400 about one of these means the scheduler sent something Talk will not
+  # them. A 400 about one of these means Tymeslot sent something Talk will not
   # take, whatever the server's settings are.
   @request_data_errors ~w[
     name description type object object-id object-type lobby lobby-timer
@@ -71,7 +71,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalk.ServerRefusals do
   Refused with the same words the integration's dashboard row uses for the
   matching code. A server that announces neither key is taken to allow it.
 
-  Only ever read from capabilities a request the scheduler authenticated came back
+  Only ever read from capabilities a request Tymeslot authenticated came back
   with: Nextcloud answers an anonymous request with capabilities of its own,
   where `can-create` is false because nobody is signed in.
   """

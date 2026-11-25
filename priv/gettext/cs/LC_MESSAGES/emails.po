@@ -307,12 +307,6 @@ msgstr "středa"
 msgid "Sent with care by"
 msgstr "Odesláno službou"
 
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
-msgstr "plánování, které respektuje váš čas"
-
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "%{date} at %{time}"

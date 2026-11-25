@@ -221,7 +221,7 @@ defmodule Tymeslot.Meetings.GroupMeetingQueries do
   the start, before anyone has booked it: people are being offered its time.
 
   Keyed by `calendar_uid` rather than id because the consumer is the
-  calendar grid, which knows provider events, and a the scheduler booking's
+  calendar grid, which knows provider events, and a Tymeslot booking's
   provider event carries the meeting's `calendar_uid` (never its `uid`, the
   booking's bearer capability).
   """

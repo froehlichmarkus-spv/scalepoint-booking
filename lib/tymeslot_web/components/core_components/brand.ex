@@ -4,7 +4,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Brand do
   use Gettext, backend: TymeslotWeb.Gettext
 
   @doc """
-  Renders the the scheduler logo.
+  Renders the Tymeslot logo.
 
   ## Attributes
     * `mode` - Either :full (logo + text) or :icon (logo only). Defaults to :full.

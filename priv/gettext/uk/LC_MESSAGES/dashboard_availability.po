@@ -404,7 +404,7 @@ msgstr "Ця перерва накладається на наявну пере�
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "You have reached the limit of %{count} schedules. Delete one to add another."
-msgstr ""
+msgstr "You have reached the limit of %{count} schedules. Delete one to add another."
 "Ви досягли ліміту %{count} розкладів. Видаліть один, щоб додати інший."
 
 #: lib/tymeslot_web/live/dashboard/availability/schedule_switcher.ex

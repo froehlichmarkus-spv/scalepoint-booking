@@ -80,8 +80,8 @@ msgstr "Забагато спроб входу через OAuth. Спробуй�
 
 #: lib/tymeslot_web/controllers/auth/invitation_controller.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your password is set."
-msgstr "Ласкаво просимо до the scheduler! Ваш пароль встановлено."
+msgid "Welcome to Tymeslot! Your password is set."
+msgstr "Ласкаво просимо до Tymeslot! Ваш пароль встановлено."
 
 #: lib/tymeslot_web/controllers/auth/invitation_controller.ex
 #, elixir-autogen, elixir-format
@@ -90,5 +90,5 @@ msgstr "Ваш пароль встановлено. Увійдіть, щоб п�
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
-msgid "You have been invited to the scheduler with this email address. Open the invitation link we emailed you to choose how you will sign in. If the link has expired, ask your administrator to send a new one."
+msgid "You have been invited to Tymeslot with this email address. Open the invitation link we emailed you to choose how you will sign in. If the link has expired, ask your administrator to send a new one."
 msgstr "На цю адресу електронної пошти надіслано запрошення до Tymeslot. Відкрийте посилання із запрошенням, яке ми надіслали вам електронною поштою, і виберіть спосіб входу. Якщо термін дії посилання минув, попросіть адміністратора надіслати нове."

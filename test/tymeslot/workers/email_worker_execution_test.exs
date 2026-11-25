@@ -532,7 +532,7 @@ defmodule Tymeslot.Workers.EmailWorkerExecutionTest do
     # classification has to survive that in every one of them, not just the
     # admin alert path the incident happened to expose.
     test "applies to the auth handlers too" do
-      user = insert(:user)
+      user = insert(:unverified_user)
 
       Mox.expect(Tymeslot.EmailServiceMock, :send_email_verification, fn _user, _url ->
         {:error, {:recipient_rejected, {422, %{"ErrorCode" => 300}}}}

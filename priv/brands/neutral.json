@@ -1,17 +1,17 @@
 {
   "key": "neutral",
-  "enabled": true,
+  "enabled": false,
   "default": false,
   "house_brand": false,
   "layout": "neutral",
-  "name": "MeetDesk24",
-  "product_label": "MeetDesk24",
-  "sender_name": "MeetDesk24",
-  "sender_email": "booking@meetdesk24.com",
+  "name": "BookDesk24",
+  "product_label": "BookDesk24",
+  "sender_name": "BookDesk24",
+  "sender_email": "booking@bookdesk24.com",
   "sender_email_env": "NEUTRAL_SENDER_EMAIL",
   "sender_name_env": "NEUTRAL_SENDER_NAME",
   "name_env": "NEUTRAL_BRAND_NAME",
-  "footer": "MeetDesk24",
+  "footer": "BookDesk24",
   "footer_env": "NEUTRAL_FOOTER",
   "powered_by": null,
   "logo": "/images/brand/neutral-mark.png",
@@ -33,10 +33,10 @@
     "heading": "Inter"
   },
   "hosts": [
-    "book.meetdesk24.com"
+    "book.bookdesk24.com"
   ],
   "username": "studio",
-  "owner_email": "host@meetdesk24.com",
+  "owner_email": "host@bookdesk24.com",
   "owner_name": "Demo Host",
   "timezone": "Europe/Berlin",
   "role": "Host",
@@ -110,6 +110,6 @@
       ]
     }
   ],
-  "notify_email": "host@meetdesk24.com",
+  "notify_email": "host@bookdesk24.com",
   "webhook_url_env": ""
 }

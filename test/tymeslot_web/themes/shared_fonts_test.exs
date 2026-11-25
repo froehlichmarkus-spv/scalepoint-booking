@@ -46,6 +46,17 @@ defmodule TymeslotWeb.Themes.SharedFontsTest do
     |> Enum.map(fn [url] -> url end)
   end
 
+  # Booking themes also ship faces from a theme module, not only the shared sheet.
+  defp declared_font_urls do
+    Path.wildcard("assets/css/**/*.css")
+    |> Enum.flat_map(fn path ->
+      ~r/url\("([^"]+\.woff2)"\)/
+      |> Regex.scan(File.read!(path), capture: :all_but_first)
+      |> Enum.map(fn [url] -> url end)
+    end)
+    |> Enum.uniq()
+  end
+
   test "the shared entry imports the font rules" do
     assert File.read!(@entry_css) =~ ~s(@import "./fonts.css";)
   end
@@ -84,12 +95,12 @@ defmodule TymeslotWeb.Themes.SharedFontsTest do
       |> Enum.map(&("/fonts/" <> Path.basename(&1)))
       |> Enum.sort()
 
-    assert shipped == Enum.sort(font_urls())
+    assert shipped == Enum.sort(declared_font_urls())
   end
 
   test "every font file is a real woff2, of one subset's size" do
     files = font_files()
-    assert length(files) == @font_files
+    assert length(files) == length(declared_font_urls())
 
     assert Enum.reject(files, fn file ->
              match?(<<"wOF2", _rest::binary>>, File.read!(file)) and

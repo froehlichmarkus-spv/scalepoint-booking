@@ -278,7 +278,7 @@ defmodule Tymeslot.Payments do
   def create_stripe_refund(params, opts), do: Config.stripe_provider().create_refund(params, opts)
 
   @doc """
-  Whether `user_id`'s outgoing material carries the free-tier "the scheduler"
+  Whether `user_id`'s outgoing material carries the free-tier "Tymeslot"
   branding. Off unless the instance enables `:show_branding` and a
   subscription manager is configured to answer for the user; an unknown user
   never gets it, so a paying customer cannot be branded by a missing id.

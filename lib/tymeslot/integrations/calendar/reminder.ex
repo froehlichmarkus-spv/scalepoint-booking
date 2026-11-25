@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Calendar.Reminder do
   @moduledoc """
-  The single source of truth for the scheduler's per-event reminder shape.
+  The single source of truth for Tymeslot's per-event reminder shape.
 
   A reminder carries two fields: a **method** (`:popup`, `:email`, or `:sms`)
   and a **lead time** in minutes (`minutes_before`). The canonical shape is an

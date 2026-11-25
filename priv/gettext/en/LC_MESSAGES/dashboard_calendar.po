@@ -698,7 +698,7 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
+msgid "Tymeslot booking"
 msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex

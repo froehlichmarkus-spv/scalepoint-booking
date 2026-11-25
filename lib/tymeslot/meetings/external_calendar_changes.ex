@@ -3,7 +3,7 @@ defmodule Tymeslot.Meetings.ExternalCalendarChanges do
   Applies externally detected calendar changes to the meeting lifecycle.
 
   When a calendar sync worker detects that a provider event linked to a
-  the scheduler meeting was deleted or modified externally, the Calendar context
+  Tymeslot meeting was deleted or modified externally, the Calendar context
   delegates here (via `Tymeslot.Meetings.ExternalCalendar.apply_external_calendar_change/5`).
   This module owns the meeting-side consequences: updating the
   `calendar_sync_status`, auto-cancelling the meeting on external deletion
@@ -43,7 +43,7 @@ defmodule Tymeslot.Meetings.ExternalCalendarChanges do
   Options:
 
   - `snapshot_at:` when the read that saw the change began. A `:modified`
-    signal is dropped when the scheduler's own write to the event completed at or
+    signal is dropped when Tymeslot's own write to the event completed at or
     after that instant, since the event read may predate it. Without it, only
     a write still pending holds the signal back.
 
@@ -289,16 +289,16 @@ defmodule Tymeslot.Meetings.ExternalCalendarChanges do
 
       # Deletions stay unguarded: a removed event is gone whatever is queued.
       signal == :modified and own_write_unseen?(meeting, snapshot_at) ->
-        ignore(meeting, signal, "the event read may predate a the scheduler calendar write")
+        ignore(meeting, signal, "the event read may predate a Tymeslot calendar write")
 
       true ->
         update_calendar_sync_status(meeting, new_status, signal)
     end
   end
 
-  # Whether the event this signal was derived from may not show the scheduler's own
+  # Whether the event this signal was derived from may not show Tymeslot's own
   # latest write to it yet, so that comparing it with the meeting would flag
-  # the scheduler's change as the host's. An attendee reschedule moves the booking
+  # Tymeslot's change as the host's. An attendee reschedule moves the booking
   # at once and a CalendarEventWorker job updates the calendar a few seconds
   # later; until then the event still shows the old time, and flagging it
   # would offer the host a move back to that old time, an undo of the
@@ -316,7 +316,7 @@ defmodule Tymeslot.Meetings.ExternalCalendarChanges do
   # The read's start is the only safe anchor. The meeting's `updated_at` moves
   # on unrelated changes, and comparing the event's last-modified time against
   # it would hold back a genuine host move for good once anything else touched
-  # the meeting; no column records the scheduler's last calendar-relevant change.
+  # the meeting; no column records Tymeslot's last calendar-relevant change.
   defp own_write_unseen?(meeting, nil),
     do: Jobs.pending_meeting_job?(CalendarEventWorker, meeting.id)
 
@@ -328,7 +328,7 @@ defmodule Tymeslot.Meetings.ExternalCalendarChanges do
   # land: the attendee cannot be offered a better time for a slot that is
   # already history, and cancelling it would only mail both parties about a
   # meeting that has been and gone. The host is free to tidy the past in their
-  # own calendar; the scheduler reconciles only bookings that still lie ahead.
+  # own calendar; Tymeslot reconciles only bookings that still lie ahead.
   #
   # Without this the reach of a sync is its whole window, not the days around
   # today: a full sync re-reads a year of events at once, so every historical
@@ -422,7 +422,7 @@ defmodule Tymeslot.Meetings.ExternalCalendarChanges do
   end
 
   # Scheduled rather than sent, so a failed send is retried by the email job.
-  # A failed insert is logged by the scheduler and does not undo the change.
+  # A failed insert is logged by Tymeslot and does not undo the change.
   @spec notify_host(Meeting.t(), signal()) :: :ok
   defp notify_host(meeting, signal) do
     _scheduled = EmailScheduler.schedule_external_booking_change(meeting.id, signal)

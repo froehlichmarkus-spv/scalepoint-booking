@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Urls do
   @moduledoc """
-  App URL building helpers for the scheduler emails.
+  App URL building helpers for Tymeslot emails.
   """
 
   alias Tymeslot.Utils.UrlBuilder

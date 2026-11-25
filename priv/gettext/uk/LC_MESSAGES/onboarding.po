@@ -85,8 +85,8 @@ msgstr "Витратьте 30 секунд, щоб дізнатися, де що
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to your the scheduler dashboard"
-msgstr "Ласкаво просимо до вашої панелі керування the scheduler"
+msgid "Welcome to your Tymeslot dashboard"
+msgstr "Ласкаво просимо до вашої панелі керування Tymeslot"
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
@@ -116,14 +116,14 @@ msgstr "Тут є все"
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
-msgstr ""
+msgstr "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
 "Ваш календар — це головна сторінка. Зустрічі, доступність, інтеграції та ваш "
 "профіль — за один клік."
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
-msgstr ""
+msgstr "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
 "Відкрийте його, щоб підключити календар, налаштувати сторінку бронювання та "
 "поділитися посиланням. Він зникне, коли всі кроки буде виконано."
 
@@ -149,8 +149,8 @@ msgstr "Зустрічі в Jitsi, kMeet або Nextcloud Talk"
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point the scheduler at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
-msgstr "Ще три відеопровайдери приєдналися до Zoom, Google Meet, Teams і MiroTalk у виборі інтеграцій. Вкажіть the scheduler власний Jitsi чи Nextcloud, і кожне бронювання отримає окрему кімнату: розмова в Talk тримає зал очікування зачиненим до початку зустрічі, переноситься разом із нею та видаляється, коли ви скасовуєте. kMeet не потребує жодного налаштування."
+msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point Tymeslot at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
+msgstr "Ще три відеопровайдери приєдналися до Zoom, Google Meet, Teams і MiroTalk у виборі інтеграцій. Вкажіть Tymeslot власний Jitsi чи Nextcloud, і кожне бронювання отримає окрему кімнату: розмова в Talk тримає зал очікування зачиненим до початку зустрічі, переноситься разом із нею та видаляється, коли ви скасовуєте. kMeet не потребує жодного налаштування."
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
@@ -194,13 +194,13 @@ msgstr "Опитування може бути відкритим, і тоді �
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler now speaks Spanish"
-msgstr "the scheduler тепер розмовляє іспанською"
+msgid "Tymeslot now speaks Spanish"
+msgstr "Tymeslot тепер розмовляє іспанською"
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "Your dashboard, booking pages and every email are now available in Spanish. the scheduler follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
-msgstr "Ваша панель керування, сторінки бронювання та всі листи тепер доступні іспанською. the scheduler використовує мову вашого браузера, або ви можете обрати мову самостійно в налаштуваннях облікового запису. Люди, які бронюють у вас, теж бачать сторінки бронювання й підтвердження своєю мовою."
+msgid "Your dashboard, booking pages and every email are now available in Spanish. Tymeslot follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
+msgstr "Ваша панель керування, сторінки бронювання та всі листи тепер доступні іспанською. Tymeslot використовує мову вашого браузера, або ви можете обрати мову самостійно в налаштуваннях облікового запису. Люди, які бронюють у вас, теж бачать сторінки бронювання й підтвердження своєю мовою."
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format

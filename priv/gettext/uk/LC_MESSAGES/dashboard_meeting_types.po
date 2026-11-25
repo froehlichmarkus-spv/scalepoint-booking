@@ -589,8 +589,8 @@ msgstr "Використано"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Кожне посилання бронює одну зустріч. the scheduler не надсилає листів: скопіюйте посилання й надішліть його самі."
+msgid "Each link books one appointment. Tymeslot sends no email: copy the link and send it yourself."
+msgstr "Кожне посилання бронює одну зустріч. Tymeslot не надсилає листів: скопіюйте посилання й надішліть його самі."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format

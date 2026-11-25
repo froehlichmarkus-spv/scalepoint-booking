@@ -199,7 +199,7 @@ defmodule TymeslotWeb.AdminLive.Formatters do
   def describe(:meeting_payments_enabled) do
     dgettext(
       "dashboard_admin",
-      "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps the scheduler's access to their Stripe account until it is set."
+      "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps Tymeslot's access to their Stripe account until it is set."
     )
   end
 
@@ -220,7 +220,7 @@ defmodule TymeslotWeb.AdminLive.Formatters do
   def describe(:email_brand_name) do
     dgettext(
       "dashboard_admin",
-      "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
+      "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"Tymeslot\"."
     )
   end
 

@@ -462,7 +462,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalParser do
 
   # RFC 5545 §3.2.18 permits both quoted (`TZID="Europe/Brussels"`) and
   # unquoted (`TZID=Europe/Brussels`) forms. Zimbra emits the quoted form;
-  # Sabre/vobject, Radicale pass-through, and the scheduler's own writer emit
+  # Sabre/vobject, Radicale pass-through, and Tymeslot's own writer emit
   # unquoted. `Timezones.sanitize/1` handles both, plus Windows zone names
   # that can leak in through user-imported ICS files.
   defp extract_timezone_param(line) do

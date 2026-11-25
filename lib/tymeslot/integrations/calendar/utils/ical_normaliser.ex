@@ -351,12 +351,12 @@ defmodule Tymeslot.Integrations.Calendar.ICalNormaliser do
 
   defp map_organiser(_other), do: nil
 
-  # An event the scheduler wrote on a server that would invite an `ATTENDEE`
+  # An event Tymeslot wrote on a server that would invite an `ATTENDEE`
   # itself carries its guests as `CONTACT` lines instead (`CalDAV.Scheduling`'s
   # `:contact` mode), and the event is no less theirs to be told about:
   # without them here, the sync left it guestless, and deleting or moving it
-  # told nobody. Taken only from an event of the scheduler's own (its UID) that
-  # names no `ATTENDEE`, which is the block `Patcher` treats as the scheduler's
+  # told nobody. Taken only from an event of Tymeslot's own (its UID) that
+  # names no `ATTENDEE`, which is the block `Patcher` treats as Tymeslot's
   # too; a `CONTACT` on anyone else's event is not a guest. A `CONTACT` line
   # carries no reply, nor any way to record one, so such a guest has none to
   # show (`Attendee`'s `nil`) rather than one pending for ever.
@@ -396,7 +396,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalNormaliser do
   defp map_partstat("tentative"), do: :tentative
   defp map_partstat(_other), do: :needs_action
 
-  # An attendee no reply was asked of (`RSVP=FALSE`, as the scheduler writes the
+  # An attendee no reply was asked of (`RSVP=FALSE`, as Tymeslot writes the
   # guests of a plain calendar event, whose invitation offers no way to
   # answer) is not waiting to answer: until a reply does arrive there is none
   # to show (`Attendee`'s `nil`), rather than one pending for ever.

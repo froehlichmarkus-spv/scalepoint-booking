@@ -131,11 +131,6 @@ msgstr "Для роботи застосунку потрібен JavaScript. У
 msgid "This timezone will be used for your availability and scheduling."
 msgstr "Цей часовий пояс використовуватиметься для визначення вашої доступності та планування зустрічей."
 
-#: lib/tymeslot_web/components/core_components/brand.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler logo"
-msgstr "Логотип the scheduler"
-
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format
 msgid "Your Timezone"

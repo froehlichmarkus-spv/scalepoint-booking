@@ -1,7 +1,7 @@
 defmodule Tymeslot.Notifications.Email.CalendarSyncEmails do
   @moduledoc """
   The emails telling a host what their calendar did to a booking: that the
-  booking was moved there, outside the scheduler, or that its calendar event could
+  booking was moved there, outside Tymeslot, or that its calendar event could
   not be written at all.
 
   Both are raised by calendar sync code, which only schedules them

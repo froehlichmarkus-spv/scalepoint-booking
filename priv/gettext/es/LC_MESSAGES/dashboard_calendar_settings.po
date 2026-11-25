@@ -70,8 +70,8 @@ msgstr "Conectar un calendario"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
-msgstr "Conecta un calendario para que the scheduler pueda leer tu disponibilidad y evitar que se reserven reuniones en horas que ya tienes ocupadas."
+msgid "Connect a calendar so Tymeslot can read your availability and stop meetings being booked when you're already busy."
+msgstr "Conecta un calendario para que Tymeslot pueda leer tu disponibilidad y evitar que se reserven reuniones en horas que ya tienes ocupadas."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -369,10 +369,10 @@ msgstr "Última sincronización hace un momento"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
-msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
-msgstr[0] "%{count} calendario ya no está en tu servidor de calendario, así que the scheduler dejó de usarlo: %{calendars}"
-msgstr[1] "%{count} calendarios ya no están en tu servidor de calendario, así que the scheduler dejó de usarlos: %{calendars}"
+msgid "%{count} calendar is no longer on your calendar server, so Tymeslot has stopped using it: %{calendars}"
+msgid_plural "%{count} calendars are no longer on your calendar server, so Tymeslot has stopped using them: %{calendars}"
+msgstr[0] "%{count} calendario ya no está en tu servidor de calendario, así que Tymeslot dejó de usarlo: %{calendars}"
+msgstr[1] "%{count} calendarios ya no están en tu servidor de calendario, así que Tymeslot dejó de usarlos: %{calendars}"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -386,8 +386,8 @@ msgstr "Ocultar el aviso sobre calendarios que ya no están en el servidor"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "«%{calendar}» ya no está en tu servidor de calendario, así que the scheduler dejó de usarlo."
+msgid "“%{calendar}” is no longer on your calendar server, so Tymeslot has stopped using it."
+msgstr "«%{calendar}» ya no está en tu servidor de calendario, así que Tymeslot dejó de usarlo."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format

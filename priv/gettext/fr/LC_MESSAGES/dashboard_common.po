@@ -278,8 +278,8 @@ msgstr "Toute la journée"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Réservé via votre page the scheduler"
+msgid "Booked through your Tymeslot page"
+msgstr "Réservé via votre page Tymeslot"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format

@@ -27,7 +27,7 @@ defmodule Tymeslot.Notifications.Email.SeatEmails do
   invites to it, a cancellation cancels it one revision up, and a move
   cancels the old seat's entry and invites to the new one's. The organiser's
   emails carry no calendar file at all: their calendar holds the slot as one
-  provider event the scheduler keeps up to date itself, and the solo organiser
+  provider event Tymeslot keeps up to date itself, and the solo organiser
   emails leave the file off for the same reason (an invitation-processing
   mail server would import it as a second event).
   """

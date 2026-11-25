@@ -3,7 +3,7 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.EventNormaliser do
   Converts raw Microsoft Graph API event payloads into normalised `CalendarEvent` structs.
 
   Handles field mapping, datetime parsing, visibility/transparency/status inference,
-  attendee normalisation, recurrence rules, and the scheduler-origin fingerprint detection.
+  attendee normalisation, recurrence rules, and Tymeslot-origin fingerprint detection.
   """
 
   require Logger

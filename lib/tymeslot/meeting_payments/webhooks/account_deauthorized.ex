@@ -1,7 +1,7 @@
 defmodule Tymeslot.MeetingPayments.Webhooks.AccountDeauthorized do
   @moduledoc """
   Handler for the Stripe `account.application.deauthorized` Connect event,
-  sent when a host removes the scheduler from their Stripe account.
+  sent when a host removes Tymeslot from their Stripe account.
 
   The event's `data.object` is the platform's *application*, so the
   connected account is read from the envelope's top-level `account`, and the

@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.MjmlEmail do
   @moduledoc """
-  Base MJML template for the scheduler transactional emails.
+  Base MJML template for Tymeslot transactional emails.
 
   ## Anatomy
 
@@ -21,6 +21,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   import Swoosh.Email
 
   alias Swoosh.Attachment
+  alias Tymeslot.Brands
   alias Tymeslot.Emails.Branding
   alias Tymeslot.Emails.Shared.{AvatarHelper, Frame, Sanitise, Stage, Styles, Urls}
   alias Tymeslot.Emails.Shared.Styles.{CSS, Tokens}
@@ -78,7 +79,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Creates a base Swoosh email pre-configured for the given tracking category
-  and with the the scheduler logo attached inline (CID `tymeslot-logo.png`) so the
+  and with the Tymeslot logo attached inline (CID `tymeslot-logo.png`) so the
   system layout's logo header renders identically in every email client
   without needing an external URL.
 
@@ -137,7 +138,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   # Mailgun drops `cid:` entirely and keys inline images by filename.
   # Postmark and AhaSend echo the `cid:` we set. Matching filename and cid
   # is the only value that renders correctly across all four.
-  @logo_cid "brand-logo.png"
+  @logo_cid "tymeslot-logo.png"
 
   @doc "The Content-ID used for the inline logo attachment."
   @spec logo_cid() :: String.t()
@@ -145,7 +146,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Attaches the instance logo as an inline image — the custom logo when a
-  self-hosted instance has uploaded one, the stock the scheduler logo otherwise.
+  self-hosted instance has uploaded one, the stock Tymeslot logo otherwise.
   Swallowed silently if neither PNG can be read: the email still sends, the
   logo simply won't render.
 
@@ -180,18 +181,18 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   @doc "Returns the configured from-email."
   @spec fetch_from_email() :: String.t()
   def fetch_from_email do
-    case Tymeslot.Brands.mail_identity() do
+    case Brands.mail_identity() do
       %{sender_email: email} when is_binary(email) and email != "" -> email
-      _ -> get_config_email_setting(:from_email)
+      _unused -> get_config_email_setting(:from_email)
     end
   end
 
   @doc "Returns the configured from-name."
   @spec fetch_from_name() :: String.t()
   def fetch_from_name do
-    case Tymeslot.Brands.mail_identity() do
+    case Brands.mail_identity() do
       %{sender_name: name} when is_binary(name) and name != "" -> name
-      _ -> get_config_email_setting(:from_name)
+      _unused -> get_config_email_setting(:from_name)
     end
   end
 
@@ -330,7 +331,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
           css-class="email-ink-muted"
         >
           #{dgettext("emails", "Sent with care by")}
-          <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark email-ink-link" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Tymeslot.Brands.footer_label()}</a>
+          <a href="#{Brands.footer_href()}" class="wordmark email-ink-link" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Brands.footer_label()}</a>
         </mj-text>
       </mj-column>
     </mj-section>

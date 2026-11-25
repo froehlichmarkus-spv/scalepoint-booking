@@ -4,7 +4,7 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
 
   The neutral brand removes the house name from mail that is not about that
   tenant. That replacement must not run inside the reset URL, or
-  `book.scalepoint-ventures.com` becomes `book.MeetDesk24-ventures.com`.
+  `book.scalepoint-ventures.com` becomes `book.BookDesk24-ventures.com`.
   Mail to a known tenant owner uses that tenant's name and sender.
   """
 
@@ -25,41 +25,40 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
   @reset_url "https://book.scalepoint-ventures.com/auth/reset-password/tok_abc"
 
   defp optional_brand do
-    Enum.find(Brands.all(), &(&1.key == "neutral" and not &1.house_brand)) ||
-      flunk("optional MeetDesk24 tenant is missing")
+    Enum.find(Brands.documents(), &(&1.key == "neutral" and not &1.house_brand)) ||
+      flunk("optional BookDesk24 tenant is missing")
   end
 
-  test "keeps the reset URL verbatim when MeetDesk24 is the active brand" do
-    user = build_user_data(%{name: "Demo Host", email: "host@meetdesk24.com", username: "studio"})
+  test "keeps the reset URL verbatim when BookDesk24 is the active brand" do
+    user = build_user_data(%{name: "Demo Host", email: "host@bookdesk24.com", username: "studio"})
 
     email =
       user
-      |> tap(fn _ -> Brands.bind(optional_brand()) end)
+      |> tap(fn _unused -> Brands.bind(optional_brand()) end)
       |> PasswordReset.render(@reset_url)
       |> Brands.scrub_email()
 
     assert email.html_body =~ @reset_url
     assert email.text_body =~ @reset_url
-    refute email.html_body =~ "MeetDesk24-ventures"
-    refute email.text_body =~ "MeetDesk24-ventures"
+    refute email.html_body =~ "BookDesk24-ventures"
+    refute email.text_body =~ "BookDesk24-ventures"
 
-    assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
-    assert_receive {:email, delivered}, 1000
-    assert delivered.html_body =~ @reset_url
-    assert delivered.text_body =~ @reset_url
-    assert delivered.from == {"MeetDesk24", "booking@meetdesk24.com"}
+    # The tenant is disabled, so the address is a demo mailbox and the send
+    # is dropped instead of delivered.
+    assert {:ok, :suppressed} = AuthEmails.send_password_reset(user, @reset_url)
+    refute_receive {:email, _delivered}, 50
   end
 
   test "sends an unbound reset as ScalePoint Booking and keeps the link" do
     user = build_user_data(%{name: "Guest", email: "guest@example.com", username: "guest"})
 
-    assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
+    assert {:ok, _unused} = AuthEmails.send_password_reset(user, @reset_url)
     assert_receive {:email, delivered}, 1000
-    assert delivered.from == {"ScalePoint Ventures", "booking@scalepoint-ventures.com"}
+    assert delivered.from == {"Scheduler", "hello@tymeslot.app"}
     assert delivered.html_body =~ @reset_url
     assert delivered.text_body =~ @reset_url
-    refute delivered.html_body =~ "meetdesk24.com"
-    refute delivered.text_body =~ "meetdesk24.com"
+    refute delivered.html_body =~ "bookdesk24.com"
+    refute delivered.text_body =~ "bookdesk24.com"
   end
 
   test "brands a reset for the house owner as that tenant and keeps the link" do
@@ -70,15 +69,15 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
         username: "someone-else"
       })
 
-    assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
+    assert {:ok, _unused} = AuthEmails.send_password_reset(user, @reset_url)
 
     assert_receive {:email, email}, 1000
     assert email.from == {"ScalePoint Ventures", "booking@scalepoint-ventures.com"}
     assert email.html_body =~ @reset_url
     assert email.text_body =~ @reset_url
     assert email.html_body =~ "ScalePoint Ventures"
-    refute email.html_body =~ "MeetDesk24"
-    refute email.text_body =~ "MeetDesk24"
+    refute email.html_body =~ "BookDesk24"
+    refute email.text_body =~ "BookDesk24"
   end
 
   test "replaces the house name in prose and leaves addresses alone" do

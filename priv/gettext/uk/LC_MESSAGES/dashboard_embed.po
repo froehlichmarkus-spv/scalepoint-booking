@@ -383,8 +383,8 @@ msgstr "Стандартний - по центру з обмеженням ~640p
 
 #: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
 #, elixir-autogen, elixir-format
-msgid "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
-msgstr "Встановіть офіційний плагін the scheduler, щоб додати сторінку бронювання за допомогою блоку або шорткоду - без жодного програмування."
+msgid "Install the official Tymeslot plugin to embed your booking page with a block or shortcode - no code."
+msgstr "Встановіть офіційний плагін Tymeslot, щоб додати сторінку бронювання за допомогою блоку або шорткоду - без жодного програмування."
 
 #: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
 #, elixir-autogen, elixir-format

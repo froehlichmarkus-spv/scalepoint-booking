@@ -166,7 +166,7 @@ defmodule Tymeslot.CalendarGrid.EventPayload do
     )
   end
 
-  # A meeting kept in the scheduler alone is on no calendar.
+  # A meeting kept in Tymeslot alone is on no calendar.
   defp draft_calendar(%CreateParams{integration_id: nil}), do: nil
 
   defp draft_calendar(params),
@@ -245,7 +245,7 @@ defmodule Tymeslot.CalendarGrid.EventPayload do
     |> Enum.count(&(Attendee.normalise(&1).email not in [nil, ""]))
   end
 
-  # How the guests of a booking, or of an event the scheduler made, have
+  # How the guests of a booking, or of an event Tymeslot made, have
   # answered (`GuestReplies.summary/1`, with its words for the badge's
   # accessible name); nil when nobody has a reply to show. Other events'
   # attendees are someone else's to chase.

@@ -70,8 +70,8 @@ msgstr "Collega un calendario"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
-msgstr "Collega un calendario in modo che the scheduler possa leggere la tua disponibilità ed evitare che vengano prenotate riunioni quando sei già occupato."
+msgid "Connect a calendar so Tymeslot can read your availability and stop meetings being booked when you're already busy."
+msgstr "Collega un calendario in modo che Tymeslot possa leggere la tua disponibilità ed evitare che vengano prenotate riunioni quando sei già occupato."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -369,10 +369,10 @@ msgstr "Ultima sincronizzazione poco fa"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
-msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
-msgstr[0] "%{count} calendario non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo: %{calendars}"
-msgstr[1] "%{count} calendari non sono più presenti sul tuo server di calendario, quindi the scheduler ha smesso di usarli: %{calendars}"
+msgid "%{count} calendar is no longer on your calendar server, so Tymeslot has stopped using it: %{calendars}"
+msgid_plural "%{count} calendars are no longer on your calendar server, so Tymeslot has stopped using them: %{calendars}"
+msgstr[0] "%{count} calendario non è più presente sul tuo server di calendario, quindi Tymeslot ha smesso di usarlo: %{calendars}"
+msgstr[1] "%{count} calendari non sono più presenti sul tuo server di calendario, quindi Tymeslot ha smesso di usarli: %{calendars}"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -386,8 +386,8 @@ msgstr "Ignora l'avviso sui calendari non più presenti sul server"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "Il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo."
+msgid "“%{calendar}” is no longer on your calendar server, so Tymeslot has stopped using it."
+msgstr "Il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi Tymeslot ha smesso di usarlo."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
@@ -412,13 +412,13 @@ msgstr "Orari occupati di %{calendar}"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
 msgid "Block the time of every event in this feed, also those it marks as free"
-msgstr ""
+msgstr "Block the time of every event in this feed, also those it marks as free"
 "Blocca l'orario di ogni evento di questo feed, anche di quelli segnati come liberi"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Events this calendar marks as free no longer block time"
-msgstr ""
+msgstr "Events this calendar marks as free no longer block time"
 "Gli eventi che questo calendario segna come liberi non bloccano più l'orario"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
@@ -434,7 +434,7 @@ msgstr "Ogni evento di questo calendario ora blocca l'orario"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
 msgid "read-only, every event blocks time, also those marked free"
-msgstr ""
+msgstr "read-only, every event blocks time, also those marked free"
 "di sola lettura, ogni evento blocca l'orario, anche quelli segnati come liberi"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex

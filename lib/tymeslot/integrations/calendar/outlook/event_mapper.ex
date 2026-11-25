@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Calendar.Outlook.EventMapper do
   @moduledoc """
-  Maps outbound event data from the scheduler's internal format to
+  Maps outbound event data from Tymeslot's internal format to
   Microsoft Graph API format for Outlook Calendar operations.
   """
 
@@ -16,7 +16,7 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.EventMapper do
   @blocking_show_as ~w(tentative oof workingElsewhere)
 
   @doc """
-  Converts the scheduler event data into the Microsoft Graph event format.
+  Converts Tymeslot event data into the Microsoft Graph event format.
 
   A repeat rule Graph has no pattern for, or one Graph would write with
   other dates (`{:error, :day_missing_in_some_months}`), is refused rather
@@ -58,10 +58,10 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.EventMapper do
   end
 
   @doc """
-  Marks `body` as the scheduler's unless `event_data` says the event belongs to
+  Marks `body` as Tymeslot's unless `event_data` says the event belongs to
   someone else (`created_by_tymeslot: false`, which the calendar grid sends
   for an event it did not create). Anything that does not say so is a
-  booking or an event the scheduler is creating, and is marked: a booking whose
+  booking or an event Tymeslot is creating, and is marked: a booking whose
   mark was dropped would be read back by the next sync as an external event.
   """
   @spec put_provenance(map(), map()) :: map()
@@ -101,8 +101,8 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.EventMapper do
   def put_transaction_id(body, _scope, _event_data), do: body
 
   @doc """
-  Adds the the scheduler fingerprint extended property to a Graph API event body,
-  so that events created by the scheduler can be identified later during sync.
+  Adds the Tymeslot fingerprint extended property to a Graph API event body,
+  so that events created by Tymeslot can be identified later during sync.
   """
   @spec add_tymeslot_fingerprint(map()) :: map()
   def add_tymeslot_fingerprint(body) do

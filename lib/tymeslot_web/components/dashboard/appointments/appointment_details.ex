@@ -4,7 +4,7 @@ defmodule TymeslotWeb.Components.Dashboard.Appointments.AppointmentDetails do
   overview's agenda modal and the calendar's booking modal so both describe an
   `Agenda.Entry` the same way: where it came from, how soon it is, when, how
   long, the video call, the place, who with and which calendar holds it, then
-  Manage (for a the scheduler booking) and Join (when there is a call).
+  Manage (for a Tymeslot booking) and Join (when there is a call).
   """
 
   use Phoenix.Component
@@ -159,9 +159,9 @@ defmodule TymeslotWeb.Components.Dashboard.Appointments.AppointmentDetails do
     if String.starts_with?(location, ["http://", "https://"]), do: nil, else: location
   end
 
-  # Where the appointment lives: a the scheduler booking, or the named synced calendar.
+  # Where the appointment lives: a Tymeslot booking, or the named synced calendar.
   defp calendar_label(%Entry{source: :tymeslot}),
-    do: dgettext("dashboard_common", "Booked through your the scheduler page")
+    do: dgettext("dashboard_common", "Booked through your Tymeslot page")
 
   defp calendar_label(%Entry{calendar: nil}),
     do: dgettext("dashboard_common", "External calendar")

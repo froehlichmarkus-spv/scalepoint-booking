@@ -237,8 +237,8 @@ msgstr "Nazwa użytkownika jest wymagana"
 
 #: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your account is now set up."
-msgstr "Witaj w the scheduler! Konto jest już gotowe."
+msgid "Welcome to Tymeslot! Your account is now set up."
+msgstr "Witaj w Tymeslot! Konto jest już gotowe."
 
 #: lib/tymeslot_web/live/onboarding_live/profile_step.ex
 #, elixir-autogen, elixir-format

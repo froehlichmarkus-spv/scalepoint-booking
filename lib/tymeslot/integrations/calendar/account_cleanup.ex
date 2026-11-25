@@ -11,7 +11,7 @@ defmodule Tymeslot.Integrations.Calendar.AccountCleanup do
       unusable once the stored refresh token is deleted with the account.
 
   Calendar events are not touched: a meeting the deletion removes from
-  the scheduler may still take place between host and guest, so the host's
+  Tymeslot may still take place between host and guest, so the host's
   events stay where they are.
 
   Every step is best-effort: a failure is logged and the next step runs. Each

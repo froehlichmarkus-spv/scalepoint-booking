@@ -1,6 +1,6 @@
 defmodule Tymeslot.Payments.Stripe do
   @moduledoc """
-  Handles Stripe-specific payment operations for the the scheduler application.
+  Handles Stripe-specific payment operations for the Tymeslot application.
   Provides a clean interface for creating customers, sessions, and verifying payments.
   """
   @behaviour Tymeslot.Payments.Behaviours.StripeProvider

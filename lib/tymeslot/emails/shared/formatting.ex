@@ -1,7 +1,7 @@
 defmodule Tymeslot.Emails.Shared.Formatting do
   @moduledoc """
   Date, time, weekday, duration, currency, location, and general text formatting
-  helpers for the scheduler emails.
+  helpers for Tymeslot emails.
 
   ## Locale contract
 

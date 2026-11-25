@@ -1,7 +1,7 @@
 defmodule Tymeslot.CalendarGrid.EventWindow do
   @moduledoc """
   The events a calendar surface shows for a span of days: the cached provider
-  events the organiser's calendar selection keeps, plus their the scheduler
+  events the organiser's calendar selection keeps, plus their Tymeslot
   bookings, less what they have hidden.
 
   The calendar loads through here
@@ -39,7 +39,7 @@ defmodule Tymeslot.CalendarGrid.EventWindow do
   events from `integrations` that the calendar selection keeps, and the
   user's bookings.
 
-  A booking is drawn in place of the calendar copy the scheduler wrote for it:
+  A booking is drawn in place of the calendar copy Tymeslot wrote for it:
   the booking is kept and the copy dropped, with the booking recording which
   calendar the copy is in (`PreferredBookings`).
   `include_expired: true` adds the requests that expired unanswered.
