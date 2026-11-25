@@ -343,7 +343,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
 
   defp format_organizer(meeting_details) do
     brand = Brands.current() || Brands.neutral_default()
-    organizer_name = Map.get(meeting_details, :organizer_name) || brand.sender_name
+    organizer_name = Map.get(meeting_details, :organizer_name)
 
     organizer_email =
       Map.get(meeting_details, :organizer_email) ||

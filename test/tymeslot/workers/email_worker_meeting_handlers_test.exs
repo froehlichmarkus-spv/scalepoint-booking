@@ -138,7 +138,7 @@ defmodule Tymeslot.Workers.EmailWorkerMeetingHandlersTest do
     end
 
     test "handles send_email_verification" do
-      user = insert(:user)
+      user = insert(:unverified_user)
       expect(EmailServiceMock, :send_email_verification, fn _user, _url -> {:ok, "sent"} end)
 
       assert :ok =
