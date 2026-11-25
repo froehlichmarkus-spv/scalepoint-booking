@@ -44,7 +44,7 @@ msgstr "Solo «Questo evento» può essere annullato."
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
-msgstr ""
+msgstr "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
 "«%{title}» si ripete. Il nuovo schema deve valere per questo evento e i "
 "successivi o per tutti?"
 
@@ -61,6 +61,6 @@ msgstr "«%{title}» si ripete. Quali eventi vuoi modificare?"
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
-msgstr ""
+msgstr "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
 "«%{title}» si ripete. A quali eventi vuoi applicare le modifiche? La tua "
 "scelta resta valida finché non chiudi i dettagli."

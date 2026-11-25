@@ -412,13 +412,13 @@ msgstr "Belegte Zeiten von %{calendar}"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
 msgid "Block the time of every event in this feed, also those it marks as free"
-msgstr ""
+msgstr "Block the time of every event in this feed, also those it marks as free"
 "Die Zeit jedes Eintrags in diesem Feed blockieren, auch der als frei markierten"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Events this calendar marks as free no longer block time"
-msgstr ""
+msgstr "Events this calendar marks as free no longer block time"
 "Als frei markierte Einträge dieses Kalenders blockieren keine Zeit mehr"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
@@ -434,7 +434,7 @@ msgstr "Jeder Eintrag dieses Kalenders blockiert jetzt Zeit"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
 msgid "read-only, every event blocks time, also those marked free"
-msgstr ""
+msgstr "read-only, every event blocks time, also those marked free"
 "schreibgeschützt, jeder Eintrag blockiert Zeit, auch als frei markierte"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex

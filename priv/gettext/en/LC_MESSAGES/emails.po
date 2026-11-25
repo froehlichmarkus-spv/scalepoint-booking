@@ -305,12 +305,6 @@ msgstr ""
 msgid "Sent with care by"
 msgstr ""
 
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
-msgstr ""
-
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "%{date} at %{time}"

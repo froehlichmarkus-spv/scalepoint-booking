@@ -44,7 +44,7 @@ msgstr "Vrátit zpět lze jen možnost „Tato událost“."
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
-msgstr ""
+msgstr "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
 "Událost „%{title}“ se opakuje. Má se nový vzor použít pro tuto a následující"
 " události, nebo pro všechny?"
 
@@ -61,6 +61,6 @@ msgstr "Událost „%{title}“ se opakuje. Které události chcete změnit?"
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
-msgstr ""
+msgstr "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
 "Událost „%{title}“ se opakuje. Na které události se mají vaše změny "
 "vztahovat? Vaše volba platí, dokud nezavřete podrobnosti."

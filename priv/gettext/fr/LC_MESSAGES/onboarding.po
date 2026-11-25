@@ -121,7 +121,7 @@ msgstr "Votre calendrier est la page d’accueil. Vos réunions, vos disponibili
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
-msgstr ""
+msgstr "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
 "Ouvrez-la pour connecter un calendrier, personnaliser votre page de "
 "réservation et partager votre lien. Elle disparaît une fois toutes les "
 "étapes terminées."

@@ -272,7 +272,7 @@ msgstr "Tento způsob opakování nelze uložit do Outlooku."
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
-msgstr ""
+msgstr "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
 "Outlook neumí přeskočit měsíce, které nemají den této série, a takové události by přesunul na poslední den měsíce. Začněte prosím sérii nejpozději 28. dne nebo ji uložte do jiného kalendáře."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex

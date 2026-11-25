@@ -420,7 +420,7 @@ msgstr "Obsazené časy kalendáře %{calendar}"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
 msgid "Block the time of every event in this feed, also those it marks as free"
-msgstr ""
+msgstr "Block the time of every event in this feed, also those it marks as free"
 "Blokovat čas každé události v tomto zdroji, i těch označených jako volné"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex

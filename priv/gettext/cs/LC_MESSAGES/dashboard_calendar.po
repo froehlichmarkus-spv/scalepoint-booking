@@ -201,14 +201,14 @@ msgstr "Účet %{account} neodpovídá. Jeho události nemusí být aktuální."
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "%{account} isn't responding. Your change to “%{title}” is saved here and will be sent automatically."
-msgstr ""
+msgstr "%{account} isn't responding. Your change to “%{title}” is saved here and will be sent automatically."
 "Účet %{account} neodpovídá. Vaše změna události „%{title}“ je uložena zde a "
 "bude odeslána automaticky."
 
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "%{account} needs you to sign in again. Until you do, its events may be out of date."
-msgstr ""
+msgstr "%{account} needs you to sign in again. Until you do, its events may be out of date."
 "K účtu %{account} se musíte znovu přihlásit. Do té doby nemusí být jeho "
 "události aktuální."
 
@@ -306,7 +306,7 @@ msgstr "Přesouvá se jiná událost. Zkuste to za chvíli znovu."
 #: lib/tymeslot_web/live/dashboard/calendar/shortcut_help.ex
 #, elixir-autogen, elixir-format
 msgid "Arrow keys move between events. Press C to add an event at the next free time. Press Enter to open the focused event, E to edit it, and M to move it: arrow keys then shift it, Shift with the arrow keys changes its length, Enter confirms and Escape cancels. Press Delete to delete the event and Ctrl Z (Cmd Z on a Mac) to undo."
-msgstr ""
+msgstr "Arrow keys move between events. Press C to add an event at the next free time. Press Enter to open the focused event, E to edit it, and M to move it: arrow keys then shift it, Shift with the arrow keys changes its length, Enter confirms and Escape cancels. Press Delete to delete the event and Ctrl Z (Cmd Z on a Mac) to undo."
 "Šipkami se pohybujete mezi událostmi. Klávesou C přidáte událost "
 "v nejbližším volném čase. Klávesou Enter otevřete vybranou událost, klávesou"
 " E ji upravíte a klávesou M ji přesunete: šipky ji pak posouvají, Shift se "
@@ -519,7 +519,7 @@ msgstr "Přesunuto na %{when}"
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
 #, elixir-autogen, elixir-format
 msgid "Moving %{title}, %{when}. Arrow keys move it, Shift with Up or Down changes how long it lasts, Enter saves, Escape cancels."
-msgstr ""
+msgstr "Moving %{title}, %{when}. Arrow keys move it, Shift with Up or Down changes how long it lasts, Enter saves, Escape cancels."
 "Přesouvání události %{title}, %{when}. Šipky ji posouvají, Shift se šipkou "
 "nahoru nebo dolů mění délku, Enter uloží, Esc zruší."
 
@@ -702,7 +702,7 @@ msgstr "Tento kalendář nepřijímá pravidla opakování z aplikace Tymeslot.
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This event is moving to another calendar. Please make the change once it has moved."
-msgstr ""
+msgstr "This event is moving to another calendar. Please make the change once it has moved."
 "Tato událost se přesouvá do jiného kalendáře. Proveďte prosím změnu, až bude"
 " přesunuta."
 
@@ -719,7 +719,7 @@ msgstr "Toto je rezervace. Přesunout nebo zrušit ji můžete v sekci Rezervace
 #: lib/tymeslot_web/live/dashboard/calendar/delete_confirm_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This is the calendar copy of a booking. Deleting it cancels the booking and tells the guest."
-msgstr ""
+msgstr "This is the calendar copy of a booking. Deleting it cancels the booking and tells the guest."
 "Toto je kopie rezervace v kalendáři. Jejím smazáním zrušíte rezervaci a host"
 " dostane oznámení."
 
@@ -746,14 +746,14 @@ msgstr "Zobrazení"
 #: lib/tymeslot_web/live/dashboard/calendar/sync_status.ex
 #, elixir-autogen, elixir-format
 msgid "You've asked for several syncs recently. Try again in a few minutes."
-msgstr ""
+msgstr "You've asked for several syncs recently. Try again in a few minutes."
 "V poslední době přišlo několik požadavků na synchronizaci. Zkuste to znovu "
 "za pár minut."
 
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "Your change to “%{title}” is saved here and will be sent to %{account} automatically."
-msgstr ""
+msgstr "Your change to “%{title}” is saved here and will be sent to %{account} automatically."
 "Vaše změna události „%{title}“ je uložena zde a bude automaticky odeslána do"
 " účtu %{account}."
 

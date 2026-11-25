@@ -300,12 +300,6 @@ msgstr "Mercoledì"
 msgid "Sent with care by"
 msgstr "Inviato con cura da"
 
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
-msgstr "la pianificazione che rispetta il tuo tempo"
-
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "%{date} at %{time}"

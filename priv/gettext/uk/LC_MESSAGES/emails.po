@@ -307,12 +307,6 @@ msgstr "середа"
 msgid "Sent with care by"
 msgstr "З турботою від"
 
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
-msgstr "планування, що поважає ваш час"
-
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "%{date} at %{time}"

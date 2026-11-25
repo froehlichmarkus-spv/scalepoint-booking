@@ -44,7 +44,7 @@ msgstr "Nur „Dieses Ereignis“ lässt sich rückgängig machen."
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
-msgstr ""
+msgstr "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
 "„%{title}“ wiederholt sich. Soll das neue Muster für dieses und alle "
 "folgenden Ereignisse gelten oder für alle?"
 
@@ -61,6 +61,6 @@ msgstr "„%{title}“ wiederholt sich. Welche Ereignisse sollen geändert werde
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
-msgstr ""
+msgstr "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
 "„%{title}“ wiederholt sich. Für welche Ereignisse sollen Ihre Änderungen "
 "gelten? Ihre Antwort gilt, bis Sie die Details schließen."

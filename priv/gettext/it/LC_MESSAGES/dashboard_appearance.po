@@ -799,3 +799,43 @@ msgstr "Tema di %{page} aggiornato a %{theme_name}"
 #, elixir-autogen, elixir-format
 msgid "Your own wording is shown in every language unless you translate it under Languages. The built-in text is always translated."
 msgstr "Il tuo testo viene mostrato in tutte le lingue, a meno che tu non lo traduca in «Lingue». Il testo predefinito viene sempre tradotto."
+
+#: test/support/fixture_theme/theme.ex
+#, elixir-autogen, elixir-format
+msgid "A booking page built only from the shared parts, to prove a theme needs nothing more."
+msgstr "A booking page built only from the shared parts, to prove a theme needs nothing more."
+
+#: test/support/journey_fixtures/talk/theme.ex
+#, elixir-autogen, elixir-format
+msgid "Booking me should feel like a short conversation, one question at a time."
+msgstr "Booking me should feel like a short conversation, one question at a time."
+
+#: test/support/showcase_theme/theme.ex
+#, elixir-autogen, elixir-format
+msgid "Every shared option at once, to prove each one through the real pages."
+msgstr "Every shared option at once, to prove each one through the real pages."
+
+#: test/support/journey_fixtures/express/theme.ex
+#, elixir-autogen, elixir-format
+msgid "My visitors want the next free time, in two taps."
+msgstr "My visitors want the next free time, in two taps."
+
+#: test/support/journey_fixtures/two/theme.ex
+#, elixir-autogen, elixir-format
+msgid "One screen to choose, one to book."
+msgstr "One screen to choose, one to book."
+
+#: test/support/journey_fixtures/scroll/theme.ex
+#, elixir-autogen, elixir-format
+msgid "People book me, not a time slot: one page that reads from who I am to when we meet."
+msgstr "People book me, not a time slot: one page that reads from who I am to when we meet."
+
+#: test/support/fixture_theme/theme.ex
+#: test/support/journey_fixtures/express/theme.ex
+#: test/support/journey_fixtures/scroll/theme.ex
+#: test/support/journey_fixtures/talk/theme.ex
+#: test/support/journey_fixtures/two/theme.ex
+#: test/support/showcase_theme/theme.ex
+#, elixir-autogen, elixir-format
+msgid "Test fixture theme."
+msgstr "Test fixture theme."

@@ -270,7 +270,7 @@ msgstr "Questo schema di ripetizione non può essere salvato in Outlook."
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
-msgstr ""
+msgstr "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."
 "Outlook non può saltare i mesi che non hanno il giorno di questa serie e sposterebbe quegli eventi all'ultimo giorno del mese. Fai iniziare la serie il 28 o prima, oppure salvala in un altro calendario."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex

@@ -268,3 +268,39 @@ msgstr "Twoja prośba została wysłana."
 msgctxt "paper"
 msgid "Your request to %{organizer} has been sent."
 msgstr "Twoja prośba została wysłana do organizatora %{organizer}."
+
+#: test/support/fixture_theme/voice.ex
+#, elixir-autogen, elixir-format
+msgctxt "fixture"
+msgid "%{name}, your request is in."
+msgstr "%{name}, your request is in."
+
+#: test/support/fixture_theme/voice.ex
+#, elixir-autogen, elixir-format
+msgctxt "fixture"
+msgid "Book a time"
+msgstr "Zarezerwuj spotkanie"
+
+#: test/support/fixture_theme/voice.ex
+#, elixir-autogen, elixir-format
+msgctxt "fixture"
+msgid "Book it"
+msgstr "Book it"
+
+#: test/support/fixture_theme/voice.ex
+#, elixir-autogen, elixir-format
+msgctxt "fixture"
+msgid "Choose a meeting to start."
+msgstr "Choose a meeting to start."
+
+#: test/support/fixture_theme/voice.ex
+#, elixir-autogen, elixir-format
+msgctxt "fixture"
+msgid "Hello, %{name} here."
+msgstr "Hello, %{name} here."
+
+#: test/support/fixture_theme/voice.ex
+#, elixir-autogen, elixir-format
+msgctxt "fixture"
+msgid "That time just went."
+msgstr "That time just went."

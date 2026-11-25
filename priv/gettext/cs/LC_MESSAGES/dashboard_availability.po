@@ -404,7 +404,7 @@ msgstr "Tato přestávka se překrývá s již existující přestávkou."
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "You have reached the limit of %{count} schedules. Delete one to add another."
-msgstr ""
+msgstr "You have reached the limit of %{count} schedules. Delete one to add another."
 "Byl dosažen limit %{count} rozvrhů. Smažte jeden, aby bylo možné přidat "
 "další."
 

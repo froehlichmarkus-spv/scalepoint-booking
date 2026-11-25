@@ -116,14 +116,14 @@ msgstr "Тут є все"
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
-msgstr ""
+msgstr "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
 "Ваш календар — це головна сторінка. Зустрічі, доступність, інтеграції та ваш "
 "профіль — за один клік."
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
-msgstr ""
+msgstr "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
 "Відкрийте його, щоб підключити календар, налаштувати сторінку бронювання та "
 "поділитися посиланням. Він зникне, коли всі кроки буде виконано."
 

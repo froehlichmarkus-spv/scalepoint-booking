@@ -116,14 +116,14 @@ msgstr "Qui c'è tutto"
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
-msgstr ""
+msgstr "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
 "Il tuo calendario è la pagina iniziale. Riunioni, disponibilità, "
 "integrazioni e il tuo profilo sono a un clic di distanza."
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
-msgstr ""
+msgstr "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
 "Aprila per collegare un calendario, personalizzare la tua pagina di "
 "prenotazione e condividere il tuo link. Scompare quando tutti i passaggi "
 "sono completati."

@@ -131,11 +131,6 @@ msgstr "Questa applicazione richiede JavaScript per funzionare. Abilitalo nelle 
 msgid "This timezone will be used for your availability and scheduling."
 msgstr "Questo fuso orario verrà utilizzato per la tua disponibilità e per la pianificazione."
 
-#: lib/tymeslot_web/components/core_components/brand.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot logo"
-msgstr "Logo di Tymeslot"
-
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format
 msgid "Your Timezone"

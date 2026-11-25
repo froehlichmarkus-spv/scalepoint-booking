@@ -412,13 +412,13 @@ msgstr "Orari occupati di %{calendar}"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
 msgid "Block the time of every event in this feed, also those it marks as free"
-msgstr ""
+msgstr "Block the time of every event in this feed, also those it marks as free"
 "Blocca l'orario di ogni evento di questo feed, anche di quelli segnati come liberi"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Events this calendar marks as free no longer block time"
-msgstr ""
+msgstr "Events this calendar marks as free no longer block time"
 "Gli eventi che questo calendario segna come liberi non bloccano più l'orario"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
@@ -434,7 +434,7 @@ msgstr "Ogni evento di questo calendario ora blocca l'orario"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
 msgid "read-only, every event blocks time, also those marked free"
-msgstr ""
+msgstr "read-only, every event blocks time, also those marked free"
 "di sola lettura, ogni evento blocca l'orario, anche quelli segnati come liberi"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex

@@ -44,7 +44,7 @@ msgstr "Cofnąć można tylko opcję „To wydarzenie”."
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
-msgstr ""
+msgstr "“%{title}” repeats. Should the new pattern apply to this and the following events, or to all of them?"
 "Wydarzenie „%{title}” się powtarza. Czy nowy wzorzec ma dotyczyć tego i "
 "kolejnych wydarzeń, czy wszystkich?"
 
@@ -61,6 +61,6 @@ msgstr "Wydarzenie „%{title}” się powtarza. Które wydarzenia zmienić?"
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
-msgstr ""
+msgstr "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
 "Wydarzenie „%{title}” się powtarza. Których wydarzeń mają dotyczyć zmiany? "
 "Wybór obowiązuje do zamknięcia szczegółów."
