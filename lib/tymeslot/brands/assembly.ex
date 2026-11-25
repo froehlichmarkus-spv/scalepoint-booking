@@ -3,12 +3,12 @@ defmodule Tymeslot.Brands.Assembly do
 
   @hex ~r/^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/
 
-  @spec build(map()) :: Tymeslot.Brands.t()
+  @spec build(map()) :: term()
   def build(map) when is_map(map) do
     struct!(Tymeslot.Brands, Map.merge(identity(map), page(map)))
   end
 
-  @spec fallback() :: Tymeslot.Brands.t()
+  @spec fallback() :: term()
   def fallback do
     %Tymeslot.Brands{
       key: "neutral",
@@ -105,7 +105,7 @@ defmodule Tymeslot.Brands.Assembly do
   defp presence(value) when is_binary(value) and value != "", do: value
   defp presence(_value), do: nil
 
-  @spec hex(term(), String.t()) :: String.t()
+  @spec hex(term(), term()) :: term()
   def hex(value, fallback) when is_binary(value) do
     if Regex.match?(@hex, value), do: value, else: fallback
   end

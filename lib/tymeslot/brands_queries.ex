@@ -30,7 +30,7 @@ defmodule Tymeslot.BrandsQueries do
   @spec tenant_brand_rows() :: list()
   def tenant_brand_rows do
     case Repo.query("select key, document from tenant_brands", []) do
-      {:ok, %{rows: rows}} -> rows
+      {:ok, %{rows: rows}} when is_list(rows) -> rows
       _other -> []
     end
   rescue

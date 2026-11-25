@@ -72,7 +72,9 @@ defmodule Tymeslot.Emails.SeedMailSuppress do
   defp address_blocked?(address, blocked, retired) when is_binary(address) do
     normalised = address |> String.trim() |> String.downcase()
     domain = normalised |> String.split("@") |> List.last()
-    MapSet.member?(blocked, normalised) or MapSet.member?(retired, domain)
+
+    MapSet.member?(blocked, normalised) or
+      (is_binary(domain) and MapSet.member?(retired, domain))
   end
 
   defp address_blocked?(_address, _blocked, _retired), do: false

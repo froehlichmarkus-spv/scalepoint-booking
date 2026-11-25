@@ -277,7 +277,7 @@ defmodule Tymeslot.Brands do
     href = public_url(brand)
 
     cond do
-      href in [nil, ""] -> "#"
+      is_nil(href) -> "#"
       brand.house_brand -> href
       leak?(href) -> "#"
       true -> href
