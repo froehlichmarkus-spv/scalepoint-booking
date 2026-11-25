@@ -168,10 +168,12 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   end
 
   defp branding_blocked?(socket, group, field, value) do
-    user_id = socket.assigns.current_user.id
-
-    not BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
+    not BookingChrome.branding_change_allowed?(owner_id(socket), group.key, field, value)
   end
+
+  defp owner_id(%{assigns: %{current_user: %{id: id}}}) when is_integer(id), do: id
+  defp owner_id(%{assigns: %{profile: %{user_id: id}}}) when is_integer(id), do: id
+  defp owner_id(_socket), do: nil
 
   defp do_set_option(socket, group, field, value) do
     panel = socket.assigns.panels[group.key]

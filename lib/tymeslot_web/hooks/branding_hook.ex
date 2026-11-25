@@ -10,6 +10,7 @@ defmodule TymeslotWeb.Hooks.BrandingHook do
   import Phoenix.Component
 
   alias Tymeslot.Payments
+  alias Tymeslot.Plans
 
   @spec on_mount(:default, map(), map(), Phoenix.LiveView.Socket.t()) ::
           {:cont, Phoenix.LiveView.Socket.t()}
@@ -17,7 +18,7 @@ defmodule TymeslotWeb.Hooks.BrandingHook do
     user_id = socket.assigns[:organizer_user_id]
 
     socket =
-      if is_integer(user_id) do
+      if Plans.enabled?() and is_integer(user_id) do
         assign(socket, :should_show_branding, Payments.show_branding?(user_id))
       else
         socket

@@ -18,7 +18,8 @@ defmodule TymeslotWeb.Branding.PoweredBy do
   def badge(assigns) do
     organizer_id = assigns[:organizer_user_id]
     preview = assigns[:owner_preview] == true
-    show = assigns[:should_show_branding] == true and not preview
+    shown = shown?(assigns[:should_show_branding], organizer_id)
+    show = shown and not preview
     hint = preview and is_integer(organizer_id) and Payments.show_branding?(organizer_id)
 
     assigns =
@@ -43,4 +44,12 @@ defmodule TymeslotWeb.Branding.PoweredBy do
     </p>
     """
   end
+
+  defp shown?(true, _organizer_id), do: true
+  defp shown?(false, _organizer_id), do: false
+
+  defp shown?(_unset, organizer_id) when is_integer(organizer_id),
+    do: Payments.show_branding?(organizer_id)
+
+  defp shown?(_unset, _organizer_id), do: false
 end
