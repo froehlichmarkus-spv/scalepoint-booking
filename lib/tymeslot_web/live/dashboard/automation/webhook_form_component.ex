@@ -200,7 +200,8 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookFormComponent do
                   dgettext(
                     "dashboard_automation",
                     "This token is automatically sent in the %{header} header.",
-                    header: ~s(<code class="bg-tymeslot-100 px-1 rounded">X-the scheduler-Token</code>)
+                    header:
+                      ~s(<code class="bg-tymeslot-100 px-1 rounded">X-the scheduler-Token</code>)
                   )
                 )}
               </p>
