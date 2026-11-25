@@ -7,9 +7,9 @@
  * these utilities. Hex values match app.css exactly.
  */
 @theme {
-  --color-turquoise-600: var(--spv-teal);
-  --color-turquoise-700: var(--spv-teal-strong);
-  --color-tymeslot-500: var(--spv-muted);
+  --color-turquoise-600: var(--spv-teal, #469189);
+  --color-turquoise-700: var(--spv-teal-strong, #3a7872);
+  --color-tymeslot-500: var(--spv-muted, #65758b);
 
   /* Core components that also render on booking pages (the flash toasts,
    * info_box) draw their corners with rounded-token-*. Map those utilities
