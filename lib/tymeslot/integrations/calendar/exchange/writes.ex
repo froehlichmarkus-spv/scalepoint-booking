@@ -112,7 +112,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.Writes do
   EWS assigns its own and ignores the one sent. `organizer_name`,
   `organizer_email`, `attendee_name` and `attendee_email` are not turned into
   EWS attendees, because attendees would make the item a meeting and have the
-  server send its own invitation on top of the one the scheduler already sent; they
+  server send its own invitation on top of the one Tymeslot already sent; they
   reach the organiser's diary inside `description`, which the builder assembles
   with them in it. `attachments` has no place on a `t:CalendarItem` body and
   would need a separate `CreateAttachment` round trip. `timezone` is the

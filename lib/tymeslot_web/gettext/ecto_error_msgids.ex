@@ -82,7 +82,7 @@ defmodule TymeslotWeb.Gettext.EctoErrorMsgids do
       "should have at most %{count} item(s)"
     )
 
-    # the scheduler's own changeset messages that carry a `:count`, which
+    # Tymeslot's own changeset messages that carry a `:count`, which
     # `Forms.translate_error/1` looks up as plurals.
     dngettext_noop(
       "errors",

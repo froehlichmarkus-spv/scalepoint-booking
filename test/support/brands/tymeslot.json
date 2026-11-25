@@ -1,0 +1,16 @@
+{
+  "key": "tymeslot",
+  "enabled": true,
+  "default": true,
+  "house_brand": true,
+  "layout": "neutral",
+  "name": "Tymeslot",
+  "product_label": "Tymeslot",
+  "sender_name": "Tymeslot",
+  "sender_email": "booking@localhost",
+  "footer": "Tymeslot",
+  "hosts": [],
+  "username": "",
+  "owner_email": "",
+  "owner_name": ""
+}

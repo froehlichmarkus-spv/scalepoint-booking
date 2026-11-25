@@ -5,7 +5,7 @@ defmodule Tymeslot.Workers.SyncOutlookCalendarWorker do
 
   Each job targets one event identified by `graph_resource_id`. The worker
   fetches the event from Graph, upserts it into the local cache, and
-  reconciles any linked the scheduler meeting whose times may have changed.
+  reconciles any linked Tymeslot meeting whose times may have changed.
 
   On a 404 (event deleted by the user) the cache row is removed and the linked
   meeting (if any) is reconciled with `:deleted`. On 401 the integration is
@@ -102,7 +102,7 @@ defmodule Tymeslot.Workers.SyncOutlookCalendarWorker do
 
   defp sync_event(integration, graph_resource_id) do
     # Taken before the fetch, as in `DeltaSync`: the event is stamped with it,
-    # and reconciliation treats a the scheduler calendar write that finished at or
+    # and reconciliation treats a Tymeslot calendar write that finished at or
     # after it as possibly missing from what was read.
     read_at = DateTime.utc_now(:microsecond)
 
@@ -183,7 +183,7 @@ defmodule Tymeslot.Workers.SyncOutlookCalendarWorker do
   # integration is about to be refused the same way, and the 15-minute sweep
   # would keep re-queueing them; flagging removes the integration from that
   # population until its owner reconnects. Only the false-to-true transition
-  # emails them, and the scheduler's uniqueness window backstops the race
+  # emails them, and Tymeslot's uniqueness window backstops the race
   # between two event jobs flagging at once.
   defp handle_credentials_rejected(integration) do
     Management.flag_for_reconnection(

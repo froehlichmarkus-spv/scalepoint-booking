@@ -1,13 +1,13 @@
 defmodule Tymeslot.CalendarGrid.EventDeletion do
   @moduledoc """
-  Deleting a calendar-grid event: the provider delete, the the scheduler meeting
+  Deleting a calendar-grid event: the provider delete, the Tymeslot meeting
   it may have been booked as, and the cached row the grid reads. Whenever the
   row changes, the organiser's cached availability is invalidated so the
   booking page stops treating the slot as taken.
 
   ## Linked meetings
 
-  An event that is the calendar copy of a the scheduler booking takes the booking
+  An event that is the calendar copy of a Tymeslot booking takes the booking
   with it: once the provider has deleted the event, the meeting is reconciled
   as externally deleted (see `Calendar.Events.delete_event_and_reconcile/4`),
   and the result says whether that cancellation went through. Nothing is
@@ -30,7 +30,7 @@ defmodule Tymeslot.CalendarGrid.EventDeletion do
     * Exchange has no scoped delete, so its series are refused with
       `:recurring_event`.
 
-  A series is never a the scheduler booking, so deleting any part of one
+  A series is never a Tymeslot booking, so deleting any part of one
   reconciles no meeting, and a room the series shares stays until the whole
   series goes.
 
@@ -96,7 +96,7 @@ defmodule Tymeslot.CalendarGrid.EventDeletion do
   @type scope :: :occurrence | :series
 
   @typedoc """
-  What happened to the the scheduler meeting the event was booked as: `:none` when
+  What happened to the Tymeslot meeting the event was booked as: `:none` when
   it was not a booking, `:cancelled` when the meeting was cancelled with it,
   `:cancel_failed` when the event is gone but the meeting could not be
   cancelled.
@@ -140,7 +140,7 @@ defmodule Tymeslot.CalendarGrid.EventDeletion do
   @doc """
   Whether deleting `event` would tell anyone, asked before the calendar
   offers a delete without a confirmation: `{:notifies, :booking}` when it is
-  the calendar copy of a live the scheduler booking, whose meeting the delete
+  the calendar copy of a live Tymeslot booking, whose meeting the delete
   cancels; `{:notifies, {:attendees, count}}` when `user_id` organises it
   and it has attendees with an address; `:silent` otherwise. The copy of a
   meeting that is no longer live (cancelled, declined, expired or voided) is
@@ -182,7 +182,7 @@ defmodule Tymeslot.CalendarGrid.EventDeletion do
     end
   end
 
-  @doc "Whether `event` is the synced calendar copy of a the scheduler booking."
+  @doc "Whether `event` is the synced calendar copy of a Tymeslot booking."
   @spec booking_copy?(map()) :: boolean()
   def booking_copy?(event) do
     CalendarEvents.event_linked_to_booking?(
@@ -332,7 +332,7 @@ defmodule Tymeslot.CalendarGrid.EventDeletion do
 
   # Addressed from the cached row alone, which is what says which occurrence
   # and series the event is. No meeting is reconciled: a series is never a
-  # the scheduler booking, and a CalDAV occurrence shares its href with the whole
+  # Tymeslot booking, and a CalDAV occurrence shares its href with the whole
   # series, so a meeting matched by it would be cancelled for one occurrence.
   defp delete_series_member(
          user_id,

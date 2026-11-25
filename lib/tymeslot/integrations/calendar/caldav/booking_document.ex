@@ -2,7 +2,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.BookingDocument do
   @moduledoc """
   Points a booking's update at the iCalendar document the organiser's CalDAV
   server last gave us, so the write patches that document instead of
-  rebuilding the event from the scheduler's payload.
+  rebuilding the event from Tymeslot's payload.
 
   A booking update (a reschedule, a video room attached, an approval) carries
   the whole booking as `CalendarEventBuilder` models it. Rebuilt from that
@@ -18,7 +18,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.BookingDocument do
   Every property the booking payload names: `DTSTART`, `DTEND`, `SUMMARY`,
   `DESCRIPTION`, `LOCATION`, `CONFERENCE`, `STATUS` and `TRANSP`. An edit the
   organiser made to one of those in their own client is overwritten, as it
-  always was; the scheduler owns them.
+  always was; Tymeslot owns them.
 
   Not written: the attendee block, since the booking payload names the
   attendee by `:attendee_email` rather than the `:attendees` list the patcher

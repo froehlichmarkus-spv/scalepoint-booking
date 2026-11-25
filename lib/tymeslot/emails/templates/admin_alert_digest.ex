@@ -18,7 +18,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
 
   Always English, like `Tymeslot.Emails.Templates.AdminAlert`: it goes to the
   operator's configured alert address, not to a user with a stored locale,
-  and inbox rules file it by its `[SEVERITY] the scheduler:` subject prefix. The
+  and inbox rules file it by its `[SEVERITY] Tymeslot:` subject prefix. The
   text below is plain English with no gettext, for the reason given in
   `Tymeslot.Emails.Templates.AdminAlert`.
   """
@@ -34,18 +34,18 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
   @spec render(String.t(), map()) :: Email.t()
   def render(recipient, digest) do
     MjmlEmail.base_email()
-    |> Email.to({"the scheduler Operator", recipient})
+    |> Email.to({"Tymeslot Operator", recipient})
     |> Email.subject(subject(digest))
     |> Email.html_body(html_body(digest))
     |> Email.text_body(text_body(digest))
   end
 
   defp subject(%{"kind" => "errors"} = digest) do
-    "[ERROR] the scheduler: #{pluralise(total_alerts(digest), "more error alert")} this hour"
+    "[ERROR] Tymeslot: #{pluralise(total_alerts(digest), "more error alert")} this hour"
   end
 
   defp subject(digest) do
-    "[INFO] the scheduler: daily digest (#{pluralise(total_alerts(digest), "alert")})"
+    "[INFO] Tymeslot: daily digest (#{pluralise(total_alerts(digest), "alert")})"
   end
 
   defp html_body(digest) do
@@ -69,7 +69,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
 
     TemplateHelper.compile_system_template(
       mjml_content,
-      "the scheduler Admin Alert Digest",
+      "Tymeslot Admin Alert Digest",
       subject(digest),
       intent: copy.intent,
       eyebrow: "Admin",
@@ -104,7 +104,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
         "#{pluralise(total_alerts(digest), "error alert")} held back after this hour's " <>
           "first ones, newest first",
       footer:
-        "the scheduler emails the first few new or returning errors of an hour at once and " <>
+        "Tymeslot emails the first few new or returning errors of an hour at once and " <>
           "collects the rest here, so a bad deploy sends one email rather than one per error.",
       text_title: "TYMESLOT ERROR ALERT ROLL-UP",
       stage_title: "Error alert roll-up",

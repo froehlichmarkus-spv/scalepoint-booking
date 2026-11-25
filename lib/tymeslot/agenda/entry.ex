@@ -2,7 +2,7 @@ defmodule Tymeslot.Agenda.Entry do
   @moduledoc """
   A single appointment on the dashboard agenda.
 
-  Source-agnostic by design: a the scheduler booking (`source: :tymeslot`) and a
+  Source-agnostic by design: a Tymeslot booking (`source: :tymeslot`) and a
   synced external calendar event (`source: :external`) are normalised into the
   same shape so the presentation layer renders one card for both.
 

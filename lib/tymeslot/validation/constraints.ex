@@ -1,6 +1,6 @@
 defmodule Tymeslot.Validation.Constraints do
   @moduledoc """
-  Centralised validation constraints for the the scheduler application.
+  Centralised validation constraints for the Tymeslot application.
 
   This module is the single source of truth for numeric bounds, length limits,
   and Ecto-ready option lists used across schemas and domain modules. The

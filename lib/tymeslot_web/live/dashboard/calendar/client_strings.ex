@@ -152,12 +152,12 @@ defmodule TymeslotWeb.Dashboard.Calendar.ClientStrings do
       no_calendar_note:
         dgettext(
           "dashboard_calendar_booking",
-          "Connect a calendar to add events, or use More options to send a the scheduler meeting."
+          "Connect a calendar to add events, or use More options to send a Tymeslot meeting."
         ),
       read_only_calendars_note:
         dgettext(
           "dashboard_calendar_booking",
-          "Your calendars are read-only. Connect one you can write to, or use More options to send a the scheduler meeting."
+          "Your calendars are read-only. Connect one you can write to, or use More options to send a Tymeslot meeting."
         )
     }
   end

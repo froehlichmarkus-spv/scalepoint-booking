@@ -13,7 +13,7 @@ defmodule Tymeslot.CalendarGrid.EventEdit do
   it is translated into the adapters'.
 
   That keeps everything the cache models, which is not everything the event
-  has: an event authored elsewhere carries properties the scheduler never reads.
+  has: an event authored elsewhere carries properties Tymeslot never reads.
   For the CalDAV family the payload therefore travels with the cached
   `raw_ical` and its ETag, and the adapter patches that document property by
   property instead of rebuilding it, so an `ATTENDEE` block with its
@@ -362,7 +362,7 @@ defmodule Tymeslot.CalendarGrid.EventEdit do
   # this exists to prevent.
   #
   # The row also says whose event it is, which decides whether the write
-  # marks it as the scheduler's, and holds the raw Google event, whose unmodelled
+  # marks it as Tymeslot's, and holds the raw Google event, whose unmodelled
   # fields a Google `PUT` has to restate.
   defp put_stored_document(payload, nil), do: payload
 

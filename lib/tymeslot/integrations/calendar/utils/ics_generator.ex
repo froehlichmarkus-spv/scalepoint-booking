@@ -177,10 +177,10 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
   defp ics_uid(uid) do
     domain =
       case Brands.current() do
-        %{sender_email: email} when is_binary(email) ->
-          email |> String.split("@") |> List.last()
+        %{hosts: [host | _rest]} when is_binary(host) and host != "" ->
+          host |> String.split(":") |> hd()
 
-        _unused ->
+        _brand ->
           Application.get_env(:tymeslot, :email)[:domain]
       end
 
@@ -222,7 +222,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     end
   end
 
-  # the scheduler emails always advertise METHOD:PUBLISH (not REQUEST/CANCEL). The
+  # Tymeslot emails always advertise METHOD:PUBLISH (not REQUEST/CANCEL). The
   # organiser's calendar is already updated via the CalDAV/OAuth write path and
   # attendee RSVP is handled by booking URLs in the email body — iTIP on the
   # wire would cause recipient-side mail servers (Zimbra, Nextcloud/Sabre,
@@ -346,12 +346,9 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     organizer_name = Map.get(meeting_details, :organizer_name) || brand.sender_name
 
     organizer_email =
-      brand.sender_email ||
-        Map.get(
-          meeting_details,
-          :organizer_email,
-          Application.get_env(:tymeslot, :email)[:from_email]
-        )
+      Map.get(meeting_details, :organizer_email) ||
+        brand.sender_email ||
+        Application.get_env(:tymeslot, :email)[:from_email]
 
     "SCHEDULE-AGENT=CLIENT#{cn_param(organizer_name)}:mailto:" <>
       Format.sanitize_ical_value(organizer_email)

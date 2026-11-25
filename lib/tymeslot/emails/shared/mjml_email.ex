@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.MjmlEmail do
   @moduledoc """
-  Base MJML template for the scheduler transactional emails.
+  Base MJML template for Tymeslot transactional emails.
 
   ## Anatomy
 
@@ -79,7 +79,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Creates a base Swoosh email pre-configured for the given tracking category
-  and with the the scheduler logo attached inline (CID `tymeslot-logo.png`) so the
+  and with the Tymeslot logo attached inline (CID `tymeslot-logo.png`) so the
   system layout's logo header renders identically in every email client
   without needing an external URL.
 
@@ -138,7 +138,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   # Mailgun drops `cid:` entirely and keys inline images by filename.
   # Postmark and AhaSend echo the `cid:` we set. Matching filename and cid
   # is the only value that renders correctly across all four.
-  @logo_cid "brand-logo.png"
+  @logo_cid "tymeslot-logo.png"
 
   @doc "The Content-ID used for the inline logo attachment."
   @spec logo_cid() :: String.t()
@@ -146,7 +146,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Attaches the instance logo as an inline image — the custom logo when a
-  self-hosted instance has uploaded one, the stock the scheduler logo otherwise.
+  self-hosted instance has uploaded one, the stock Tymeslot logo otherwise.
   Swallowed silently if neither PNG can be read: the email still sends, the
   logo simply won't render.
 

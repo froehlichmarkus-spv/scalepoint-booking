@@ -209,7 +209,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.OptionsGrid do
         <p class="text-token-sm text-blue-800">
           {dgettext(
             "dashboard_embed",
-            "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
+            "Install the official Tymeslot plugin to embed your booking page with a block or shortcode - no code."
           )}
           <a
             href="https://wordpress.org/plugins/tymeslot/"

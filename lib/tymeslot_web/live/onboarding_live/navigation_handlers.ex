@@ -481,7 +481,7 @@ defmodule TymeslotWeb.OnboardingLive.NavigationHandlers do
                     :info,
                     dgettext(
                       "onboarding_wizard",
-                      "Welcome to the scheduler! Your account is now set up."
+                      "Welcome to Tymeslot! Your account is now set up."
                     )
                   )
                   |> LiveView.redirect(to: redirect_to)

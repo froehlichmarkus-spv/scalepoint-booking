@@ -439,7 +439,7 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.CalendarAPI do
   Fetches a single raw Graph event by its provider event ID.
 
   Returns the raw decoded JSON map (not converted to common format), with
-  the the scheduler extended property expanded. Takes a bare token because the
+  the Tymeslot extended property expanded. Takes a bare token because the
   callers (sync workers) manage token refresh and circuit-breaking around
   their own preflight logic.
   """
@@ -546,7 +546,7 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.CalendarAPI do
     end)
   end
 
-  # The Graph body of an event the scheduler writes, refused before any request
+  # The Graph body of an event Tymeslot writes, refused before any request
   # when its repeat rule has no Graph pattern.
   defp event_body(event_data) do
     with {:ok, body} <- EventMapper.format_event_data(event_data),

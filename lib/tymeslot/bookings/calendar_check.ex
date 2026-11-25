@@ -19,7 +19,7 @@ defmodule Tymeslot.Bookings.CalendarCheck do
   ## The meeting being moved is not a conflict with itself
 
   A reschedule's fresh fetch returns the meeting's own provider event, because
-  the scheduler wrote it to the host's calendar when the booking was made. Left in,
+  Tymeslot wrote it to the host's calendar when the booking was made. Left in,
   it would refuse every move onto a time overlapping (or, through a buffer,
   merely adjacent to) the slot the meeting already occupies, so a booking
   could not be nudged by fifteen minutes. Pass the meeting as `:exclude` and

@@ -1,6 +1,6 @@
 defmodule Tymeslot.Auth.UserSchema do
   @moduledoc """
-  Schema for user accounts in the the scheduler system.
+  Schema for user accounts in the Tymeslot system.
   """
   use Gettext, backend: TymeslotWeb.Gettext
   use Ecto.Schema

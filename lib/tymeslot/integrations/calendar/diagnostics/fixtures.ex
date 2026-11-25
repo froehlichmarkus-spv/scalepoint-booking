@@ -1,7 +1,7 @@
 defmodule Tymeslot.Integrations.Calendar.Diagnostics.Fixtures do
   @moduledoc """
   Writes no application path makes, for `mix calendar_audit` to plant the
-  states it then checks the scheduler reads or recovers from: provider events in
+  states it then checks Tymeslot reads or recovers from: provider events in
   shapes the booking writers never produce, a CalDAV write under an ETag the
   caller chooses, and a sync cursor the provider will refuse.
 

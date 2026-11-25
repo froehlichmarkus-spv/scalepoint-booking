@@ -5,7 +5,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.HostAddresses do
 
   Google and Outlook mark the signed-in account's own attendee entry; CalDAV
   does not, and a CalDAV integration records no address for its account. The
-  host is therefore taken to be whoever answers to the the scheduler account's
+  host is therefore taken to be whoever answers to the Tymeslot account's
   email, or to the CalDAV login when that is an email address, which covers
   the invitation that reached the address the host signs in with.
 

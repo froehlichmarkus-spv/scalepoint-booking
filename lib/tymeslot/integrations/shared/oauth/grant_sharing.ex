@@ -1,15 +1,15 @@
 defmodule Tymeslot.Integrations.Shared.OAuth.GrantSharing do
   @moduledoc """
-  Whether another the scheduler account still relies on the provider-side grant
+  Whether another Tymeslot account still relies on the provider-side grant
   an integration holds, so that deleting one account does not revoke it.
 
   A provider's revoke ends more than the one row's tokens. Google's ends the
   whole grant the Google account gave this app, and Google Calendar and
   Google Meet connect through the same app, so a revoke from either cuts off
-  every the scheduler account on that Google account, whichever of the two it
+  every Tymeslot account on that Google account, whichever of the two it
   connected. Zoom's removes the app's authorisation for the Zoom user, and
   Zoom's deauthorisation webhook that follows would then disconnect every
-  the scheduler account linked to it.
+  Tymeslot account linked to it.
 
   The external account is recognised by `provider_account_id`: Google's
   `sub`, Zoom's user id. A row that never recorded one cannot be matched to

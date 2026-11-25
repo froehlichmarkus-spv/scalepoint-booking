@@ -12,7 +12,7 @@ defmodule Tymeslot.CalendarGrid.ProviderPayload do
   event, never from the part that changed.
 
   Complete means complete with respect to what the cache models. Properties
-  the scheduler never reads (categories, custom `X-` properties, alarm repeats)
+  Tymeslot never reads (categories, custom `X-` properties, alarm repeats)
   are still lost on a Google write. CalDAV keeps them: the caller sends the
   event's cached `raw_ical` alongside the payload and the adapter patches
   that document rather than rebuilding it.
@@ -61,7 +61,7 @@ defmodule Tymeslot.CalendarGrid.ProviderPayload do
          status: writable_status(event.status),
          provider_event_id: event.provider_event_id,
          calendar_id: calendar_id(event.provider_calendar_id),
-         # Whether the adapters mark the event as the scheduler's: only `false`
+         # Whether the adapters mark the event as Tymeslot's: only `false`
          # leaves it unmarked, so an event someone else made stays theirs.
          created_by_tymeslot: Map.get(event, :created_by_tymeslot)
        }}

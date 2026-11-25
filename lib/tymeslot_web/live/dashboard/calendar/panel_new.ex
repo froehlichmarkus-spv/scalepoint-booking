@@ -14,7 +14,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNew do
   form again and runs the create path every create takes
   (`Creation.start/3`); the draft then belongs to the pending create, and
   once that answers the panel edits the new event. With a guest and "Send as a
-  the scheduler meeting" ticked, Create books a the scheduler meeting instead
+  Tymeslot meeting" ticked, Create books a Tymeslot meeting instead
   (`PanelMeeting`); with "Group event" ticked, Create makes a one-off event
   people sign up for (`PanelGroupEvent`).
 

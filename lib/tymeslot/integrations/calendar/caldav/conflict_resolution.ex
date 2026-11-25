@@ -20,7 +20,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.ConflictResolution do
 
     * `:keep_local`  — retry the write without `If-Match`, forcing the local
                        version to overwrite the server's. Use only when
-                       the scheduler owns the event and the server copy is
+                       Tymeslot owns the event and the server copy is
                        expected to be stale (e.g. events with a
                        `@tymeslot.com` UID suffix).
 

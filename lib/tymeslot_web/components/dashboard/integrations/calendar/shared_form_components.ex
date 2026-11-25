@@ -198,7 +198,7 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Calendar.SharedFormCompo
 
   Shown by both the connect form and the CalDAV reconnect modal, so the two
   cannot drift apart. iCloud adds a line to each: on connecting, that revoking
-  the password disconnects the scheduler; on reconnecting, that a revoked password
+  the password disconnects Tymeslot; on reconnecting, that a revoked password
   will not work again, which is the usual reason an iCloud calendar needs
   reconnecting at all.
   """

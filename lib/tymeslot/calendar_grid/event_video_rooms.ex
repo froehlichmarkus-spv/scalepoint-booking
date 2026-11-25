@@ -38,11 +38,11 @@ defmodule Tymeslot.CalendarGrid.EventVideoRooms do
 
   The room is never read back out of the event's description or location. The
   organiser can edit that text in any calendar client, and a room found there
-  need not be one the scheduler created.
+  need not be one Tymeslot created.
 
   Instead the record holds the event's identifiers within its calendar
   integration, and matches an event that shares any of them, as
-  `Tymeslot.Meetings.CalendarEventLink` does for bookings: the uid the scheduler
+  `Tymeslot.Meetings.CalendarEventLink` does for bookings: the uid Tymeslot
   generated, which CalDAV servers keep, and the identifier the provider
   returned, which Google and Outlook cache as `provider_event_id`. Occurrences
   of a series are matched too: Google and Outlook cache them with their
@@ -114,7 +114,7 @@ defmodule Tymeslot.CalendarGrid.EventVideoRooms do
 
   @doc """
   Records where the calendar provider put an event written under the uid
-  the scheduler generated: the identifier it returned, which is how Google and
+  Tymeslot generated: the identifier it returned, which is how Google and
   Outlook address the event from then on, the calendar it was written to,
   which Google needs to look the event up again, and the iCalendar UID its
   cached row carries, which Outlook finds it by once it moved to another
@@ -432,7 +432,7 @@ defmodule Tymeslot.CalendarGrid.EventVideoRooms do
   def discard(rooms), do: Enum.each(rooms, &enqueue(&1, "delete"))
 
   @doc """
-  The identifiers a room's event may be cached under: the uid the scheduler
+  The identifiers a room's event may be cached under: the uid Tymeslot
   generated, the provider's own identifier, and the iCalendar UID its cached
   row was seen with.
   """

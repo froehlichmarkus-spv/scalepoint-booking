@@ -1,7 +1,7 @@
 defmodule Tymeslot.Integrations.Calendar.ColourOverrides do
   @moduledoc """
   A user's durable per-event colour overrides: setting and clearing one on a
-  the scheduler meeting or an external calendar event, looking them up, and
+  Tymeslot meeting or an external calendar event, looking them up, and
   resolving which palette key an event is displayed in.
 
   `Tymeslot.Integrations.Calendar` delegates to this module; the rows

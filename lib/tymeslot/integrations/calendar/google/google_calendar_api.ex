@@ -4,7 +4,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.CalendarAPI do
   Handles authentication, token refresh, and calendar CRUD operations.
 
   Google's own notifications are suppressed on every write (`sendUpdates=none`),
-  because the scheduler sends its own: without it a create, update or delete would
+  because Tymeslot sends its own: without it a create, update or delete would
   mail each attendee a second notice, a cancellation on delete.
   """
 

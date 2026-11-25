@@ -163,7 +163,7 @@ defmodule Tymeslot.Integrations.Calendar.Shared.ErrorMessages do
   def specific_message({:calendar_listing_too_large, url}, _provider) do
     dgettext(
       "integrations_calendar",
-      "The calendar server at %{url} listed more items than the scheduler can process at once. If this address points at a single calendar, enter your account's server address instead, and the scheduler will find your calendars there.",
+      "The calendar server at %{url} listed more items than Tymeslot can process at once. If this address points at a single calendar, enter your account's server address instead, and Tymeslot will find your calendars there.",
       url: url
     )
   end
@@ -186,7 +186,7 @@ defmodule Tymeslot.Integrations.Calendar.Shared.ErrorMessages do
   def specific_message(:response_too_large, _provider) do
     dgettext(
       "integrations_calendar",
-      "The calendar server returned more data than the scheduler can process at once."
+      "The calendar server returned more data than Tymeslot can process at once."
     )
   end
 
@@ -210,7 +210,7 @@ defmodule Tymeslot.Integrations.Calendar.Shared.ErrorMessages do
     )
   end
 
-  # A response that would not decode reached the scheduler, so neither the
+  # A response that would not decode reached Tymeslot, so neither the
   # network nor the server URL is to blame, which is all `:unknown` could say.
   def specific_message(:malformed_response, _provider) do
     dgettext(
@@ -227,7 +227,7 @@ defmodule Tymeslot.Integrations.Calendar.Shared.ErrorMessages do
     if own_server?(provider) do
       dgettext(
         "integrations_calendar",
-        "%{provider} did not respond in time. If the server is only reachable from your organisation's network or over a VPN, the scheduler cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes.",
+        "%{provider} did not respond in time. If the server is only reachable from your organisation's network or over a VPN, Tymeslot cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes.",
         provider: format_provider_name(provider)
       )
     end

@@ -18,7 +18,7 @@ defmodule Tymeslot.Availability.Offer.Moving do
   The whole record, not just its uid, because the page has to leave the
   meeting out of two different counts: the host's booking limits, keyed on
   the uid, and the events read back from their connected calendar, where the
-  meeting appears as the provider event the scheduler wrote and is matched by
+  meeting appears as the provider event Tymeslot wrote and is matched by
   whichever identifier that provider family preserves.
 
   A seat move vacates its meeting only when the mover is its last seat;

@@ -16,9 +16,9 @@ defmodule Tymeslot.CalendarGrid.CreateParams do
   (`"location_venue"`), written as its one-line text and refused
   (`:venue_gone`) when it was deleted meanwhile.
 
-  A the scheduler meeting may be booked with no calendar at all when the
+  A Tymeslot meeting may be booked with no calendar at all when the
   organiser has none they can write to (`calendar: :optional`): the meeting
-  then lives in the scheduler alone, and its `integration_id` and `calendar_id`
+  then lives in Tymeslot alone, and its `integration_id` and `calendar_id`
   are nil. A calendar event always needs one.
 
   `to_payload/1` turns the result into what `Changes.create_event/2` writes.
@@ -101,7 +101,7 @@ defmodule Tymeslot.CalendarGrid.CreateParams do
   @doc """
   Checks the string-keyed `params` a create was asked with, for `user_id`
   whose active calendar accounts are `integrations`, in the organiser's
-  `timezone`. With `calendar: :optional`, for a the scheduler meeting, no
+  `timezone`. With `calendar: :optional`, for a Tymeslot meeting, no
   calendar is accepted while the organiser has none to write to.
   """
   @spec cast(pos_integer(), [map()], map(), String.t(), keyword()) ::
@@ -462,7 +462,7 @@ defmodule Tymeslot.CalendarGrid.CreateParams do
 
   defp recurrence(rule, _integration) when rule in [nil, ""], do: {:ok, nil}
 
-  # A meeting kept in the scheduler alone has no calendar to write a series to.
+  # A meeting kept in Tymeslot alone has no calendar to write a series to.
   defp recurrence(_rule, nil), do: {:error, :recurrence_rule, :not_repeatable}
 
   defp recurrence(rule, integration) when is_binary(rule) and byte_size(rule) <= @max_rule do

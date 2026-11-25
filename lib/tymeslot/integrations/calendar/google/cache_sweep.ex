@@ -40,7 +40,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.CacheSweep do
     * **it holds no local change waiting for the server** (`sync_state`).
       Google has no offline queue today; the guard costs nothing and keeps a
       queued write from being swept if it ever gets one.
-    * **it is not linked to a the scheduler booking.** A row's absence from a
+    * **it is not linked to a Tymeslot booking.** A row's absence from a
       listing is weaker evidence than Google reporting the event cancelled,
       and a booking's event is the one row whose loss means something beyond
       the cache. The sweep neither cancels the meeting nor emails anyone, as

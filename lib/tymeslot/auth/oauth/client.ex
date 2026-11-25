@@ -14,7 +14,7 @@ defmodule Tymeslot.Auth.OAuth.Client do
 
   require Logger
 
-  @user_agent "the scheduler-Scheduler"
+  @user_agent "Tymeslot-Scheduler"
 
   @type provider :: Providers.provider()
   @type error :: {:provider_rejected, term()} | {:transport, term()} | {:invalid_response, term()}

@@ -1,11 +1,11 @@
 defmodule Tymeslot.Integrations.Calendar.CalDAV.Scheduling do
   @moduledoc """
-  Decides how a CalDAV server is told who a the scheduler event is with.
+  Decides how a CalDAV server is told who a Tymeslot event is with.
 
   RFC 6638 lets a client opt out of server-side scheduling by tagging its
   `ATTENDEE` properties `SCHEDULE-AGENT=CLIENT`: the server then stores the
   attendee without mailing them an iTIP invitation, which is exactly what
-  the scheduler wants, because it sends its own notification with its own branding
+  Tymeslot wants, because it sends its own notification with its own branding
   and its own reschedule and cancellation links.
 
   Most servers honour that. sabre/dav (Nextcloud, Baikal, ownCloud) skips
@@ -13,7 +13,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Scheduling do
   default; Radicale implements no scheduling at all; Apple co-authored the RFC.
   Zimbra and cPanel's calendar server are the exceptions: they strip the
   parameter and run iTIP for any event carrying an `ATTENDEE`, so a single
-  booking reaches the attendee as the scheduler's email plus one or more server
+  booking reaches the attendee as Tymeslot's email plus one or more server
   invitations, the later ones without the video link. The other side of that
   trade is that an event with no `ATTENDEE` shows one participant in the
   organiser's calendar, and the organiser's own client can never send an
@@ -22,7 +22,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Scheduling do
   So attendees are advertised everywhere except Zimbra and cPanel, which keep
   the `CONTACT` fallback (RFC 5545 §3.8.4.2): the same name and address,
   carried outside the iTIP model. What `CONTACT` costs is confined to the
-  organiser's external client; the scheduler's own calendar shows the booker either
+  organiser's external client; Tymeslot's own calendar shows the booker either
   way, and its own emails reach them, so a duplicate invitation to every
   booker outweighs it.
 
@@ -39,7 +39,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Scheduling do
   calendar an event is stored in is one of its attendees, and adds them when
   the event does not list them. It recognises the owner by any address on
   their account, aliases included, but writes the one it adds under the
-  account's primary address. A user whose the scheduler address is an alias, or a
+  account's primary address. A user whose Tymeslot address is an alias, or a
   custom domain, on that account would therefore see their login address
   appear beside the booker, on the server and in every client that syncs from
   it, whether the event carries the booker as an `ATTENDEE`, as a `CONTACT`,
@@ -63,7 +63,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Scheduling do
       still shows them under two addresses, and the server, taking the event
       for an invitation from someone else, silently ignores every later change
       to its guests. The organiser's own copy therefore shows them once, under
-      the account's address, while the booker's invitation, which the scheduler
+      the account's address, while the booker's invitation, which Tymeslot
       sends itself, keeps theirs.
 
   Mailbox.org lists its own aliases in that set, and usually a custom-domain
@@ -74,9 +74,9 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Scheduling do
 
   Open-Xchange honours `SCHEDULE-AGENT=CLIENT` on the write that carries it
   but strips the parameter before storing the event, so every later write
-  the scheduler makes from the stored copy (the video link, a reschedule, a
+  Tymeslot makes from the stored copy (the video link, a reschedule, a
   colour) would mail the booker a "changed" notice from the organiser's
-  address, and a delete or a removed guest a cancellation, beside the scheduler's
+  address, and a delete or a removed guest a cancellation, beside Tymeslot's
   own email. Every PUT and DELETE to that server therefore carries
   `Schedule-Reply: F` (RFC 6638 §8.1), which it honours for the organiser's
   writes as well as an attendee's, suppressing the notice for a create, an

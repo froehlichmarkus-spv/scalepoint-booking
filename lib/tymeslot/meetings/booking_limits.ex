@@ -9,7 +9,7 @@ defmodule Tymeslot.Meetings.BookingLimits do
     * per-meeting-type caps, stored on the meeting type
 
   A booking instant passes only when every configured cap still has room.
-  Limits count the scheduler bookings that hold a slot (see
+  Limits count Tymeslot bookings that hold a slot (see
   `Tymeslot.Meetings.MeetingState.where_slot_live/1`) — never external
   calendar events, which are conflict-checking's concern.
 

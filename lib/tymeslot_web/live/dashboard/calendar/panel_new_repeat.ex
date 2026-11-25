@@ -11,7 +11,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewRepeat do
   `"custom"`) and the editor's fields (`"repeat_custom"`); the rule is
   composed from the draft as cast, so it follows a start that moves, and
   what the calendar would refuse is refused before anything is written. A
-  the scheduler meeting and a group event do not repeat, so the field gives way
+  Tymeslot meeting and a group event do not repeat, so the field gives way
   to them.
   """
 

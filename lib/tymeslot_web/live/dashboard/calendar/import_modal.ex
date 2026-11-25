@@ -45,7 +45,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.ImportModal do
         <.info_box :if={@choices == []} variant={:info}>
           {dgettext(
             "dashboard_calendar_import",
-            "Connect a calendar the scheduler can write to before importing events."
+            "Connect a calendar Tymeslot can write to before importing events."
           )}
         </.info_box>
 

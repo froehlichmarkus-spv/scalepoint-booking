@@ -428,7 +428,7 @@ defmodule Tymeslot.Bookings.Reschedule do
   # The schedule check in `Validation.prepare_new_times/4` re-derives the
   # organiser's windows and breaks, but
   # it computes them against an empty event list by design
-  # (`Calculate.offers_slot/6`), and the write below only looks at the scheduler's
+  # (`Calculate.offers_slot/6`), and the write below only looks at Tymeslot's
   # own meetings. Without this, nothing on the reschedule path ever consults the
   # host's connected calendar: a time the host blocked in Google, Outlook or
   # CalDAV after the reschedule page rendered, or one the page's cached event

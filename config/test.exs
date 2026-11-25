@@ -1,5 +1,11 @@
 import Config
 
+# The suite asserts the upstream product name. Production brands stay in priv/brands.
+System.put_env(
+  "BRAND_CONFIG_DIR",
+  Path.expand("../test/support/brands", __DIR__)
+)
+
 # Configure environment
 config :tymeslot, environment: :test, video_room_backoff_base_ms: 0
 

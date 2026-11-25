@@ -45,7 +45,7 @@ defmodule Tymeslot.Emails.EmailService.IntegrationEmails do
   Sends a "reconnect required" notification to the integration owner.
 
   Called when an integration is flagged `needs_reauth` — a revoked grant, or
-  one whose scopes no longer cover what the scheduler must do. Unlike the unhealthy
+  one whose scopes no longer cover what Tymeslot must do. Unlike the unhealthy
   notification, this one describes a state that cannot resolve itself.
   """
   @spec send_integration_reauth_notification(
@@ -115,7 +115,7 @@ defmodule Tymeslot.Emails.EmailService.IntegrationEmails do
 
   @doc """
   Tells the owner of a calendar integration that the calendar server no
-  longer has `calendar_names`, so the scheduler has stopped using them.
+  longer has `calendar_names`, so Tymeslot has stopped using them.
   """
   @spec send_calendars_removed_notification(
           Tymeslot.Emails.EmailService.user_map(),

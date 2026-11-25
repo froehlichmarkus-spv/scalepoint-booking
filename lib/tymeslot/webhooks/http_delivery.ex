@@ -6,7 +6,7 @@ defmodule Tymeslot.Webhooks.HttpDelivery do
   re-validated by `Tymeslot.Webhooks.SsrfValidator` — a 3xx from a public
   host therefore cannot redirect the request to loopback or link-local
   ranges that the initial validation rejected. Sensitive request headers
-  (`X-the scheduler-Token`, `Authorization`) are stripped when a redirect crosses
+  (`X-Tymeslot-Token`, `Authorization`) are stripped when a redirect crosses
   origins so they cannot leak to a third-party host.
   """
 
@@ -120,7 +120,7 @@ defmodule Tymeslot.Webhooks.HttpDelivery do
       headers
     else
       Enum.reject(headers, fn
-        {"X-the scheduler-Token", _value} -> true
+        {"X-Tymeslot-Token", _value} -> true
         {"Authorization", _value} -> true
         _other -> false
       end)

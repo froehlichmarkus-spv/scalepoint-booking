@@ -275,7 +275,7 @@ defmodule Tymeslot.Integrations.Calendar.Provider do
   Looks for an event in every calendar of the account the organiser can
   write to, once `fetch_event/2` has been told by every calendar the
   integration reaches that it does not exist there: the organiser may have
-  moved it to a calendar the scheduler does not read. A calendar the organiser can
+  moved it to a calendar Tymeslot does not read. A calendar the organiser can
   only read is never asked, since nothing can have been moved into it and its
   refusal would leave the event's absence unproven. `client` is any one of
   the integration's clients.

@@ -9,7 +9,7 @@ defmodule Tymeslot.Integrations.Video.Providers.ZoomProvider.Reauth do
   failure so the caller discards rather than retrying.
 
   There is a third case that looks identical from the API's point of view and
-  must not be treated the same. When the scheduler never asks Zoom for the scope in
+  must not be treated the same. When Tymeslot never asks Zoom for the scope in
   question, no user's grant can hold it, so the shortfall belongs to the
   Marketplace app rather than to any account owner. Asking them to reconnect
   would send them round a loop that cannot end, so that case is logged for the
@@ -66,7 +66,7 @@ defmodule Tymeslot.Integrations.Video.Providers.ZoomProvider.Reauth do
       flag_for_reauth(config, "zoom_missing_scope", Scopes.reauth_message(operation))
     else
       Logger.error(
-        "Zoom app does not request a scope the scheduler needs; reconnecting cannot fix this",
+        "Zoom app does not request a scope Tymeslot needs; reconnecting cannot fix this",
         operation: operation,
         required_scope: Scopes.required_description(operation)
       )

@@ -44,7 +44,7 @@ defmodule Tymeslot.Integrations.MeetingProvisioning do
 
   Google Calendar replaces a Meet code made outside Calendar with one made
   for the event, so a booking on Google Calendar given a standalone Meet
-  space would end up with two links: the one the scheduler sent, and the one on
+  space would end up with two links: the one Tymeslot sent, and the one on
   the event. The Meet is therefore made with the event, as on the dashboard.
   Any other combination gets a room of its own from the video provider.
 

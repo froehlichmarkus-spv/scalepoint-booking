@@ -59,7 +59,7 @@ defmodule Tymeslot.Integrations.Calendar.Diagnostics do
   integration's primary calendar, bypassing `ICalBuilder`.
 
   Used by `mix calendar_audit` to exercise adversarial server-generated
-  payloads (e.g. Zimbra-style `TZID="Europe/Brussels"`) that the scheduler's own
+  payloads (e.g. Zimbra-style `TZID="Europe/Brussels"`) that Tymeslot's own
   writer never produces, so the audit can verify our parser handles them.
   Not intended for application use.
   """

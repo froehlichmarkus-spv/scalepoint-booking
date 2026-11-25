@@ -40,7 +40,7 @@ defmodule Tymeslot.Integrations.Video.Providers.ProviderBehaviour do
 
   @doc """
   A join URL for a recipient the room cannot name: a booking's guests, whom
-  the host's booker invited and the scheduler mints no personal link for, and the
+  the host's booker invited and Tymeslot mints no personal link for, and the
   "Join video call" line written into a calendar event's description, which
   every reader of that event shares.
 
