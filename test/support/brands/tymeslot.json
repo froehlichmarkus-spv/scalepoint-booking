@@ -6,10 +6,10 @@
   "layout": "neutral",
   "name": "Tymeslot",
   "product_label": "Tymeslot",
-  "sender_name": "Tymeslot",
-  "sender_email": "booking@localhost",
+  "sender_name": "Scheduler",
+  "sender_email": "hello@tymeslot.app",
   "footer": "Tymeslot",
-  "hosts": [],
+  "hosts": ["tymeslot.app"],
   "username": "",
   "owner_email": "",
   "owner_name": ""
