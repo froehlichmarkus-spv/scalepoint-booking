@@ -271,9 +271,14 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
   # meeting from the dashboard.
   defp stage_subtitle(meeting) do
     if Meeting.group?(meeting),
-      do: dgettext("emails_booking_changes", "Please review the group meeting in Tymeslot."),
+      do:
+        dgettext("emails_booking_changes", "Please review the group meeting in %{product}.",
+          product: Tymeslot.Brands.product_name()
+        ),
       else:
-        dgettext("emails_booking_changes", "Please review and update the booking in Tymeslot.")
+        dgettext("emails_booking_changes", "Please review and update the booking in %{product}.",
+          product: Tymeslot.Brands.product_name()
+        )
   end
 
   defp alert_parts(:deleted, meeting) do
@@ -321,7 +326,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     <mj-section padding="12px 0 0 0">
       <mj-column>
         <mj-text font-size="15px" color="#{Styles.ink_soft()}" line-height="1.6">
-          #{dgettext("emails_booking_changes", "This meeting was <strong>removed from your external calendar</strong> but is still active in Tymeslot. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up.")}
+          #{dgettext("emails_booking_changes", "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up.", product: Tymeslot.Brands.product_name())}
         </mj-text>
       </mj-column>
     </mj-section>
@@ -366,7 +371,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     """
     #{dgettext("emails_booking_changes", "Meeting Deleted in External Calendar")}
 
-    #{dgettext("emails_booking_changes", "The meeting \"%{title}\" was deleted from your external calendar but is still active in Tymeslot.", title: meeting.title)}
+    #{dgettext("emails_booking_changes", "The meeting \"%{title}\" was deleted from your external calendar but is still active in %{product}.", title: meeting.title, product: Tymeslot.Brands.product_name())}
 
     #{dgettext("emails_booking_changes", "MEETING DETAILS:")}
     #{dgettext("emails_booking_changes", "Date:")} #{Formatting.format_date(owner_time, locale)}

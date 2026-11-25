@@ -80,13 +80,13 @@ msgstr "Trop de tentatives OAuth. Veuillez réessayer plus tard."
 
 #: lib/tymeslot_web/controllers/auth/invitation_controller.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your password is set."
-msgstr "Bienvenue sur the scheduler ! Votre mot de passe est défini."
+msgid "Your password is set. Please log in to continue."
+msgstr "Votre mot de passe est défini. Veuillez vous connecter pour continuer."
 
 #: lib/tymeslot_web/controllers/auth/invitation_controller.ex
 #, elixir-autogen, elixir-format
-msgid "Your password is set. Please log in to continue."
-msgstr "Votre mot de passe est défini. Veuillez vous connecter pour continuer."
+msgid "Welcome to the scheduler! Your password is set."
+msgstr "Bienvenue sur the scheduler ! Votre mot de passe est défini."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format

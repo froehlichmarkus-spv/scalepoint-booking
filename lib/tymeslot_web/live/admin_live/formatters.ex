@@ -398,7 +398,7 @@ defmodule TymeslotWeb.AdminLive.Formatters do
   def pinned_reason(env_var) do
     dgettext(
       "dashboard_admin",
-      "Set by the %{variable} environment variable. To change it here, remove the variable and restart Tymeslot.",
+      "Set by the %{variable} environment variable. To change it here, remove the variable and restart the app.",
       variable: env_var
     )
   end

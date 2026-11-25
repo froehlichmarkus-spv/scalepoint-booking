@@ -20,7 +20,7 @@
   }
 
   .btn-link {
-    @apply text-turquoise-600 font-bold hover:text-turquoise-700 transition-colors underline underline-offset-4 decoration-2 decoration-turquoise-200 hover:decoration-turquoise-400;
+    @apply text-turquoise-700 font-bold hover:text-turquoise-800 transition-colors underline underline-offset-4 decoration-2 decoration-turquoise-200 hover:decoration-turquoise-400;
   }
 
   /* Without the .action-button base class the legacy classes need their own
@@ -62,13 +62,18 @@
 
   .action-button--primary,
   .btn-primary {
-    @apply bg-linear-to-r from-turquoise-600 to-cyan-600 text-white shadow-lg shadow-turquoise-500/20;
+    background-image: none;
+    background-color: var(--spv-navy);
+    color: var(--spv-white);
+    border-color: var(--spv-navy);
   }
 
   @media (hover: hover) {
     .action-button--primary:hover:not(:disabled, [aria-disabled="true"]),
     .btn-primary:hover:not(:disabled, [aria-disabled="true"]) {
-      @apply from-turquoise-700 to-cyan-700 shadow-turquoise-500/40;
+      background-image: none;
+      background-color: var(--spv-navy-dark);
+      border-color: var(--spv-navy-dark);
     }
   }
 

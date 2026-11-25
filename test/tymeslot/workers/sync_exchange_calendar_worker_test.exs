@@ -256,7 +256,7 @@ defmodule Tymeslot.Workers.SyncExchangeCalendarWorkerTest do
   end
 
   describe "the synthesised uid" do
-    test "never cancels a Tymeslot meeting whose calendar uid collides with it", %{
+    test "never cancels a the scheduler meeting whose calendar uid collides with it", %{
       integration: integration,
       user: user
     } do
@@ -379,7 +379,7 @@ defmodule Tymeslot.Workers.SyncExchangeCalendarWorkerTest do
       assert reason =~ "server error"
 
       assert %{sync_error: message} = Repo.reload!(integration)
-      assert message =~ "Tymeslot will retry automatically"
+      assert message =~ "the scheduler will retry automatically"
     end
 
     test "discards a response past the EWS byte budget, tells the owner and keeps the cache", %{
@@ -395,12 +395,12 @@ defmodule Tymeslot.Workers.SyncExchangeCalendarWorkerTest do
       end)
 
       assert {:discard, reason} = run(integration)
-      assert reason == "Exchange server returned more data than Tymeslot can process at once"
+      assert reason == "Exchange server returned more data than the scheduler can process at once"
       # An expected end of the job: no error report every cycle.
       assert SyncExchangeCalendarWorker.expected_outcome?(reason)
 
       assert %{sync_error: message} = Repo.reload!(integration)
-      assert message =~ "more data than Tymeslot can process at once"
+      assert message =~ "more data than the scheduler can process at once"
 
       assert [_busy] = availability_events(integration)
       assert [_item] = grid_rows(integration)

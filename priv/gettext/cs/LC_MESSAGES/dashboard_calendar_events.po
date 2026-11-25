@@ -66,11 +66,6 @@ msgstr "Jméno hosta je povinné"
 msgid "Meeting with %{name}"
 msgstr "Schůzka s %{name}"
 
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "This calendar is read-only. Events on it can't be changed from Tymeslot."
-msgstr "Tento kalendář je jen pro čtení. Události v něm nelze měnit z Tymeslotu."
-
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Could not change the video link - changes reverted"
@@ -253,11 +248,6 @@ msgstr "Smazání se nezdařilo – zkusíme to znovu při příští synchroniz
 #, elixir-autogen, elixir-format
 msgid "Too many new meetings. Please wait a moment."
 msgstr "Příliš mnoho nových schůzek. Počkejte prosím chvíli."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Tuto schůzku organizuje někdo jiný, takže the scheduler nemůže přesunout ani rozdělit sérii, na kterou jste byli jen pozváni."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -490,3 +480,13 @@ msgstr "Událost byla smazána, ale účastníky se nepodařilo informovat."
 #, elixir-autogen, elixir-format
 msgid "Syncing with your calendar. Open the event to change the whole series."
 msgstr "Probíhá synchronizace s vaším kalendářem. Otevřete událost a změňte celou sérii."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+msgstr "Tuto schůzku organizuje někdo jiný, takže the scheduler nemůže přesunout ani rozdělit sérii, na kterou jste byli jen pozváni."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar is read-only. Events on it can't be changed from here."
+msgstr "Tento kalendář je jen pro čtení. Události v něm nelze měnit z Tymeslotu."

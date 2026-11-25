@@ -54,7 +54,7 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSection do
           padding="0 0 4px 0"
           css-class="mobile-eyebrow"
         >
-          #{dgettext("emails", "Video call")}
+          #{Sanitise.sanitize_for_email(Keyword.get(opts, :eyebrow, dgettext("emails", "Video call")))}
         </mj-text>
         <mj-text
           font-size="16px"

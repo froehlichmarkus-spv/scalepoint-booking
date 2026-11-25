@@ -95,11 +95,6 @@ msgstr "Weryfikacja bezpieczeństwa nie powiodła się. Spróbuj ponownie."
 msgid "Successfully signed in with %{provider}."
 msgstr "Zalogowano przez konto %{provider}."
 
-#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
-#, elixir-autogen, elixir-format
-msgid "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in."
-msgstr "To konto %{provider} służy już do logowania na inne konto Tymeslot. Użyj innego albo wybierz inny sposób logowania."
-
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
 msgid "This link is no longer valid. Please sign in to continue."
@@ -140,11 +135,6 @@ msgstr "Nieobsługiwany dostawca OAuth: %{provider}"
 msgid "We couldn't send the link to finish signing up just now. Please try again later."
 msgstr "Nie udało się teraz wysłać linku do dokończenia rejestracji. Spróbuj ponownie później."
 
-#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! You'll sign in with %{provider}."
-msgstr "Witamy w aplikacji the scheduler! Będziesz logować się przez konto %{provider}."
-
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
 msgid "Welcome! You've successfully signed up with %{provider}."
@@ -159,3 +149,13 @@ msgstr "Twoje konto jest gotowe. Aby kontynuować, zaloguj się przez konto %{pr
 #, elixir-autogen, elixir-format
 msgid "Your sign-up session has expired. Please sign in again."
 msgstr "Sesja rejestracji wygasła. Zaloguj się ponownie."
+
+#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
+#, elixir-autogen, elixir-format
+msgid "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in."
+msgstr "To konto %{provider} służy już do logowania na inne konto Tymeslot. Użyj innego albo wybierz inny sposób logowania."
+
+#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to the scheduler! You'll sign in with %{provider}."
+msgstr "Witamy w aplikacji the scheduler! Będziesz logować się przez konto %{provider}."

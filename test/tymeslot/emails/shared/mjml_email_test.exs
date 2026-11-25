@@ -184,7 +184,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmailTest do
       assert mjml =~ "<mjml>"
       assert mjml =~ "</mjml>"
       assert mjml =~ "Test Content"
-      assert mjml =~ "Tymeslot"
+      assert mjml =~ "BOOKDESK_SUITE_FOOTER"
     end
 
     test "uses provided organizer details" do
@@ -251,8 +251,8 @@ defmodule Tymeslot.Emails.Shared.MjmlEmailTest do
       # Check for header, content, and footer sections
       assert mjml =~ "<mj-head>"
       assert mjml =~ "<mj-body"
-      assert mjml =~ "Sent with care by"
-      assert mjml =~ "Tymeslot"
+      assert mjml =~ "BOOKDESK_SUITE_FOOTER"
+      refute mjml =~ "Tymeslot"
     end
 
     test "loads no web font, so opening the email contacts no font host" do
@@ -312,5 +312,19 @@ defmodule Tymeslot.Emails.Shared.MjmlEmailTest do
 
   # Reads the sender identity from config rather than the module under test, so
   # the assertions stay independent of MjmlEmail's own accessors.
+  defp configured(:from_email) do
+    case Tymeslot.Brands.mail_identity() do
+      %{sender_email: email} when is_binary(email) and email != "" -> email
+      _ -> Application.get_env(:tymeslot, :email)[:from_email]
+    end
+  end
+
+  defp configured(:from_name) do
+    case Tymeslot.Brands.mail_identity() do
+      %{sender_name: name} when is_binary(name) and name != "" -> name
+      _ -> Application.get_env(:tymeslot, :email)[:from_name]
+    end
+  end
+
   defp configured(key), do: Application.get_env(:tymeslot, :email)[key]
 end

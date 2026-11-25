@@ -290,7 +290,7 @@ defmodule Tymeslot.Bookings.ConfirmationEmailsIntegrationTest do
       assert_received {:email, other}
 
       by_recipient = Map.new([one, other], &{&1.to |> hd() |> elem(1), &1})
-      instance_address = Application.get_env(:tymeslot, :email)[:from_email]
+      instance_address = Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()
 
       attendee_copy = Map.fetch!(by_recipient, "attendee@example.com")
       organiser_copy = Map.fetch!(by_recipient, "organizer@example.com")

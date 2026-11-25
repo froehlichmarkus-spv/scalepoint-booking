@@ -86,11 +86,6 @@ msgstr "Le domaine a une extension invalide (.%{tld}). Vouliez-vous dire .%{sugg
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "Le domaine a une extension non reconnue (.%{tld}). Vouliez-vous dire .%{suggestion} ?"
 
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Le domaine a une extension non reconnue (.%{tld}). Si elle est correcte, cette version de the scheduler ne la connaît pas encore et doit être mise à jour."
-
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Email domain format is invalid"
@@ -150,11 +145,6 @@ msgstr "L’e-mail a une extension invalide (.%{tld}). Vouliez-vous dire .%{sugg
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "L’e-mail a une extension non reconnue (.%{tld}). Vouliez-vous dire .%{suggestion} ?"
-
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "L’e-mail a une extension non reconnue (.%{tld}). Si elle est correcte, cette version de the scheduler ne la connaît pas encore et doit être mise à jour."
 
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
@@ -541,3 +531,13 @@ msgstr "Le mot de passe doit contenir au moins un caractère spécial"
 #, elixir-autogen, elixir-format
 msgid "Password must contain at least one uppercase letter"
 msgstr "Le mot de passe doit contenir au moins une lettre majuscule"
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "Le domaine a une extension non reconnue (.%{tld}). Si elle est correcte, cette version de the scheduler ne la connaît pas encore et doit être mise à jour."
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "L’e-mail a une extension non reconnue (.%{tld}). Si elle est correcte, cette version de the scheduler ne la connaît pas encore et doit être mise à jour."

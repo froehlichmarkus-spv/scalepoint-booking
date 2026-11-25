@@ -20,6 +20,8 @@ defmodule TymeslotWeb.Dashboard.ScheduleSettingsComponent do
     WeeklySchedule
   }
 
+  alias Tymeslot.Integrations.Calendar
+  alias Tymeslot.Integrations.HealthCheck
   alias Tymeslot.Validation.Constraints
   alias TymeslotWeb.Components.Dashboard.Availability.{DeleteScheduleModal, ScheduleFormModal}
   alias TymeslotWeb.CustomInputModeHelper
@@ -81,6 +83,7 @@ defmodule TymeslotWeb.Dashboard.ScheduleSettingsComponent do
       |> assign(assigns)
       |> select_from_params()
       |> load_schedules()
+      |> load_connected_calendars()
       |> assign(saving: false)
       |> assign(form_errors: %{})
       |> assign_new(:custom_input_mode, fn -> CustomInputModeHelper.default_custom_mode() end)
@@ -493,6 +496,69 @@ defmodule TymeslotWeb.Dashboard.ScheduleSettingsComponent do
   defp failure_message(_reason),
     do: dgettext("dashboard_availability", "Something went wrong. Please try again.")
 
+  defp load_connected_calendars(socket) do
+    case socket.assigns[:profile] do
+      %{user_id: user_id} when is_integer(user_id) ->
+        unhealthy = HealthCheck.health_states_for_user(user_id).calendar
+
+        calendars =
+          user_id
+          |> Calendar.list_integrations()
+          |> Enum.filter(& &1.is_active)
+          |> Enum.map(fn integration ->
+            %{
+              name: integration.name,
+              email: integration.provider_account_email,
+              attention:
+                HealthCheck.attention_status(integration, Map.get(unhealthy, integration.id))
+            }
+          end)
+
+        assign(socket, :connected_calendars, calendars)
+
+      _missing ->
+        assign(socket, :connected_calendars, socket.assigns[:connected_calendars] || [])
+    end
+  end
+
+  attr :calendars, :list, required: true
+
+  defp connected_calendars(assigns) do
+    ~H"""
+    <section class="rounded-token-xl border border-tymeslot-200 bg-white p-4 min-w-0">
+      <h3 class="text-token-sm font-semibold text-tymeslot-900">
+        {dgettext("dashboard_availability", "Connected calendars")}
+      </h3>
+      <p class="mt-1 text-token-xs text-tymeslot-600">
+        {dgettext(
+          "dashboard_availability",
+          "Busy times on these calendars are kept off your booking page."
+        )}
+      </p>
+      <ul :if={@calendars != []} class="mt-3 space-y-2">
+        <li :for={calendar <- @calendars} class="min-w-0">
+          <p class="truncate text-token-sm font-medium text-tymeslot-900">{calendar.name}</p>
+          <p class="truncate text-token-xs text-tymeslot-500">
+            {calendar.email}
+            <span class="text-tymeslot-300">·</span>
+            <span class={calendar.attention == :ok && "text-emerald-700"}>
+              {calendar_status(calendar.attention)}
+            </span>
+          </p>
+        </li>
+      </ul>
+      <p :if={@calendars == []} class="mt-3 text-token-sm text-tymeslot-600">
+        {dgettext("dashboard_availability", "No calendar connected yet.")}
+      </p>
+    </section>
+    """
+  end
+
+  defp calendar_status(:ok), do: dgettext("dashboard_calendar_settings", "Healthy")
+  defp calendar_status(:paused), do: dgettext("dashboard_calendar_settings", "Paused")
+  defp calendar_status(:needs_reauth), do: dgettext("dashboard_calendar_settings", "Reconnect")
+  defp calendar_status(_status), do: dgettext("dashboard_calendar_settings", "Needs attention")
+
   @impl Phoenix.LiveComponent
   @spec render(map()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
@@ -511,17 +577,33 @@ defmodule TymeslotWeb.Dashboard.ScheduleSettingsComponent do
           menu_open={@schedule_menu_open}
           myself={@myself}
         >
-          <.live_component
-            module={ListComponent}
-            id="availability-list"
-            weekly_schedule={@weekly_schedule}
-            profile={@profile}
-            selected_schedule={@selected_schedule}
-            time_format={@time_format}
-            form_errors={@form_errors}
-            client_ip={@client_ip}
-            user_agent={@user_agent}
-          />
+          <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+            <.live_component
+              module={ListComponent}
+              id="availability-list"
+              weekly_schedule={@weekly_schedule}
+              profile={@profile}
+              selected_schedule={@selected_schedule}
+              time_format={@time_format}
+              form_errors={@form_errors}
+              client_ip={@client_ip}
+              user_agent={@user_agent}
+            />
+
+            <div class="space-y-4 min-w-0">
+              <.connected_calendars calendars={@connected_calendars} />
+              <div
+                :if={@selected_schedule}
+                class="rounded-xl border border-base-300 bg-base-100 p-4"
+              >
+                <PolicyCard.buffer_settings
+                  schedule={@selected_schedule}
+                  myself={@myself}
+                  custom_input_mode={@custom_input_mode}
+                />
+              </div>
+            </div>
+          </div>
 
           <%!-- Inside the panel: the times belong to the selected schedule. --%>
           <.live_component
@@ -538,6 +620,7 @@ defmodule TymeslotWeb.Dashboard.ScheduleSettingsComponent do
             schedule={@selected_schedule}
             myself={@myself}
             custom_input_mode={@custom_input_mode}
+            buffers={false}
           />
         </ScheduleSwitcher.schedule_panel>
 

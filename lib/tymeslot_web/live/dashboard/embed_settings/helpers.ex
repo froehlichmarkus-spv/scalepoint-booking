@@ -107,7 +107,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
     # the modal instead.
     String.trim("""
     <!-- the scheduler Popup -->
-    <a href="#{href}" target="_blank" rel="noopener" onclick="if(window.TymeslotBooking){event.preventDefault();TymeslotBooking.open('#{username}'#{js_options})}">#{label}</a>
+    <a href="#{href}" target="_blank" rel="noopener" onclick="if(window.BookDesk24){event.preventDefault();BookDesk24.open('#{username}'#{js_options})}">#{label}</a>
     <script src="#{base_url}/embed.js" async></script>
     """)
   end
@@ -136,8 +136,8 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
     <script>
       (function() {
         var init = function() {
-          if (window.TymeslotBooking) {
-            TymeslotBooking.initFloating('#{username}'#{js_options});
+          if (window.BookDesk24) {
+            BookDesk24.initFloating('#{username}'#{js_options});
           } else {
             setTimeout(init, 100);
           }

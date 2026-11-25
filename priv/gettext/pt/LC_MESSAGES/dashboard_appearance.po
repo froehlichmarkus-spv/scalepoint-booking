@@ -237,11 +237,6 @@ msgstr "Muitas alterações. Salvando em instantes…"
 
 #: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
 #, elixir-autogen, elixir-format
-msgid "Turn this off to go back to the built-in text, which is translated into every language the scheduler supports. Your own wording is discarded."
-msgstr "Desative para voltar ao texto embutido, que é traduzido para todos os idiomas que o the scheduler oferece. Seu texto é descartado."
-
-#: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
-#, elixir-autogen, elixir-format
 msgid "Unsaved changes"
 msgstr "Alterações não salvas"
 
@@ -799,3 +794,8 @@ msgstr "Tema de %{page} atualizado para %{theme_name}"
 #, elixir-autogen, elixir-format
 msgid "Your own wording is shown in every language unless you translate it under Languages. The built-in text is always translated."
 msgstr "Seu próprio texto aparece em todos os idiomas, a menos que você o traduza em Idiomas. O texto embutido é sempre traduzido."
+
+#: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
+#, elixir-autogen, elixir-format
+msgid "Turn this off to go back to the built-in text, which is translated into every language the scheduler supports. Your own wording is discarded."
+msgstr "Desative para voltar ao texto embutido, que é traduzido para todos os idiomas que o the scheduler oferece. Seu texto é descartado."

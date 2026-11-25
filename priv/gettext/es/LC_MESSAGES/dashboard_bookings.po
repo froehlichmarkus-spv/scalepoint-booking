@@ -828,23 +828,8 @@ msgstr "Esta reserva ya no se puede mover al horario de tu calendario."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is still updating your calendar for this booking. Please try again in a moment."
-msgstr "the scheduler todavía está actualizando tu calendario para esta reserva. Inténtalo de nuevo en un momento."
-
-#: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Your calendar now has this meeting at %{time}. the scheduler will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
-msgstr "Ahora tu calendario tiene esta reunión en este horario: %{time}. the scheduler moverá la reserva a ese horario, reprogramará sus recordatorios y enviará el nuevo horario por correo a %{attendee_name} y a los invitados, si los hay."
-
-#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
-#, elixir-autogen, elixir-format
 msgid "The meeting has moved again in your calendar. Check the new time and confirm the move."
 msgstr "La reunión cambió otra vez de horario en tu calendario. Revisa el nuevo horario y confirma el cambio."
-
-#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler could not move this booking. Please try again."
-msgstr "the scheduler no pudo mover esta reserva. Inténtalo de nuevo."
 
 #: lib/tymeslot_web/components/dashboard/meetings/host_move_modal.ex
 #, elixir-autogen, elixir-format
@@ -981,3 +966,18 @@ msgstr "No se puede hacer ningún reembolso, ya que el pago tiene más de 60 dí
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "No se puede hacer ningún reembolso, ya que el pago está en disputa. Resuelve primero la disputa en Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Your calendar now has this meeting at %{time}. the scheduler will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
+msgstr "Ahora tu calendario tiene esta reunión en este horario: %{time}. the scheduler moverá la reserva a ese horario, reprogramará sus recordatorios y enviará el nuevo horario por correo a %{attendee_name} y a los invitados, si los hay."
+
+#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler could not move this booking. Please try again."
+msgstr "the scheduler no pudo mover esta reserva. Inténtalo de nuevo."
+
+#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler is still updating your calendar for this booking. Please try again in a moment."
+msgstr "the scheduler todavía está actualizando tu calendario para esta reserva. Inténtalo de nuevo en un momento."

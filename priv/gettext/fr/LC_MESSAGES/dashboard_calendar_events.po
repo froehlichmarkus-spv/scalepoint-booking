@@ -66,11 +66,6 @@ msgstr "Le nom de l’invité est requis"
 msgid "Meeting with %{name}"
 msgstr "Réunion avec %{name}"
 
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "This calendar is read-only. Events on it can't be changed from Tymeslot."
-msgstr "Ce calendrier est en lecture seule. Les événements qu’il contient ne peuvent pas être modifiés depuis Tymeslot."
-
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Could not change the video link - changes reverted"
@@ -251,11 +246,6 @@ msgstr "Échec de la suppression - nouvelle tentative programmée à la prochain
 #, elixir-autogen, elixir-format
 msgid "Too many new meetings. Please wait a moment."
 msgstr "Trop de nouvelles réunions. Veuillez patienter un instant."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Cette réunion est organisée par quelqu'un d'autre : the scheduler ne peut pas déplacer ni scinder une série à laquelle vous êtes seulement invité."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -484,3 +474,13 @@ msgstr "Événement supprimé, mais les participants n'ont pas pu être informé
 #, elixir-autogen, elixir-format
 msgid "Syncing with your calendar. Open the event to change the whole series."
 msgstr "Synchronisation avec votre calendrier en cours. Ouvrez l’événement pour modifier toute la série."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+msgstr "Cette réunion est organisée par quelqu'un d'autre : the scheduler ne peut pas déplacer ni scinder une série à laquelle vous êtes seulement invité."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar is read-only. Events on it can't be changed from here."
+msgstr "Ce calendrier est en lecture seule. Les événements qu’il contient ne peuvent pas être modifiés depuis Tymeslot."

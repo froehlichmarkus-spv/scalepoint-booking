@@ -693,11 +693,6 @@ msgstr "Este calendário não bloqueia agendamentos"
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "This calendar doesn't take repeat rules from Tymeslot."
-msgstr "Este calendário não aceita regras de repetição do Tymeslot."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
 msgid "This event is moving to another calendar. Please make the change once it has moved."
 msgstr ""
 "Este evento está sendo movido para outro calendário. Faça a alteração depois"
@@ -725,11 +720,6 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Too late to undo: “%{title}” has already been deleted."
 msgstr "Tarde demais para desfazer: o evento “%{title}” já foi excluído."
-
-#: lib/tymeslot_web/live/dashboard/calendar/preview.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Agendamento do the scheduler"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format
@@ -827,3 +817,13 @@ msgstr "Não foi possível salvar essa cor. Tente novamente."
 #, elixir-autogen, elixir-format
 msgid "Colour of %{calendar}"
 msgstr "Cor de %{calendar}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar doesn't take repeat rules from this booking page."
+msgstr "Este calendário não aceita regras de repetição do Tymeslot."
+
+#: lib/tymeslot_web/live/dashboard/calendar/preview.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler booking"
+msgstr "Agendamento do the scheduler"

@@ -62,11 +62,6 @@ msgstr "Imię i nazwisko gościa jest wymagane"
 msgid "Meeting with %{name}"
 msgstr "Spotkanie – %{name}"
 
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "This calendar is read-only. Events on it can't be changed from Tymeslot."
-msgstr "Ten kalendarz jest tylko do odczytu. Jego wydarzeń nie można zmieniać z poziomu Tymeslot."
-
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Could not change the video link - changes reverted"
@@ -249,11 +244,6 @@ msgstr "Usuwanie nie powiodło się – ponowimy próbę przy następnej synchro
 #, elixir-autogen, elixir-format
 msgid "Too many new meetings. Please wait a moment."
 msgstr "Zbyt wiele nowych spotkań. Odczekaj chwilę."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "To spotkanie organizuje ktoś inny, więc the scheduler nie może przenieść ani podzielić serii, do której zostałeś tylko zaproszony."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -486,3 +476,13 @@ msgstr "Usunięto wydarzenie, ale nie udało się powiadomić uczestników."
 #, elixir-autogen, elixir-format
 msgid "Syncing with your calendar. Open the event to change the whole series."
 msgstr "Trwa synchronizacja z kalendarzem. Otwórz wydarzenie, aby zmienić całą serię."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+msgstr "To spotkanie organizuje ktoś inny, więc the scheduler nie może przenieść ani podzielić serii, do której zostałeś tylko zaproszony."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar is read-only. Events on it can't be changed from here."
+msgstr "Ten kalendarz jest tylko do odczytu. Jego wydarzeń nie można zmieniać z poziomu Tymeslot."

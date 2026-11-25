@@ -183,11 +183,6 @@ msgid "Error 404"
 msgstr "Błąd 404"
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
-#, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Przejdź do the scheduler"
-
-#: lib/tymeslot_web/controllers/error_html/404.html.heex
 #: lib/tymeslot_web/live/scheduling/organizer_helpers.ex
 #, elixir-autogen, elixir-format
 msgid "Page not found"
@@ -938,3 +933,8 @@ msgstr "nie może być większe niż %{max} przy tym odstępie, aby każda sesja
 #, elixir-autogen, elixir-format
 msgid "Meeting types that ask invitees to confirm their email cannot be booked as a series."
 msgstr "Typów spotkań, które proszą zaproszonych o potwierdzenie adresu e-mail, nie można rezerwować jako serii."
+
+#: lib/tymeslot_web/controllers/error_html/404.html.heex
+#, elixir-autogen, elixir-format
+msgid "Go to the scheduler"
+msgstr "Przejdź do the scheduler"

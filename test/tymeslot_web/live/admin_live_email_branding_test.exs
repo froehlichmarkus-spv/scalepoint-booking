@@ -188,7 +188,7 @@ defmodule TymeslotWeb.AdminLiveEmailBrandingTest do
         |> render_submit(%{"key" => "email_brand_name", "value" => String.duplicate("a", 61)})
 
       assert html =~ "That value is too long."
-      assert Branding.brand_name() == "Tymeslot"
+      assert Branding.brand_name() == "ScalePoint Ventures"
     end
 
     test "submitting the built-in default unchanged still acknowledges the save", %{conn: conn} do
@@ -201,7 +201,7 @@ defmodule TymeslotWeb.AdminLiveEmailBrandingTest do
 
       assert_push_event(lv, "ts:setting-saved", %{key: "email_brand_name"})
       refute html =~ "Email brand name updated."
-      assert Branding.brand_name() == "Tymeslot"
+      assert Branding.brand_name() == "ScalePoint Ventures"
     end
   end
 

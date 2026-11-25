@@ -764,7 +764,7 @@
 
   function validateUsername(methodName, username) {
     if (!username) {
-      console.error('Tymeslot: No username provided to ' + methodName + '()');
+      console.error('BookDesk24: No username provided to ' + methodName + '()');
       return false;
     }
     return true;
@@ -992,6 +992,10 @@
       ensureScrollable(container, wrapper);
     }
   };
+
+  // The name shown in embed snippets. The previous global stays so embeds
+  // already on a page keep working.
+  window.BookDesk24 = window.TymeslotBooking;
 
   /**
    * Initialize when DOM is ready

@@ -25,7 +25,7 @@ defmodule TymeslotWeb.Dashboard.CalendarEditMessages do
       {:error,
        dgettext(
          "dashboard_calendar_events",
-         "This calendar is read-only. Events on it can't be changed from Tymeslot."
+         "This calendar is read-only. Events on it can't be changed from here."
        )}
 
   def refusal({:error, :rate_limited, _message}),
@@ -207,7 +207,11 @@ defmodule TymeslotWeb.Dashboard.CalendarEditMessages do
       )
 
   def repeat_refusal(:not_supported),
-    do: dgettext("dashboard_calendar", "This calendar doesn't take repeat rules from Tymeslot.")
+    do:
+      dgettext(
+        "dashboard_calendar",
+        "This calendar doesn't take repeat rules from this booking page."
+      )
 
   def repeat_refusal(:ends_before),
     do:

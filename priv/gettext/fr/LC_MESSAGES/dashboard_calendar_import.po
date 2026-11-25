@@ -35,11 +35,6 @@ msgstr "Fermer"
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar the scheduler can write to before importing events."
-msgstr "Connectez un calendrier dans lequel the scheduler peut écrire avant d’importer des événements."
-
-#: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
-#, elixir-autogen, elixir-format
 msgid "Copy the events of an .ics file into one of your calendars."
 msgstr "Copiez les événements d’un fichier .ics dans l’un de vos calendriers."
 
@@ -257,3 +252,8 @@ msgstr "Ce fichier contient %{count} événements, du %{first} au %{last}. Une i
 #, elixir-autogen, elixir-format
 msgid "To keep a whole calendar, with no limit and in step with its changes, subscribe to it by URL instead."
 msgstr "Pour garder un calendrier entier, sans limite et tenu à jour au fil de ses modifications, abonnez-vous plutôt à ce calendrier par son URL."
+
+#: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a calendar the scheduler can write to before importing events."
+msgstr "Connectez un calendrier dans lequel the scheduler peut écrire avant d’importer des événements."

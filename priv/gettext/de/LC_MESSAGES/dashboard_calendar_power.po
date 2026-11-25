@@ -447,11 +447,6 @@ msgstr "12-Stunden-Format verwenden"
 msgid "Use the 24-hour clock"
 msgstr "24-Stunden-Format verwenden"
 
-#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
-#, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Als the scheduler-Termin senden"
-
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "The note to the guest is too long. Keep it to 2,000 characters or fewer."
@@ -498,3 +493,8 @@ msgstr "Die Desktop-Benachrichtigungen sind eingeschaltet, aber Ihr Browser bloc
 #, elixir-autogen, elixir-format
 msgid "Your browser did not allow notifications, so desktop notifications are still off."
 msgstr "Ihr Browser hat keine Benachrichtigungen erlaubt, daher sind die Desktop-Benachrichtigungen weiterhin ausgeschaltet."
+
+#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
+#, elixir-autogen, elixir-format
+msgid "Send as a the scheduler meeting"
+msgstr "Als the scheduler-Termin senden"

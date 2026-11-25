@@ -186,11 +186,6 @@ msgid "Error 404"
 msgstr "Chyba 404"
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
-#, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Přejít na the scheduler"
-
-#: lib/tymeslot_web/controllers/error_html/404.html.heex
 #: lib/tymeslot_web/live/scheduling/organizer_helpers.ex
 #, elixir-autogen, elixir-format
 msgid "Page not found"
@@ -941,3 +936,8 @@ msgstr "smí být při tomto opakování nejvýše %{max}, aby každý termín s
 #, elixir-autogen, elixir-format
 msgid "Meeting types that ask invitees to confirm their email cannot be booked as a series."
 msgstr "Typy schůzek, které žádají pozvané o potvrzení e-mailu, nelze rezervovat jako sérii."
+
+#: lib/tymeslot_web/controllers/error_html/404.html.heex
+#, elixir-autogen, elixir-format
+msgid "Go to the scheduler"
+msgstr "Přejít na the scheduler"

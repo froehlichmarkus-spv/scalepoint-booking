@@ -751,11 +751,6 @@ msgstr "Видалено %{email}. Сповіщення буде надісла�
 msgid "Your calendar needs to be reconnected. Please reconnect it from the Integrations page."
 msgstr "Ваш календар потрібно перепідключити. Зробіть це на сторінці «Інтеграції»."
 
-#: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
-#, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Немає (лише the scheduler)"
-
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
@@ -860,12 +855,17 @@ msgstr "Час належить бронюванню. Перенесіть йо�
 msgid "Colour"
 msgstr "Колір"
 
+#: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
+#, elixir-autogen, elixir-format
+msgid "%{calendar} can't hold all of the event's reminders, so some were not carried."
+msgstr "Календар %{calendar} не вміщує всі нагадування події, тому частину з них не перенесено."
+
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
 msgid "Add a guest to send a the scheduler meeting."
 msgstr "Додайте гостя, щоб надіслати зустріч Tymeslot."
 
-#: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
+#: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "%{calendar} can't hold all of the event's reminders, so some were not carried."
-msgstr "Календар %{calendar} не вміщує всі нагадування події, тому частину з них не перенесено."
+msgid "None (the scheduler only)"
+msgstr "Немає (лише the scheduler)"

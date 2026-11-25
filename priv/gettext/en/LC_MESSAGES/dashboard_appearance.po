@@ -237,11 +237,6 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
 #, elixir-autogen, elixir-format
-msgid "Turn this off to go back to the built-in text, which is translated into every language the scheduler supports. Your own wording is discarded."
-msgstr ""
-
-#: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
-#, elixir-autogen, elixir-format
 msgid "Unsaved changes"
 msgstr ""
 
@@ -798,4 +793,9 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
 #, elixir-autogen, elixir-format
 msgid "Your own wording is shown in every language unless you translate it under Languages. The built-in text is always translated."
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
+#, elixir-autogen, elixir-format
+msgid "Turn this off to go back to the built-in text, which is translated into every language the scheduler supports. Your own wording is discarded."
 msgstr ""

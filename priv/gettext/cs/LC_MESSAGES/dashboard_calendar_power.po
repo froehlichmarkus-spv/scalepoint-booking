@@ -449,11 +449,6 @@ msgstr "Použít 12hodinový formát času"
 msgid "Use the 24-hour clock"
 msgstr "Použít 24hodinový formát času"
 
-#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
-#, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Odeslat jako schůzku the scheduler"
-
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "The note to the guest is too long. Keep it to 2,000 characters or fewer."
@@ -501,3 +496,8 @@ msgstr "Oznámení na ploše jsou zapnutá, ale prohlížeč je blokuje. Povolte
 #, elixir-autogen, elixir-format
 msgid "Your browser did not allow notifications, so desktop notifications are still off."
 msgstr "Prohlížeč oznámení nepovolil, takže oznámení na ploše zůstávají vypnutá."
+
+#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
+#, elixir-autogen, elixir-format
+msgid "Send as a the scheduler meeting"
+msgstr "Odeslat jako schůzku the scheduler"

@@ -86,11 +86,6 @@ msgstr "Doména má neplatnou koncovku (.%{tld}). Myslíte .%{suggestion}?"
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "Doména má nerozpoznanou koncovku (.%{tld}). Myslíte .%{suggestion}?"
 
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Doména má nerozpoznanou koncovku (.%{tld}). Pokud je správná, tato verze aplikace the scheduler ji ještě nezná a je třeba ji aktualizovat."
-
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Email domain format is invalid"
@@ -150,11 +145,6 @@ msgstr "E-mail má neplatnou koncovku (.%{tld}). Myslíte .%{suggestion}?"
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "E-mail má nerozpoznanou koncovku (.%{tld}). Myslíte .%{suggestion}?"
-
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "E-mail má nerozpoznanou koncovku (.%{tld}). Pokud je správná, tato verze aplikace the scheduler ji ještě nezná a je třeba ji aktualizovat."
 
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
@@ -544,3 +534,13 @@ msgstr "Heslo musí obsahovat alespoň jeden speciální znak"
 #, elixir-autogen, elixir-format
 msgid "Password must contain at least one uppercase letter"
 msgstr "Heslo musí obsahovat alespoň jedno velké písmeno"
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "Doména má nerozpoznanou koncovku (.%{tld}). Pokud je správná, tato verze aplikace the scheduler ji ještě nezná a je třeba ji aktualizovat."
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "E-mail má nerozpoznanou koncovku (.%{tld}). Pokud je správná, tato verze aplikace the scheduler ji ještě nezná a je třeba ji aktualizovat."

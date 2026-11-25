@@ -420,11 +420,6 @@ msgstr "Se acerca la reunión con %{organizer} a la que %{booker} te invitó."
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler platform fee: %{amount}"
-msgstr "Comisión de la plataforma the scheduler: %{amount}"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
-#, elixir-autogen, elixir-format
 msgid "View receipt"
 msgstr "Ver el recibo"
 
@@ -754,3 +749,8 @@ msgstr "Se cerraron las inscripciones"
 #, elixir-autogen, elixir-format
 msgid "The list is also attached as a CSV file for a spreadsheet."
 msgstr "La lista también va adjunta como archivo CSV para abrirla en una hoja de cálculo."
+
+#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler platform fee: %{amount}"
+msgstr "Comisión de la plataforma the scheduler: %{amount}"

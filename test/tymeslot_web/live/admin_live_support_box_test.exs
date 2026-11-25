@@ -29,11 +29,14 @@ defmodule TymeslotWeb.AdminLiveSupportBoxTest do
           ] do
         {:ok, lv, _html} = live(conn, path)
 
-        assert has_element?(lv, ~s{#support-star a[href="https://github.com/Tymeslot/tymeslot"]})
+        assert has_element?(
+                 lv,
+                 ~s{#support-star a[href="mailto:support@scalepoint-ventures.com"]}
+               )
 
         assert has_element?(
                  lv,
-                 ~s{#support-sponsor a[href="https://github.com/sponsors/Tymeslot"]}
+                 ~s{#support-sponsor a[href="mailto:support@scalepoint-ventures.com"]}
                )
       end
     end
@@ -66,7 +69,7 @@ defmodule TymeslotWeb.AdminLiveSupportBoxTest do
 
       assert has_element?(
                lv,
-               ~s{#support-report a[href="https://github.com/Tymeslot/tymeslot/issues/new"]}
+               ~s{#support-report a[href="mailto:support@scalepoint-ventures.com"]}
              )
     end
   end

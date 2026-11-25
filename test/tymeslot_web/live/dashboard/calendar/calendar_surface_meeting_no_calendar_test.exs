@@ -1,7 +1,7 @@
 defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingNoCalendarTest do
   @moduledoc """
   The side panel's New event state for an organiser with no calendar to
-  write to: a Tymeslot meeting can still be booked, kept in Tymeslot alone
+  write to: a the scheduler meeting can still be booked, kept in Tymeslot alone
   (its calendar is "None (Tymeslot only)"), while a plain event cannot be
   created and a note says why.
   """

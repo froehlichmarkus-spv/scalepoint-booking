@@ -278,11 +278,6 @@ msgstr ""
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your Tymeslot page"
-msgstr ""
-
-#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
-#, elixir-autogen, elixir-format
 msgid "External calendar"
 msgstr ""
 
@@ -445,4 +440,9 @@ msgstr ""
 #: lib/tymeslot_web/components/dashboard_sidebar.ex
 #, elixir-autogen, elixir-format
 msgid "Expand menu"
+msgstr ""
+
+#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
+#, elixir-autogen, elixir-format
+msgid "Booked through your the scheduler page"
 msgstr ""

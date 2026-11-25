@@ -52,6 +52,8 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
     default: nil,
     doc: "the type's one booking address (`BookingPages.meeting_type_path/2`), shown when set"
 
+  attr :username, :string, default: nil
+
   @spec meeting_type_card(map()) :: Phoenix.LiveView.Rendered.t()
   def meeting_type_card(assigns) do
     assigns = assign(assigns, :plan_paused, PlanAccess.paused?(assigns.type))
@@ -282,6 +284,20 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
               screen reader's list of buttons tells the cards apart. --%>
         <div class="flex items-center gap-2 shrink-0">
           <Buttons.icon_button
+            :if={copy_link(@link_path, @username, @type)}
+            id={"meeting-type-card-copy-#{@type.id}"}
+            icon="hero-link"
+            size={:sm}
+            label={dgettext("dashboard_meeting_types", "Copy link")}
+            tooltip={dgettext("dashboard_meeting_types", "Copy link")}
+            phx-hook="CopyOnClick"
+            phx-click="booking_link_copied"
+            phx-target={@myself}
+            data-copy-text={copy_link(@link_path, @username, @type)}
+            data-copy-feedback={dgettext("dashboard_meeting_types", "Booking link copied!")}
+          />
+
+          <Buttons.icon_button
             :if={not @plan_paused}
             id={"meeting-type-card-edit-#{@type.id}"}
             icon="hero-pencil-square"
@@ -510,6 +526,22 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
   # leaving nothing to name).
   defp video_provider(%{kind: :video}, %{video_integration: %{provider: provider}}), do: provider
   defp video_provider(_location, _type), do: nil
+
+  # The public address a guest can book, copied from the row. A type that
+  # lives on a page uses that path; otherwise it is `/username/slug`.
+  defp copy_link(_path, _username, %{invitation_only: true}), do: nil
+  defp copy_link(_path, _username, %{is_private: true}), do: nil
+
+  defp copy_link(path, _username, _type) when is_binary(path) and path != "" do
+    TymeslotWeb.Endpoint.url() <> path
+  end
+
+  defp copy_link(_path, username, %{slug: slug})
+       when is_binary(username) and username != "" and is_binary(slug) and slug != "" do
+    TymeslotWeb.Endpoint.url() <> "/" <> username <> "/" <> slug
+  end
+
+  defp copy_link(_path, _username, _type), do: nil
 
   defp kind_icon(:video), do: "hero-video-camera-mini"
   defp kind_icon(:phone), do: "hero-phone-mini"

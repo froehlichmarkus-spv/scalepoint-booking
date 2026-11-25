@@ -169,9 +169,18 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   end
 
   defp branding_blocked?(socket, group, field, value) do
-    user_id = socket.assigns.current_user.id
+    case socket.assigns do
+      %{current_user: %{id: user_id}} ->
+        not Tymeslot.Plans.BookingChrome.branding_change_allowed?(
+          user_id,
+          group.key,
+          field,
+          value
+        )
 
-    not Tymeslot.Plans.BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
+      _other ->
+        false
+    end
   end
 
   defp do_set_option(socket, group, field, value) do

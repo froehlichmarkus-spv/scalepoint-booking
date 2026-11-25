@@ -68,7 +68,7 @@ msgstr "Cobranças ativadas:"
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "DISPUTE DETAILS:"
-msgstr "DETALHES DA CONTESTAÇÃO:"
+msgstr "DISPUTE DETAILS:"
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
@@ -90,11 +90,6 @@ msgstr "Se a contestação for encerrada a seu favor, o agendamento será concil
 #, elixir-autogen, elixir-format
 msgid "Meeting:"
 msgstr "Reunião:"
-
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
-msgstr "Assim que o Stripe estiver satisfeito, o status da sua conta será atualizado automaticamente. Não é preciso fazer mais nada do lado do Tymeslot."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
@@ -140,7 +135,7 @@ msgstr "CONTA STRIPE RESTRITA"
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "STRIPE DISPUTE OPENED"
-msgstr "CONTESTAÇÃO STRIPE ABERTA"
+msgstr "STRIPE DISPUTE OPENED"
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
@@ -249,13 +244,8 @@ msgstr "Detalhes do reembolso"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
-msgstr "Reembolse o participante pelos seus pagamentos no the scheduler ou pelo painel do Stripe, ou informe o que acontece depois."
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
-msgstr "REEMBOLSO DA SÉRIE NÃO REALIZADO"
+msgstr "SERIES REFUND NOT MADE"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
@@ -301,3 +291,13 @@ msgstr "O que fazer"
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
 msgstr "Você cancelou as sessões restantes de uma série, mas não foi possível reembolsar %{amount} ao participante. As sessões continuam canceladas."
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
+msgstr "Assim que o Stripe estiver satisfeito, o status da sua conta será atualizado automaticamente. Não é preciso fazer mais nada do lado do Tymeslot."
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format
+msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
+msgstr "Reembolse o participante pelos seus pagamentos no the scheduler ou pelo painel do Stripe, ou informe o que acontece depois."

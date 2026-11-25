@@ -479,7 +479,7 @@ defmodule Tymeslot.Meetings.VideoRooms do
       {:ok,
        %{
          meeting_url: meeting_url,
-         location: meeting_url,
+         location: host_location(meeting, meeting_url),
          video_room_id: room_id,
          video_provider: provider_string(meeting_context.provider_type),
          organizer_video_url: organizer_url,
@@ -495,6 +495,22 @@ defmodule Tymeslot.Meetings.VideoRooms do
   # room lives after `video_integration_id` is nulled by the integration's
   # `nilify_all` foreign key. Without it a disconnected integration leaves the
   # room unreachable and it lingers on the organiser's provider account.
+  # A generated room URL is the join link, not the place the guest was shown.
+  # Keep a host label such as "Google Meet" when one is already on the meeting.
+  defp host_location(%{location: location}, meeting_url) when is_binary(location) do
+    trimmed = String.trim(location)
+
+    cond do
+      trimmed == "" -> meeting_url
+      trimmed == meeting_url -> meeting_url
+      String.match?(trimmed, ~r/^https?:\/\//i) -> meeting_url
+      String.downcase(trimmed) in ["video call", "video"] -> meeting_url
+      true -> trimmed
+    end
+  end
+
+  defp host_location(_meeting, meeting_url), do: meeting_url
+
   defp provider_string(nil), do: nil
 
   defp provider_string(provider_type) when is_atom(provider_type),

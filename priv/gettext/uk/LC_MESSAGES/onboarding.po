@@ -85,11 +85,6 @@ msgstr "Витратьте 30 секунд, щоб дізнатися, де що
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to your the scheduler dashboard"
-msgstr "Ласкаво просимо до вашої панелі керування the scheduler"
-
-#: lib/tymeslot/onboarding/dashboard_tour.ex
-#, elixir-autogen, elixir-format
 msgid "You're set"
 msgstr "Усе готово"
 
@@ -149,11 +144,6 @@ msgstr "Зустрічі в Jitsi, kMeet або Nextcloud Talk"
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point the scheduler at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
-msgstr "Ще три відеопровайдери приєдналися до Zoom, Google Meet, Teams і MiroTalk у виборі інтеграцій. Вкажіть the scheduler власний Jitsi чи Nextcloud, і кожне бронювання отримає окрему кімнату: розмова в Talk тримає зал очікування зачиненим до початку зустрічі, переноситься разом із нею та видаляється, коли ви скасовуєте. kMeet не потребує жодного налаштування."
-
-#: lib/tymeslot/announcements/catalog.ex
-#, elixir-autogen, elixir-format
 msgid "A meeting type can now offer several places to meet: in person at an address, a video call or a phone call. The person booking picks the one that suits them, and can change it when they reschedule. Offer more than one video service and they choose which one the meeting runs on."
 msgstr "Тип зустрічі тепер може пропонувати кілька місць: особисто за адресою, відеодзвінок або телефонний дзвінок. Людина, яка бронює, обирає зручний варіант і може змінити його під час перенесення. Запропонуйте кілька відеосервісів, і вона обере, на якому пройде зустріч."
 
@@ -194,16 +184,6 @@ msgstr "Опитування може бути відкритим, і тоді �
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler now speaks Spanish"
-msgstr "the scheduler тепер розмовляє іспанською"
-
-#: lib/tymeslot/announcements/catalog.ex
-#, elixir-autogen, elixir-format
-msgid "Your dashboard, booking pages and every email are now available in Spanish. the scheduler follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
-msgstr "Ваша панель керування, сторінки бронювання та всі листи тепер доступні іспанською. the scheduler використовує мову вашого браузера, або ви можете обрати мову самостійно в налаштуваннях облікового запису. Люди, які бронюють у вас, теж бачать сторінки бронювання й підтвердження своєю мовою."
-
-#: lib/tymeslot/announcements/catalog.ex
-#, elixir-autogen, elixir-format
 msgid "Book a whole course of sessions at once"
 msgstr "Забронюйте цілий курс сесій одразу"
 
@@ -221,3 +201,23 @@ msgstr "Календар на панелі керування в новому в
 #, elixir-autogen, elixir-format
 msgid "We've redesigned the calendar from the ground up: a fresh look, a clearer layout with more room for your week, and quicker ways to plan, create and change your meetings. Have a look around, or read the docs for a tour of everything that's new."
 msgstr "Ми повністю переробили календар: новий вигляд, зрозуміліше компонування з більшим простором для вашого тижня та швидші способи планувати, створювати й змінювати зустрічі. Роздивіться або прочитайте документацію, щоб дізнатися про всі нововведення."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point the scheduler at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
+msgstr "Ще три відеопровайдери приєдналися до Zoom, Google Meet, Teams і MiroTalk у виборі інтеграцій. Вкажіть the scheduler власний Jitsi чи Nextcloud, і кожне бронювання отримає окрему кімнату: розмова в Talk тримає зал очікування зачиненим до початку зустрічі, переноситься разом із нею та видаляється, коли ви скасовуєте. kMeet не потребує жодного налаштування."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to your the scheduler dashboard"
+msgstr "Ласкаво просимо до вашої панелі керування the scheduler"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Your dashboard, booking pages and every email are now available in Spanish. the scheduler follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
+msgstr "Ваша панель керування, сторінки бронювання та всі листи тепер доступні іспанською. the scheduler використовує мову вашого браузера, або ви можете обрати мову самостійно в налаштуваннях облікового запису. Люди, які бронюють у вас, теж бачать сторінки бронювання й підтвердження своєю мовою."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler now speaks Spanish"
+msgstr "the scheduler тепер розмовляє іспанською"

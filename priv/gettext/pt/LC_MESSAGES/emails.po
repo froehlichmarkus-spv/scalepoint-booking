@@ -54,7 +54,7 @@ msgstr "Vou mandar um lembrete %{label} antes do nosso compromisso."
 #: lib/tymeslot/emails/shared/text_body_helper.ex
 #, elixir-autogen, elixir-format
 msgid "JOIN VIDEO MEETING:"
-msgstr "ENTRAR NA REUNIÃO POR VÍDEO:"
+msgstr "JOIN VIDEO MEETING:"
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
 #, elixir-autogen, elixir-format
@@ -79,7 +79,7 @@ msgstr "Local:"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "MEETING DETAILS:"
-msgstr "DETALHES DA REUNIÃO:"
+msgstr "MEETING DETAILS:"
 
 #: lib/tymeslot/emails/shared/text_body_helper.ex
 #, elixir-autogen, elixir-format
@@ -291,6 +291,7 @@ msgid "Tuesday"
 msgstr "terça-feira"
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/templates/appointment_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Video call"
 msgstr "Chamada de vídeo"
@@ -299,17 +300,6 @@ msgstr "Chamada de vídeo"
 #, elixir-autogen, elixir-format
 msgid "Wednesday"
 msgstr "quarta-feira"
-
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "Sent with care by"
-msgstr "Enviado com carinho por"
-
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
-msgstr "agendamento que respeita seu tempo"
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
@@ -552,7 +542,7 @@ msgstr "%{name} removeu você de um evento."
 #: lib/tymeslot/emails/shared/meeting/description.ex
 #, elixir-autogen, elixir-format
 msgid "DESCRIPTION:"
-msgstr "DESCRIÇÃO:"
+msgstr "DESCRIPTION:"
 
 #: lib/tymeslot/emails/shared/meeting/description.ex
 #, elixir-autogen, elixir-format

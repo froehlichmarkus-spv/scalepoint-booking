@@ -225,7 +225,9 @@
   }
 
   .date-picker-day.is-selected {
-    @apply bg-turquoise-700 text-white font-semibold;
+    background-color: var(--spv-navy);
+    color: var(--spv-white);
+    @apply font-semibold;
   }
 
   .date-picker-day[aria-disabled="true"] {

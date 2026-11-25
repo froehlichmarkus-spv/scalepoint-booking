@@ -30,6 +30,7 @@ defmodule TymeslotWeb.Dashboard.Availability.PolicyCard do
   attr :schedule, :map, required: true
   attr :myself, :any, required: true
   attr :custom_input_mode, :map, required: true
+  attr :buffers, :boolean, default: true
 
   @spec policy_card(map()) :: Phoenix.LiveView.Rendered.t()
   def policy_card(assigns) do
@@ -46,6 +47,7 @@ defmodule TymeslotWeb.Dashboard.Availability.PolicyCard do
     >
       <div class="space-y-8">
         <.buffer_settings
+          :if={@buffers}
           schedule={@schedule}
           myself={@myself}
           custom_input_mode={@custom_input_mode}

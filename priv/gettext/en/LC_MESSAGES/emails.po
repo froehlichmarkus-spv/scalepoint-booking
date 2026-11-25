@@ -291,6 +291,7 @@ msgid "Tuesday"
 msgstr ""
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/templates/appointment_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Video call"
 msgstr ""
@@ -298,17 +299,6 @@ msgstr ""
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "Wednesday"
-msgstr ""
-
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "Sent with care by"
-msgstr ""
-
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
 msgstr ""
 
 #: lib/tymeslot/emails/shared/formatting.ex

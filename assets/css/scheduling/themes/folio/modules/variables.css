@@ -35,19 +35,19 @@
   --folio-line-height-heading: 1.15;
 
   /* Palette inputs (Ivory). */
-  --theme-primary: #b4532a;
-  --theme-primary-hover: #96431f;
+  --theme-primary: var(--spv-navy, #111e32);
+  --theme-primary-hover: var(--spv-navy-dark, #09101b);
   --theme-secondary: #7a6450;
-  --theme-accent: #a0612f;
+  --theme-accent: var(--spv-teal, #469189);
   --theme-on-primary: #ffffff;
-  --theme-primary-solid: #b4532a;
-  --theme-primary-solid-hover: #96431f;
+  --theme-primary-solid: var(--spv-navy, #111e32);
+  --theme-primary-solid-hover: var(--spv-navy-dark, #09101b);
   --theme-on-accent: #ffffff;
   --theme-accent-solid: #a0612f;
   --theme-canvas: #faf7f2;
   --theme-surface: #fffdf9;
   --theme-text: #1f1b16;
-  --theme-text-secondary: #6b6158;
+  --theme-text-secondary: var(--spv-muted, #5a687c);
 
   /* Status inputs: a fixed hue, 65% of it, mixed with the text colour. */
   --folio-danger-hue: #d1352b;

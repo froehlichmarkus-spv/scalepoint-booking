@@ -92,7 +92,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Errors do
     do:
       dgettext_noop(
         "integrations_calendar",
-        "The calendar server is rate-limiting Tymeslot. the scheduler will retry automatically."
+        "The calendar server is rate-limiting this booking page. It will retry automatically."
       )
 
   def describe_error(:network_error),

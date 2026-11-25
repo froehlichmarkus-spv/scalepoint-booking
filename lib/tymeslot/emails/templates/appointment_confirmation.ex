@@ -58,6 +58,19 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
 
       #{if line = GroupSession.line(appointment_details), do: Text.centered_text(line, font_size: "14px", padding: "0 0 16px 0")}
 
+      #{if attendee_video_url do
+        MeetingComponents.video_meeting_section(@intent, attendee_video_url,
+        title: dgettext("emails_booking", "Ready to join when it's time?"),
+        button_text: dgettext("emails_booking", "Join Video Meeting"),
+        eyebrow: video_eyebrow(appointment_details))
+      end}
+
+      #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Need to make changes?"), [%{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel Appointment"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
+
+      #{if appointment_details.reminders_summary do
+        Callouts.alert_box(@intent, appointment_details.reminders_summary, title: dgettext("emails_booking", "Reminders Scheduled"))
+      end}
+
       #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.description_section(appointment_details)}
@@ -66,22 +79,10 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
 
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
-      #{if attendee_video_url do
-        MeetingComponents.video_meeting_section(@intent, attendee_video_url,
-        title: dgettext("emails_booking", "Ready to join when it's time?"),
-        button_text: dgettext("emails_booking", "Join Video Meeting"))
-      end}
-
       #{if payment_receipt, do: PaymentBlocks.attendee_receipt_html(payment_receipt)}
-
-      #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Need to make changes?"), [%{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel Appointment"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
 
       #{if appointment_details.organizer_contact_info do
         Text.centered_text(dgettext("emails_booking", "Questions? %{contact_info}", contact_info: appointment_details.organizer_contact_info), font_size: "14px", padding: "16px 0 0 0")
-      end}
-
-      #{if appointment_details.reminders_summary do
-        Callouts.alert_box(@intent, appointment_details.reminders_summary, title: dgettext("emails_booking", "Reminders Scheduled"))
       end}
       """
 
@@ -403,6 +404,20 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
     #{appointment_details.organizer_name}
     """
   end
+
+  # A host label such as "Google Meet" replaces the generic "Video call"
+  # eyebrow. A blank or generic label stays the translated default.
+  defp video_eyebrow(%{location: location}) when is_binary(location) do
+    trimmed = String.trim(location)
+
+    if trimmed == "" or String.downcase(trimmed) in ["video call", "video"] do
+      dgettext("emails", "Video call")
+    else
+      trimmed
+    end
+  end
+
+  defp video_eyebrow(_details), do: dgettext("emails", "Video call")
 
   # A meeting the host confirmed from their poll was not booked by anyone,
   # so the organiser's copy says the poll is confirmed rather than naming

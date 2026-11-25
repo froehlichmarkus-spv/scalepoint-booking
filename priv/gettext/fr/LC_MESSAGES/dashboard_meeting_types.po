@@ -341,6 +341,7 @@ msgstr "Supprimer le type de réunion"
 msgid "Edit %{name}"
 msgstr "Modifier %{name}"
 
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
 #, elixir-autogen, elixir-format
 msgid "Booking link copied!"
@@ -351,6 +352,7 @@ msgstr "Lien de réservation copié !"
 msgid "Cancelled"
 msgstr "Annulé"
 
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
@@ -584,11 +586,6 @@ msgstr "Utilisé"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Chaque lien permet de réserver un seul rendez-vous. the scheduler n’envoie aucun e-mail : copiez le lien et envoyez-le vous-même."
-
-#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
-#, elixir-autogen, elixir-format
 msgid "Appointment cancelled"
 msgstr "Rendez-vous annulé"
 
@@ -641,3 +638,8 @@ msgstr "Affichage des 100 invitations les plus récentes."
 #, elixir-autogen, elixir-format
 msgid "This link has expired, so it can't be reopened. Create a new one instead."
 msgstr "Ce lien a expiré et ne peut donc pas être rouvert. Créez-en plutôt un nouveau."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
+msgstr "Chaque lien permet de réserver un seul rendez-vous. the scheduler n’envoie aucun e-mail : copiez le lien et envoyez-le vous-même."

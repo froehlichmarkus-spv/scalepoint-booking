@@ -142,7 +142,7 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalk.BookingConversatio
 
       expect(HTTPClientMock, :request, fn :post, @room_api, body, _headers, _opts ->
         assert Jason.decode!(body)["description"] ==
-                 "Über Tymeslot gebucht.\n\nReference: " <> @reference
+                 "Über the scheduler gebucht.\n\nReference: " <> @reference
 
         created(%{"token" => "abc123xy"})
       end)
@@ -220,7 +220,8 @@ defmodule Tymeslot.Integrations.Video.Providers.NextcloudTalk.BookingConversatio
         listed([
           %{
             @made_earlier
-            | "description" => "Über Tymeslot gebucht.\r\n\r\n  Reference: #{@reference}\nNotes"
+            | "description" =>
+                "Über the scheduler gebucht.\r\n\r\n  Reference: #{@reference}\nNotes"
           }
         ])
       end)

@@ -278,11 +278,6 @@ msgstr "Ganztägig"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Über Ihre the scheduler-Seite gebucht"
-
-#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
-#, elixir-autogen, elixir-format
 msgid "External calendar"
 msgstr "Externer Kalender"
 
@@ -446,3 +441,8 @@ msgstr "Menü einklappen"
 #, elixir-autogen, elixir-format
 msgid "Expand menu"
 msgstr "Menü ausklappen"
+
+#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
+#, elixir-autogen, elixir-format
+msgid "Booked through your the scheduler page"
+msgstr "Über Ihre the scheduler-Seite gebucht"

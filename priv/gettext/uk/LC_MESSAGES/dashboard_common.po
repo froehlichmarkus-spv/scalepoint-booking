@@ -278,11 +278,6 @@ msgstr "Цілий день"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Заброньовано через вашу сторінку the scheduler"
-
-#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
-#, elixir-autogen, elixir-format
 msgid "External calendar"
 msgstr "Зовнішній календар"
 
@@ -447,3 +442,8 @@ msgstr "Згорнути меню"
 #, elixir-autogen, elixir-format
 msgid "Expand menu"
 msgstr "Розгорнути меню"
+
+#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
+#, elixir-autogen, elixir-format
+msgid "Booked through your the scheduler page"
+msgstr "Заброньовано через вашу сторінку the scheduler"

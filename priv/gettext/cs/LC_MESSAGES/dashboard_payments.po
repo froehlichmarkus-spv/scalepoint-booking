@@ -115,16 +115,6 @@ msgstr "Výchozí měna"
 msgid "Disconnect Stripe"
 msgstr "Odpojit Stripe"
 
-#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
-#, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from Tymeslot. Existing payments remain visible. New paid bookings will fail until you reconnect."
-msgstr "Odpojte svůj účet Stripe od služby Tymeslot. Stávající platby zůstanou viditelné. Nové placené rezervace budou selhávat, dokud jej znovu nepřipojíte."
-
-#: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
-msgstr "Opravdu chcete odpojit svůj účet Stripe od služby the scheduler? Stávající platby zůstanou viditelné, ale nové placené rezervace budou selhávat, dokud jej znovu nepřipojíte."
-
 #: lib/tymeslot_web/live/dashboard/payments_settings/status_card.ex
 #, elixir-autogen, elixir-format
 msgid "Disconnected"
@@ -313,20 +303,10 @@ msgstr "Stripe pro tuto rezervaci zatím nezaznamenal žádnou platbu. Zkuste to
 msgid "Stripe is reviewing your account. Charges switch on automatically once approved."
 msgstr "Stripe kontroluje váš účet. Po schválení se přijímání plateb automaticky zapne."
 
-#: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
-#, elixir-autogen, elixir-format
-msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
-msgstr "Účastník obdrží celou vrácenou částku. Poplatek platformy the scheduler se vrací poměrně; transakční poplatky Stripe z původní platby zůstávají vám."
-
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "This booking has not been paid yet, so it cannot be refunded."
 msgstr "Tato rezervace zatím nebyla zaplacena, platbu tedy nelze vrátit."
-
-#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
-#, elixir-autogen, elixir-format
-msgid "This payment can no longer be refunded from Tymeslot. Refunds older than 60 days must be processed in your Stripe dashboard."
-msgstr "Tuto platbu už nelze vrátit ze služby Tymeslot. Platby starší než 60 dní je nutné vracet v nástěnce Stripe."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -504,16 +484,6 @@ msgstr "Platby přes Stripe nejsou na tomto serveru plně nastavené. Obraťte s
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account is already connected to another the scheduler account."
-msgstr "Tento účet Stripe je už připojený k jinému účtu Tymeslot."
-
-#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
-#, elixir-autogen, elixir-format
-msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
-msgstr "Tento účet Stripe používá měnu, kterou the scheduler pro platby zatím nepodporuje."
-
-#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
-#, elixir-autogen, elixir-format
 msgid "That Stripe connection link is no longer valid. Please try again."
 msgstr "Tento odkaz pro připojení Stripe už není platný. Zkuste to prosím znovu."
 
@@ -544,3 +514,33 @@ msgstr[2] "Po odpojení bude zrušeno %{count} nedokončených plateb."
 #, elixir-autogen, elixir-format
 msgid "A checkout is in progress in your current currency. Try again in a few minutes."
 msgstr "V aktuální měně právě probíhá platba. Zkuste to znovu za několik minut."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+msgstr "Opravdu chcete odpojit svůj účet Stripe od služby the scheduler? Stávající platby zůstanou viditelné, ale nové placené rezervace budou selhávat, dokud jej znovu nepřipojíte."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Disconnect your Stripe account. Existing payments remain visible. New paid bookings will fail until you reconnect."
+msgstr "Odpojte svůj účet Stripe od služby Tymeslot. Stávající platby zůstanou viditelné. Nové placené rezervace budou selhávat, dokud jej znovu nepřipojíte."
+
+#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
+#, elixir-autogen, elixir-format
+msgid "That Stripe account is already connected to another the scheduler account."
+msgstr "Tento účet Stripe je už připojený k jinému účtu Tymeslot."
+
+#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
+#, elixir-autogen, elixir-format
+msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
+msgstr "Tento účet Stripe používá měnu, kterou the scheduler pro platby zatím nepodporuje."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
+#, elixir-autogen, elixir-format
+msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
+msgstr "Účastník obdrží celou vrácenou částku. Poplatek platformy the scheduler se vrací poměrně; transakční poplatky Stripe z původní platby zůstávají vám."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This payment can no longer be refunded here. Refunds older than 60 days must be processed in your Stripe dashboard."
+msgstr "Tuto platbu už nelze vrátit ze služby Tymeslot. Platby starší než 60 dní je nutné vracet v nástěnce Stripe."

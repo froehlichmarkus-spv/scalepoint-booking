@@ -812,11 +812,6 @@ msgstr ""
 msgid "Connect a calendar to start a poll"
 msgstr ""
 
-#: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
-#, elixir-autogen, elixir-format
-msgid "Guests vote on a page that opens once your calendar is connected, so Tymeslot can flag the times you're busy and book the winner without double-booking you."
-msgstr ""
-
 #: lib/tymeslot_web/live/dashboard/polls/confirm_slot_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This time clashes with an event on your calendar. Confirming books it anyway."
@@ -1030,4 +1025,9 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/polls/leave_poll_editor_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Your changes to this poll are not saved yet. Leaving now discards them."
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
+#, elixir-autogen, elixir-format
+msgid "Guests vote on a page that opens once your calendar is connected, so the scheduler can flag the times you're busy and book the winner without double-booking you."
 msgstr ""

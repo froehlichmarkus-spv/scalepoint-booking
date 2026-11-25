@@ -595,3 +595,18 @@ msgstr "A pausa %{break} não cabe mais nestes horários. Primeiro, mova ou excl
 #, elixir-autogen, elixir-format
 msgid "The %{break} break on %{day} falls outside that day's hours. Move or delete it, then try again."
 msgstr "A pausa %{break} de %{day} fica fora dos horários desse dia. Mova ou exclua a pausa e tente novamente."
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times on these calendars are kept off your booking page."
+msgstr "Busy times on these calendars are kept off your booking page."
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Connected calendars"
+msgstr "Connected calendars"
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "No calendar connected yet."
+msgstr "No calendar connected yet."

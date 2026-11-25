@@ -4,6 +4,25 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorTest do
 
   alias Tymeslot.Integrations.Calendar.IcsGenerator
 
+  defp mail_domain do
+    case Tymeslot.Brands.current() || Tymeslot.Brands.neutral_default() do
+      %{sender_email: email} when is_binary(email) ->
+        email |> String.split("@") |> List.last()
+
+      _ ->
+        Application.get_env(:tymeslot, :email)[:domain]
+    end
+  end
+
+  defp organizer_email(fallback) do
+    case Tymeslot.Brands.current() || Tymeslot.Brands.neutral_default() do
+      %{sender_email: email} when is_binary(email) -> email
+      _ -> fallback
+    end
+  end
+
+  defp unfold(ics), do: String.replace(ics, "\r\n ", "")
+
   describe "generate_ics/1" do
     test "generates valid ICS content with required fields" do
       meeting_details = %{
@@ -16,8 +35,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorTest do
         organizer_name: "John Doe"
       }
 
-      # Ensure we use the domain from configuration
-      domain = Application.get_env(:tymeslot, :email)[:domain]
+      domain = mail_domain()
       ics_content = IcsGenerator.generate_ics(meeting_details)
 
       assert ics_content =~ "BEGIN:VCALENDAR"
@@ -41,7 +59,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorTest do
       ics_content = IcsGenerator.generate_ics(meeting_details)
 
       assert ics_content =~ "ORGANIZER"
-      assert ics_content =~ "john@example.com"
+      assert unfold(ics_content) =~ organizer_email("john@example.com")
       assert ics_content =~ "John Smith"
     end
 
@@ -526,7 +544,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorTest do
     end
 
     test "one calendar holds one event per session, each its own, with no rule" do
-      domain = Application.get_env(:tymeslot, :email)[:domain]
+      domain = mail_domain()
 
       attachment =
         IcsGenerator.generate_series_attachment(

@@ -397,11 +397,6 @@ msgstr "Wpisz tłumaczenie (%{language})"
 
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
 #, elixir-autogen, elixir-format
-msgid "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
-msgstr "Goście mogą wybrać dowolny język obsługiwany przez Tymeslot. Wyłącz tę opcję, aby samodzielnie wybrać języki."
-
-#: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
-#, elixir-autogen, elixir-format
 msgid "Invitees can choose only the languages ticked below."
 msgstr "Goście mogą wybrać tylko języki zaznaczone poniżej."
 
@@ -429,3 +424,8 @@ msgstr "Pisz moje teksty w języku: %{language}"
 #, elixir-autogen, elixir-format
 msgid "Your %{language} translations are kept: tick the language again and they come back."
 msgstr "Tłumaczenia (%{language}) zostaną zachowane: zaznacz język ponownie, a wrócą."
+
+#: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
+#, elixir-autogen, elixir-format
+msgid "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
+msgstr "Goście mogą wybrać dowolny język obsługiwany przez Tymeslot. Wyłącz tę opcję, aby samodzielnie wybrać języki."

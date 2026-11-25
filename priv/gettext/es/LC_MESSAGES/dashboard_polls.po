@@ -812,11 +812,6 @@ msgstr "Primero conecta un calendario: los invitados votan en una página que se
 msgid "Connect a calendar to start a poll"
 msgstr "Conecta un calendario para crear una votación"
 
-#: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
-#, elixir-autogen, elixir-format
-msgid "Guests vote on a page that opens once your calendar is connected, so the scheduler can flag the times you're busy and book the winner without double-booking you."
-msgstr "Los invitados votan en una página que se abre cuando conectas tu calendario. Así, the scheduler puede marcar los horarios en los que ya tienes algo y reservar el horario ganador sin que tengas dos reservas a la misma hora."
-
 #: lib/tymeslot_web/live/dashboard/polls/confirm_slot_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This time clashes with an event on your calendar. Confirming books it anyway."
@@ -1031,3 +1026,8 @@ msgstr "¿Salir sin guardar?"
 #, elixir-autogen, elixir-format
 msgid "Your changes to this poll are not saved yet. Leaving now discards them."
 msgstr "Los cambios en esta votación todavía no están guardados. Si sales ahora, se descartarán."
+
+#: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
+#, elixir-autogen, elixir-format
+msgid "Guests vote on a page that opens once your calendar is connected, so the scheduler can flag the times you're busy and book the winner without double-booking you."
+msgstr "Los invitados votan en una página que se abre cuando conectas tu calendario. Así, the scheduler puede marcar los horarios en los que ya tienes algo y reservar el horario ganador sin que tengas dos reservas a la misma hora."

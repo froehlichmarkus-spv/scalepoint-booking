@@ -11,20 +11,10 @@ msgstr ""
 "Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n>1);\n"
 
-#: lib/tymeslot/emails/templates/email_change_notification.ex
-#, elixir-autogen, elixir-format
-msgid "A change was requested on your the scheduler account."
-msgstr "Une modification a été demandée sur votre compte Tymeslot."
-
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "A fresh password and you're back in."
 msgstr "Un nouveau mot de passe et c’est reparti."
-
-#: lib/tymeslot/emails/templates/email_change_notification.ex
-#, elixir-autogen, elixir-format
-msgid "A request has been made to change the email address on your the scheduler account. We're letting you know so you can confirm it was you."
-msgstr "Une demande a été effectuée pour modifier l’adresse e-mail de votre compte Tymeslot. Nous vous en informons afin que vous puissiez confirmer que c’est bien vous."
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -99,20 +89,10 @@ msgstr "Confirmer l’e-mail et commencer"
 msgid "Confirm Email & Get Started:"
 msgstr "Confirmer l’e-mail et commencer :"
 
-#: lib/tymeslot/emails/templates/email_change_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Confirm the new email address on your the scheduler account."
-msgstr "Confirmez la nouvelle adresse e-mail de votre compte Tymeslot."
-
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Confirm your email and your account is ready."
 msgstr "Confirmez votre e-mail et votre compte est prêt."
-
-#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
-#, elixir-autogen, elixir-format
-msgid "Confirm your email to finish signing up for Tymeslot."
-msgstr "Confirmez votre e-mail pour finaliser votre inscription à Tymeslot."
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
@@ -174,16 +154,6 @@ msgstr "Changement d’e-mail demandé vers : %{new_email}"
 msgid "For security, a copy of this confirmation was sent to your previous email address."
 msgstr "Par sécurité, une copie de cette confirmation a été envoyée à votre ancienne adresse e-mail."
 
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, no further action is needed."
-msgstr "Pour votre sécurité, ce lien expire dans 24 heures. Si cette inscription à the scheduler ne vient pas de vous, aucune action supplémentaire n’est nécessaire."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email."
-msgstr "Pour votre sécurité, ce lien expire dans 24 heures. Si cette inscription à the scheduler ne vient pas de vous, vous pouvez ignorer cet e-mail."
-
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Forgot your password? Reset it here."
@@ -218,11 +188,6 @@ msgstr "Si vous n’avez pas demandé la réinitialisation de votre mot de passe
 #, elixir-autogen, elixir-format
 msgid "If you didn't request this change, your account is still secure - you can simply delete this email."
 msgstr "Si vous n’avez pas demandé cette modification, votre compte reste sécurisé - vous pouvez simplement supprimer cet e-mail."
-
-#: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Instructions to reset your the scheduler password."
-msgstr "Instructions pour réinitialiser votre mot de passe Tymeslot."
 
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
@@ -350,37 +315,10 @@ msgstr "Définir un nouveau mot de passe"
 msgid "Set New Password:"
 msgstr "Définir un nouveau mot de passe :"
 
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Sign In to the scheduler"
-msgstr "Se connecter à the scheduler"
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Sign In to the scheduler:"
-msgstr "Se connecter à the scheduler :"
-
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Sign in instead of signing up."
 msgstr "Connectez-vous au lieu de vous inscrire."
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Someone asked to reset the password for your the scheduler account, but your account signs in with %{provider}, so it has no password to reset. Use the button below and choose %{provider} to sign in."
-msgstr "Quelqu’un a demandé la réinitialisation du mot de passe de votre compte the scheduler, mais votre compte se connecte avec %{provider} et n’a donc pas de mot de passe à réinitialiser. Utilisez le bouton ci-dessous et choisissez %{provider} pour vous connecter."
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new the scheduler account with this email address, which already has an account. If it was you, sign in below, or reset your password if you can't remember it."
-msgstr "Quelqu’un vient d’essayer de créer un nouveau compte the scheduler avec cette adresse e-mail, qui a déjà un compte. Si c’était vous, connectez-vous ci-dessous, ou réinitialisez votre mot de passe si vous ne vous en souvenez plus."
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new the scheduler account with this email address, which already has an account. If it was you, sign in with %{provider} below."
-msgstr "Quelqu’un vient d’essayer de créer un nouveau compte the scheduler avec cette adresse e-mail, qui a déjà un compte. Si c’était vous, connectez-vous ci-dessous avec %{provider}."
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
@@ -418,11 +356,6 @@ msgstr "Ceci est une confirmation des modifications apportées à votre compte. 
 #, elixir-autogen, elixir-format
 msgid "This is a security notification sent to protect your account. If you have concerns, please contact support immediately."
 msgstr "Ceci est une notification de sécurité envoyée pour protéger votre compte. Si vous avez des inquiétudes, veuillez contacter immédiatement le support."
-
-#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
-#, elixir-autogen, elixir-format
-msgid "This link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email and no account will be created."
-msgstr "Ce lien expire dans 24 heures. Si cette inscription à the scheduler ne vient pas de vous, vous pouvez ignorer cet e-mail et aucun compte ne sera créé."
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
@@ -490,21 +423,6 @@ msgstr "Nous vous en informons au cas où ce ne serait pas vous."
 msgid "Welcome"
 msgstr "Bienvenue"
 
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler"
-msgstr "Bienvenue sur the scheduler"
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler - please verify your email."
-msgstr "Bienvenue sur the scheduler - veuillez vérifier votre adresse e-mail."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler!"
-msgstr "Bienvenue sur the scheduler !"
-
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
 msgid "What happens next"
@@ -520,16 +438,6 @@ msgstr "Ce que vous devez savoir"
 msgid "You already have an account"
 msgstr "Vous avez déjà un compte"
 
-#: lib/tymeslot/emails/templates/email_change_verification.ex
-#, elixir-autogen, elixir-format
-msgid "You asked to change the email address on your the scheduler account to %{new_email}."
-msgstr "Vous avez demandé à changer l’adresse e-mail de votre compte the scheduler pour %{new_email}."
-
-#: lib/tymeslot/emails/templates/email_change_verification.ex
-#, elixir-autogen, elixir-format
-msgid "You asked to change the email address on your the scheduler account. Confirm the new address below to finish the switch."
-msgstr "Vous avez demandé à changer l’adresse e-mail de votre compte Tymeslot. Confirmez la nouvelle adresse ci-dessous pour finaliser le changement."
-
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
 msgid "You may need to sign in again on other devices"
@@ -539,31 +447,6 @@ msgstr "Vous devrez peut-être vous reconnecter sur d’autres appareils"
 #, elixir-autogen, elixir-format
 msgid "You sign in with %{provider}."
 msgstr "Vous vous connectez avec %{provider}."
-
-#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
-#, elixir-autogen, elixir-format
-msgid "You're signing up for the scheduler with %{provider}. Confirm this email address to create your account and sign in."
-msgstr "Vous vous inscrivez à the scheduler avec %{provider}. Confirmez cette adresse e-mail pour créer votre compte et vous connecter."
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler account email address has been successfully changed."
-msgstr "L’adresse e-mail de votre compte the scheduler a été modifiée avec succès."
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler account email address has been successfully changed. This confirmation is being sent to your previous address so you know the switch happened."
-msgstr "L’adresse e-mail de votre compte the scheduler a été modifiée avec succès. Cette confirmation est envoyée à votre ancienne adresse pour vous informer que le changement a eu lieu."
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler account has no password to reset."
-msgstr "Votre compte the scheduler n’a pas de mot de passe à réinitialiser."
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler email address has been changed."
-msgstr "L’adresse e-mail de votre compte the scheduler a été modifiée."
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
@@ -592,23 +475,8 @@ msgstr "Suppression du compte"
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "As you asked, your the scheduler account has been deleted, together with everything in it. This cannot be undone."
-msgstr "Comme vous l’avez demandé, votre compte the scheduler a été supprimé, avec tout ce qu’il contenait. Cette action est irréversible."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "As you asked, your the scheduler account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account."
-msgstr "Comme vous l’avez demandé, votre compte the scheduler sera supprimé le %{date}. D’ici là, il est gelé : votre page de réservation est hors ligne et personne ne peut réserver avec vous. Si vous changez d’avis, connectez-vous avant cette date pour restaurer votre compte."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
 msgid "Everything in it is gone."
 msgstr "Tout son contenu a été supprimé."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "If you did not ask for this, contact whoever runs this the scheduler service straight away."
-msgstr "Si vous n’êtes pas à l’origine de cette demande, contactez immédiatement la personne qui gère ce service Tymeslot."
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
@@ -640,30 +508,10 @@ msgstr "Votre compte a été supprimé"
 msgid "Your account is scheduled for deletion"
 msgstr "La suppression de votre compte est programmée"
 
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your upcoming bookings have been deleted from Tymeslot. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
-msgstr "Vos réservations à venir ont été supprimées de Tymeslot. Vos invités n’ont pas été prévenus. Les événements de calendrier et les liens vidéo déjà créés ont été laissés tels quels. Si une réunion ne doit pas avoir lieu, veuillez contacter vous-même vos invités."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your upcoming bookings will be deleted from the scheduler with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
-msgstr "Vos réservations à venir seront supprimées de the scheduler avec votre compte. Vos invités ne seront pas prévenus. Les événements de calendrier et les liens vidéo déjà créés resteront tels quels. Si une réunion ne doit pas avoir lieu, veuillez contacter vous-même vos invités."
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new the scheduler account with this email address. It belongs to an account that is scheduled for deletion on %{date}. If it was you, sign in before then to restore that account, or sign up again after that date."
-msgstr "Quelqu’un vient d’essayer de créer un nouveau compte the scheduler avec cette adresse e-mail. Elle appartient à un compte dont la suppression est prévue le %{date}. Si c’était vous, connectez-vous avant cette date pour restaurer ce compte, ou inscrivez-vous de nouveau après cette date."
-
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Confirm your email to finish signing up"
 msgstr "Confirmez votre e-mail pour finaliser votre inscription"
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Email Address Changed - the scheduler Account"
-msgstr "Adresse e-mail modifiée - Compte the scheduler"
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
@@ -674,26 +522,6 @@ msgstr "Adresse e-mail modifiée avec succès"
 #, elixir-autogen, elixir-format
 msgid "Verify your email address"
 msgstr "Vérifiez votre adresse e-mail"
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "You already have a the scheduler account"
-msgstr "Vous avez déjà un compte the scheduler"
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler account has been deleted"
-msgstr "Votre compte the scheduler a été supprimé"
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler account has no password"
-msgstr "Votre compte the scheduler n’a pas de mot de passe"
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your the scheduler account is scheduled for deletion"
-msgstr "La suppression de votre compte the scheduler est programmée"
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -777,20 +605,192 @@ msgstr "Ce lien est valable 7 jours."
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
-msgid "You're invited to the scheduler"
-msgstr "Invitation à rejoindre the scheduler"
-
-#: lib/tymeslot/emails/templates/account_invitation.ex
-#, elixir-autogen, elixir-format
 msgid "Your account is ready and waiting."
 msgstr "Votre compte est prêt et vous attend."
+
+#: lib/tymeslot/emails/templates/email_change_notification.ex
+#, elixir-autogen, elixir-format
+msgid "A change was requested on your the scheduler account."
+msgstr "Une modification a été demandée sur votre compte Tymeslot."
+
+#: lib/tymeslot/emails/templates/email_change_notification.ex
+#, elixir-autogen, elixir-format
+msgid "A request has been made to change the email address on your the scheduler account. We're letting you know so you can confirm it was you."
+msgstr "Une demande a été effectuée pour modifier l’adresse e-mail de votre compte Tymeslot. Nous vous en informons afin que vous puissiez confirmer que c’est bien vous."
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "An administrator has created a the scheduler account for you. Accept the invitation to choose how you'll sign in and set up your booking page."
 msgstr "Un administrateur a créé un compte the scheduler pour vous. Acceptez l’invitation pour choisir votre méthode de connexion et configurer votre page de réservation."
 
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "As you asked, your the scheduler account has been deleted, together with everything in it. This cannot be undone."
+msgstr "Comme vous l’avez demandé, votre compte the scheduler a été supprimé, avec tout ce qu’il contenait. Cette action est irréversible."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "As you asked, your the scheduler account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account."
+msgstr "Comme vous l’avez demandé, votre compte the scheduler sera supprimé le %{date}. D’ici là, il est gelé : votre page de réservation est hors ligne et personne ne peut réserver avec vous. Si vous changez d’avis, connectez-vous avant cette date pour restaurer votre compte."
+
+#: lib/tymeslot/emails/templates/email_change_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Confirm the new email address on your the scheduler account."
+msgstr "Confirmez la nouvelle adresse e-mail de votre compte Tymeslot."
+
+#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
+#, elixir-autogen, elixir-format
+msgid "Confirm your email to finish signing up for %{product}."
+msgstr "Confirm your email to finish signing up for %{product}."
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Email Address Changed - the scheduler Account"
+msgstr "Adresse e-mail modifiée - Compte the scheduler"
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, no further action is needed."
+msgstr "Pour votre sécurité, ce lien expire dans 24 heures. Si cette inscription à the scheduler ne vient pas de vous, aucune action supplémentaire n’est nécessaire."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email."
+msgstr "Pour votre sécurité, ce lien expire dans 24 heures. Si cette inscription à the scheduler ne vient pas de vous, vous pouvez ignorer cet e-mail."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "If you did not ask for this, contact whoever runs this the scheduler service straight away."
+msgstr "Si vous n’êtes pas à l’origine de cette demande, contactez immédiatement la personne qui gère ce service Tymeslot."
+
+#: lib/tymeslot/emails/templates/password_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Instructions to reset your the scheduler password."
+msgstr "Instructions pour réinitialiser votre mot de passe Tymeslot."
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Sign In to the scheduler"
+msgstr "Se connecter à the scheduler"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Sign In to the scheduler:"
+msgstr "Se connecter à the scheduler :"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Someone asked to reset the password for your the scheduler account, but your account signs in with %{provider}, so it has no password to reset. Use the button below and choose %{provider} to sign in."
+msgstr "Quelqu’un a demandé la réinitialisation du mot de passe de votre compte the scheduler, mais votre compte se connecte avec %{provider} et n’a donc pas de mot de passe à réinitialiser. Utilisez le bouton ci-dessous et choisissez %{provider} pour vous connecter."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Someone just tried to create a new the scheduler account with this email address, which already has an account. If it was you, sign in below, or reset your password if you can't remember it."
+msgstr "Quelqu’un vient d’essayer de créer un nouveau compte the scheduler avec cette adresse e-mail, qui a déjà un compte. Si c’était vous, connectez-vous ci-dessous, ou réinitialisez votre mot de passe si vous ne vous en souvenez plus."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Someone just tried to create a new the scheduler account with this email address, which already has an account. If it was you, sign in with %{provider} below."
+msgstr "Quelqu’un vient d’essayer de créer un nouveau compte the scheduler avec cette adresse e-mail, qui a déjà un compte. Si c’était vous, connectez-vous ci-dessous avec %{provider}."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Someone just tried to create a new the scheduler account with this email address. It belongs to an account that is scheduled for deletion on %{date}. If it was you, sign in before then to restore that account, or sign up again after that date."
+msgstr "Quelqu’un vient d’essayer de créer un nouveau compte the scheduler avec cette adresse e-mail. Elle appartient à un compte dont la suppression est prévue le %{date}. Si c’était vous, connectez-vous avant cette date pour restaurer ce compte, ou inscrivez-vous de nouveau après cette date."
+
+#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
+#, elixir-autogen, elixir-format
+msgid "This link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email and no account will be created."
+msgstr "Ce lien expire dans 24 heures. Si cette inscription à the scheduler ne vient pas de vous, vous pouvez ignorer cet e-mail et aucun compte ne sera créé."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to the scheduler"
+msgstr "Bienvenue sur the scheduler"
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to the scheduler - please verify your email."
+msgstr "Bienvenue sur the scheduler - veuillez vérifier votre adresse e-mail."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to the scheduler!"
+msgstr "Bienvenue sur the scheduler !"
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "You already have a the scheduler account"
+msgstr "Vous avez déjà un compte the scheduler"
+
+#: lib/tymeslot/emails/templates/email_change_verification.ex
+#, elixir-autogen, elixir-format
+msgid "You asked to change the email address on your the scheduler account to %{new_email}."
+msgstr "Vous avez demandé à changer l’adresse e-mail de votre compte the scheduler pour %{new_email}."
+
+#: lib/tymeslot/emails/templates/email_change_verification.ex
+#, elixir-autogen, elixir-format
+msgid "You asked to change the email address on your the scheduler account. Confirm the new address below to finish the switch."
+msgstr "Vous avez demandé à changer l’adresse e-mail de votre compte Tymeslot. Confirmez la nouvelle adresse ci-dessous pour finaliser le changement."
+
+#: lib/tymeslot/emails/templates/account_invitation.ex
+#, elixir-autogen, elixir-format
+msgid "You're invited to the scheduler"
+msgstr "Invitation à rejoindre the scheduler"
+
+#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
+#, elixir-autogen, elixir-format
+msgid "You're signing up for the scheduler with %{provider}. Confirm this email address to create your account and sign in."
+msgstr "Vous vous inscrivez à the scheduler avec %{provider}. Confirmez cette adresse e-mail pour créer votre compte et vous connecter."
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler account email address has been successfully changed."
+msgstr "L’adresse e-mail de votre compte the scheduler a été modifiée avec succès."
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler account email address has been successfully changed. This confirmation is being sent to your previous address so you know the switch happened."
+msgstr "L’adresse e-mail de votre compte the scheduler a été modifiée avec succès. Cette confirmation est envoyée à votre ancienne adresse pour vous informer que le changement a eu lieu."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler account has been deleted"
+msgstr "Votre compte the scheduler a été supprimé"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler account has no password"
+msgstr "Votre compte the scheduler n’a pas de mot de passe"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler account has no password to reset."
+msgstr "Votre compte the scheduler n’a pas de mot de passe à réinitialiser."
+
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "Your the scheduler account is ready. Accept the invitation to sign in."
 msgstr "Votre compte the scheduler est prêt. Acceptez l’invitation pour vous connecter."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler account is scheduled for deletion"
+msgstr "La suppression de votre compte the scheduler est programmée"
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Your the scheduler email address has been changed."
+msgstr "L’adresse e-mail de votre compte the scheduler a été modifiée."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your upcoming bookings have been deleted from %{product}. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
+msgstr "Your upcoming bookings have been deleted from %{product}. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your upcoming bookings will be deleted from the scheduler with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
+msgstr "Vos réservations à venir seront supprimées de the scheduler avec votre compte. Vos invités ne seront pas prévenus. Les événements de calendrier et les liens vidéo déjà créés resteront tels quels. Si une réunion ne doit pas avoir lieu, veuillez contacter vous-même vos invités."

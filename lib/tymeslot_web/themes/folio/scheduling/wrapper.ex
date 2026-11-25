@@ -98,7 +98,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
         <p :if={Tymeslot.Brands.powered_by(@brand)} class="room-powered">
           {Tymeslot.Brands.powered_by(@brand)}
         </p>
-        <p class="room-source"><a href="/source">AGPLv3 source</a></p>
+        <p :if={is_nil(@brand)} class="room-source"><a href="/source">AGPLv3 source</a></p>
       </div>
     </ThemeShell.theme_shell>
     """

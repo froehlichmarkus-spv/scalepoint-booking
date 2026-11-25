@@ -449,11 +449,6 @@ msgstr "Використовувати 12-годинний формат часу
 msgid "Use the 24-hour clock"
 msgstr "Використовувати 24-годинний формат часу"
 
-#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
-#, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Надіслати як зустріч the scheduler"
-
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "The note to the guest is too long. Keep it to 2,000 characters or fewer."
@@ -501,3 +496,8 @@ msgstr "Сповіщення на робочому столі увімкнено
 #, elixir-autogen, elixir-format
 msgid "Your browser did not allow notifications, so desktop notifications are still off."
 msgstr "Браузер не дозволив сповіщення, тому сповіщення на робочому столі досі вимкнено."
+
+#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
+#, elixir-autogen, elixir-format
+msgid "Send as a the scheduler meeting"
+msgstr "Надіслати як зустріч the scheduler"

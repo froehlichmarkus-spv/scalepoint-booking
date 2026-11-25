@@ -828,22 +828,7 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "Tymeslot is still updating your calendar for this booking. Please try again in a moment."
-msgstr ""
-
-#: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Your calendar now has this meeting at %{time}. Tymeslot will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
-msgstr ""
-
-#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
-#, elixir-autogen, elixir-format
 msgid "The meeting has moved again in your calendar. Check the new time and confirm the move."
-msgstr ""
-
-#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot could not move this booking. Please try again."
 msgstr ""
 
 #: lib/tymeslot_web/components/dashboard/meetings/host_move_modal.ex
@@ -980,4 +965,19 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/bookings_management/cancellation.ex
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
+msgstr ""
+
+#: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Your calendar now has this meeting at %{time}. the scheduler will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler could not move this booking. Please try again."
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler is still updating your calendar for this booking. Please try again in a moment."
 msgstr ""

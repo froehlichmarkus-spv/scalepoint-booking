@@ -212,7 +212,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.OptionsGrid do
             "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
           )}
           <a
-            href="https://wordpress.org/plugins/tymeslot/"
+            href="mailto:support@scalepoint-ventures.com"
             target="_blank"
             rel="noopener noreferrer"
             data-analytics-event="wordpress_plugin_cta_clicked"
@@ -223,7 +223,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.OptionsGrid do
           </a>
           <span class="text-blue-400" aria-hidden="true">·</span>
           <a
-            href="https://github.com/Tymeslot/tymeslot-wordpress"
+            href="mailto:support@scalepoint-ventures.com"
             target="_blank"
             rel="noopener noreferrer"
             data-analytics-event="github_cta_clicked"

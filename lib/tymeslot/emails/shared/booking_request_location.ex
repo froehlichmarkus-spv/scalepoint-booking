@@ -26,6 +26,28 @@ defmodule Tymeslot.Emails.Shared.BookingRequestLocation do
 
   def place(_meeting), do: nil
 
+  @doc """
+  The host's own video label, when it is not the generic "Video call".
+
+  A Meet, Zoom, or Teams label is what the guest was shown. The generic
+  default stays nil so callers can still say "Video call".
+  """
+  @spec video_label(map()) :: String.t() | nil
+  def video_label(%{location_kind: :video, location: location}) when is_binary(location) do
+    shown = MeetingTypes.display_location(String.trim(location), :video)
+    if generic_video_label?(shown), do: nil, else: shown
+  end
+
+  def video_label(_meeting), do: nil
+
+  @spec generic_video_label?(term()) :: boolean()
+  def generic_video_label?(label) when is_binary(label) do
+    normalized = label |> String.trim() |> String.downcase()
+    normalized in ["video call", "video"]
+  end
+
+  def generic_video_label?(_label), do: true
+
   @doc "The location kind, used to pick the label `Formatting.format_location/1` shows."
   @spec type(Meeting.t()) :: :video | :phone | :in_person | :in_person_to_arrange | :custom
   # A booking made against a meeting type's location list already recorded

@@ -115,16 +115,6 @@ msgstr "Devise par défaut"
 msgid "Disconnect Stripe"
 msgstr "Déconnecter Stripe"
 
-#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
-#, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from Tymeslot. Existing payments remain visible. New paid bookings will fail until you reconnect."
-msgstr "Déconnectez votre compte Stripe de Tymeslot. Les paiements existants restent visibles. Les nouvelles réservations payantes échoueront jusqu’à ce que vous vous reconnectiez."
-
-#: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
-msgstr "Déconnecter votre compte Stripe de the scheduler ? Les paiements existants restent visibles, mais les nouvelles réservations payantes échoueront jusqu’à ce que vous vous reconnectiez."
-
 #: lib/tymeslot_web/live/dashboard/payments_settings/status_card.ex
 #, elixir-autogen, elixir-format
 msgid "Disconnected"
@@ -313,20 +303,10 @@ msgstr "Stripe n’a pas encore capturé de paiement pour cette réservation. R�
 msgid "Stripe is reviewing your account. Charges switch on automatically once approved."
 msgstr "Stripe examine votre compte. Les paiements s’activeront automatiquement une fois celui-ci approuvé."
 
-#: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
-#, elixir-autogen, elixir-format
-msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
-msgstr "Le participant reçoit l’intégralité du montant remboursé. Les frais de plateforme de the scheduler sont remboursés proportionnellement ; les frais de traitement Stripe sur le prélèvement d’origine restent à votre charge."
-
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "This booking has not been paid yet, so it cannot be refunded."
 msgstr "Cette réservation n’a pas encore été payée, elle ne peut donc pas être remboursée."
-
-#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
-#, elixir-autogen, elixir-format
-msgid "This payment can no longer be refunded from Tymeslot. Refunds older than 60 days must be processed in your Stripe dashboard."
-msgstr "Ce paiement ne peut plus être remboursé depuis Tymeslot. Les remboursements datant de plus de 60 jours doivent être traités depuis votre tableau de bord Stripe."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -501,16 +481,6 @@ msgstr "Les paiements Stripe ne sont pas entièrement configurés sur ce serveur
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account is already connected to another the scheduler account."
-msgstr "Ce compte Stripe est déjà connecté à un autre compte Tymeslot."
-
-#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
-#, elixir-autogen, elixir-format
-msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
-msgstr "Ce compte Stripe utilise une devise que the scheduler ne prend pas encore en charge pour les paiements."
-
-#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
-#, elixir-autogen, elixir-format
 msgid "That Stripe connection link is no longer valid. Please try again."
 msgstr "Ce lien de connexion à Stripe n’est plus valide. Veuillez réessayer."
 
@@ -540,3 +510,33 @@ msgstr[1] "%{count} paiements en cours seront annulés lors de la déconnexion."
 #, elixir-autogen, elixir-format
 msgid "A checkout is in progress in your current currency. Try again in a few minutes."
 msgstr "Un paiement est en cours dans votre devise actuelle. Réessayez dans quelques minutes."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+msgstr "Déconnecter votre compte Stripe de the scheduler ? Les paiements existants restent visibles, mais les nouvelles réservations payantes échoueront jusqu’à ce que vous vous reconnectiez."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Disconnect your Stripe account. Existing payments remain visible. New paid bookings will fail until you reconnect."
+msgstr "Déconnectez votre compte Stripe de Tymeslot. Les paiements existants restent visibles. Les nouvelles réservations payantes échoueront jusqu’à ce que vous vous reconnectiez."
+
+#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
+#, elixir-autogen, elixir-format
+msgid "That Stripe account is already connected to another the scheduler account."
+msgstr "Ce compte Stripe est déjà connecté à un autre compte Tymeslot."
+
+#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
+#, elixir-autogen, elixir-format
+msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
+msgstr "Ce compte Stripe utilise une devise que the scheduler ne prend pas encore en charge pour les paiements."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
+#, elixir-autogen, elixir-format
+msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
+msgstr "Le participant reçoit l’intégralité du montant remboursé. Les frais de plateforme de the scheduler sont remboursés proportionnellement ; les frais de traitement Stripe sur le prélèvement d’origine restent à votre charge."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This payment can no longer be refunded here. Refunds older than 60 days must be processed in your Stripe dashboard."
+msgstr "Ce paiement ne peut plus être remboursé depuis Tymeslot. Les remboursements datant de plus de 60 jours doivent être traités depuis votre tableau de bord Stripe."

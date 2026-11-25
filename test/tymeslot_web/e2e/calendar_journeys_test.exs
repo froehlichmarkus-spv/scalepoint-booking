@@ -6,7 +6,7 @@ defmodule TymeslotWeb.E2E.CalendarJourneysTest do
   side panel renames an event; a click on an all-day bar opens its preview;
   quick create opens a closed Saturday for booking and Undo closes it
   again; a booking request opens to Accept, which confirms it; the side
-  panel makes a Tymeslot meeting with a guest.
+  panel makes a the scheduler meeting with a guest.
 
   Only a browser runs the hook's pointer handling, the toast's Undo button
   and the preview's buttons together. Drags are synthetic pointer events
@@ -343,7 +343,7 @@ defmodule TymeslotWeb.E2E.CalendarJourneysTest do
     )
   end
 
-  feature "the side panel makes a Tymeslot meeting with a guest", %{session: session} do
+  feature "the side panel makes a the scheduler meeting with a guest", %{session: session} do
     {session, user, _integration} = organiser(session)
     iso = Date.to_iso8601(ahead(2))
 

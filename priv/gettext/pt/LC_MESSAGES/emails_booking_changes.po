@@ -269,11 +269,6 @@ msgstr "Olá, %{amount} do seu pagamento de %{original} foi reembolsado."
 msgid "Hi, your payment of %{amount} has been refunded in full."
 msgstr "Olá, seu pagamento de %{amount} foi reembolsado integralmente."
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr "Se a reunião não vai mais acontecer, cancele-a no the scheduler para o participante ser avisado e o horário ficar livre."
-
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #, elixir-autogen, elixir-format
 msgid "If you added the meeting to your calendar, the attached file removes it there."
@@ -304,7 +299,7 @@ msgstr "Local:"
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
 msgid "MEETING DETAILS:"
-msgstr "DETALHES DA REUNIÃO:"
+msgstr "MEETING DETAILS:"
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -390,16 +385,6 @@ msgstr "Pagamento original: %{amount}"
 #, elixir-autogen, elixir-format
 msgid "Partial Refund Issued - %{amount}"
 msgstr "Reembolso parcial feito - %{amount}"
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "Please review and update the booking in Tymeslot."
-msgstr "Revise e atualize o agendamento no Tymeslot."
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "Please review the group meeting in Tymeslot."
-msgstr "Revise a reunião em grupo no Tymeslot."
 
 #: lib/tymeslot/emails/templates/booking_payment_refunded.ex
 #, elixir-autogen, elixir-format
@@ -496,35 +481,10 @@ msgstr "O compromisso com %{name} foi cancelado."
 msgid "The attendee has been notified of the cancellation."
 msgstr "O participante foi avisado do cancelamento."
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
-msgstr "A reunião em grupo “%{title}” foi remarcada no seu calendário externo. O the scheduler mantém o horário original para todos os participantes, e uma reunião em grupo não pode ser remarcada para todos de uma vez."
-
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
 msgid "The last participant cancelled their spot"
 msgstr "O último participante cancelou a vaga"
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was deleted from your external calendar but is still active in Tymeslot."
-msgstr "A reunião “%{title}” foi excluída do seu calendário externo, mas continua ativa no Tymeslot."
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was deleted from your external calendar. the scheduler still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
-msgstr "A reunião “%{title}” foi excluída do seu calendário externo. O the scheduler ainda tem este agendamento registrado. Revise e cancele-o aqui se a reunião não vai mais acontecer."
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking - please review the details and update or cancel it accordingly."
-msgstr "A reunião “%{title}” foi remarcada no seu calendário externo. O the scheduler ainda guarda o agendamento original. Revise os dados e atualize ou cancele conforme o caso."
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking shown below."
-msgstr "A reunião “%{title}” foi remarcada no seu calendário externo. O the scheduler ainda guarda o agendamento original mostrado abaixo."
 
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #, elixir-autogen, elixir-format
@@ -547,16 +507,6 @@ msgid "Their guest was emailed too."
 msgid_plural "Their %{count} guests were emailed too."
 msgstr[0] "O convidado também foi avisado por e-mail."
 msgstr[1] "Os %{count} convidados também foram avisados por e-mail."
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
-msgstr "Esta reunião em grupo foi <strong>remarcada no seu calendário externo</strong>. O the scheduler ainda mostra o horário original acima, e os participantes continuam contando com ele. Para manter o horário original, mova o evento de volta no seu calendário. Para alterá-lo, envie um pedido de remarcação aos participantes pelo seu painel ou cancele a reunião por lá, para que todos os participantes sejam avisados."
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in Tymeslot. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr "Esta reunião foi <strong>removida do seu calendário externo</strong>, mas continua ativa no Tymeslot. Se a reunião não vai mais acontecer, cancele-a no the scheduler para o participante ser avisado e o horário ficar livre."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -653,11 +603,6 @@ msgstr "Quer agendar outro horário?"
 msgid "Would you like to schedule a new appointment?"
 msgstr "Você gostaria de agendar um novo compromisso?"
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "You changed when \"%{title}\" ends in your external calendar, so the scheduler updated the booking: it now ends at %{to} instead of %{from}."
-msgstr "Você alterou o término de \"%{title}\" no seu calendário externo, então o the scheduler atualizou a reserva: agora ela termina às %{to} em vez de %{from}."
-
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #, elixir-autogen, elixir-format
 msgid "You don't need to do anything. If you added the meeting to your calendar, the attached file marks it as cancelled there."
@@ -682,11 +627,6 @@ msgstr "com %{name}"
 #, elixir-autogen, elixir-format
 msgid "your host"
 msgstr "seu anfitrião"
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "This meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: the scheduler then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
-msgstr "Esta reunião foi <strong>remarcada no seu calendário externo</strong>. O the scheduler ainda mostra o horário original acima. Para mover o agendamento para o novo horário, abra-o no seu painel e escolha <strong>Mover agendamento</strong>: o the scheduler então reprograma seus lembretes e envia o novo horário ao participante por e-mail. Se a opção <strong>Mover agendamento</strong> não aparecer, envie ao participante um pedido de remarcação pelo seu painel."
 
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #, elixir-autogen, elixir-format
@@ -722,3 +662,63 @@ msgstr "Reunião cancelada: %{name} cancelou - %{date}"
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "Ninguém mais tem vaga confirmada no horário anterior, então aquela reunião foi cancelada."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+msgstr "Se a reunião não vai mais acontecer, cancele-a no the scheduler para o participante ser avisado e o horário ficar livre."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "Please review and update the booking in %{product}."
+msgstr "Please review and update the booking in %{product}."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "Please review the group meeting in %{product}."
+msgstr "Please review the group meeting in %{product}."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
+msgstr "A reunião em grupo “%{title}” foi remarcada no seu calendário externo. O the scheduler mantém o horário original para todos os participantes, e uma reunião em grupo não pode ser remarcada para todos de uma vez."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was deleted from your external calendar but is still active in %{product}."
+msgstr "The meeting \"%{title}\" was deleted from your external calendar but is still active in %{product}."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was deleted from your external calendar. the scheduler still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
+msgstr "A reunião “%{title}” foi excluída do seu calendário externo. O the scheduler ainda tem este agendamento registrado. Revise e cancele-o aqui se a reunião não vai mais acontecer."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking - please review the details and update or cancel it accordingly."
+msgstr "A reunião “%{title}” foi remarcada no seu calendário externo. O the scheduler ainda guarda o agendamento original. Revise os dados e atualize ou cancele conforme o caso."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking shown below."
+msgstr "A reunião “%{title}” foi remarcada no seu calendário externo. O the scheduler ainda guarda o agendamento original mostrado abaixo."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
+msgstr "Esta reunião em grupo foi <strong>remarcada no seu calendário externo</strong>. O the scheduler ainda mostra o horário original acima, e os participantes continuam contando com ele. Para manter o horário original, mova o evento de volta no seu calendário. Para alterá-lo, envie um pedido de remarcação aos participantes pelo seu painel ou cancele a reunião por lá, para que todos os participantes sejam avisados."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+msgstr "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "This meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: the scheduler then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
+msgstr "Esta reunião foi <strong>remarcada no seu calendário externo</strong>. O the scheduler ainda mostra o horário original acima. Para mover o agendamento para o novo horário, abra-o no seu painel e escolha <strong>Mover agendamento</strong>: o the scheduler então reprograma seus lembretes e envia o novo horário ao participante por e-mail. Se a opção <strong>Mover agendamento</strong> não aparecer, envie ao participante um pedido de remarcação pelo seu painel."
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "You changed when \"%{title}\" ends in your external calendar, so the scheduler updated the booking: it now ends at %{to} instead of %{from}."
+msgstr "Você alterou o término de \"%{title}\" no seu calendário externo, então o the scheduler atualizou a reserva: agora ela termina às %{to} em vez de %{from}."

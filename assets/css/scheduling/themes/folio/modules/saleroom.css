@@ -237,8 +237,6 @@
   --theme-background: var(--room-card);
   --theme-surface: var(--room-card);
   --theme-canvas: var(--room-card);
-  --theme-primary: var(--room-accent-strong);
-  --theme-primary-hover: var(--room-accent);
   border-radius: 20px;
   padding: calc(1.15 * var(--space-md)) calc(1.2 * var(--space-md)) calc(1.25 * var(--space-md));
   box-shadow: var(--folio-room-card-shadow);

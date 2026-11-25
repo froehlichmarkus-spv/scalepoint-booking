@@ -398,11 +398,6 @@ msgstr "Abbonamento in corso..."
 msgid "Colour"
 msgstr "Colore"
 
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
-#, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
-msgstr "Come vengono mostrati gli eventi di questo calendario nel tuo calendario Tymeslot."
-
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
@@ -522,11 +517,6 @@ msgstr "Solo orari occupati"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Scegli quali calendari usa the scheduler e quali di questi bloccano gli orari sulla tua pagina di prenotazione."
-
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
-#, elixir-autogen, elixir-format
 msgid "Don't block"
 msgstr "Non bloccare"
 
@@ -554,11 +544,6 @@ msgstr "Attivato"
 #, elixir-autogen, elixir-format
 msgid "Read-only"
 msgstr "Sola lettura"
-
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "Condiviso con te solo come orari occupati. the scheduler può bloccare questi orari ma non mostrare gli eventi."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -641,11 +626,6 @@ msgstr "Se dopo il collegamento hai revocato la vecchia password specifica per a
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
-msgid "Keep this password for as long as you use Tymeslot. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
-msgstr "Conserva questa password finché usi Tymeslot. Se la revochi o cambi la password del tuo ID Apple, iCloud si scollega e la tua pagina di prenotazione non offre alcuna fascia oraria finché non lo ricolleghi."
-
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
-#, elixir-autogen, elixir-format
 msgid "Enter your Apple ID email and that password below."
 msgstr "Qui sotto inserisci l'email del tuo ID Apple e quella password."
 
@@ -663,3 +643,23 @@ msgstr "In Accesso e sicurezza, scegli Password specifiche per le app e creane u
 #, elixir-autogen, elixir-format
 msgid "iCloud needs an app-specific password, not your Apple ID password."
 msgstr "iCloud richiede una password specifica per l'app, non la password del tuo ID Apple."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
+msgstr "Scegli quali calendari usa the scheduler e quali di questi bloccano gli orari sulla tua pagina di prenotazione."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "How this calendar's events are shown in your the scheduler calendar."
+msgstr "Come vengono mostrati gli eventi di questo calendario nel tuo calendario Tymeslot."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Keep this password for as long as you use this booking page. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
+msgstr "Conserva questa password finché usi Tymeslot. Se la revochi o cambi la password del tuo ID Apple, iCloud si scollega e la tua pagina di prenotazione non offre alcuna fascia oraria finché non lo ricolleghi."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
+msgstr "Condiviso con te solo come orari occupati. the scheduler può bloccare questi orari ma non mostrare gli eventi."

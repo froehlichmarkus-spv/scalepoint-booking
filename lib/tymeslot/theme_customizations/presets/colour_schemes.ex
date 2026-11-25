@@ -418,10 +418,10 @@ defmodule Tymeslot.ThemeCustomizations.Presets.ColourSchemes do
       name: dgettext_noop("dashboard_appearance", "Ivory"),
       mode: :light,
       colors: %{
-        primary: "#b4532a",
-        primary_hover: "#96431f",
+        primary: "#111E32",
+        primary_hover: "#09101B",
         secondary: "#7a6450",
-        accent: "#a0612f",
+        accent: "#469189",
         background: "#faf7f2",
         surface: "#fffdf9",
         text: "#1f1b16",

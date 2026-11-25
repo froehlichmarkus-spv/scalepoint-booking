@@ -79,11 +79,6 @@ msgstr "Základní URL je povinná"
 msgid "Base URL must be text"
 msgstr "Základní URL musí být text"
 
-#: lib/tymeslot/integrations/video/providers/nextcloud_talk/booking_conversation.ex
-#, elixir-autogen, elixir-format
-msgid "Booked through Tymeslot."
-msgstr "Rezervováno přes Tymeslot."
-
 #: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
 #, elixir-autogen, elixir-format
 msgid "Connected to Nextcloud Talk %{version}"
@@ -350,11 +345,6 @@ msgstr "Server Nextcloud odpověděl stavem %{status}. Zkontrolujte adresu nebo 
 msgid "Nextcloud did not find Talk at this address. Check that the Talk app is installed and enabled, and that the server address is the one you open Nextcloud at."
 msgstr "Nextcloud na této adrese nenašel Talk. Zkontrolujte, zda je aplikace Talk nainstalovaná a zapnutá a zda je adresa serveru ta, na které Nextcloud otevíráte."
 
-#: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
-#, elixir-autogen, elixir-format
-msgid "Nextcloud is refusing requests from the scheduler for now, usually after too many failed logins. Wait a few minutes before trying again."
-msgstr "Server Nextcloud teď odmítá požadavky ze služby the scheduler, obvykle po příliš mnoha neúspěšných přihlášeních. Počkejte několik minut a zkuste to znovu."
-
 #: lib/tymeslot/integrations/video/room_creation_error.ex
 #, elixir-autogen, elixir-format
 msgid "Nextcloud redirected the request to create a conversation. Edit the integration and enter the address your browser ends up on when you open Nextcloud."
@@ -474,11 +464,6 @@ msgstr "Server neodpověděl jako server Nextcloud. Zkontrolujte adresu."
 #, elixir-autogen, elixir-format
 msgid "The server redirected the request. Enter the address your browser ends up on when you open Nextcloud, starting with https://."
 msgstr "Server požadavek přesměroval. Zadejte adresu začínající https://, na které váš prohlížeč skončí, když otevřete Nextcloud."
-
-#: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
-#, elixir-autogen, elixir-format
-msgid "This Nextcloud Talk is too old. the scheduler needs Talk 21.1 or later."
-msgstr "Tato verze Nextcloud Talk je příliš stará. the scheduler vyžaduje Talk 21.1 nebo novější."
 
 #: lib/tymeslot/integrations/video/room_creation_error.ex
 #, elixir-autogen, elixir-format
@@ -609,3 +594,18 @@ msgstr "Službě Zoom chybí oprávnění potřebné k přeplánování schůzek
 #, elixir-autogen, elixir-format
 msgid "Zoom token refresh failed after 401. Please reconnect your Zoom account."
 msgstr "Obnovení tokenu Zoom po chybě 401 se nezdařilo. Připojte prosím svůj účet Zoom znovu."
+
+#: lib/tymeslot/integrations/video/providers/nextcloud_talk/booking_conversation.ex
+#, elixir-autogen, elixir-format
+msgid "Booked through %{product}."
+msgstr "Booked through %{product}."
+
+#: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
+#, elixir-autogen, elixir-format
+msgid "Nextcloud is refusing requests from the scheduler for now, usually after too many failed logins. Wait a few minutes before trying again."
+msgstr "Server Nextcloud teď odmítá požadavky ze služby the scheduler, obvykle po příliš mnoha neúspěšných přihlášeních. Počkejte několik minut a zkuste to znovu."
+
+#: lib/tymeslot/integrations/video/providers/nextcloud_talk_provider.ex
+#, elixir-autogen, elixir-format
+msgid "This Nextcloud Talk is too old. the scheduler needs Talk 21.1 or later."
+msgstr "Tato verze Nextcloud Talk je příliš stará. the scheduler vyžaduje Talk 21.1 nebo novější."

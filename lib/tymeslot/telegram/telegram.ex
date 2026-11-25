@@ -282,7 +282,7 @@ defmodule Tymeslot.Telegram do
 
   @spec build_deep_link(String.t()) :: String.t()
   def build_deep_link(token) do
-    bot_username = Application.get_env(:tymeslot, :telegram_bot_username, "TymeslotBot")
+    bot_username = Application.get_env(:tymeslot, :telegram_bot_username, "BookDesk24Bot")
     "https://t.me/#{bot_username}?start=#{token}"
   end
 

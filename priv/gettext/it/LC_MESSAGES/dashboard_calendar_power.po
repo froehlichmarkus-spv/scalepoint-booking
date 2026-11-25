@@ -447,11 +447,6 @@ msgstr "Usa l'orologio a 12 ore"
 msgid "Use the 24-hour clock"
 msgstr "Usa l'orologio a 24 ore"
 
-#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
-#, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Invia come riunione the scheduler"
-
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format
 msgid "The note to the guest is too long. Keep it to 2,000 characters or fewer."
@@ -498,3 +493,8 @@ msgstr "Le notifiche sul desktop sono attive, ma il browser le blocca. Consenti 
 #, elixir-autogen, elixir-format
 msgid "Your browser did not allow notifications, so desktop notifications are still off."
 msgstr "Il browser non ha consentito le notifiche, quindi le notifiche sul desktop sono ancora disattivate."
+
+#: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
+#, elixir-autogen, elixir-format
+msgid "Send as a the scheduler meeting"
+msgstr "Invia come riunione the scheduler"

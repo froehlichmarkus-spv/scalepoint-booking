@@ -400,11 +400,6 @@ msgstr "Napište překlad (%{language})"
 
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
 #, elixir-autogen, elixir-format
-msgid "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
-msgstr "Hosté si mohou zvolit libovolný jazyk, který the scheduler podporuje. Vypněte, pokud chcete jazyky vybrat sami."
-
-#: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
-#, elixir-autogen, elixir-format
 msgid "Invitees can choose only the languages ticked below."
 msgstr "Hosté si mohou zvolit jen jazyky zaškrtnuté níže."
 
@@ -432,3 +427,8 @@ msgstr "Psát mé texty v jazyce: %{language}"
 #, elixir-autogen, elixir-format
 msgid "Your %{language} translations are kept: tick the language again and they come back."
 msgstr "Vaše překlady (%{language}) zůstanou zachovány: zaškrtněte jazyk znovu a vrátí se."
+
+#: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
+#, elixir-autogen, elixir-format
+msgid "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
+msgstr "Hosté si mohou zvolit libovolný jazyk, který the scheduler podporuje. Vypněte, pokud chcete jazyky vybrat sami."

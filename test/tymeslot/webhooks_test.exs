@@ -621,22 +621,22 @@ defmodule Tymeslot.WebhooksTest do
 
     test "includes timestamp header" do
       headers = Webhooks.build_headers("{}", nil)
-      assert Enum.any?(headers, fn {k, _v} -> k == "X-Tymeslot-Timestamp" end)
+      assert Enum.any?(headers, fn {k, _v} -> k == "X-the scheduler-Timestamp" end)
     end
 
     test "includes token header when token is provided" do
       headers = Webhooks.build_headers("{}", "my-secret-token")
-      assert {"X-Tymeslot-Token", "my-secret-token"} in headers
+      assert {"X-the scheduler-Token", "my-secret-token"} in headers
     end
 
     test "omits token header when token is nil" do
       headers = Webhooks.build_headers("{}", nil)
-      refute Enum.any?(headers, fn {k, _v} -> k == "X-Tymeslot-Token" end)
+      refute Enum.any?(headers, fn {k, _v} -> k == "X-the scheduler-Token" end)
     end
 
     test "cannot sign without a token" do
       headers = Webhooks.build_headers("{}", nil)
-      refute List.keymember?(headers, "X-Tymeslot-Signature", 0)
+      refute List.keymember?(headers, "X-the scheduler-Signature", 0)
     end
   end
 end

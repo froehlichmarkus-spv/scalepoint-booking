@@ -116,7 +116,7 @@ defmodule Tymeslot.Emails.Templates.BookingPaymentRefundedTest do
 
       assert email.reply_to == {"Bob Host", "bob@example.com"}
       assert {_name, address} = email.from
-      assert address == Application.get_env(:tymeslot, :email)[:from_email]
+      assert address == Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()
     end
 
     test "carries no Reply-To when the host's address is unknown" do

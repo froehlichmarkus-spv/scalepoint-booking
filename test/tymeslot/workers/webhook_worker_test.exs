@@ -86,8 +86,8 @@ defmodule Tymeslot.Workers.WebhookWorkerTest do
       expected_id = Integer.to_string(job.id)
 
       expect(Tymeslot.HTTPClientMock, :post, 1, fn _url, _body, headers, _opts ->
-        assert {"X-Tymeslot-Delivery-Id", ^expected_id} =
-                 List.keyfind(headers, "X-Tymeslot-Delivery-Id", 0)
+        assert {"X-the scheduler-Delivery-Id", ^expected_id} =
+                 List.keyfind(headers, "X-the scheduler-Delivery-Id", 0)
 
         {:ok, %Req.Response{status: 200, body: "OK"}}
       end)
@@ -109,14 +109,14 @@ defmodule Tymeslot.Workers.WebhookWorkerTest do
         })
 
       expect(Tymeslot.HTTPClientMock, :post, 2, fn _url, _body, headers, _opts ->
-        send(test_pid, {:delivery_id, List.keyfind(headers, "X-Tymeslot-Delivery-Id", 0)})
+        send(test_pid, {:delivery_id, List.keyfind(headers, "X-the scheduler-Delivery-Id", 0)})
         {:ok, %Req.Response{status: 503, body: "busy"}}
       end)
 
       assert {:error, {:http_error, 503}} = WebhookWorker.perform(job)
       assert {:error, {:http_error, 503}} = WebhookWorker.perform(%{job | attempt: 2})
 
-      expected = {"X-Tymeslot-Delivery-Id", Integer.to_string(job.id)}
+      expected = {"X-the scheduler-Delivery-Id", Integer.to_string(job.id)}
       assert_received {:delivery_id, ^expected}
       assert_received {:delivery_id, ^expected}
     end

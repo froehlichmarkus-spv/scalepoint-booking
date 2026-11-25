@@ -67,6 +67,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.MeetingTypesListComponent do
                 payments_accepted={@payments_accepted}
                 unlisted={PageVisibility.unlisted?(@page_memberships, type)}
                 link_path={@link_paths[type.id]}
+                username={@username}
                 myself={@parent_myself}
               />
             </div>

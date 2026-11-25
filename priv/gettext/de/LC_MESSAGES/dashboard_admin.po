@@ -100,11 +100,6 @@ msgstr "GitHub-Anmeldung"
 msgid "Google login"
 msgstr "Google-Anmeldung"
 
-#: lib/tymeslot_web/live/admin_live/components/layout.ex
-#, elixir-autogen, elixir-format
-msgid "Manage this self-hosted the scheduler install."
-msgstr "Diese selbst gehostete the scheduler-Installation verwalten."
-
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Meeting payments"
@@ -323,11 +318,6 @@ msgstr "Bitte geben Sie eine Hex-Farbe wie #14b8a6 ein."
 msgid "Logo shown at the top of every transactional email. Converted to a PNG in your browser before upload and attached inline, so it renders even in clients that block remote images. SVG, PNG, JPEG, and WebP sources are all accepted."
 msgstr "Logo am Kopf jeder Transaktions-E-Mail. Es wird vor dem Hochladen im Browser in ein PNG umgewandelt und direkt in die Nachricht eingebettet, sodass es auch in Clients erscheint, die entfernte Bilder blockieren. SVG, PNG, JPEG und WebP werden als Quellformat akzeptiert."
 
-#: lib/tymeslot_web/live/admin_live/formatters.ex
-#, elixir-autogen, elixir-format
-msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
-msgstr "Name in der Vorschauzeile im Posteingang, im Alt-Text des Logos und im Titel der E-Mail. Ändert nicht den Absendernamen, dafür ist EMAIL_FROM_NAME zuständig. Leer lassen, um „the scheduler“ zu verwenden."
-
 #: lib/tymeslot_web/live/admin_live/components/email_branding.ex
 #, elixir-autogen, elixir-format
 msgid "Pick a colour"
@@ -533,16 +523,6 @@ msgstr "reCAPTCHA bei der Registrierung deaktiviert."
 msgid "reCAPTCHA on signup turned on."
 msgstr "reCAPTCHA bei der Registrierung aktiviert."
 
-#: lib/tymeslot_web/live/admin_live/components/settings.ex
-#, elixir-autogen, elixir-format
-msgid "Changes here take effect immediately. A setting fixed by an environment variable, such as REGISTRATION_ENABLED, is greyed out and changes only when you edit that variable and restart Tymeslot."
-msgstr "Änderungen an dieser Stelle werden sofort wirksam. Eine Einstellung, die durch eine Umgebungsvariable wie REGISTRATION_ENABLED festgelegt ist, ist ausgegraut und ändert sich erst, wenn Sie diese Variable bearbeiten und the scheduler neu starten."
-
-#: lib/tymeslot_web/live/admin_live/formatters.ex
-#, elixir-autogen, elixir-format
-msgid "Set by the %{variable} environment variable. To change it here, remove the variable and restart Tymeslot."
-msgstr "Durch die Umgebungsvariable %{variable} festgelegt. Um die Einstellung hier zu ändern, entfernen Sie die Variable und starten Sie the scheduler neu."
-
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Email address that receives admin alerts when the toggle above is enabled. Leave blank to send no alert emails."
@@ -600,18 +580,8 @@ msgstr "Sterne helfen anderen, die selbst hosten, das Projekt zu finden."
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "Support the scheduler"
-msgstr "the scheduler unterstützen"
-
-#: lib/tymeslot_web/live/admin_live/components/support_box.ex
-#, elixir-autogen, elixir-format
 msgid "Turn on admin alerts"
 msgstr "Admin-Benachrichtigungen aktivieren"
-
-#: lib/tymeslot_web/live/admin_live/components/support_box.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler is free to self-host. If it is useful to you, here are three ways to help it grow."
-msgstr "the scheduler lässt sich kostenlos selbst hosten. Wenn es Ihnen nützt, gibt es drei Möglichkeiten, es beim Wachsen zu unterstützen."
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
@@ -628,7 +598,37 @@ msgstr "Version %{version}"
 msgid "Set STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET in the environment to enable meeting payments. Also set STRIPE_CONNECT_CLIENT_ID, or no new host can connect a Stripe account."
 msgstr "Legen Sie STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung fest, um Terminzahlungen zu aktivieren. Legen Sie außerdem STRIPE_CONNECT_CLIENT_ID fest, sonst kann kein neuer Gastgeber ein Stripe-Konto verbinden."
 
+#: lib/tymeslot_web/live/admin_live/components/settings.ex
+#, elixir-autogen, elixir-format
+msgid "Changes here take effect immediately. A setting fixed by an environment variable, such as REGISTRATION_ENABLED, is greyed out and changes only when you edit that variable and restart the app."
+msgstr "Änderungen an dieser Stelle werden sofort wirksam. Eine Einstellung, die durch eine Umgebungsvariable wie REGISTRATION_ENABLED festgelegt ist, ist ausgegraut und ändert sich erst, wenn Sie diese Variable bearbeiten und the scheduler neu starten."
+
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps the scheduler's access to their Stripe account until it is set."
 msgstr "Gastgebern auf dieser Instanz erlauben, Zahlungen von Buchenden über Stripe Connect entgegenzunehmen. Erfordert, dass STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung gesetzt sind: Ohne sie bleibt der Schalter gesperrt. Gastgeber verbinden ihr Stripe-Konto über STRIPE_CONNECT_CLIENT_ID: Ohne diese Variable nehmen bereits verbundene Gastgeber weiter Zahlungen entgegen, neue Gastgeber können sich aber nicht verbinden, und trennt ein Gastgeber die Verbindung, behält the scheduler den Zugriff auf sein Stripe-Konto, bis die Variable gesetzt ist."
+
+#: lib/tymeslot_web/live/admin_live/components/layout.ex
+#, elixir-autogen, elixir-format
+msgid "Manage this self-hosted the scheduler install."
+msgstr "Diese selbst gehostete the scheduler-Installation verwalten."
+
+#: lib/tymeslot_web/live/admin_live/formatters.ex
+#, elixir-autogen, elixir-format
+msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
+msgstr "Name in der Vorschauzeile im Posteingang, im Alt-Text des Logos und im Titel der E-Mail. Ändert nicht den Absendernamen, dafür ist EMAIL_FROM_NAME zuständig. Leer lassen, um „the scheduler“ zu verwenden."
+
+#: lib/tymeslot_web/live/admin_live/formatters.ex
+#, elixir-autogen, elixir-format
+msgid "Set by the %{variable} environment variable. To change it here, remove the variable and restart the app."
+msgstr "Durch die Umgebungsvariable %{variable} festgelegt. Um die Einstellung hier zu ändern, entfernen Sie die Variable und starten Sie the scheduler neu."
+
+#: lib/tymeslot_web/live/admin_live/components/support_box.ex
+#, elixir-autogen, elixir-format
+msgid "Support the scheduler"
+msgstr "the scheduler unterstützen"
+
+#: lib/tymeslot_web/live/admin_live/components/support_box.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler is free to self-host. If it is useful to you, here are three ways to help it grow."
+msgstr "the scheduler lässt sich kostenlos selbst hosten. Wenn es Ihnen nützt, gibt es drei Möglichkeiten, es beim Wachsen zu unterstützen."

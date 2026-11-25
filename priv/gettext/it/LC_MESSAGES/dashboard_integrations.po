@@ -252,11 +252,6 @@ msgstr "Questa azione non può essere annullata e rimuoverà tutti i dati associ
 msgid "Video"
 msgstr "Video"
 
-#: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
-#, elixir-autogen, elixir-format
-msgid "Your Microsoft organisation requires admin approval before the scheduler can be connected. Please ask your IT administrator to grant consent for the app."
-msgstr "La tua organizzazione Microsoft richiede l'approvazione di un amministratore prima che the scheduler possa essere collegato. Chiedi al tuo amministratore IT di concedere il consenso per l'app."
-
 #: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your Stripe account is restricted."
@@ -303,11 +298,6 @@ msgid "%{count} connection needs attention - %{message}"
 msgid_plural "%{count} connections need attention - %{message}"
 msgstr[0] "%{count} connessione richiede attenzione - %{message}"
 msgstr[1] "%{count} connessioni richiedono attenzione - %{message}"
-
-#: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
-#, elixir-autogen, elixir-format
-msgid "%{service} wasn't connected because Calendar permission was not granted. Please try again and tick the box for \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - the scheduler needs this to create meetings and Google Meet links."
-msgstr "%{service} non è stato collegato perché l'autorizzazione al Calendario non è stata concessa. Riprova e seleziona la casella \"Visualizza, modifica, condividi ed elimina definitivamente tutti i calendari a cui puoi accedere tramite Google Calendar\" - the scheduler ne ha bisogno per creare riunioni e link di Google Meet."
 
 #: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
 #, elixir-autogen, elixir-format
@@ -445,18 +435,6 @@ msgid_plural "%{name}: %{count} changes made here were not saved to the calendar
 msgstr[0] "%{name}: %{count} modifica fatta qui non è stata salvata nel calendario."
 msgstr[1] "%{name}: %{count} modifiche fatte qui non sono state salvate nel calendario."
 
-#: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
-#, elixir-autogen, elixir-format
-msgid "%{name}: %{count} calendar is no longer on your calendar server, so the scheduler has stopped using it."
-msgid_plural "%{name}: %{count} calendars are no longer on your calendar server, so the scheduler has stopped using them."
-msgstr[0] "%{name}: %{count} calendario non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo."
-msgstr[1] "%{name}: %{count} calendari non sono più presenti sul tuo server di calendario, quindi the scheduler ha smesso di usarli."
-
-#: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
-#, elixir-autogen, elixir-format
-msgid "%{name}: “%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "%{name}: il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo."
-
 #: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
 #, elixir-autogen, elixir-format
 msgid "%{service} is busy right now. Please try again in a minute."
@@ -486,3 +464,25 @@ msgstr "Tipo di riunione duplicato e disattivato. Attivalo quando è pronto."
 #, elixir-autogen, elixir-format
 msgid "This meeting type uses a feature your current plan does not include, so it cannot be duplicated."
 msgstr "Questo tipo di riunione usa una funzionalità non inclusa nel tuo piano attuale, quindi non può essere duplicato."
+
+#: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{name}: %{count} calendar is no longer on your calendar server, so the scheduler has stopped using it."
+msgid_plural "%{name}: %{count} calendars are no longer on your calendar server, so the scheduler has stopped using them."
+msgstr[0] "%{name}: %{count} calendario non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo."
+msgstr[1] "%{name}: %{count} calendari non sono più presenti sul tuo server di calendario, quindi the scheduler ha smesso di usarli."
+
+#: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{name}: “%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
+msgstr "%{name}: il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo."
+
+#: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
+#, elixir-autogen, elixir-format
+msgid "%{service} wasn't connected because Calendar permission was not granted. Please try again and tick the box for \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - the scheduler needs this to create meetings and Google Meet links."
+msgstr "%{service} non è stato collegato perché l'autorizzazione al Calendario non è stata concessa. Riprova e seleziona la casella \"Visualizza, modifica, condividi ed elimina definitivamente tutti i calendari a cui puoi accedere tramite Google Calendar\" - the scheduler ne ha bisogno per creare riunioni e link di Google Meet."
+
+#: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
+#, elixir-autogen, elixir-format
+msgid "Your Microsoft organisation requires admin approval before the scheduler can be connected. Please ask your IT administrator to grant consent for the app."
+msgstr "La tua organizzazione Microsoft richiede l'approvazione di un amministratore prima che the scheduler possa essere collegato. Chiedi al tuo amministratore IT di concedere il consenso per l'app."

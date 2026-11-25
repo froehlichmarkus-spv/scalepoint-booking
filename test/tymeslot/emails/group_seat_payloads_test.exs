@@ -213,7 +213,7 @@ defmodule Tymeslot.Emails.GroupSeatPayloadsTest do
 
       assert email.reply_to == {"Ada", "ada@example.com"}
       assert {_name, address} = email.from
-      assert address == Application.get_env(:tymeslot, :email)[:from_email]
+      assert address == Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()
     end
   end
 

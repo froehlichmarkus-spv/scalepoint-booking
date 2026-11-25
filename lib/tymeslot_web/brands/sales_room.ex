@@ -17,12 +17,13 @@ defmodule TymeslotWeb.Brands.SalesRoom do
       assigns
       |> assign(:brand, brand)
       |> assign(:copy, copy)
+      |> assign(:logo, customer_logo(brand))
       |> assign(:services, (brand && brand.services) || [])
       |> assign(:links, safe_links(brand))
 
     ~H"""
     <div :if={@brand} class="room">
-      <img :if={@brand.logo} class="room__logo" src={@brand.logo} alt={@brand.name} />
+      <img :if={@logo} class="room__logo" src={@logo} alt={@brand.company} />
       <p :if={@brand.role != ""} class="room__role">{@brand.role}</p>
       <p :if={@copy["hero"]} class="room__hero">{@copy["hero"]}</p>
       <p :if={@copy["bio"]} class="room__bio">{@copy["bio"]}</p>
@@ -40,6 +41,20 @@ defmodule TymeslotWeb.Brands.SalesRoom do
       </ul>
     </div>
     """
+  end
+
+  # The suite mark stays on the app chrome and in mail. A booking page shows
+  # a logo only when the tenant brought its own, not the house mark.
+  defp customer_logo(nil), do: nil
+
+  defp customer_logo(brand) do
+    house = Enum.find(Tymeslot.Brands.enabled(), & &1.house_brand)
+
+    cond do
+      not is_binary(brand.logo) or brand.logo == "" -> nil
+      house && house.logo == brand.logo -> nil
+      true -> brand.logo
+    end
   end
 
   defp copy_for(nil, _locale), do: %{}
