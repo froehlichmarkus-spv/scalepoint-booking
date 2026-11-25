@@ -268,39 +268,3 @@ msgstr ""
 msgctxt "paper"
 msgid "Your request to %{organizer} has been sent."
 msgstr ""
-
-#: test/support/fixture_theme/voice.ex
-#, elixir-autogen, elixir-format
-msgctxt "fixture"
-msgid "%{name}, your request is in."
-msgstr ""
-
-#: test/support/fixture_theme/voice.ex
-#, elixir-autogen, elixir-format
-msgctxt "fixture"
-msgid "Book a time"
-msgstr ""
-
-#: test/support/fixture_theme/voice.ex
-#, elixir-autogen, elixir-format
-msgctxt "fixture"
-msgid "Book it"
-msgstr ""
-
-#: test/support/fixture_theme/voice.ex
-#, elixir-autogen, elixir-format
-msgctxt "fixture"
-msgid "Choose a meeting to start."
-msgstr ""
-
-#: test/support/fixture_theme/voice.ex
-#, elixir-autogen, elixir-format
-msgctxt "fixture"
-msgid "Hello, %{name} here."
-msgstr ""
-
-#: test/support/fixture_theme/voice.ex
-#, elixir-autogen, elixir-format
-msgctxt "fixture"
-msgid "That time just went."
-msgstr ""
