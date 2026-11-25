@@ -42,7 +42,9 @@ defmodule TymeslotWeb.Router do
 
     post "/stripe", StripeWebhookController, :webhook, metadata: %{raw_body: true}
     post "/stripe/connect", StripeWebhookController, :connect, metadata: %{raw_body: true}
-    post "/growth-os-billing", GrowthOsBillingWebhookController, :create, metadata: %{raw_body: true}
+
+    post "/growth-os-billing", GrowthOsBillingWebhookController, :create,
+      metadata: %{raw_body: true}
   end
 
   # Calendar provider webhooks negotiate `text/plain` for their subscription

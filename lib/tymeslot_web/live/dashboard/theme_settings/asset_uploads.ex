@@ -144,7 +144,6 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.AssetUploads do
   end
 
   defp store_upload(socket, field, profile, theme_id) do
-
     # The file must be stored inside the callback: the temporary upload is
     # deleted as soon as it returns.
     socket = remember_consumed(socket, field)
