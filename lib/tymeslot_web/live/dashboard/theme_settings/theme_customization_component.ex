@@ -19,6 +19,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Phoenix.LiveView.Socket
+  alias Tymeslot.Plans.BookingChrome
   alias Tymeslot.Security.RateLimiter
   alias Tymeslot.ThemeCustomizations
   alias Tymeslot.Themes.Catalog
@@ -157,6 +158,24 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   end
 
   defp set_option(socket, group, field, value) do
+    if branding_blocked?(socket, group, field, value) do
+      Flash.error(dgettext("plans", "Your logo and accent colour are part of Pro."))
+
+      {:noreply, socket}
+    else
+      do_set_option(socket, group, field, value)
+    end
+  end
+
+  defp branding_blocked?(socket, group, field, value) do
+    not BookingChrome.branding_change_allowed?(owner_id(socket), group.key, field, value)
+  end
+
+  defp owner_id(%{assigns: %{current_user: %{id: id}}}) when is_integer(id), do: id
+  defp owner_id(%{assigns: %{profile: %{user_id: id}}}) when is_integer(id), do: id
+  defp owner_id(_socket), do: nil
+
+  defp do_set_option(socket, group, field, value) do
     panel = socket.assigns.panels[group.key]
     {event, action, metadata} = panel.telemetry(group, field, value)
 

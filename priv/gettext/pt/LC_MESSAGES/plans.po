@@ -1,0 +1,204 @@
+## "msgid"s in this file come from POT (.pot) files.
+##
+## Do not add, change, or remove "msgid"s manually here as
+## they're tied to the ones in the corresponding POT file
+## (with the same domain).
+##
+## Use "mix gettext.extract --merge" or "mix gettext.merge"
+## to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: pt\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
+#, elixir-autogen, elixir-format
+msgid "A payment is past due. Update billing to keep Pro."
+msgstr "Há um pagamento em atraso. Atualize a cobrança para manter o Pro."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Activating your plan…"
+msgstr "Ativando seu plano…"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Always"
+msgstr "Sempre"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Billing is unavailable. Try again in a moment."
+msgstr "A cobrança está indisponível. Tente de novo em instantes."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Calendars"
+msgstr "Calendários"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Event types"
+msgstr "Tipos de evento"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Feature"
+msgstr "Recurso"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Google Calendar"
+msgstr "Google Calendar"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
+#, elixir-autogen, elixir-format
+msgid "Google Meet, Zoom and Teams are part of Pro."
+msgstr "Google Meet, Zoom e Teams fazem parte do Pro."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Google Meet, Zoom, Teams"
+msgstr "Google Meet, Zoom, Teams"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Group, polls, recurring"
+msgstr "Grupo, enquetes, recorrentes"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Hidden"
+msgstr "Oculto"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Included"
+msgstr "Incluído"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Manage billing"
+msgstr "Gerenciar cobrança"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "On your booking page"
+msgstr "Na sua página de agendamento"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "One"
+msgstr "Um"
+
+#: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
+#, elixir-autogen, elixir-format
+msgid "Only your oldest bookable event type is public. The others are paused, not deleted."
+msgstr "Só o seu tipo de evento agendável mais antigo fica público. Os outros estão pausados, não excluídos."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Paused, Pro required"
+msgstr "Pausado, Pro necessário"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Payments, webhooks, reminders"
+msgstr "Pagamentos, webhooks, lembretes"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Plan & billing"
+msgstr "Plano e cobrança"
+
+#: lib/tymeslot_web/branding/powered_by.ex
+#, elixir-autogen, elixir-format
+msgid "Powered by"
+msgstr "Com tecnologia"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Powered by BookDesk24"
+msgstr "Com tecnologia BookDesk24"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Prices are net. VAT IDs for reverse charge are collected by billing. No Stripe Tax."
+msgstr "Os preços são líquidos. A cobrança coleta os identificadores de IVA para reverse charge. Sem Stripe Tax."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Pro monthly – %{price}"
+msgstr "Pro mensal – %{price}"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Pro trial until %{date}"
+msgstr "Teste do Pro até %{date}"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Pro yearly – %{price}"
+msgstr "Pro anual – %{price}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
+#, elixir-autogen, elixir-format
+msgid "Reminder emails are part of Pro."
+msgstr "E-mails de lembrete fazem parte do Pro."
+
+#: lib/tymeslot_web/components/shared/reminder_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Reminder emails are part of Pro. You can still turn existing ones off."
+msgstr "E-mails de lembrete fazem parte do Pro. Você ainda pode desligar os que já existem."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
+#: lib/tymeslot_web/live/dashboard/service_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "The Free plan includes 1 event type. Upgrade to Pro for unlimited event types."
+msgstr "O plano Free inclui 1 tipo de evento. Mude para o Pro para tipos de evento ilimitados."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
+#, elixir-autogen, elixir-format
+msgid "This needs BookDesk24 Pro."
+msgstr "Isso precisa do BookDesk24 Pro."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Unlimited"
+msgstr "Ilimitado"
+
+#: lib/tymeslot_web/branding/powered_by.ex
+#, elixir-autogen, elixir-format
+msgid "Visible on Free: Powered by %{product}"
+msgstr "Visível no Free: Com tecnologia %{product}"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "You are on Free."
+msgstr "Você está no Free."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "You are on Pro."
+msgstr "Você está no Pro."
+
+#: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
+#, elixir-autogen, elixir-format
+msgid "You are using %{count} of 1 calendars. Upgrade or remove the extra ones. Existing calendars still block double bookings."
+msgstr "Você está usando %{count} de 1 calendários. Mude de plano ou remova os extras. Os calendários existentes continuam evitando reservas duplicadas."
+
+#: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
+#, elixir-autogen, elixir-format
+msgid "Your Pro trial ends within 3 days."
+msgstr "Seu teste do Pro termina em até 3 dias."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Your logo and accent"
+msgstr "Sua logo e o destaque"
+
+#: lib/tymeslot_web/live/dashboard/theme_settings/asset_uploads.ex
+#: lib/tymeslot_web/live/dashboard/theme_settings/theme_customization_component.ex
+#, elixir-autogen, elixir-format
+msgid "Your logo and accent colour are part of Pro."
+msgstr "Sua logo e a cor de destaque fazem parte do Pro."

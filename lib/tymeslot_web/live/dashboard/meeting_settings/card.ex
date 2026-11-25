@@ -10,6 +10,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
   alias Tymeslot.MeetingTypes
   alias Tymeslot.MeetingTypes.Lengths
   alias Tymeslot.MeetingTypes.LocationOption
+  alias Tymeslot.Plans.PlanAccess
   alias TymeslotWeb.Components.CoreComponents.Buttons
   alias TymeslotWeb.Components.CoreComponents.Containers
   alias TymeslotWeb.Components.CoreComponents.Feedback
@@ -53,10 +54,15 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
 
   @spec meeting_type_card(map()) :: Phoenix.LiveView.Rendered.t()
   def meeting_type_card(assigns) do
+    assigns = assign(assigns, :plan_paused, PlanAccess.paused?(assigns.type))
+
     ~H"""
     <Containers.card
       padding={:xs}
-      class={if(@type.is_active, do: "card-glass-available", else: "card-glass-unavailable")}
+      class={[
+        if(@type.is_active, do: "card-glass-available", else: "card-glass-unavailable"),
+        @plan_paused && "opacity-70"
+      ]}
     >
       <div class="flex items-center gap-3">
         <%!-- Drag Handle --%>
@@ -138,6 +144,14 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
                 {dgettext("dashboard_meeting_types", "No open dates")}
               </Feedback.pill>
             </Tooltip.tooltip>
+            <Feedback.pill
+              :if={@plan_paused}
+              tone={:warning}
+              icon="hero-pause-circle-mini"
+              data-testid="plan-type-paused"
+            >
+              {dgettext("plans", "Paused, Pro required")}
+            </Feedback.pill>
             <Feedback.pill
               :if={group_paused?(@type, @group_bookings_allowed)}
               tone={:warning}
@@ -268,6 +282,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
               screen reader's list of buttons tells the cards apart. --%>
         <div class="flex items-center gap-2 shrink-0">
           <Buttons.icon_button
+            :if={not @plan_paused}
             id={"meeting-type-card-edit-#{@type.id}"}
             icon="hero-pencil-square"
             size={:sm}
@@ -279,6 +294,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
           />
 
           <Buttons.icon_button
+            :if={not @plan_paused}
             id={"meeting-type-card-duplicate-#{@type.id}"}
             icon="hero-document-duplicate"
             size={:sm}

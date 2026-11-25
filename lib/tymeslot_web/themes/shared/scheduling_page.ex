@@ -94,6 +94,10 @@ defmodule TymeslotWeb.Themes.Shared.SchedulingPage do
   # visitor to win over, so their preview never carries the branding
   # extension's invitation to make a page of their own.
   defp branding(%{owner_preview: true}), do: false
+
+  # A visitor's page leaves the decision to the branding extension. Resolving
+  # it here would call the subscription manager during render and would hide
+  # a still-unset answer from that extension.
   defp branding(assigns), do: assigns[:should_show_branding]
 
   # The documented dynamic-component pattern: the theme's wrapper is a

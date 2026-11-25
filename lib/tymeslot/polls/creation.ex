@@ -19,6 +19,7 @@ defmodule Tymeslot.Polls.Creation do
   """
 
   alias Tymeslot.Emails.EmailScheduler
+  alias Tymeslot.Features
   alias Tymeslot.Polls
 
   alias Tymeslot.Polls.{
@@ -38,7 +39,8 @@ defmodule Tymeslot.Polls.Creation do
   @doc "See `Tymeslot.Polls.create_poll/2`."
   @spec create_poll(integer(), map()) :: {:ok, PollSchema.t()} | {:error, term()}
   def create_poll(user_id, attrs) do
-    with {:ok, attrs, slots} <- prepare(user_id, attrs, :publish) do
+    with :ok <- ensure_polls(user_id),
+         {:ok, attrs, slots} <- prepare(user_id, attrs, :publish) do
       insert_poll(user_id, attrs, slots)
     end
   end
@@ -46,7 +48,8 @@ defmodule Tymeslot.Polls.Creation do
   @doc "See `Tymeslot.Polls.create_draft/2`."
   @spec create_draft(integer(), map()) :: {:ok, PollSchema.t()} | {:error, term()}
   def create_draft(user_id, attrs) do
-    with {:ok, attrs, slots} <- prepare(user_id, attrs, :draft) do
+    with :ok <- ensure_polls(user_id),
+         {:ok, attrs, slots} <- prepare(user_id, attrs, :draft) do
       {invitees, attrs} = Map.pop(attrs, :invitees, [])
 
       poll_attrs =
@@ -94,6 +97,14 @@ defmodule Tymeslot.Polls.Creation do
   # What every save checks, and what publishing adds. A draft is private, so
   # it waits for nothing a link needs: not the calendar, nor the username,
   # nor a first time.
+  defp ensure_polls(user_id) do
+    case Features.check_access(user_id, :polls_allowed) do
+      :ok -> :ok
+      {:error, :feature_access_checker_failed} = error -> error
+      {:error, _reason} -> {:error, :polls_not_allowed}
+    end
+  end
+
   defp prepare(user_id, attrs, :publish) do
     with :ok <- HostReadiness.ensure_calendar(user_id),
          :ok <- HostReadiness.ensure_username(user_id, Map.get(attrs, :invitees, [])),

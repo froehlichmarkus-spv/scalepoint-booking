@@ -29,6 +29,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.AssetUploads do
   import Phoenix.LiveView, only: [allow_upload: 3, consume_uploaded_entries: 3, send_update: 3]
 
   alias Tymeslot.Media.Uploads
+  alias Tymeslot.Plans.BookingChrome
   alias Tymeslot.Security.RateLimiter
   alias Tymeslot.ThemeCustomizations
   alias TymeslotWeb.Helpers.ImageUploadErrors
@@ -129,6 +130,21 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.AssetUploads do
   defp process(socket, field) do
     %{profile: profile, theme_id: theme_id} = socket.assigns
 
+    if field == :logo_path and
+         not BookingChrome.branding_change_allowed?(
+           profile.user_id,
+           :logo,
+           :logo_path,
+           "upload"
+         ) do
+      Flash.error(dgettext("plans", "Your logo and accent colour are part of Pro."))
+      socket
+    else
+      store_upload(socket, field, profile, theme_id)
+    end
+  end
+
+  defp store_upload(socket, field, profile, theme_id) do
     # The file must be stored inside the callback: the temporary upload is
     # deleted as soon as it returns.
     socket = remember_consumed(socket, field)

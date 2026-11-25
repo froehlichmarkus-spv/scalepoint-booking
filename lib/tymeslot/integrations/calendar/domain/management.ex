@@ -21,6 +21,7 @@ defmodule Tymeslot.Integrations.Calendar.Management do
   alias Tymeslot.Integrations.HealthCheck
   alias Tymeslot.Integrations.Shared.ReauthHandling
   alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Plans.Limits
   alias Tymeslot.Repo
   require Logger
 
@@ -149,15 +150,27 @@ defmodule Tymeslot.Integrations.Calendar.Management do
           {:ok, CalendarIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
   def insert_integration(%{user_id: user_id} = attrs) do
     PrimaryElection.under_lock(user_id, fn ->
-      case CalendarIntegrationQueries.create(attrs) do
-        {:ok, integration} ->
-          PrimaryElection.adopt_if_vacant(integration)
-          integration
+      with :ok <- Limits.check_quota(user_id, :calendar_integrations),
+           :ok <- Limits.ensure_calendar_provider(user_id, provider_of(attrs)) do
+        case CalendarIntegrationQueries.create(attrs) do
+          {:ok, integration} ->
+            PrimaryElection.adopt_if_vacant(integration)
+            integration
 
-        {:error, changeset} ->
-          Repo.rollback(changeset)
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      else
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp provider_of(attrs) when is_map(attrs) do
+    case Map.fetch(attrs, :provider) do
+      {:ok, provider} -> provider
+      :error -> Map.get(attrs, "provider")
+    end
   end
 
   @doc """

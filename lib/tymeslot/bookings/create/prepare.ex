@@ -23,6 +23,7 @@ defmodule Tymeslot.Bookings.Create.Prepare do
   alias Tymeslot.MeetingTypes
   alias Tymeslot.MeetingTypes.Lengths
   alias Tymeslot.MeetingTypes.MeetingTypeSchema
+  alias Tymeslot.Plans.PlanAccess
 
   @doc """
   The booking data for one booking at the submitted date and time: `common/2`
@@ -136,7 +137,8 @@ defmodule Tymeslot.Bookings.Create.Prepare do
     with :ok <- validate_host_accepting(user_id),
          :ok <- validate_meeting_type_active(booking_data),
          :ok <- validate_invitation(booking_data),
-         :ok <- CreateGroup.ensure_taking_seats(booking_data) do
+         :ok <- CreateGroup.ensure_taking_seats(booking_data),
+         :ok <- PlanAccess.ensure_bookable(booking_data) do
       validate_payments_available(booking_data, user_id)
     end
   end

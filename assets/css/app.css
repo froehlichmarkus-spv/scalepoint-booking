@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "../../brand/tokens.css";
+@import "./spv-bridge.css";
 
 /* Import design tokens */
 @import "./base/variables.css";
@@ -111,19 +113,19 @@
 
 @theme {
   /* --- Brand + extended palette (formerly theme.extend.colors) --- */
-  --color-brand: #fd4f00;
+  --color-brand: var(--spv-teal);
 
-  --color-turquoise-50: #f0fdfa;
-  --color-turquoise-100: #ccfbf1;
-  --color-turquoise-200: #99f6e4;
-  --color-turquoise-300: #5eead4;
-  --color-turquoise-400: #2dd4bf;
-  --color-turquoise-500: #14b8a6;
-  --color-turquoise-600: #0d9488;
-  --color-turquoise-700: #0f766e;
-  --color-turquoise-800: #115e59;
-  --color-turquoise-900: #134e4a;
-  --color-turquoise-950: #042f2e;
+  --color-turquoise-50: var(--spv-text-light);
+  --color-turquoise-100: color-mix(in srgb, var(--spv-teal-light) 35%, var(--spv-white));
+  --color-turquoise-200: color-mix(in srgb, var(--spv-teal-light) 55%, var(--spv-white));
+  --color-turquoise-300: var(--spv-teal-light);
+  --color-turquoise-400: var(--spv-teal-light);
+  --color-turquoise-500: var(--spv-teal);
+  --color-turquoise-600: var(--spv-teal);
+  --color-turquoise-700: var(--spv-teal-strong);
+  --color-turquoise-800: var(--spv-teal-strong);
+  --color-turquoise-900: var(--spv-navy);
+  --color-turquoise-950: var(--spv-navy-dark);
 
   --color-cyan-50: #ecfeff;
   --color-cyan-100: #cffafe;
@@ -137,17 +139,17 @@
   --color-cyan-900: #164e63;
   --color-cyan-950: #083344;
 
-  --color-tymeslot-50: #fafafa;
-  --color-tymeslot-100: #f4f4f5;
-  --color-tymeslot-200: #e4e4e7;
-  --color-tymeslot-300: #d4d4d8;
-  --color-tymeslot-400: #a1a1aa;
-  --color-tymeslot-500: #71717a;
-  --color-tymeslot-600: #52525b;
-  --color-tymeslot-700: #3f3f46;
-  --color-tymeslot-800: #27272a;
-  --color-tymeslot-900: #18181b;
-  --color-tymeslot-950: #09090b;
+  --color-tymeslot-50: var(--spv-text-light);
+  --color-tymeslot-100: color-mix(in srgb, var(--spv-muted) 18%, var(--spv-white));
+  --color-tymeslot-200: color-mix(in srgb, var(--spv-muted) 32%, var(--spv-white));
+  --color-tymeslot-300: color-mix(in srgb, var(--spv-muted) 55%, var(--spv-white));
+  --color-tymeslot-400: var(--spv-muted);
+  --color-tymeslot-500: var(--spv-muted);
+  --color-tymeslot-600: var(--spv-navy-light);
+  --color-tymeslot-700: var(--spv-navy);
+  --color-tymeslot-800: var(--spv-navy-light);
+  --color-tymeslot-900: var(--spv-navy);
+  --color-tymeslot-950: var(--spv-navy-dark);
 
   /* Glass background colours reference the design tokens (distinct names, so no
      self-reference). Enables bg-glass-light, bg-glass-card, etc. */

@@ -6,6 +6,7 @@ defmodule TymeslotWeb.Themes.Shared.Customization.Helpers do
 
   alias Tymeslot.Demo
   alias Tymeslot.Locales
+  alias Tymeslot.Plans.BookingChrome
   alias Tymeslot.ThemeCustomizations
   alias Tymeslot.ThemeCustomizations.Tokens
   alias TymeslotWeb.Themes.Shared.Journey.Navigators.Reveal
@@ -24,7 +25,14 @@ defmodule TymeslotWeb.Themes.Shared.Customization.Helpers do
 
     overrides = socket.assigns[:theme_overrides] || %{}
 
-    assign(socket, :theme_tokens, ThemeCustomizations.tokens(theme_id, customization, overrides))
+    tokens = ThemeCustomizations.tokens(theme_id, customization, overrides)
+    user_id = profile_user_id(profile)
+
+    assign(
+      socket,
+      :theme_tokens,
+      BookingChrome.present(user_id, customization, tokens)
+    )
   end
 
   @doc """
@@ -87,4 +95,8 @@ defmodule TymeslotWeb.Themes.Shared.Customization.Helpers do
 
   defp background(%Tokens{media: media}), do: media[:background]
   defp background(_no_tokens), do: nil
+
+  defp profile_user_id(%{user_id: user_id}) when is_integer(user_id), do: user_id
+  defp profile_user_id(%{"user_id" => user_id}) when is_integer(user_id), do: user_id
+  defp profile_user_id(_profile), do: nil
 end

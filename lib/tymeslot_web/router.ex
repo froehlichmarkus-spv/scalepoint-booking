@@ -42,6 +42,9 @@ defmodule TymeslotWeb.Router do
 
     post "/stripe", StripeWebhookController, :webhook, metadata: %{raw_body: true}
     post "/stripe/connect", StripeWebhookController, :connect, metadata: %{raw_body: true}
+
+    post "/growth-os-billing", GrowthOsBillingWebhookController, :create,
+      metadata: %{raw_body: true}
   end
 
   # Calendar provider webhooks negotiate `text/plain` for their subscription
@@ -324,6 +327,7 @@ defmodule TymeslotWeb.Router do
       live "/dashboard/embed", DashboardLive, :embed
       live "/dashboard/analytics", Dashboard.AnalyticsLive, :index
       live "/dashboard/payments", DashboardLive, :payments
+      live "/dashboard/plan", DashboardLive, :plan
     end
 
     post "/dashboard/payments/connect", Dashboard.PaymentsController, :connect
@@ -488,6 +492,7 @@ defmodule TymeslotWeb.Router do
       on_mount: [
         TymeslotWeb.Hooks.LocaleHook,
         TymeslotWeb.Hooks.ThemeHook,
+        TymeslotWeb.Hooks.BrandingHook,
         TymeslotWeb.Hooks.ClientInfoHook
       ] do
       live "/:username/poll/:token", Themes.Core.Dispatcher, :poll_voting
@@ -507,6 +512,7 @@ defmodule TymeslotWeb.Router do
         # organiser it found rather than looking them up again.
         TymeslotWeb.Live.Scheduling.PageAddress,
         TymeslotWeb.Hooks.ThemeHook,
+        TymeslotWeb.Hooks.BrandingHook,
         TymeslotWeb.Hooks.ClientInfoHook,
         TymeslotWeb.Hooks.PageViewHook
       ] do

@@ -36,6 +36,7 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
   alias Tymeslot.Integrations.Video
   alias Tymeslot.MeetingTypes.LocationOption
   alias Tymeslot.MeetingTypes.SeriesSettings
+  alias Tymeslot.Plans
   alias Tymeslot.Profiles
   alias Tymeslot.Utils.UriUtils
   alias Tymeslot.Venues
@@ -69,6 +70,7 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
          :ok <- gate_group_bookings(user_id, attrs, current_max_participants),
          :ok <- gate_series(user_id, attrs, current_series_mode),
          :ok <- gate_payment(user_id, attrs),
+         :ok <- gate_reminders(user_id, attrs),
          :ok <- validate_availability_schedule(attrs, user_id),
          :ok <- validate_video_integration(attrs, user_id),
          :ok <- validate_locations(attrs, user_id) do
@@ -272,6 +274,20 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
 
   defp gate_payment(_user_id, _attrs), do: :ok
 
+  defp gate_reminders(user_id, attrs) do
+    case Map.get(attrs, :reminder_config) || Map.get(attrs, "reminder_config") do
+      list when is_list(list) and list != [] ->
+        case Features.check_access(user_id, :reminders_allowed) do
+          :ok -> :ok
+          {:error, :feature_access_checker_failed} = error -> error
+          {:error, _reason} -> {:error, :reminders_not_allowed}
+        end
+
+      _other ->
+        :ok
+    end
+  end
+
   defp validate_video_integration(%{allow_video: true, video_integration_id: nil}, _user_id) do
     {:error, :video_integration_required}
   end
@@ -282,13 +298,25 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
   defp validate_video_integration(%{allow_video: true, video_integration_id: id}, user_id)
        when is_integer(id) do
     case Video.fetch_integration_for_user(id, user_id) do
-      {:ok, %{is_active: true}} -> :ok
+      {:ok, %{is_active: true} = integration} -> gate_oauth_video(user_id, integration)
       {:ok, _integration} -> {:error, :invalid_video_integration}
       {:error, :not_found} -> {:error, :invalid_video_integration}
     end
   end
 
   defp validate_video_integration(_attrs, _user_id), do: :ok
+
+  defp gate_oauth_video(user_id, integration) do
+    if Plans.oauth_video_provider?(integration.provider) do
+      case Features.check_access(user_id, :oauth_video_allowed) do
+        :ok -> :ok
+        {:error, :feature_access_checker_failed} = error -> error
+        {:error, _reason} -> {:error, :oauth_video_not_allowed}
+      end
+    else
+      :ok
+    end
+  end
 
   defp validate_calendar_integration(
          %{calendar_integration_id: nil, target_calendar_id: nil},

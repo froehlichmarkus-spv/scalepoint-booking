@@ -12,6 +12,7 @@ defmodule Tymeslot.MeetingTypes.PublicListing do
   alias Tymeslot.MeetingTypes.MeetingTypeSchema
   alias Tymeslot.MeetingTypes.OneOffEvents
   alias Tymeslot.MeetingTypes.PaymentAccess
+  alias Tymeslot.Plans.PlanAccess
 
   @doc """
   Of `meeting_types` (active ones a page lists), those the page offers, in the
@@ -23,6 +24,7 @@ defmodule Tymeslot.MeetingTypes.PublicListing do
     meeting_types
     |> reject_invitation_only()
     |> GroupAccess.reject_paused()
+    |> PlanAccess.reject_paused()
     |> FixedDates.reject_unbookable()
     |> PaymentAccess.reject_unsellable()
     |> OneOffEvents.order_for_listing()

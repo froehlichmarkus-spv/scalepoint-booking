@@ -31,6 +31,11 @@ defmodule Tymeslot.Brands do
     :layout,
     :name,
     :product_label,
+    :product_name,
+    :suite_name,
+    :module_name,
+    :suite_title,
+    :byline,
     :sender_name,
     :sender_email,
     :footer,
@@ -241,6 +246,58 @@ defmodule Tymeslot.Brands do
 
   @spec chrome_suffix() :: term()
   def chrome_suffix, do: " · " <> chrome_name()
+
+  @doc "Customer-facing product. Tenants override it; the house default is BookDesk24."
+  @spec product_name(term()) :: term()
+  def product_name(brand \\ nil) do
+    brand = brand || mail_identity()
+
+    cond do
+      present?(brand.product_name) -> brand.product_name
+      brand.house_brand -> "BookDesk24"
+      true -> brand.name
+    end
+  end
+
+  @doc "Internal suite, for example ScalePoint Ventures Growth OS."
+  @spec suite_name(term()) :: term()
+  def suite_name(brand \\ nil) do
+    brand = brand || mail_identity()
+    if present?(brand.suite_name), do: brand.suite_name, else: "ScalePoint Ventures Growth OS"
+  end
+
+  @doc "Module name inside the suite, matching Outreach and Connect."
+  @spec module_name(term()) :: term()
+  def module_name(brand \\ nil) do
+    brand = brand || mail_identity()
+    if present?(brand.module_name), do: brand.module_name, else: "Booking"
+  end
+
+  @doc "Document title for admin, login and the dashboard."
+  @spec suite_title(term()) :: term()
+  def suite_title(brand \\ nil) do
+    brand = brand || mail_identity()
+
+    cond do
+      present?(brand.suite_title) -> brand.suite_title
+      brand.house_brand -> "ScalePoint Growth OS · " <> module_name(brand)
+      true -> product_name(brand)
+    end
+  end
+
+  @doc "Small byline under the wordmark. Tenants on their own brand can leave it empty."
+  @spec byline(term()) :: term()
+  def byline(brand \\ nil) do
+    brand = brand || mail_identity()
+
+    cond do
+      present?(brand.byline) -> brand.byline
+      brand.house_brand -> "by ScalePoint"
+      true -> nil
+    end
+  end
+
+  defp present?(value), do: is_binary(value) and value != ""
 
   @spec chrome_logo() :: term()
   def chrome_logo do
@@ -491,6 +548,11 @@ defmodule Tymeslot.Brands do
     |> Map.put("sender_email", env_over(map, "sender_email_env", "sender_email"))
     |> Map.put("sender_name", env_over(map, "sender_name_env", "sender_name"))
     |> Map.put("footer", env_over(map, "footer_env", "footer"))
+    |> Map.put("product_name", env_over(map, "product_name_env", "product_name"))
+    |> Map.put("suite_name", env_over(map, "suite_name_env", "suite_name"))
+    |> Map.put("module_name", env_over(map, "module_name_env", "module_name"))
+    |> Map.put("suite_title", env_over(map, "suite_title_env", "suite_title"))
+    |> Map.put("byline", env_over(map, "byline_env", "byline"))
   end
 
   defp env_over(map, env_key, field) do

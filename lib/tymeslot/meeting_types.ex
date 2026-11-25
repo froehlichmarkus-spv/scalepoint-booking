@@ -23,6 +23,7 @@ defmodule Tymeslot.MeetingTypes do
   alias Tymeslot.MeetingTypes.PublicListing
   alias Tymeslot.MeetingTypes.ReminderValidation
   alias Tymeslot.MeetingTypes.Slugs
+  alias Tymeslot.Plans.Limits
   alias Tymeslot.Repo
   alias Tymeslot.Utils.UriUtils
   alias Tymeslot.Venues
@@ -172,7 +173,8 @@ defmodule Tymeslot.MeetingTypes do
       Repo.transaction(fn ->
         changeset = MeetingTypeSchema.changeset(%MeetingTypeSchema{}, attrs, opts)
 
-        with {:ok, changeset} <- Slugs.claim_address(changeset),
+        with :ok <- Limits.check_quota(owner_id(attrs), :meeting_types),
+             {:ok, changeset} <- Slugs.claim_address(changeset),
              {:ok, promotion} <- BookingCalendar.promote(changeset),
              {:ok, meeting_type} <- MeetingTypeQueries.create_meeting_type(attrs, opts) do
           {meeting_type, promotion}
@@ -185,6 +187,29 @@ defmodule Tymeslot.MeetingTypes do
       if promotion == :promoted, do: invalidate_after_commit(meeting_type.user_id)
       Publication.maybe_publish(meeting_type.user_id)
       {:ok, meeting_type}
+    end
+  end
+
+  defp owner_field(attrs) when is_map(attrs) do
+    case Map.fetch(attrs, :user_id) do
+      {:ok, id} -> id
+      :error -> Map.get(attrs, "user_id")
+    end
+  end
+
+  defp owner_id(attrs) when is_map(attrs) do
+    case owner_field(attrs) do
+      id when is_integer(id) ->
+        id
+
+      id when is_binary(id) ->
+        case Integer.parse(id) do
+          {parsed, ""} -> parsed
+          _invalid -> nil
+        end
+
+      _other ->
+        nil
     end
   end
 

@@ -62,6 +62,7 @@ defmodule TymeslotWeb.Components.Shared.ReminderPicker do
       "The one-click lead times, as `%{value:, unit:}` maps; 30 minutes and an hour when omitted."
 
   attr :myself, :any, required: true
+  attr :allowed, :boolean, default: true
 
   @spec reminder_picker(map()) :: Phoenix.LiveView.Rendered.t()
   def reminder_picker(assigns) do
@@ -106,7 +107,10 @@ defmodule TymeslotWeb.Components.Shared.ReminderPicker do
         <% end %>
       </div>
 
-      <div class="mt-4 space-y-3">
+      <p :if={not @allowed} class="gos-plan-muted" data-testid="reminders-pro-lock">
+        {dgettext("plans", "Reminder emails are part of Pro. You can still turn existing ones off.")}
+      </p>
+      <div :if={@allowed} class="mt-4 space-y-3">
         <div class="flex flex-wrap items-center gap-2">
           <%!-- One-click buttons, one per preset not yet held --%>
           <button

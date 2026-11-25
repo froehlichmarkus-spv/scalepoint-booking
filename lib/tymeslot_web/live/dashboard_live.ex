@@ -35,6 +35,7 @@ defmodule TymeslotWeb.DashboardLive do
   alias Tymeslot.Dashboard.DashboardContext
   alias Tymeslot.Meetings
   alias Tymeslot.Onboarding
+  alias Tymeslot.Plans.Workers.EntitlementResync
   alias TymeslotWeb.Components.DashboardLayout
   alias TymeslotWeb.Components.Shared.PickerPreferences
   alias TymeslotWeb.Components.TourOverlay
@@ -48,11 +49,13 @@ defmodule TymeslotWeb.DashboardLive do
   alias TymeslotWeb.Dashboard.MeetingFormMessages
   alias TymeslotWeb.Dashboard.OnboardingChecklist
   alias TymeslotWeb.Dashboard.PaymentsHandlers
+  alias TymeslotWeb.Dashboard.PlanComponent
   alias TymeslotWeb.Dashboard.PollEventHandlers
   alias TymeslotWeb.Dashboard.ScheduleSettingsComponent
   alias TymeslotWeb.Dashboard.ServiceSettingsComponent
   alias TymeslotWeb.Dashboard.TourEventHandlers
   alias TymeslotWeb.Helpers.PageTitles
+  alias TymeslotWeb.Hooks.PlanAssignsHook
 
   require Logger
 
@@ -323,6 +326,9 @@ defmodule TymeslotWeb.DashboardLive do
               recurring_bookings_allowed={@recurring_bookings_allowed}
               payments_allowed={@payments_allowed}
               automations_allowed={@automations_allowed}
+              reminders_allowed={assigns[:reminders_allowed] != false}
+              plan_limits={assigns[:plan_limits]}
+              plan_usage={assigns[:plan_usage]}
               feature_placeholder_components={@feature_placeholder_components}
             />
           <% else %>
@@ -504,6 +510,21 @@ defmodule TymeslotWeb.DashboardLive do
 
   def handle_info({:poll_deadline_next, deadline}, socket),
     do: PollEventHandlers.handle_poll_deadline_next(deadline, socket)
+
+  def handle_info({:plan_updated, _user_id}, socket) do
+    {:noreply, PlanAssignsHook.refresh(socket)}
+  end
+
+  def handle_info({:plan_resync, component_id}, socket) do
+    user = socket.assigns[:current_user]
+
+    if user do
+      EntitlementResync.enqueue(user.id)
+    end
+
+    send_update(PlanComponent, id: component_id)
+    {:noreply, socket}
+  end
 
   def handle_info(:agenda_tick, socket) do
     {:noreply, socket |> AgendaRefresh.reschedule() |> AgendaRefresh.refresh()}
