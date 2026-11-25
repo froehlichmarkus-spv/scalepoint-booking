@@ -1,0 +1,400 @@
+defmodule TymeslotWeb.Live.Scheduling.RescheduleEntryTest do
+  @moduledoc """
+  What the public scheduling page offers a booker who arrives to move an
+  existing meeting: the day the schedule step opens on, and the meeting type
+  the page is pinned to.
+
+  The companion module, `RescheduleCompletionTest`, picks the journey up at
+  the submit. The seam is where the booker commits, because the two halves
+  fail differently: everything here is a wrong *offer*, a day with no times or
+  a type the meeting is not on, and it is caught by looking at the page;
+  everything there is a wrong *outcome*, and is caught by looking at the
+  database.
+
+  Both halves share `Tymeslot.RescheduleTestSetup`.
+  """
+
+  use TymeslotWeb.LiveCase, async: false
+
+  @moduletag :scheduling
+  @moduletag :bookings
+  @moduletag :live
+  @moduletag :integration
+
+  import Mox
+  import Tymeslot.Factory
+
+  alias Ecto.Changeset
+  alias Tymeslot.Repo
+  alias Tymeslot.RescheduleTestSetup
+  alias TymeslotWeb.Themes.Shared.Journey.Navigators.Paged
+  alias TymeslotWeb.Themes.Shared.Journey.Progress
+  alias TymeslotWeb.ThemeTestMatrix
+
+  setup :verify_on_exit!
+
+  setup tags do
+    RescheduleTestSetup.reschedule_journey(tags)
+  end
+
+  describe "the day a reschedule opens on" do
+    @tag :capture_log
+    test "the schedule step opens on a bookable day with its times listed", %{
+      conn: conn,
+      profile: profile,
+      meeting: meeting
+    } do
+      # The auto-selection used to stand down for the whole reschedule journey:
+      # it treated `is_rescheduling` as a deliberate choice of day, on the
+      # belief that a reschedule link carried a date. It carries only the uid,
+      # so nothing was being preserved — the rescheduler simply got the empty
+      # grid, and does so against the calendar that was full enough to force
+      # the move in the first place.
+      #
+      # This walks the real entry rather than setting the assign, because the
+      # two disagree on ordering: `do_handle_schedule_entry/2` runs before
+      # `handle_params/3` on the connected mount, so `is_rescheduling` is not
+      # yet on the socket at the moment a synchronous fetch resolves. A unit
+      # test on the assign cannot see that; this does.
+      {:ok, view, _html} =
+        live(
+          conn,
+          "/#{profile.username}?timezone=#{profile.timezone}&reschedule_meeting_uid=#{meeting.uid}"
+        )
+
+      view |> element("[data-fact='meeting_type']") |> render_click()
+
+      wait_until(fn -> has_element?(view, "[data-fact='time']") end)
+
+      state = :sys.get_state(view.pid).socket.assigns
+
+      assert state.is_rescheduling,
+             "the reschedule context must survive the step transition, or this proves nothing"
+
+      assert {:ok, %Date{}} = Date.from_iso8601(state.selected_date)
+
+      document = view |> render() |> Floki.parse_document!()
+
+      assert Floki.find(document, "[data-fact='date'][aria-pressed='true']") != [],
+             "expected the reschedule to open on a day painted as selected"
+
+      assert Floki.attribute(document, "[data-fact='time']", "data-value") != [],
+             "expected that day's times to be listed"
+
+      # The hour stays the rescheduler's decision, exactly as for a new booking.
+      assert state.selected_time == nil
+    end
+  end
+
+  describe "the schedule a reschedule is offered against" do
+    # A second, unrelated type the organiser also offers publicly. Without one
+    # the "exactly one card" assertions below pass on an empty catalogue and
+    # prove nothing, since `setup` inserts a single meeting type.
+    defp second_public_type(user) do
+      insert(:meeting_type,
+        user: user,
+        duration_minutes: 45,
+        name: "Deep Dive",
+        is_active: true
+      )
+    end
+
+    # Moves the meeting onto a type of its own, on a schedule with a window
+    # nothing else uses, so "which type is this page on?" is answerable from
+    # `booking_window_days` alone.
+    defp pin_meeting_to_its_own_type(user, profile, meeting) do
+      long_schedule =
+        insert(:availability_schedule,
+          profile: profile,
+          is_default: false,
+          name: "Long lead time",
+          advance_booking_days: 180,
+          min_advance_hours: 0,
+          buffer_before_minutes: 0,
+          buffer_after_minutes: 0
+        )
+
+      pinned_type =
+        insert(:meeting_type,
+          user: user,
+          duration_minutes: 30,
+          name: "Pinned Chat",
+          is_active: true,
+          availability_schedule_id: long_schedule.id
+        )
+
+      {:ok, _updated} =
+        meeting
+        |> Changeset.change(%{meeting_type_id: pinned_type.id})
+        |> Repo.update()
+
+      pinned_type
+    end
+
+    @tag :capture_log
+    test "a later session of a series reaches a year past its first", %{
+      conn: conn,
+      user: user,
+      profile: profile,
+      meeting: meeting,
+      original_start: original_start
+    } do
+      first = DateTime.add(original_start, -6, :day)
+      series = insert(:booking_series, organizer_user: user, first_start_at: first)
+
+      insert(:meeting,
+        organizer_user_id: user.id,
+        meeting_type_id: meeting.meeting_type_id,
+        start_time: first,
+        end_time: DateTime.add(first, 30, :minute),
+        duration: 30,
+        status: :confirmed,
+        series_id: series.id,
+        series_position: 1
+      )
+
+      meeting |> Changeset.change(series_id: series.id, series_position: 2) |> Repo.update!()
+
+      {:ok, view, _html} =
+        live(conn, "/#{profile.username}?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}")
+
+      view |> element("[data-fact='meeting_type']") |> render_click()
+      render(view)
+
+      # The schedule's window is 30 days; the series' year runs out on the
+      # day 365 after its first session, tomorrow.
+      assert :sys.get_state(view.pid).socket.assigns.booking_window_days ==
+               Date.diff(Date.add(DateTime.to_date(first), 365), Date.utc_today()) + 1
+    end
+
+    @tag :capture_log
+    test "comes from the meeting's own type, not a duration match", %{
+      conn: conn,
+      user: user,
+      profile: profile,
+      meeting: meeting
+    } do
+      # A reschedule link carries only the meeting uid, and the type used to be
+      # re-picked from the duration in the URL — which resolves against slugs,
+      # so it matched nothing and the page fell back to the profile's default
+      # schedule. Slots were then offered from the default while the submit was
+      # validated against the meeting's own type, which is the one way left to
+      # break "if it is offered, it can be booked".
+      pinned_type = pin_meeting_to_its_own_type(user, profile, meeting)
+
+      {:ok, view, _html} =
+        live(conn, "/#{profile.username}?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}")
+
+      # The other type is not offered at all any more: a reschedule shows the
+      # meeting's own type and nothing else.
+      refute has_element?(
+               view,
+               "[data-fact='meeting_type'][data-value='quick-chat']"
+             )
+
+      # The card is gone, but the event behind it is still the client's to
+      # push, so the server is what has to hold. The only card on the page is
+      # clicked with another type's slug overriding its value — the closest a
+      # test gets to a crafted client without bypassing the component.
+      view
+      |> element("[data-fact='meeting_type']")
+      |> render_click(%{"duration" => "quick-chat"})
+
+      render(view)
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns.meeting_type.id == pinned_type.id
+      assert assigns.booking_window_days == 180
+
+      # The slug is discarded rather than kept alongside the pinned type: left
+      # on "quick-chat" it is no longer one of `:meeting_types`, and the step's
+      # own validation then refuses to advance with no card showing why.
+      assert assigns.selected_duration == "pinned-chat"
+      assert assigns.duration == "pinned-chat"
+    end
+
+    @tag :capture_log
+    test "a stale slug in the URL does not move the reschedule off its type", %{
+      conn: conn,
+      user: user,
+      profile: profile,
+      meeting: meeting
+    } do
+      # `/:username/:slug` resolves the type from the slug, and a reschedule
+      # reaches it through a mid-flow locale switch or an old direct booking
+      # link with the uid appended. Resolved by slug, the page offered slots
+      # against "Quick Chat"'s 30-day window while the submit validated against
+      # the meeting's own 180-day one.
+      pinned_type = pin_meeting_to_its_own_type(user, profile, meeting)
+
+      {:ok, view, _html} =
+        live(
+          conn,
+          "/#{profile.username}/quick-chat?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}"
+        )
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns.meeting_type.id == pinned_type.id
+      assert assigns.booking_window_days == 180
+      assert assigns.selected_duration == "pinned-chat"
+      assert assigns.duration == "pinned-chat"
+    end
+
+    # The connected mount enters the first step before `handle_params` runs,
+    # so the pin has to be in place by then too. Without it that entry fell
+    # back on the slug, and a slug naming no type (one renamed since the link
+    # was made) turned the reschedule away as an invalid meeting type.
+    @tag :capture_log
+    test "a slug naming no type does not turn the reschedule away", %{
+      conn: conn,
+      user: user,
+      profile: profile,
+      meeting: meeting
+    } do
+      pinned_type = pin_meeting_to_its_own_type(user, profile, meeting)
+
+      assert {:ok, view, _html} =
+               live(
+                 conn,
+                 "/#{profile.username}/renamed-since?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}"
+               )
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns.meeting_type.id == pinned_type.id
+      assert assigns.selected_duration == "pinned-chat"
+    end
+
+    # Each theme marks the selected card its own way (Rhythm on a wrapper
+    # around the button carrying the testid), so the selector comes from the
+    # matrix: one written for another theme matches nothing and would pass on
+    # a page that pinned nothing.
+    for theme <- ThemeTestMatrix.all() do
+      @tag :capture_log
+      test "#{theme.name}: offers the meeting's own type, already selected", %{
+        conn: conn,
+        user: user,
+        profile: profile,
+        meeting: meeting
+      } do
+        second_public_type(user)
+        profile = use_theme(profile, unquote(theme.id))
+
+        {:ok, view, _html} =
+          live(conn, "/#{profile.username}?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}")
+
+        # One card out of the two the organiser offers, and it is the meeting's
+        # own: a reschedule is not a choice of meeting type, so the step
+        # confirms what is being moved rather than asking for something that
+        # cannot be changed.
+        cards =
+          view
+          |> render()
+          |> Floki.parse_document!()
+          |> Floki.find("[data-fact='meeting_type']")
+
+        assert length(cards) == 1
+        assert Floki.attribute(cards, "data-value") == ["quick-chat"]
+
+        # Already chosen, and choosing it is the way on: the overview offers
+        # no Next of its own to hold the booker back.
+        assert has_element?(view, unquote(theme.selected_duration_selector))
+        offer = moment_for(view, :meeting_type)
+        assert has_element?(view, "##{offer}-step [data-fact='meeting_type']")
+        refute has_element?(view, "##{offer}-step [data-intent='continue']")
+      end
+
+      @tag :capture_log
+      test "#{theme.name}: clicking the pinned card moves on with the pinned type", %{
+        conn: conn,
+        profile: profile,
+        meeting: meeting
+      } do
+        # The choice is the way on, so clicking the pinned card can neither
+        # deselect it nor leave the booker stuck on the step: it goes
+        # straight to the schedule with the meeting's own type.
+        profile = use_theme(profile, unquote(theme.id))
+
+        {:ok, view, _html} =
+          live(conn, "/#{profile.username}?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}")
+
+        # Anchored first: without this the assertions below pass just as well
+        # on a page that never pinned anything, where the click chooses a card.
+        assert has_element?(view, unquote(theme.selected_duration_selector))
+
+        view |> element("[data-fact='meeting_type']") |> render_click()
+
+        # Paged, the overview leaves the page; on a continuous page it stays
+        # above the calendar, done.
+        assert has_element?(view, "##{moment_for(view, :slot)}-step[data-moment-state='current']")
+
+        offer = "##{moment_for(view, :meeting_type)}-step"
+
+        if paged?(view) do
+          refute has_element?(view, offer)
+        else
+          assert has_element?(view, "#{offer}[data-moment-state='done']")
+        end
+
+        assert :sys.get_state(view.pid).socket.assigns.selected_duration == "quick-chat"
+      end
+    end
+  end
+
+  describe "a booking the rules no longer let move" do
+    @tag :capture_log
+    test "is refused on arrival, in the visitor's language", %{
+      conn: conn,
+      profile: profile,
+      meeting: meeting
+    } do
+      # A lapsed approval request, as `Approval.expire/1` leaves it.
+      {:ok, _expired} =
+        meeting
+        |> Changeset.change(%{status: :expired, approval_resolved_at: DateTime.utc_now(:second)})
+        |> Repo.update()
+
+      conn = put_req_header(conn, "accept-language", "de-DE,de;q=0.9")
+
+      assert {:error, {_redirect, %{to: to, flash: flash}}} =
+               live(
+                 conn,
+                 "/#{profile.username}?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}"
+               )
+
+      assert to == "/#{profile.username}?timezone=UTC"
+      assert flash["error"] == "Ein abgelaufener Termin kann nicht verschoben werden"
+    end
+
+    @tag :capture_log
+    test "a booking that can still move is not refused", %{
+      conn: conn,
+      profile: profile,
+      meeting: meeting
+    } do
+      assert {:ok, _view, _html} =
+               live(
+                 conn,
+                 "/#{profile.username}?timezone=UTC&reschedule_meeting_uid=#{meeting.uid}"
+               )
+    end
+  end
+
+  defp use_theme(profile, theme_id) do
+    {:ok, profile} = profile |> Changeset.change(%{booking_theme: theme_id}) |> Repo.update()
+    profile
+  end
+
+  # The moment that collects `fact`, whatever the journey calls it (the
+  # classic `:overview` and `:schedule`, Folio's `:offer` and `:when`).
+  defp moment_for(view, fact) do
+    Progress.moment_for(:sys.get_state(view.pid).socket.assigns.journey, fact)
+  end
+
+  # Whether the page shows one moment at a time: a paged journey drops the
+  # moment left behind, a continuous or transcript one keeps it, done.
+  defp paged?(view) do
+    :sys.get_state(view.pid).socket.assigns.journey.navigator == Paged
+  end
+end

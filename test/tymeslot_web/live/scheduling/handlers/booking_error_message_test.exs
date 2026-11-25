@@ -1,0 +1,162 @@
+defmodule TymeslotWeb.Live.Scheduling.Handlers.BookingErrorMessageTest do
+  use ExUnit.Case, async: true
+
+  @moduletag :scheduling
+  @moduletag :unit
+
+  alias TymeslotWeb.Live.Scheduling.Handlers.BookingErrorMessage
+
+  # Keep in sync with `Tymeslot.Bookings.Errors.classified_error/0` — a new
+  # atom added there without a matching entry (and `message/1` clause) here
+  # should fail this test.
+  @classified_errors [
+    :meeting_type_inactive,
+    :meeting_type_not_found,
+    :slot_taken,
+    :organizer_required,
+    :booking_failed,
+    :payments_unavailable,
+    :host_not_found,
+    :custom_field_errors,
+    :checkout_failed,
+    :meeting_not_found,
+    :failed_to_update_meeting,
+    :booking_limit_reached
+  ]
+
+  describe "message/1 with classified error atoms" do
+    test "covers every atom in Errors.classified_error/0 with a translated, non-leaking message" do
+      results =
+        for reason <- @classified_errors do
+          message = BookingErrorMessage.message(reason)
+
+          assert is_binary(message) and message != "",
+                 "expected #{inspect(reason)} to render a non-empty string"
+
+          refute message =~ Atom.to_string(reason),
+                 "expected #{inspect(reason)} to be translated, not leaked as its atom name"
+
+          message
+        end
+
+      assert MapSet.size(MapSet.new(results)) == length(@classified_errors),
+             "expected every classified error atom to render a distinct message"
+    end
+  end
+
+  # One entry per refusal `Tymeslot.Bookings.Policy`, `Validation` and
+  # `CreateAdHoc` return (`Tymeslot.Bookings.Refusal.t/0` and the ad-hoc
+  # atoms), with the copy it must render. A refusal added there without a
+  # `message/1` clause falls to the generic fallback and fails here.
+  @refusals %{
+    {:not_cancellable, :completed} => "Cannot cancel a completed meeting",
+    {:not_cancellable, :expired} => "Cannot cancel an expired meeting",
+    {:not_cancellable, :started} => "Cannot cancel a meeting that has already started",
+    {:not_cancellable, :past} => "Cannot cancel a meeting that has already occurred",
+    {:not_reschedulable, :cancelled} => "Cannot reschedule a cancelled meeting",
+    {:not_reschedulable, :completed} => "Cannot reschedule a completed meeting",
+    {:not_reschedulable, :expired} => "Cannot reschedule an expired meeting",
+    {:not_reschedulable, :started} => "Cannot reschedule a meeting that has already started",
+    {:not_reschedulable, :past} => "Cannot reschedule a meeting that has already occurred",
+    {:not_reschedulable, :awaiting_approval} =>
+      "Cannot request a reschedule while the booking awaits approval",
+    :managed_by_host =>
+      "This meeting was arranged by a poll, so only its host can move it. If the new time doesn't suit you, reply to your invitation.",
+    :invalid_datetime => "Invalid date/time",
+    :in_past => "Booking time must be in the future",
+    {:too_soon, 12} => "Booking requires at least 12 hours in advance",
+    {:too_far_ahead, 90} => "You cannot book more than 90 days in advance",
+    :title_required => "Title is required",
+    :attendee_name_required => "Attendee name is required",
+    :attendee_email_required => "Attendee email is required",
+    :attendee_is_organizer => "The guest email must differ from your own address",
+    :invalid_reminders => "The reminders for this meeting are not valid",
+    :end_before_start => "End time must be after start time",
+    :meeting_creation_failed => "Failed to create meeting"
+  }
+
+  describe "message/1 with booking-rule refusals" do
+    test "renders each refusal as its own copy" do
+      mismatches =
+        for {reason, expected} <- @refusals,
+            BookingErrorMessage.message(reason) != expected,
+            do: {reason, BookingErrorMessage.message(reason)}
+
+      assert mismatches == []
+    end
+
+    test "renders a refusal in the visitor's locale" do
+      Gettext.with_locale(TymeslotWeb.Gettext, "de", fn ->
+        assert BookingErrorMessage.message({:not_cancellable, :expired}) ==
+                 "Ein abgelaufener Termin kann nicht abgesagt werden"
+      end)
+    end
+  end
+
+  describe "message/1 with binary reasons" do
+    test "falls back to generic copy instead of leaking raw English" do
+      reason = "Some short custom error"
+
+      assert BookingErrorMessage.message(reason) ==
+               "Failed to create meeting. Please try again."
+    end
+
+    test "falls back to generic copy for a long unmapped binary" do
+      reason = String.duplicate("x", 100)
+
+      assert BookingErrorMessage.message(reason) ==
+               "Failed to create meeting. Please try again."
+    end
+  end
+
+  describe "message/1 with unknown atoms" do
+    test "falls back to generic copy for an unmapped atom" do
+      assert BookingErrorMessage.message(:some_unmapped_atom) ==
+               "Failed to create meeting. Please try again."
+    end
+  end
+
+  describe "message/1 for an unverified booking" do
+    test "each refusal has copy" do
+      assert BookingErrorMessage.message({:not_cancellable, :awaiting_verification}) ==
+               "This booking is not confirmed yet. If you do not confirm it, it will be released on its own."
+
+      assert BookingErrorMessage.message({:not_reschedulable, :awaiting_verification}) ==
+               "This booking is not confirmed yet. Confirm it from the link in your email first."
+    end
+  end
+
+  describe "message(:managed_by_host)" do
+    test "is translated from the booking errors catalogue" do
+      Gettext.with_locale(TymeslotWeb.Gettext, "de", fn ->
+        assert BookingErrorMessage.message(:managed_by_host) ==
+                 "Dieser Termin wurde per Umfrage festgelegt, daher kann nur der Gastgeber ihn verschieben. Wenn Ihnen die neue Zeit nicht passt, antworten Sie auf Ihre Einladung."
+      end)
+    end
+  end
+
+  describe "voiced/2, in the rendering theme's voice" do
+    setup do
+      Gettext.put_locale(TymeslotWeb.Gettext, "en")
+      :ok
+    end
+
+    test "words a taken time the theme's way where its voice has the line" do
+      # The fixture theme ("99") has a voice with a line for a taken time.
+      assert BookingErrorMessage.voiced(:slot_taken, "99") == "That time just went."
+    end
+
+    test "keeps the shared wording for a theme without a voice, an unknown id and no id" do
+      shared = BookingErrorMessage.message(:slot_taken)
+
+      assert BookingErrorMessage.voiced(:slot_taken, "1") == shared
+      assert BookingErrorMessage.voiced(:slot_taken, "nope") == shared
+      assert BookingErrorMessage.voiced(:slot_taken, nil) == shared
+    end
+
+    test "leaves every other reason to message/1" do
+      assert BookingErrorMessage.voiced(:booking_limit_reached, "99") ==
+               BookingErrorMessage.message(:booking_limit_reached)
+    end
+  end
+end

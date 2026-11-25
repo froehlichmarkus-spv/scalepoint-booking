@@ -1,0 +1,559 @@
+defmodule Tymeslot.Meetings.MeetingListQueries do
+  @moduledoc """
+  Listing, filtering, and pagination queries for the Meeting schema.
+
+  Holds the read-side query surface — the composable query-building DSL
+  (filter by user/status/time, keyset cursor, ordering) and the public
+  list/pagination functions built on top of it. Single-record lookups,
+  writes, and aggregate counts live in `Tymeslot.Meetings.MeetingQueries`;
+  this module is purely about returning lists of meetings.
+  """
+
+  import Ecto.Query, warn: false
+
+  alias Tymeslot.Meetings.GuestSchema
+  alias Tymeslot.Meetings.MeetingSchema, as: Meeting
+  alias Tymeslot.Meetings.MeetingState
+  alias Tymeslot.Meetings.ParticipantQueries
+  alias Tymeslot.Meetings.ParticipantSchema
+  alias Tymeslot.Repo
+
+  # Query building helpers
+
+  # A booking belongs to the account that organises it. The organiser and
+  # attendee email columns are snapshots taken at booking time, and an address
+  # can change hands, so neither may decide whose list a booking appears in.
+  defp for_organizer(query, user_id),
+    do: from(m in query, where: m.organizer_user_id == ^user_id)
+
+  defp with_id(query, nil), do: query
+  defp with_id(query, id), do: from(m in query, where: m.id == ^id)
+
+  # `:main` is the profile's own page (and any booking through no page, or
+  # through one deleted since); an id is one of its booking pages.
+  defp through_booking_page(query, nil), do: query
+
+  defp through_booking_page(query, :main),
+    do: from(m in query, where: is_nil(m.booking_page_id))
+
+  defp through_booking_page(query, page_id) when is_integer(page_id),
+    do: from(m in query, where: m.booking_page_id == ^page_id)
+
+  defp with_status(query, nil), do: query
+  defp with_status(query, status), do: from(m in query, where: m.status == ^status)
+
+  defp without_status(query, nil), do: query
+  defp without_status(query, ""), do: query
+
+  defp without_status(query, status) when is_list(status),
+    do: from(m in query, where: m.status not in ^status)
+
+  defp without_status(query, status), do: from(m in query, where: m.status != ^status)
+
+  defp upcoming(query, now), do: from(m in query, where: m.end_time > ^now)
+  defp past(query, now), do: from(m in query, where: m.end_time < ^now)
+  defp order_by_start_asc(query), do: from(m in query, order_by: [asc: m.start_time])
+
+  defp apply_limit(query, limit), do: from(m in query, limit: ^limit)
+
+  defp apply_time_filter(query, nil, _now), do: query
+  defp apply_time_filter(query, :upcoming, now), do: upcoming(query, now)
+  defp apply_time_filter(query, :past, now), do: past(query, now)
+
+  # The keyset cursor walks in the same direction as the ordering, so a page
+  # always continues from the last row of the previous one.
+  defp cursor_after(query, nil, _after_id, _order), do: query
+  defp cursor_after(query, _after_start, nil, _order), do: query
+
+  defp cursor_after(query, after_start, after_id, :desc) do
+    from(m in query,
+      where:
+        m.start_time < ^after_start or
+          (m.start_time == ^after_start and m.id < ^after_id)
+    )
+  end
+
+  defp cursor_after(query, after_start, after_id, :asc) do
+    from(m in query,
+      where:
+        m.start_time > ^after_start or
+          (m.start_time == ^after_start and m.id > ^after_id)
+    )
+  end
+
+  defp order_by_start_and_id(query, :desc),
+    do: from(m in query, order_by: [desc: m.start_time, desc: m.id])
+
+  defp order_by_start_and_id(query, :asc),
+    do: from(m in query, order_by: [asc: m.start_time, asc: m.id])
+
+  # Live (non-cancelled), visible participants only, oldest booking first —
+  # mirrors the guests preload_order and keeps the dashboard from ever
+  # rendering a cancelled participant or a seat awaiting email verification.
+  defp live_participants_preload do
+    ParticipantQueries.where_visible(
+      from(p in ParticipantSchema,
+        where: is_nil(p.cancelled_at),
+        order_by: [asc: p.inserted_at, asc: p.id]
+      )
+    )
+  end
+
+  # Guests whose booker is still on the meeting. A participant who cancels
+  # their seat leaves their guest rows behind — deliberately, since the rows
+  # record who was invited — but those guests no longer hold seats and their
+  # RSVP links are inert, so showing them on the organiser's card would count
+  # people who are not coming. Guests of a solo booking carry no participant
+  # and are always live. Guests of a seat still awaiting verification are
+  # hidden with their booker, by the rule `ParticipantQueries.where_visible/1`
+  # applies (restated here, since the participant is not this query's first
+  # binding).
+  defp live_guests_preload do
+    from(g in GuestSchema,
+      left_join: p in ParticipantSchema,
+      on: p.id == g.participant_id,
+      where:
+        is_nil(g.participant_id) or
+          (is_nil(p.cancelled_at) and
+             (is_nil(p.verification_deadline_at) or not is_nil(p.email_verified_at))),
+      order_by: [asc: g.inserted_at]
+    )
+  end
+
+  @doc """
+  Returns upcoming meetings that should have a video room link but do not.
+  """
+  @spec list_meetings_missing_video_rooms(DateTime.t(), pos_integer()) :: [Meeting.t()]
+  def list_meetings_missing_video_rooms(now, limit \\ 500) do
+    now
+    |> meetings_missing_video_rooms_base()
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the given user's upcoming meetings that should have a video room link
+  but do not. Used to retry video room creation immediately after the user
+  re-authorises their video provider integration with the right scope.
+  """
+  @spec list_user_meetings_missing_video_rooms(pos_integer(), DateTime.t(), pos_integer()) ::
+          [Meeting.t()]
+  def list_user_meetings_missing_video_rooms(user_id, now, limit \\ 500) do
+    now
+    |> meetings_missing_video_rooms_base()
+    |> where([m], m.organizer_user_id == ^user_id)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @typedoc """
+  Which of an integration's rooms a disconnect deletes: those of upcoming live
+  bookings, or every room the integration still holds.
+  """
+  @type room_scope :: :upcoming | :all
+
+  @doc """
+  Builds the query for meetings that still hold a provider-side room created by
+  the given integration, within `scope`.
+
+  `:upcoming` keeps to live bookings that have not ended by `now`: past
+  bookings are history, and most providers' rooms expire on their own. `:all`
+  takes every meeting, whatever its time or status, for providers whose rooms
+  stay on the organiser's server until something deletes them.
+
+  Shared by the list and the count, so what the disconnect modal offers to
+  delete is exactly what the disconnect deletes.
+  """
+  @spec with_video_room_for_integration(pos_integer(), room_scope(), DateTime.t()) ::
+          Ecto.Query.t()
+  def with_video_room_for_integration(integration_id, scope, %DateTime{} = now) do
+    Meeting
+    |> where([m], m.video_integration_id == ^integration_id)
+    |> where([m], not is_nil(m.video_room_id))
+    |> within_room_scope(scope, now)
+  end
+
+  defp within_room_scope(query, :all, _now), do: query
+
+  defp within_room_scope(query, :upcoming, now),
+    do: query |> MeetingState.where_live_booking() |> upcoming(now)
+
+  @doc """
+  Returns up to `limit` meetings holding a provider-side room created by the
+  given integration, within `scope` (see `with_video_room_for_integration/3`).
+
+  Used when a user disconnects an integration and asks for the rooms to be
+  deleted along with it.
+  """
+  @spec list_with_video_room_for_integration(
+          pos_integer(),
+          room_scope(),
+          DateTime.t(),
+          pos_integer()
+        ) :: [Meeting.t()]
+  def list_with_video_room_for_integration(integration_id, scope, now, limit) do
+    integration_id
+    |> with_video_room_for_integration(scope, now)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the id and status of up to `limit` meetings holding a provider-side
+  room created by the given integration that have not ended by `now`, soonest
+  first, whatever their status.
+
+  Used to bring each room in line with its booking once the integration is
+  reconnected, since changes made while it could not reach the provider were
+  dropped: the room of a live booking is updated, and the room of a released
+  one deleted. Ended meetings are left to the clean-up jobs.
+  """
+  @spec list_upcoming_video_rooms_for_integration(pos_integer(), DateTime.t(), pos_integer()) ::
+          [%{id: String.t(), status: MeetingState.status()}]
+  def list_upcoming_video_rooms_for_integration(integration_id, %DateTime{} = now, limit) do
+    Meeting
+    |> where([m], m.video_integration_id == ^integration_id)
+    |> where([m], not is_nil(m.video_room_id))
+    |> upcoming(now)
+    |> order_by([m], asc: m.start_time)
+    |> limit(^limit)
+    |> select([m], %{id: m.id, status: m.status})
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns cancelled meetings that still hold a provider-side room.
+
+  Successful provider deletion clears `video_room_id`, so a cancelled meeting
+  that still carries one has not been cleaned up: either it predates that
+  behaviour, or its integration was disconnected before the release that
+  resolves a fallback. `cancelled_before` keeps the scan clear of bookings whose
+  cancellation job is still in flight.
+  """
+  @spec list_cancelled_with_video_room(DateTime.t(), pos_integer()) :: [Meeting.t()]
+  def list_cancelled_with_video_room(cancelled_before, limit \\ 200) do
+    Meeting
+    |> where([m], m.status == :cancelled)
+    |> where([m], not is_nil(m.video_room_id))
+    |> where([m], m.cancelled_at < ^cancelled_before)
+    |> order_by([m], asc: m.cancelled_at)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Meetings whose video room still exists on one of `providers` and whose end
+  lies at or after `ended_after` and before `ended_before`.
+
+  `ended_after` bounds how far back the scan reaches. A room nothing can reach
+  any more, because its integration was disconnected and never replaced, drops
+  out of the window instead of being retried every night for ever.
+
+  Cancelled meetings are left out: `list_cancelled_with_video_room/2` covers
+  them, so no room is picked up by both scans. So are meetings whose
+  integration is waiting to be reconnected or is being disconnected, because
+  every delete through it would be refused. A meeting whose integration link is
+  gone stays in: `Tymeslot.Integrations.Video.IntegrationResolver` falls back on
+  the organiser's current integration for the same provider.
+  """
+  @spec list_ended_with_video_room([String.t()], DateTime.t(), DateTime.t(), pos_integer()) ::
+          [Meeting.t()]
+  def list_ended_with_video_room(providers, ended_before, ended_after, limit \\ 500) do
+    Meeting
+    |> join(:left, [m], vi in assoc(m, :video_integration))
+    |> where([m], m.video_provider in ^providers)
+    |> where([m], not is_nil(m.video_room_id))
+    |> where([m], m.status != :cancelled)
+    |> where(
+      [m, vi],
+      is_nil(m.video_integration_id) or (not vi.needs_reauth and is_nil(vi.deleted_at))
+    )
+    |> where([m], m.end_time < ^ended_before and m.end_time >= ^ended_after)
+    |> order_by([m], asc: m.end_time)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  defp meetings_missing_video_rooms_base(now) do
+    Meeting
+    |> MeetingState.where_live_booking()
+    |> upcoming(now)
+    |> where([m], not is_nil(m.video_integration_id))
+    |> where([m], is_nil(m.video_room_id))
+    |> order_by([m], asc: m.start_time)
+  end
+
+  @doc """
+  Get the organiser's upcoming live bookings, soonest first, up to `limit`.
+  """
+  @spec upcoming_meetings_for_organizer(pos_integer(), non_neg_integer()) :: [Meeting.t()]
+  def upcoming_meetings_for_organizer(organizer_user_id, limit) do
+    now = DateTime.utc_now()
+
+    Meeting
+    |> MeetingState.where_live_booking()
+    |> upcoming(now)
+    |> for_organizer(organizer_user_id)
+    |> order_by_start_asc()
+    |> apply_limit(limit)
+    |> preload(participants: ^live_participants_preload())
+    |> Repo.all()
+  end
+
+  @doc """
+  Loads the live participants of `meeting`, or of each of a list of
+  meetings, into `:participants`, oldest booking first, the same set the
+  dashboard lists show. A list is loaded in one query.
+  """
+  @spec preload_live_participants(Meeting.t()) :: Meeting.t()
+  @spec preload_live_participants([Meeting.t()]) :: [Meeting.t()]
+  def preload_live_participants(meeting_or_meetings) do
+    preloaded =
+      Repo.preload(meeting_or_meetings, [participants: live_participants_preload()], force: true)
+
+    # Matched to rule out the `nil` that `Repo.preload/3` returns for a `nil`.
+    case preloaded do
+      loaded when is_list(loaded) or is_struct(loaded, Meeting) -> loaded
+    end
+  end
+
+  @doc """
+  Like `preload_live_participants/1`, with the guests whose invitation still
+  stands loaded into `:guests` too (oldest first), in one preload.
+  """
+  @spec preload_live_people(Meeting.t() | [Meeting.t()]) :: Meeting.t() | [Meeting.t()]
+  def preload_live_people(meeting_or_meetings) do
+    preloaded =
+      Repo.preload(
+        meeting_or_meetings,
+        [participants: live_participants_preload(), guests: live_guests_preload()],
+        force: true
+      )
+
+    # Matched to rule out the `nil` that `Repo.preload/3` returns for a `nil`.
+    case preloaded do
+      loaded when is_list(loaded) or is_struct(loaded, Meeting) -> loaded
+    end
+  end
+
+  @doc """
+  Returns the organiser's live bookings overlapping the `[from_utc, to_utc)`
+  window, ordered by start time.
+
+  "Live" means the slot currently occupies the calendar: an occupying status
+  and not voided by a pending reschedule request. Past bookings inside the
+  window are included — the calendar grid shows history as well as what is
+  ahead.
+
+  By default only the bookings the organiser may see
+  (`MeetingState.where_visible_to_organiser/1`): the calendar grid and the
+  time-off warning are the organiser's view. `include_hidden: true` keeps
+  the unverified and unpaid holds too, for callers deciding what the public
+  may still book: a held slot must stay taken there.
+  """
+  @spec list_for_organizer_in_range(pos_integer(), DateTime.t(), DateTime.t(),
+          include_hidden: boolean()
+        ) :: [Meeting.t()]
+  def list_for_organizer_in_range(
+        organizer_user_id,
+        %DateTime{} = from_utc,
+        %DateTime{} = to_utc,
+        opts \\ []
+      ) do
+    Meeting
+    |> MeetingState.where_slot_live()
+    |> visible_unless(Keyword.get(opts, :include_hidden, false))
+    |> where([m], m.organizer_user_id == ^organizer_user_id)
+    |> where([m], m.start_time < ^to_utc and m.end_time > ^from_utc)
+    |> order_by_start_asc()
+    |> Repo.all()
+  end
+
+  defp visible_unless(query, true), do: query
+  defp visible_unless(query, false), do: MeetingState.where_visible_to_organiser(query)
+
+  @doc """
+  Returns the organiser's booking requests that expired unanswered and
+  overlap the `[from_utc, to_utc)` window, ordered by start time.
+  """
+  @spec list_expired_requests_for_organizer_in_range(pos_integer(), DateTime.t(), DateTime.t()) ::
+          [Meeting.t()]
+  def list_expired_requests_for_organizer_in_range(
+        organizer_user_id,
+        %DateTime{} = from_utc,
+        %DateTime{} = to_utc
+      ) do
+    Meeting
+    |> MeetingState.where_expired_request()
+    |> MeetingState.where_visible_to_organiser()
+    |> where([m], m.organizer_user_id == ^organizer_user_id)
+    |> where([m], m.start_time < ^to_utc and m.end_time > ^from_utc)
+    |> order_by_start_asc()
+    |> Repo.all()
+  end
+
+  @default_booking_search_limit 10
+
+  @doc """
+  Searches the organiser's bookings the calendar draws (live ones, and
+  requests that expired unanswered) by title, guest name, guest email and
+  meeting type, case-insensitively and with the term matched literally.
+  Returns those starting on or after `:from` in ascending order
+  (`upcoming`) and those before it, latest first (`past`), each capped at
+  `:limit` (default #{@default_booking_search_limit}). A blank term returns
+  empty sides without a query.
+  """
+  @spec search_for_organizer(pos_integer(), String.t(), keyword()) :: %{
+          upcoming: [Meeting.t()],
+          past: [Meeting.t()]
+        }
+  def search_for_organizer(organizer_user_id, term, opts) do
+    case String.trim(to_string(term)) do
+      "" ->
+        %{upcoming: [], past: []}
+
+      trimmed ->
+        from_utc = Keyword.fetch!(opts, :from)
+        limit = Keyword.get(opts, :limit, @default_booking_search_limit)
+        drawn = drawn_matching(organizer_user_id, "%" <> escape_like(trimmed) <> "%")
+
+        %{
+          upcoming:
+            drawn
+            |> where([m], m.start_time >= ^from_utc)
+            |> order_by([m], asc: m.start_time, asc: m.id)
+            |> limit(^limit)
+            |> Repo.all(),
+          past:
+            drawn
+            |> where([m], m.start_time < ^from_utc)
+            |> order_by([m], desc: m.start_time, desc: m.id)
+            |> limit(^limit)
+            |> Repo.all()
+        }
+    end
+  end
+
+  # The organiser's matching bookings in either state the calendar draws
+  # (`MeetingState.where_drawn/1` owns the rule).
+  defp drawn_matching(organizer_user_id, pattern) do
+    Meeting
+    |> for_organizer(organizer_user_id)
+    |> where(
+      [m],
+      ilike(m.title, ^pattern) or ilike(m.attendee_name, ^pattern) or
+        ilike(m.attendee_email, ^pattern) or ilike(m.meeting_type, ^pattern)
+    )
+    |> MeetingState.where_drawn()
+    |> MeetingState.where_visible_to_organiser()
+  end
+
+  # Escapes LIKE/ILIKE wildcard metacharacters so a typed term is matched
+  # literally rather than as a pattern.
+  defp escape_like(term), do: String.replace(term, ~r/[\\%_]/, "\\\\\\0")
+
+  @doc """
+  Get every upcoming meeting the organiser holds and may see, whatever its
+  status, soonest first.
+  """
+  @spec list_upcoming_meetings_for_organizer(pos_integer()) :: [Meeting.t()]
+  def list_upcoming_meetings_for_organizer(organizer_user_id) do
+    now = DateTime.utc_now()
+
+    Meeting
+    |> for_organizer(organizer_user_id)
+    |> MeetingState.where_visible_to_organiser()
+    |> upcoming(now)
+    |> order_by_start_asc()
+    |> Repo.all()
+  end
+
+  @doc """
+  Cursor-based pagination for the organiser's meetings using keyset on start_time and id.
+  Accepts opts: :after_start (DateTime), :after_id (binary_id), :per_page, :status, :time_filter (:upcoming | :past),
+  :id (one meeting only), :order (:desc, the default, newest first; or :asc, soonest first),
+  :booking_page (`:main` for bookings through no page, or a booking page id).
+  Each meeting comes with the booking page it was booked through.
+  Never returns a meeting the organiser may not see
+  (`MeetingState.where_visible_to_organiser/1`), whatever the filter.
+  Returns a list limited to per_page.
+  """
+  @spec list_meetings_for_organizer_paginated_cursor(pos_integer(), Keyword.t()) :: [Meeting.t()]
+  def list_meetings_for_organizer_paginated_cursor(organizer_user_id, opts) do
+    after_start = Keyword.get(opts, :after_start)
+    after_id = Keyword.get(opts, :after_id)
+    per_page = Keyword.get(opts, :per_page, 20)
+    # Fetch one extra item to determine if there's a next page
+    limit = per_page + 1
+    status = Keyword.get(opts, :status)
+    exclude_status = Keyword.get(opts, :exclude_status)
+    time_filter = Keyword.get(opts, :time_filter)
+    order = Keyword.get(opts, :order, :desc)
+
+    now = DateTime.utc_now()
+
+    Meeting
+    |> for_organizer(organizer_user_id)
+    |> MeetingState.where_visible_to_organiser()
+    |> with_id(Keyword.get(opts, :id))
+    |> with_status(status)
+    |> without_status(exclude_status)
+    |> through_booking_page(Keyword.get(opts, :booking_page))
+    |> apply_time_filter(time_filter, now)
+    |> order_by_start_and_id(order)
+    |> cursor_after(after_start, after_id, order)
+    |> apply_limit(limit)
+    |> preload(^card_preloads(Keyword.get(opts, :series_sessions, false)))
+    |> Repo.all()
+  end
+
+  # What a dashboard card shows besides the meeting. Its series is one query
+  # for the page whatever the page holds (the badge reads its session count);
+  # with `series_sessions`, so are the sessions of those series, which a
+  # request card lists.
+  defp card_preloads(series_sessions?) do
+    [
+      :booking_page,
+      :confirming_poll,
+      guests: live_guests_preload(),
+      participants: card_participants_preload(),
+      series: series_preload(series_sessions?)
+    ]
+  end
+
+  defp series_preload(false), do: []
+
+  defp series_preload(true),
+    do: [meetings: from(m in Meeting, order_by: [asc: m.series_position])]
+
+  @doc """
+  Every meeting id the user organises, past and future, in any status. Read
+  by account deletion before the cascade removes the meetings, so the jobs
+  queued for them can be cleared afterwards.
+  """
+  @spec list_ids_for_organizer(pos_integer()) :: [Ecto.UUID.t()]
+  def list_ids_for_organizer(organizer_user_id) do
+    Meeting
+    |> where([m], m.organizer_user_id == ^organizer_user_id)
+    |> select([m], m.id)
+    |> Repo.all()
+  end
+
+  # The participants a dashboard card lists: the live ones, and on a
+  # cancelled meeting every one, since a cancelled card records who had
+  # booked it. Whoever released their spot before the meeting was cancelled
+  # carries their own `cancelled_at`; those still booked when it was called
+  # off do not (cancelling a meeting leaves its participant rows alone). A
+  # seat still awaiting verification is never listed, on any card: the
+  # organiser never had it.
+  defp card_participants_preload do
+    ParticipantQueries.where_visible(
+      from(p in ParticipantSchema,
+        join: m in Meeting,
+        on: m.id == p.meeting_id,
+        where: is_nil(p.cancelled_at) or m.status == :cancelled,
+        order_by: [asc: p.inserted_at, asc: p.id]
+      )
+    )
+  end
+end

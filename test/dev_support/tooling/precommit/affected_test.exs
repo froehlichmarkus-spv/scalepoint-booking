@@ -1,0 +1,314 @@
+defmodule Tymeslot.Precommit.AffectedTest do
+  use ExUnit.Case, async: true
+
+  @moduletag :dev_support
+
+  alias Tymeslot.Precommit.Affected
+
+  # The gate's real shape, so a rule keyed to a command the gate no longer
+  # runs would show up as a step that is never dropped.
+  @steps [
+    {"format", ~w[format --check-formatted], :dev},
+    {"deps.unlock", ~w[deps.unlock --check-unused], :dev},
+    {"compile", ~w[compile --warnings-as-errors], :dev},
+    {"compile (test)", ~w[compile --warnings-as-errors], :test},
+    {"gettext", ~w[gettext.check], :dev},
+    {"credo", ~w[credo --strict], :dev},
+    {"sobelow", ~w[sobelow], :dev},
+    {"deps.audit", ~w[deps.audit], :dev},
+    {"hex.audit", ~w[hex.audit], :dev},
+    {"migrations", ~w[excellent_migrations.check_safety], :dev},
+    {"workflows", ~w[actionlint], :dev},
+    {"css tokens", ~w[css.check_tokens], :dev},
+    {"xref", ~w[xref graph --label compile-connected --fail-above 27], :dev},
+    {"test", ~w[test], :test},
+    {"js", ~w[test.js], :dev},
+    {"dialyzer", ~w[dialyzer.incremental --list-unused-filters], :dev}
+  ]
+
+  @always_with_suite [
+    "format",
+    "compile",
+    "compile (test)",
+    "gettext",
+    "credo",
+    "xref",
+    "test",
+    "dialyzer"
+  ]
+
+  # Large enough that a one-domain selection stays under the threshold past
+  # which `Selection` takes the full suite instead.
+  defp index do
+    tags = %{
+      "test/tymeslot/auth/session_test.exs" => MapSet.new([:auth]),
+      "test/tymeslot/payments/stripe_test.exs" => MapSet.new([:payments]),
+      "test/tymeslot/payments/refund_test.exs" => MapSet.new([:payments]),
+      "test/tymeslot/analytics/report_test.exs" => MapSet.new([:analytics]),
+      "test/tymeslot/analytics/export_test.exs" => MapSet.new([:analytics]),
+      "test/tymeslot/analytics/funnel_test.exs" => MapSet.new([:analytics])
+    }
+
+    %{
+      test_files: tags |> Map.keys() |> MapSet.new(),
+      tags: tags,
+      domain_tags: MapSet.new([:auth, :payments, :analytics]),
+      sources: %{}
+    }
+  end
+
+  # The path dependency's suite, for its changes to resolve against. It
+  # carries every domain this suite has, so none is selected for being this
+  # suite's own.
+  defp upstream_index do
+    tags = %{
+      "test/tymeslot/payments/charge_test.exs" => MapSet.new([:payments]),
+      "test/tymeslot/auth/login_test.exs" => MapSet.new([:auth]),
+      "test/tymeslot/analytics/stats_test.exs" => MapSet.new([:analytics])
+    }
+
+    %{
+      test_files: tags |> Map.keys() |> MapSet.new(),
+      tags: tags,
+      domain_tags: MapSet.new([:auth, :payments, :analytics]),
+      sources: %{}
+    }
+  end
+
+  defp select_upstream(upstream),
+    do: Affected.select(@steps, [], index(), upstream: upstream, upstream_index: upstream_index())
+
+  defp names(%{steps: steps}), do: Enum.map(steps, fn {name, _args, _env} -> name end)
+
+  defp test_args(%{steps: steps}) do
+    Enum.find_value(steps, fn
+      {"test", args, :test} -> args
+      _step -> nil
+    end)
+  end
+
+  defp lint_args(narrowed, name) do
+    Enum.find_value(narrowed.steps, fn
+      {^name, args, _env} -> args
+      _step -> nil
+    end)
+  end
+
+  @lint_inputs %{
+    "format" =>
+      MapSet.new(~w[lib/tymeslot/payments/stripe.ex lib/tymeslot_web/button.ex mix.exs]),
+    "credo" => MapSet.new(~w[lib/tymeslot/payments/stripe.ex lib/tymeslot_web/button.ex])
+  }
+
+  defp select_lint(changed, opts \\ []) do
+    Affected.select(
+      @steps,
+      changed,
+      Keyword.get(opts, :index, index()),
+      Keyword.merge([lint_inputs: @lint_inputs], opts)
+    )
+  end
+
+  describe "select/4 format and credo" do
+    test "check only the changed files they read in a full run" do
+      narrowed =
+        select_lint(["lib/tymeslot/payments/stripe.ex", "lib/tymeslot/gone.ex", "README.md"])
+
+      assert lint_args(narrowed, "format") ==
+               ~w[format --check-formatted lib/tymeslot/payments/stripe.ex]
+
+      assert lint_args(narrowed, "credo") == ~w[credo --strict lib/tymeslot/payments/stripe.ex]
+    end
+
+    test "are skipped when no file they read changed" do
+      narrowed = select_lint(["priv/repo/migrations/20260101000000_add_x.exs"])
+
+      assert {"format", "no file it checks changed"} in narrowed.skipped
+      assert {"credo", "no file it checks changed"} in narrowed.skipped
+    end
+
+    test "run repo-wide when their configuration or the code they load changed" do
+      for {path, wide} <- [
+            {".formatter.exs", ["format"]},
+            {"mix.lock", ["format", "credo"]},
+            {".credo.exs", ["credo"]},
+            {"config/config.exs", ["credo"]},
+            {"dev_support/credo_checks/no_native_title.ex", ["credo"]},
+            {"test/support/tag_taxonomy.ex", ["credo"]}
+          ] do
+        narrowed = select_lint(["lib/tymeslot/payments/stripe.ex", path])
+
+        for tool <- ["format", "credo"] do
+          args = lint_args(narrowed, tool)
+
+          assert tool in wide == args in [~w[format --check-formatted], ~w[credo --strict]],
+                 "#{path}: #{tool} ran as #{inspect(args)}"
+        end
+      end
+    end
+
+    test "credo runs repo-wide when a component's :global attribute moves what its callers may pass" do
+      index = %{index() | sources: %{"lib/tymeslot_web/button.ex" => "attr :rest, :global"}}
+
+      assert lint_args(select_lint(["lib/tymeslot_web/button.ex"], index: index), "credo") ==
+               ~w[credo --strict]
+
+      assert lint_args(select_lint(["lib/tymeslot_web/button.ex"]), "credo") ==
+               ~w[credo --strict lib/tymeslot_web/button.ex]
+    end
+
+    test "an upstream code change alone leaves this repository's format and credo unrun" do
+      narrowed =
+        select_lint([],
+          upstream: ["lib/tymeslot/payments/charge.ex"],
+          upstream_index: upstream_index()
+        )
+
+      assert {"format", "no file it checks changed"} in narrowed.skipped
+      assert {"credo", "no file it checks changed"} in narrowed.skipped
+      assert "compile" in names(narrowed)
+    end
+
+    test "an upstream change to the Credo checks this repository loads runs credo repo-wide" do
+      narrowed =
+        select_lint([],
+          upstream: ["dev_support/credo_checks/no_native_title.ex"],
+          upstream_index: upstream_index()
+        )
+
+      assert lint_args(narrowed, "credo") == ~w[credo --strict]
+      assert {"format", "no file it checks changed"} in narrowed.skipped
+    end
+  end
+
+  describe "select/4" do
+    test "a lib change runs the static steps and only the tests it affects" do
+      narrowed = Affected.select(@steps, ["lib/tymeslot/payments/stripe.ex"], index())
+
+      assert names(narrowed) == @always_with_suite
+
+      assert test_args(narrowed) == [
+               "test",
+               "test/tymeslot/payments/refund_test.exs",
+               "test/tymeslot/payments/stripe_test.exs"
+             ]
+    end
+
+    test "every dropped step is reported with its reason" do
+      narrowed = Affected.select(@steps, ["lib/tymeslot/payments/stripe.ex"], index())
+
+      assert narrowed.skipped == [
+               {"deps.unlock", "mix.exs and mix.lock unchanged"},
+               {"sobelow", "no web, config, auth or upload code changed"},
+               {"deps.audit", "mix.exs and mix.lock unchanged"},
+               {"hex.audit", "reads the live Hex registry; the full gate runs it"},
+               {"migrations", "no migration changed"},
+               {"workflows", "no workflow changed"},
+               {"css tokens", "no booking-theme CSS changed"},
+               {"js", "no JavaScript changed"}
+             ]
+    end
+
+    test "each conditional step runs when the diff touches its input" do
+      cases = [
+        {"mix.lock", ["deps.unlock", "deps.audit"]},
+        {"lib/tymeslot_web/live/dashboard_live.ex", ["sobelow"]},
+        {"lib/tymeslot/auth/session.ex", ["sobelow"]},
+        {"config/runtime.exs", ["sobelow"]},
+        {"priv/repo/migrations/20260101000000_add_x.exs", ["migrations"]},
+        {".github/workflows/verify.yml", ["workflows"]},
+        {"assets/css/scheduling/themes/quill/modules/base.css", ["css tokens"]},
+        {"scripts/test_css_tokens.sh", ["css tokens"]},
+        {"dev_support/tooling/mix/tasks/css.check_tokens.ex", ["css tokens"]},
+        {"assets/js/utility_hooks.js", ["js"]},
+        {"assets/js/__tests__/flash_auto_dismiss.test.js", ["js"]},
+        {"assets/vendor/topbar.cjs", ["js"]},
+        {"assets/package-lock.json", ["js"]},
+        {"assets/vitest.config.js", ["js"]}
+      ]
+
+      for {path, expected} <- cases do
+        ran = names(Affected.select(@steps, [path], index()))
+        assert Enum.filter(ran, &(&1 in expected)) == expected, "#{path} ran #{inspect(ran)}"
+      end
+    end
+
+    test "hex.audit is left to the full gate, whatever the diff touches" do
+      diff = ["mix.exs", "mix.lock", "lib/tymeslot/payments/stripe.ex"]
+      narrowed = Affected.select(@steps, diff, index())
+
+      refute "hex.audit" in names(narrowed)
+
+      assert {"hex.audit", "reads the live Hex registry; the full gate runs it"} in narrowed.skipped
+    end
+
+    test "a docs-only diff runs nothing" do
+      narrowed = Affected.select(@steps, ["README.md", "assets/css/app.css"], index())
+
+      assert narrowed.steps == []
+      assert length(narrowed.skipped) == length(@steps)
+    end
+
+    test "a workflow-only diff runs actionlint and nothing else" do
+      assert names(Affected.select(@steps, [".gitea/workflows/verify.yml"], index())) == [
+               "workflows"
+             ]
+    end
+
+    test "a booking-theme CSS diff runs the token check and nothing else" do
+      # Not shared/tokens.css: sobelow's name match ("token") would also run.
+      diff = ["assets/css/scheduling/shared/components/polls.css"]
+
+      assert names(Affected.select(@steps, diff, index())) == ["css tokens"]
+    end
+
+    test "a JavaScript-only diff runs Vitest and nothing else" do
+      assert names(Affected.select(@steps, ["assets/js/utility_hooks.js"], index())) == ["js"]
+    end
+
+    test "the suite runs as `test.elixir` where the `test` alias also runs the JavaScript" do
+      steps = List.keyreplace(@steps, "test", 0, {"test", ~w[test.elixir], :test})
+
+      narrowed = Affected.select(steps, ["lib/tymeslot/payments/stripe.ex"], index())
+
+      assert {"test", ~w[test.elixir
+                         test/tymeslot/payments/refund_test.exs
+                         test/tymeslot/payments/stripe_test.exs], :test} in narrowed.steps
+
+      assert names(Affected.select(steps, ["README.md"], index())) == []
+    end
+
+    test "a change that widens takes the full suite" do
+      narrowed = Affected.select(@steps, ["test/support/factory.ex"], index())
+
+      assert test_args(narrowed) == ["test"]
+    end
+
+    test "a migration takes the full suite with the migrations tag included" do
+      narrowed =
+        Affected.select(@steps, ["priv/repo/migrations/20260101000000_add_x.exs"], index())
+
+      assert test_args(narrowed) == ["test", "--include", "migrations"]
+    end
+
+    test "an upstream code change runs the static steps and this suite's tests in its domains" do
+      narrowed = select_upstream(["lib/tymeslot/payments/charge.ex"])
+
+      assert names(narrowed) == @always_with_suite
+
+      assert test_args(narrowed) ==
+               ~w[test test/tymeslot/payments/refund_test.exs test/tymeslot/payments/stripe_test.exs]
+    end
+
+    test "an upstream docs change is ignored" do
+      assert select_upstream(["CHANGELOG.md"]).steps == []
+    end
+
+    test "an upstream change that widens takes the full suite, but not this repository's conditional steps" do
+      narrowed = select_upstream(["mix.lock"])
+
+      refute "deps.unlock" in names(narrowed)
+      assert test_args(narrowed) == ["test"]
+    end
+  end
+end

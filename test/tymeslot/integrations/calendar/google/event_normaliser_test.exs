@@ -1,0 +1,405 @@
+defmodule Tymeslot.Integrations.Calendar.Google.EventNormaliserTest do
+  use Tymeslot.DataCase, async: true
+  @moduletag :integrations
+
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Integrations.Calendar.Google.EventNormaliser
+
+  @context %{
+    calendar_integration_id: 42,
+    provider_calendar_id: "primary",
+    synced_at: ~U[2026-04-08 12:00:00Z]
+  }
+
+  describe "normalise_events/2" do
+    test "normalises a standard timed event with all fields" do
+      raw_events = [
+        %{
+          "iCalUID" => "ical-uid-123@google.com",
+          "id" => "event-id-123",
+          "summary" => "Team Standup",
+          "description" => "Daily sync",
+          "location" => "Room 4B",
+          "visibility" => "private",
+          "transparency" => "opaque",
+          "status" => "confirmed",
+          "start" => %{
+            "dateTime" => "2026-04-08T10:00:00+02:00",
+            "timeZone" => "Europe/Berlin"
+          },
+          "end" => %{"dateTime" => "2026-04-08T10:30:00+02:00"},
+          "organizer" => %{
+            "email" => "boss@example.com",
+            "displayName" => "The Boss"
+          },
+          "attendees" => [
+            %{
+              "email" => "dev@example.com",
+              "displayName" => "Dev",
+              "responseStatus" => "accepted",
+              "optional" => false
+            }
+          ],
+          "reminders" => %{
+            "overrides" => [%{"method" => "popup", "minutes" => 10}]
+          },
+          "colorId" => "5",
+          "etag" => "\"etag-abc\"",
+          "recurrence" => ["RRULE:FREQ=DAILY"],
+          "recurringEventId" => "recurring-123"
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert %CalendarEvent{} = event
+      # An instance without its original start is cached under its own id.
+      assert event.uid == "event-id-123"
+      assert event.provider == :google
+      assert event.calendar_integration_id == 42
+      assert event.provider_calendar_id == "primary"
+      assert event.synced_at == ~U[2026-04-08 12:00:00Z]
+      assert event.summary == "Team Standup"
+      assert event.description == "Daily sync"
+      assert event.location == "Room 4B"
+      assert event.visibility == :private
+      assert event.transparency == :opaque
+      assert event.status == :confirmed
+      assert event.all_day == false
+      # Shifted to UTC: 10:00+02:00 → 08:00Z
+      assert event.start_at == ~U[2026-04-08 08:00:00Z]
+      assert event.end_at == ~U[2026-04-08 08:30:00Z]
+      assert event.timezone == "Europe/Berlin"
+      assert event.organiser == %{email: "boss@example.com", display_name: "The Boss"}
+
+      assert [attendee] = event.attendees
+      assert attendee.email == "dev@example.com"
+      assert attendee.display_name == "Dev"
+      assert attendee.response_status == :accepted
+      assert attendee.optional == false
+
+      assert [reminder] = event.reminders
+      assert reminder.method == :popup
+      assert reminder.minutes_before == 10
+
+      assert event.colour == "banana"
+      assert event.etag == "\"etag-abc\""
+      assert event.recurrence_rule == "FREQ=DAILY"
+      assert event.provider_metadata["recurringEventId"] == "recurring-123"
+    end
+
+    test "normalises an all-day event" do
+      raw_events = [
+        %{
+          "iCalUID" => "allday-uid@google.com",
+          "id" => "allday-id",
+          "summary" => "Bank Holiday",
+          "start" => %{"date" => "2026-04-10"},
+          "end" => %{"date" => "2026-04-11"},
+          "status" => "confirmed"
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert event.all_day == true
+      assert event.start_date == ~D[2026-04-10]
+      assert event.end_date == ~D[2026-04-11]
+      assert is_nil(event.start_at)
+      assert is_nil(event.end_at)
+    end
+
+    test "normalises a cancelled event" do
+      raw_events = [
+        %{
+          "iCalUID" => "cancelled-uid@google.com",
+          "id" => "cancelled-id",
+          "summary" => "Cancelled Meeting",
+          "start" => %{"dateTime" => "2026-04-08T14:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T15:00:00Z"},
+          "status" => "cancelled"
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert event.status == :cancelled
+    end
+
+    # Google reports an invitation the account declined as a confirmed event;
+    # only the account's own attendee entry says it was declined.
+    test "an invitation the account itself declined does not block time" do
+      raw_events = [
+        %{
+          "iCalUID" => "declined-uid@google.com",
+          "id" => "declined-id",
+          "start" => %{"dateTime" => "2026-04-08T14:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T15:00:00Z"},
+          "status" => "confirmed",
+          "attendees" => [
+            %{"email" => "boss@example.com", "responseStatus" => "accepted"},
+            %{"email" => "me@example.com", "self" => true, "responseStatus" => "declined"}
+          ]
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert event.status == :declined
+      refute CalendarEvent.blocking?(event)
+    end
+
+    test "another attendee declining leaves the event blocking" do
+      raw_events = [
+        %{
+          "iCalUID" => "other-declined@google.com",
+          "id" => "other-declined-id",
+          "start" => %{"dateTime" => "2026-04-08T14:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T15:00:00Z"},
+          "status" => "confirmed",
+          "attendees" => [
+            %{"email" => "guest@example.com", "responseStatus" => "declined"},
+            %{"email" => "me@example.com", "self" => true, "responseStatus" => "accepted"}
+          ]
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert event.status == :confirmed
+      assert CalendarEvent.blocking?(event)
+    end
+
+    test "normalises a transparent (free) event" do
+      raw_events = [
+        %{
+          "iCalUID" => "free-uid@google.com",
+          "id" => "free-id",
+          "summary" => "Lunch",
+          "start" => %{"dateTime" => "2026-04-08T12:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T13:00:00Z"},
+          "transparency" => "transparent"
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert event.transparency == :transparent
+      refute CalendarEvent.blocking?(event)
+    end
+
+    test "normalises event with multiple attendees" do
+      raw_events = [
+        %{
+          "iCalUID" => "attendees-uid@google.com",
+          "id" => "attendees-id",
+          "summary" => "Group Call",
+          "start" => %{"dateTime" => "2026-04-08T16:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T17:00:00Z"},
+          "attendees" => [
+            %{
+              "email" => "alice@example.com",
+              "displayName" => "Alice",
+              "responseStatus" => "accepted"
+            },
+            %{
+              "email" => "bob@example.com",
+              "responseStatus" => "declined",
+              "optional" => true
+            },
+            %{
+              "email" => "charlie@example.com",
+              "responseStatus" => "tentative"
+            }
+          ]
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+
+      assert length(event.attendees) == 3
+
+      alice = Enum.find(event.attendees, &(&1.email == "alice@example.com"))
+      assert alice.display_name == "Alice"
+      assert alice.response_status == :accepted
+      assert alice.optional == false
+
+      bob = Enum.find(event.attendees, &(&1.email == "bob@example.com"))
+      assert bob.response_status == :declined
+      assert bob.optional == true
+    end
+
+    test "falls back to id when iCalUID is missing" do
+      raw_events = [
+        %{
+          "id" => "fallback-id",
+          "summary" => "No iCalUID",
+          "start" => %{"dateTime" => "2026-04-08T10:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T11:00:00Z"}
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+      assert event.uid == "fallback-id"
+    end
+
+    test "skips invalid event with no UID and continues processing" do
+      raw_events = [
+        %{
+          "summary" => "No UID Event",
+          "start" => %{"dateTime" => "2026-04-08T10:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T11:00:00Z"}
+        },
+        %{
+          "iCalUID" => "valid-uid@google.com",
+          "id" => "valid-id",
+          "summary" => "Valid Event",
+          "start" => %{"dateTime" => "2026-04-08T12:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T13:00:00Z"}
+        }
+      ]
+
+      assert {:ok, events} = EventNormaliser.normalise_events(raw_events, @context)
+      assert length(events) == 1
+      assert hd(events).uid == "valid-uid@google.com"
+    end
+
+    test "returns empty list when all events are invalid" do
+      raw_events = [
+        %{"summary" => "No UID"},
+        %{"summary" => "Also No UID"}
+      ]
+
+      assert {:ok, []} = EventNormaliser.normalise_events(raw_events, @context)
+    end
+
+    test "returns empty list for empty input" do
+      assert {:ok, []} = EventNormaliser.normalise_events([], @context)
+    end
+
+    test "detects Tymeslot-created event via extendedProperties" do
+      raw_events = [
+        %{
+          "iCalUID" => "tymeslot-uid@google.com",
+          "id" => "tymeslot-id",
+          "summary" => "Booking",
+          "start" => %{"dateTime" => "2026-04-08T10:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T11:00:00Z"},
+          "extendedProperties" => %{"private" => %{"createdBy" => "tymeslot"}}
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+      assert event.created_by_tymeslot == true
+    end
+
+    test "marks non-Tymeslot event as not created by Tymeslot" do
+      raw_events = [
+        %{
+          "iCalUID" => "other-uid@google.com",
+          "id" => "other-id",
+          "summary" => "External Meeting",
+          "start" => %{"dateTime" => "2026-04-08T10:00:00Z"},
+          "end" => %{"dateTime" => "2026-04-08T11:00:00Z"}
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+      assert event.created_by_tymeslot == false
+    end
+
+    test "maps an unknown Google colorId to nil colour" do
+      raw_events = [
+        %{
+          "iCalUID" => "evt-x@google.com",
+          "id" => "evt-x",
+          "summary" => "X",
+          "colorId" => "999",
+          "start" => %{"dateTime" => "2026-07-02T10:00:00Z"},
+          "end" => %{"dateTime" => "2026-07-02T11:00:00Z"}
+        }
+      ]
+
+      assert {:ok, [event]} = EventNormaliser.normalise_events(raw_events, @context)
+      assert event.colour == nil
+    end
+  end
+
+  describe "normalise_events/2 - a series' recurrence lines" do
+    # Google lists EXDATE and RDATE lines beside the rule, in any order.
+    for {lines, rule} <- [
+          {["RRULE:FREQ=WEEKLY;BYDAY=MO"], "FREQ=WEEKLY;BYDAY=MO"},
+          {["EXDATE;TZID=Europe/Berlin:20261012T090000", "RRULE:FREQ=WEEKLY;BYDAY=MO"],
+           "FREQ=WEEKLY;BYDAY=MO"},
+          {["EXDATE;VALUE=DATE:20261012"], nil},
+          {[], nil}
+        ] do
+      test "reads #{inspect(lines)} as #{inspect(rule)}" do
+        raw = %{
+          "id" => "master1",
+          "iCalUID" => "master1@google.com",
+          "status" => "confirmed",
+          "start" => %{"dateTime" => "2026-10-05T09:00:00+02:00"},
+          "end" => %{"dateTime" => "2026-10-05T09:30:00+02:00"},
+          "recurrence" => unquote(lines)
+        }
+
+        assert {:ok, [event]} = EventNormaliser.normalise_events([raw], @context)
+        assert event.recurrence_rule == unquote(rule)
+      end
+    end
+  end
+
+  describe "normalise_events/2 - recurring instances" do
+    test "gives each instance of a series its own uid" do
+      {:ok, events} =
+        EventNormaliser.normalise_events(
+          [
+            instance(%{"dateTime" => "2026-05-04T10:00:00+02:00"}, "20260504T080000Z"),
+            instance(%{"dateTime" => "2026-05-11T10:00:00+02:00"}, "20260511T080000Z")
+          ],
+          @context
+        )
+
+      assert Enum.map(events, & &1.uid) == [
+               "series-uid@google.com_20260504T080000Z",
+               "series-uid@google.com_20260511T080000Z"
+             ]
+    end
+
+    test "stamps an all-day instance with its date" do
+      {:ok, [event]} =
+        EventNormaliser.normalise_events(
+          [instance(%{"date" => "2026-05-04"}, "20260504")],
+          @context
+        )
+
+      assert event.uid == "series-uid@google.com_20260504"
+    end
+
+    test "falls back to the instance id when the original start is missing" do
+      raw = Map.delete(instance(nil, "20260504T080000Z"), "originalStartTime")
+      {:ok, [event]} = EventNormaliser.normalise_events([raw], @context)
+      assert event.uid == "series1234_20260504T080000Z"
+    end
+
+    test "a single event keeps its iCalUID" do
+      raw = Map.drop(instance(nil, "x"), ["recurringEventId", "originalStartTime"])
+      {:ok, [event]} = EventNormaliser.normalise_events([raw], @context)
+      assert event.uid == "series-uid@google.com"
+    end
+  end
+
+  defp instance(original_start, id_suffix) do
+    %{
+      "iCalUID" => "series-uid@google.com",
+      "id" => "series1234_#{id_suffix}",
+      "recurringEventId" => "series1234",
+      "originalStartTime" => original_start,
+      "status" => "confirmed",
+      "summary" => "Weekly",
+      "start" => %{"dateTime" => "2026-05-04T10:00:00+02:00"},
+      "end" => %{"dateTime" => "2026-05-04T11:00:00+02:00"}
+    }
+  end
+end

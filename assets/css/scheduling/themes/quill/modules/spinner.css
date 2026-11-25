@@ -1,0 +1,19 @@
+/* Spinner — the inline loading indicator (rendered by the core <.spinner>
+   component, and inside <.loading_button>). The `spin` keyframe lives in
+   shared/utilities.css. */
+
+.spinner {
+  display: inline-block;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border: var(--border-width-medium) solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* The smaller spinner beside the week label while availability loads. */
+.spinner--sm {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}

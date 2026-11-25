@@ -1,0 +1,69 @@
+defmodule TymeslotWeb.Themes.Shared.CustomQuestions.Inputs.OptionCard do
+  @moduledoc """
+  Branded answer-option card used by single-select, multi-select and the
+  note acknowledgement.
+
+  Visually consistent with the yes/no tile pair: rounded surface, accent
+  fill when selected, glyph indicator on the leading edge. The native
+  input element (radio or checkbox) is rendered visually hidden so
+  keyboard/screen-reader users get the standard semantics.
+
+  The input carries the markup contract's `data-fact="answer"`, the question
+  id as `data-question` and the value it sends as `data-value`.
+  """
+  use Phoenix.Component
+
+  use TymeslotWeb.Components.CoreComponents, only: [icon: 1]
+
+  attr :indicator, :atom, required: true, values: [:radio, :check]
+
+  attr :input_type, :string,
+    required: true,
+    doc: "Either \"radio\" or \"checkbox\" — controls the native input element."
+
+  attr :name, :string, default: "value"
+  attr :value, :string, required: true, doc: "Option value submitted by the input."
+  attr :selected?, :boolean, required: true
+  attr :event, :string, required: true, doc: "Phoenix event name fired on click."
+  attr :myself, :any, required: true
+
+  attr :question, :string,
+    required: true,
+    doc:
+      "the question's id, the markup contract's `data-question`, sent with the answer as `question`"
+
+  slot :inner_block, required: true
+
+  @spec render(map()) :: Phoenix.LiveView.Rendered.t()
+  def render(assigns) do
+    ~H"""
+    <label class={[
+      "custom-question-option-card",
+      @selected? && "is-selected"
+    ]}>
+      <%!-- raw-input: sr-only control drawn by the option card and its indicator around it --%>
+      <input
+        type={@input_type}
+        name={@name}
+        value={@value}
+        checked={@selected?}
+        class="sr-only"
+        phx-click={@event}
+        phx-value-value={@value}
+        phx-value-question={@question}
+        phx-target={@myself}
+        data-fact="answer"
+        data-question={@question}
+        data-value={@value}
+      />
+      <span
+        class={["custom-question-option-indicator", "is-#{@indicator}"]}
+        aria-hidden="true"
+      >
+        <.icon :if={@indicator == :check} name="hero-check" class="stroke-3" />
+      </span>
+      <span class="custom-question-option-label">{render_slot(@inner_block)}</span>
+    </label>
+    """
+  end
+end

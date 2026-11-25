@@ -1,0 +1,540 @@
+defmodule TymeslotWeb.AuthLiveTest do
+  use TymeslotWeb.LiveCase, async: false
+  @moduletag :auth
+
+  alias Phoenix.Flash
+  alias Tymeslot.Auth
+  alias Tymeslot.Auth.UserSchema
+  alias Tymeslot.Auth.UserTokenQueries
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.FieldValidators.PasswordValidator
+  alias Tymeslot.Security.{Password, RateLimiter, Token}
+  import Ecto.Query, only: [from: 2]
+  import Tymeslot.Factory
+
+  describe "Login" do
+    test "renders login page", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/login")
+      assert has_element?(view, "#login-form")
+    end
+
+    test "marks its fields required but leaves validation to the app", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/login")
+
+      assert has_element?(view, "#login-form[novalidate]")
+      assert has_element?(view, "#login-form input[name='email'][required]")
+      assert has_element?(view, "#login-form input[name='password'][required]")
+    end
+
+    test "successful login with valid credentials", %{conn: conn} do
+      password = "ValidPassword123!"
+      user = insert(:user, password_hash: Password.hash_password(password))
+
+      {:ok, view, _html} = live(conn, ~p"/auth/login")
+
+      form =
+        form(view, "#login-form", %{
+          "email" => user.email,
+          "password" => password
+        })
+
+      conn = submit_form(form, conn)
+      assert redirected_to(conn) == "/dashboard"
+    end
+
+    test "fails login with invalid password", %{conn: conn} do
+      user = insert(:user, password_hash: Password.hash_password("ValidPassword123!"))
+
+      conn =
+        post(conn, ~p"/auth/session", %{
+          "email" => user.email,
+          "password" => "WrongPassword"
+        })
+
+      assert Flash.get(conn.assigns.flash, :error) ==
+               "Invalid email or password. If you signed up recently, check your inbox for the verification link."
+
+      assert redirected_to(conn) == ~p"/auth/login"
+    end
+  end
+
+  describe "Registration" do
+    setup do
+      # The signup form only renders the terms checkbox and enforces the
+      # "must be accepted" validation when legal agreements are enforced.
+      original = Application.get_env(:tymeslot, :enforce_legal_agreements)
+      Application.put_env(:tymeslot, :enforce_legal_agreements, true)
+      on_exit(fn -> Application.put_env(:tymeslot, :enforce_legal_agreements, original) end)
+      :ok
+    end
+
+    test "renders signup page", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+      assert has_element?(view, "#signup-form")
+    end
+
+    test "successful registration", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+      email = "newuser@example.com"
+
+      view
+      |> form("#signup-form", %{
+        "user" => %{
+          "email" => email,
+          "password" => "ValidPassword123!",
+          "terms_accepted" => "true",
+          # honeypot
+          "website" => ""
+        }
+      })
+      |> render_submit()
+
+      assert render(view) =~ "Account created successfully"
+
+      assert Auth.get_user_by_email(email)
+    end
+
+    test "a taken address sees exactly what a free one sees", %{conn: conn} do
+      password_owner = insert(:user)
+      social_owner = insert(:user, provider: "github", password_hash: nil)
+      fresh = "fresh-#{System.unique_integer([:positive])}@example.com"
+
+      outcomes =
+        for email <- [fresh, password_owner.email, social_owner.email] do
+          {:ok, view, _html} = live(conn, ~p"/auth/signup")
+          submit_signup(view, email)
+
+          assert_patch(view, ~p"/auth/verify-email")
+
+          # The screen shows the address that was typed; take that out and
+          # everything else the visitor sees must match.
+          {view |> element("#auth-live") |> render() |> String.replace(email, "EMAIL"),
+           view |> element("#app-flash-group") |> render()}
+        end
+
+      assert [same, same, same] = outcomes
+      assert Repo.aggregate(UserSchema, :count, :id) == 3
+    end
+
+    test "with the address's verification allowance used up, taken and free still match",
+         %{conn: conn} do
+      for _i <- 1..5, do: RateLimiter.check(:verification_ip, "127.0.0.1")
+      owner = insert(:user)
+      fresh = "fresh-#{System.unique_integer([:positive])}@example.com"
+
+      outcomes =
+        for email <- [fresh, owner.email] do
+          {:ok, view, _html} = live(conn, ~p"/auth/signup")
+          submit_signup(view, email)
+          assert_patch(view, ~p"/auth/verify-email")
+
+          {view |> element("#auth-live") |> render() |> String.replace(email, "EMAIL"),
+           view |> element("#app-flash-group") |> render()}
+        end
+
+      assert [same, same] = outcomes
+    end
+
+    test "a genuine sign-up can resend its verification email", %{conn: conn} do
+      email = "resend-#{System.unique_integer([:positive])}@example.com"
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+      submit_signup(view, email)
+      assert_patch(view, ~p"/auth/verify-email")
+
+      user = Repo.get_by!(UserSchema, email: email)
+      Repo.delete_all(Oban.Job)
+
+      render_hook(view, "resend_verification", %{})
+
+      assert render(view) =~ "Verification email sent! Please check your inbox."
+
+      assert [job] = Repo.all(Oban.Job)
+      assert job.args["action"] == "send_email_verification"
+      assert job.args["user_id"] == user.id
+    end
+
+    test "a sign-up with a taken address cannot resend to it, and is told the same",
+         %{conn: conn} do
+      owner = insert(:unverified_user)
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+      submit_signup(view, owner.email)
+      assert_patch(view, ~p"/auth/verify-email")
+      Repo.delete_all(Oban.Job)
+
+      render_hook(view, "resend_verification", %{})
+
+      assert render(view) =~ "Verification email sent! Please check your inbox."
+      assert [] = Repo.all(Oban.Job)
+    end
+
+    test "marks its fields required but leaves validation to the app", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+      # An unticked terms box is reported by the server's own message (below).
+      assert has_element?(view, "#signup-form[novalidate]")
+      assert has_element?(view, "#signup-form input[name='user[email]'][required]")
+      assert has_element?(view, "#signup-form input[name='user[password]'][required]")
+      assert has_element?(view, "#signup-form input[name='user[terms_accepted]'][required]")
+    end
+
+    test "validation errors on registration", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+      # Try to submit with invalid data to see errors
+      result =
+        view
+        |> form("#signup-form", %{
+          "user" => %{
+            "email" => "invalid-email",
+            "password" => "short"
+          }
+        })
+        |> render_submit()
+
+      assert result =~ "is invalid"
+      assert result =~ "must be at least 8 characters"
+
+      # Now test terms error with otherwise valid data
+      result =
+        view
+        |> form("#signup-form", %{
+          "user" => %{
+            "email" => "valid@example.com",
+            "password" => "ValidPassword123!"
+          }
+        })
+        |> render_submit()
+
+      assert result =~ "must be accepted"
+    end
+  end
+
+  describe "Password Reset" do
+    test "initiates password reset", %{conn: conn} do
+      user = insert(:user)
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password")
+
+      view
+      |> form("#reset-password-form", %{"email" => user.email})
+      |> render_submit()
+
+      assert render(view) =~ "Check Your Email"
+    end
+
+    test "password, social and unknown addresses see the same confirmation", %{conn: conn} do
+      password_user = insert(:user)
+
+      social_user =
+        insert(:user,
+          provider: "google",
+          password_hash: nil,
+          email: "oauth-reset-#{System.unique_integer([:positive])}@example.com"
+        )
+
+      unknown = "nobody-#{System.unique_integer([:positive])}@example.com"
+
+      outcomes =
+        for email <- [password_user.email, social_user.email, unknown] do
+          {:ok, view, _html} = live(conn, ~p"/auth/reset-password")
+
+          view
+          |> form("#reset-password-form", %{"email" => email})
+          |> render_submit()
+
+          assert_patch(view, ~p"/auth/reset-password-sent")
+          assert render(view) =~ "Check Your Email"
+
+          # The page and the flash the visitor sees, element for element.
+          {view |> element("#auth-live") |> render(),
+           view |> element("#app-flash-group") |> render()}
+        end
+
+      assert [same, same, same] = outcomes
+    end
+
+    test "empty email shows an error rather than the success confirmation", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password")
+
+      view
+      |> form("#reset-password-form", %{"email" => ""})
+      |> render_submit()
+
+      refute render(view) =~ "Check Your Email"
+      assert has_element?(view, "#reset-password-form")
+    end
+
+    test "the email field is marked required but validation stays with the app", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password")
+
+      assert has_element?(view, "#reset-password-form[novalidate]")
+      assert has_element?(view, "#reset-password-form input[name='email'][required]")
+    end
+
+    test "navigation between states", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/login")
+
+      # Go to signup
+      view
+      |> element("button", "Sign up")
+      |> render_click()
+
+      assert has_element?(view, "#signup-form")
+
+      # Go back to login
+      view
+      |> element("button", "Log in")
+      |> render_click()
+
+      assert has_element?(view, "#login-form")
+    end
+  end
+
+  describe "Page titles and meta descriptions" do
+    setup :setup_password_reset_token
+
+    # Four routes, four LiveView states, four distinct titles and descriptions.
+    # The title and the description content are both pinned: a `<meta
+    # name="description">` tag on its own says nothing about what the page
+    # actually claims to be.
+    @indexable_auth_pages [
+      {"login", "/auth/login", "Log In · Tymeslot",
+       "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."},
+      {"signup", "/auth/signup", "Create an Account · Tymeslot",
+       "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."},
+      {"reset password", "/auth/reset-password", "Reset Password · Tymeslot",
+       "Enter your email to receive a password reset link for your Tymeslot account."},
+      {"reset password form", :token, "Choose a New Password · Tymeslot",
+       "Choose a strong new password for your Tymeslot account."}
+    ]
+
+    for {name, path, title, description} <- @indexable_auth_pages do
+      test "#{name} page sets its own title and meta description", %{conn: conn, token: token} do
+        path =
+          case unquote(path) do
+            :token -> "/auth/reset-password/#{token}"
+            path -> path
+          end
+
+        {:ok, view, html} = live(conn, path)
+
+        assert page_title(view) == unquote(title)
+        assert html =~ ~s(<meta name="description" content="#{unquote(description)}"/>)
+      end
+    end
+
+    test "oauth and transient pages do not set a custom title or meta description", %{conn: conn} do
+      conn =
+        init_test_session(conn, %{
+          "pending_oauth_registration" => %{
+            provider: "github",
+            email: "oauth@example.com",
+            name: nil,
+            email_from_provider: true,
+            provider_uid: "12345",
+            github_user_id: nil,
+            google_user_id: nil
+          }
+        })
+
+      {:ok, view, html} = live(conn, ~p"/auth/complete-registration")
+      assert page_title(view) == "Schedule a Meeting · Tymeslot"
+      refute html =~ ~s(<meta name="description")
+    end
+  end
+
+  describe "Password Reset Form" do
+    setup :setup_password_reset_token
+
+    test "valid token renders new password form", %{conn: conn, token: token} do
+      {:ok, _view, html} = live(conn, ~p"/auth/reset-password/#{token}")
+
+      assert html =~ "new-password-form"
+    end
+
+    test "invalid token renders invalid_token state", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/auth/reset-password/nonexistent-token-abc")
+
+      assert html =~ "Link Expired or Invalid"
+    end
+
+    test "expired token renders invalid_token state", %{conn: conn, user: user, token: token} do
+      expired_time = DateTime.add(DateTime.utc_now(), -3 * 3600, :second)
+
+      Repo.update_all(
+        from(u in UserSchema, where: u.id == ^user.id),
+        set: [reset_sent_at: expired_time]
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/auth/reset-password/#{token}")
+
+      assert html =~ "Link Expired or Invalid"
+    end
+
+    test "valid submission transitions to success state", %{conn: conn, token: token} do
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password/#{token}")
+
+      view
+      |> form("#new-password-form", %{
+        "password" => "NewSecurePass123!",
+        "password_confirmation" => "NewSecurePass123!"
+      })
+      |> render_submit()
+
+      assert render(view) =~ "Password Reset Successfully"
+    end
+
+    test "submit_password_reset with nil reset_token surfaces 'Invalid reset token'", %{
+      conn: conn
+    } do
+      # The submit_password_reset handler has a two-step `with`: CSRF valid,
+      # then `true <- not is_nil(token)`. A stale reconnect or a direct
+      # invocation on the reset-request page hits the nil-guard — test that
+      # path by passing a real CSRF token from a page where reset_token was
+      # never assigned.
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password")
+
+      csrf_html = view |> element("input[name=_csrf_token]") |> render()
+      [_match, csrf_token] = Regex.run(~r/value="([^"]+)"/, csrf_html)
+
+      result =
+        render_hook(view, "submit_password_reset", %{
+          "password" => "NewSecurePass123!",
+          "password_confirmation" => "NewSecurePass123!",
+          "_csrf_token" => csrf_token
+        })
+
+      assert result =~ "Invalid reset token"
+    end
+
+    # Every rejection on this form used to be assigned to :errors and then
+    # dropped on the floor by the template, so a rejected submission looked
+    # exactly like no submission at all. These pin the failure paths to
+    # something the user can actually read.
+    test "a password missing a special character is rejected visibly", %{
+      conn: conn,
+      token: token
+    } do
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password/#{token}")
+
+      html =
+        view
+        |> form("#new-password-form", %{
+          "password" => "SomePassword123",
+          "password_confirmation" => "SomePassword123"
+        })
+        |> render_submit()
+
+      assert html =~ "Password must contain at least one special character"
+      refute html =~ "Password Reset Successfully"
+    end
+
+    test "a mismatched confirmation is rejected visibly", %{conn: conn, token: token} do
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password/#{token}")
+
+      html =
+        view
+        |> form("#new-password-form", %{
+          "password" => "NewSecurePass123!",
+          "password_confirmation" => "DifferentPass456!"
+        })
+        |> render_submit()
+
+      assert html =~ "Password confirmation does not match"
+      refute html =~ "Password Reset Successfully"
+    end
+
+    test "the form states every rule the server enforces", %{conn: conn, token: token} do
+      {:ok, _view, html} = live(conn, ~p"/auth/reset-password/#{token}")
+
+      for rule <- PasswordValidator.rules() do
+        assert html =~ ~s(data-password-rule="#{rule.key}"),
+               "the password checklist omits the enforced #{rule.key} rule"
+      end
+    end
+  end
+
+  describe "CSRF validation failure" do
+    test "submit_signup with invalid CSRF token shows security error", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+      result =
+        render_hook(view, "submit_signup", %{
+          "user" => %{
+            "email" => "test@example.com",
+            "password" => "ValidPassword123!",
+            "terms_accepted" => "true",
+            "website" => ""
+          },
+          "_csrf_token" => "invalid_token"
+        })
+
+      assert result =~ "Security validation failed"
+    end
+
+    test "submit_reset_request with invalid CSRF token shows security error", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/auth/reset-password")
+
+      result =
+        render_hook(view, "submit_reset_request", %{
+          "email" => "test@example.com",
+          "_csrf_token" => "invalid_token"
+        })
+
+      assert result =~ "Security validation failed"
+    end
+  end
+
+  describe "verify-email page" do
+    test "shows the address the verification email was sent to", %{conn: conn} do
+      user = insert(:unverified_user)
+
+      conn =
+        init_test_session(conn, %{
+          "unverified_user_id" => user.id,
+          "unverified_user_email" => user.email,
+          "unverified_session_timestamp" => DateTime.to_unix(DateTime.utc_now())
+        })
+
+      {:ok, _view, html} = live(conn, ~p"/auth/verify-email")
+
+      assert html =~ "Sent to"
+      assert html =~ user.email
+    end
+  end
+
+  defp setup_password_reset_token(_context) do
+    user = insert(:user)
+    token = Token.generate()
+    {:ok, _result} = UserTokenQueries.set_reset_token(user, token)
+    %{user: user, token: token}
+  end
+
+  describe "locale" do
+    test "connected mount keeps a non-default session locale", %{conn: conn} do
+      # The initial GET (still in the test process) runs LocalePlug, which
+      # accepts the query param and persists it to the session. Connecting
+      # the LiveView spawns a separate process — only the :auth live_session's
+      # own on_mount locale hook can carry that session locale into it.
+      {:ok, view, _html} = live(conn, "/auth/login?locale=de")
+
+      # "Welcome Back!" only renders in German as "Willkommen zurück!" if the
+      # connected LiveView process's own Gettext locale was set from the
+      # session, not left on the process default ("en").
+      assert render(view) =~ "Willkommen zurück!"
+    end
+  end
+
+  defp submit_signup(view, email) do
+    view
+    |> form("#signup-form", %{
+      "user" => %{
+        "email" => email,
+        "password" => "ValidPassword123!",
+        "terms_accepted" => "true",
+        "website" => ""
+      }
+    })
+    |> render_submit()
+  end
+end

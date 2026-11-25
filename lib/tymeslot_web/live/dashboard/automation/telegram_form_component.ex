@@ -1,0 +1,371 @@
+defmodule TymeslotWeb.Dashboard.Automation.TelegramFormComponent do
+  @moduledoc """
+  Form component for creating and editing Telegram integrations.
+  Renders the own-bot form or the shared-bot wizard: on create by the
+  installation's bot mode, on edit by the integration's own.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.Telegram
+  alias Tymeslot.Validation.Constraints
+  alias TymeslotWeb.Dashboard.Automation.EventSubscriptions
+  alias TymeslotWeb.Dashboard.Automation.Helpers, as: AutomationHelpers
+  alias TymeslotWeb.Live.Shared.FormValidationHelpers
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     socket
+     |> assign(:form_errors, %{})
+     |> assign(:form_values, %{})
+     |> assign(:saving, false)
+     |> assign(:available_events, Telegram.available_events())
+     |> assign(:wizard_step, 1)
+     |> assign(:deep_link, nil)
+     |> assign(:link_expired, false)}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(assigns, socket) do
+    mode = assigns[:mode] || :create
+    integration = assigns[:integration]
+
+    form_values =
+      cond do
+        Map.has_key?(assigns, :form_values) ->
+          assigns.form_values
+
+        mode == :edit && integration ->
+          %{
+            "name" => integration.name,
+            "events" => integration.events
+          }
+
+        true ->
+          %{"name" => "", "events" => []}
+      end
+
+    socket =
+      socket
+      |> assign(assigns)
+      |> assign(:mode, mode)
+      |> assign(:integration, integration)
+      |> assign(:shared_bot_mode, Telegram.form_bot_mode(mode, integration) == :shared)
+      |> assign(:form_values, form_values)
+      |> assign(:form_errors, assigns[:form_errors] || %{})
+
+    {:ok, socket}
+  end
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns = assign(assigns, :can_submit, can_submit?(assigns))
+
+    ~H"""
+    <div class="space-y-8">
+      <%!-- Toolbar --%>
+      <.section_header
+        icon="hero-bolt"
+        title={form_title(@mode, @shared_bot_mode, @wizard_step)}
+        class="mb-10"
+      >
+        <:actions>
+          <.icon_button
+            icon="hero-x-mark"
+            variant={:neutral}
+            label={dgettext("dashboard_automation_chat", "Close")}
+            phx-click="close_telegram_form"
+            phx-target={@parent_component}
+          />
+        </:actions>
+      </.section_header>
+
+      <%= if @shared_bot_mode && @mode == :create && @wizard_step == 1 do %>
+        <%!-- Shared Bot: Step 1 — Deep Link --%>
+        <.shared_bot_step1
+          deep_link={@deep_link}
+          link_expired={@link_expired}
+          parent_component={@parent_component}
+        />
+      <% else %>
+        <%!-- Standard Form (own-bot create/edit, shared-bot step 2/edit) --%>
+        <form
+          id="telegram-form"
+          novalidate
+          phx-submit={
+            if @mode == :create do
+              JS.push("create_telegram", target: @parent_component)
+            else
+              JS.push("update_telegram", target: @parent_component)
+            end
+          }
+          phx-target={@parent_component}
+          class="space-y-8"
+        >
+          <%!-- Name & Details --%>
+          <.card
+            title={dgettext("dashboard_automation_chat", "Integration Details")}
+            description={
+              dgettext(
+                "dashboard_automation_chat",
+                "Configure your Telegram notification settings."
+              )
+            }
+          >
+            <div class="space-y-6">
+              <.input
+                name="telegram[name]"
+                label={dgettext("dashboard_automation_chat", "Integration Name")}
+                value={Map.get(@form_values, "name", "")}
+                phx-blur={
+                  JS.push("validate_telegram_field",
+                    value: %{"field" => "name"},
+                    target: @parent_component
+                  )
+                }
+                placeholder={dgettext("dashboard_automation_chat", "My Telegram Notifications")}
+                maxlength={Constraints.integration_name_length_opts()[:max]}
+                required
+                errors={FormValidationHelpers.field_errors(@form_errors, :name)}
+                icon="hero-tag"
+              />
+
+              <%= if !@shared_bot_mode do %>
+                <.input
+                  name="telegram[bot_token]"
+                  type="password"
+                  label={dgettext("dashboard_automation_chat", "Bot Token")}
+                  value={Map.get(@form_values, "bot_token", "")}
+                  phx-blur={
+                    JS.push("validate_telegram_field",
+                      value: %{"field" => "bot_token"},
+                      target: @parent_component
+                    )
+                  }
+                  placeholder="123456789:ABCdefGHI..."
+                  required
+                  errors={FormValidationHelpers.field_errors(@form_errors, :bot_token)}
+                  icon="hero-key"
+                />
+
+                <.input
+                  name="telegram[chat_id]"
+                  label={dgettext("dashboard_automation_chat", "Chat ID")}
+                  value={Map.get(@form_values, "chat_id", "")}
+                  phx-blur={
+                    JS.push("validate_telegram_field",
+                      value: %{"field" => "chat_id"},
+                      target: @parent_component
+                    )
+                  }
+                  placeholder={
+                    dgettext("dashboard_automation_chat", "-1001234567890 or @channelname")
+                  }
+                  required
+                  errors={FormValidationHelpers.field_errors(@form_errors, :chat_id)}
+                  icon="hero-chat-bubble-left"
+                />
+
+                <div class="p-4 rounded-token-xl bg-turquoise-50/50 border-2 border-turquoise-100">
+                  <div class="flex gap-3">
+                    <div class="mt-0.5">
+                      <.icon name="hero-information-circle" class="w-5 h-5 text-turquoise-600" />
+                    </div>
+                    <div>
+                      <p class="text-token-sm font-black text-turquoise-900">
+                        {dgettext("dashboard_automation_chat", "How to get your Bot Token & Chat ID")}
+                      </p>
+                      <p class="text-token-xs text-turquoise-700 font-medium mt-0.5">
+                        {raw(
+                          dgettext(
+                            "dashboard_automation_chat",
+                            "Message %{bot} on Telegram to create a bot and get its token.",
+                            bot: ~s(<strong>@BotFather</strong>)
+                          )
+                        )}
+                        {raw(
+                          dgettext(
+                            "dashboard_automation_chat",
+                            "To find your Chat ID, message %{bot} or add your bot to a group and use the Telegram API.",
+                            bot: ~s(<strong>@userinfobot</strong>)
+                          )
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </.card>
+
+          <%!-- Events Selection --%>
+          <EventSubscriptions.event_subscriptions
+            name="telegram[events][]"
+            events={@available_events}
+            selected={Map.get(@form_values, "events", [])}
+            toggle_event="toggle_telegram_event"
+            target={@parent_component}
+            errors={FormValidationHelpers.field_errors(@form_errors, :events)}
+            description={
+              dgettext(
+                "dashboard_automation_chat",
+                "Select which events should trigger Telegram notifications."
+              )
+            }
+          />
+
+          <%!-- Form Actions --%>
+          <div class="flex justify-end gap-3 pt-4">
+            <.action_button
+              variant={:secondary}
+              phx-click="close_telegram_form"
+              phx-target={@parent_component}
+            >
+              {dgettext("dashboard_automation_chat", "Cancel")}
+            </.action_button>
+            <.loading_button
+              type="submit"
+              variant={:primary}
+              loading={@saving}
+              loading_text={
+                if(!@shared_bot_mode && @mode == :create,
+                  do: dgettext("dashboard_automation_chat", "Testing & Saving..."),
+                  else: dgettext("dashboard_automation_chat", "Saving...")
+                )
+              }
+              disabled={!@can_submit}
+            >
+              <%= cond do %>
+                <% !@shared_bot_mode && @mode == :create -> %>
+                  {dgettext("dashboard_automation_chat", "Test & Save")}
+                <% @mode == :create -> %>
+                  {dgettext("dashboard_automation_chat", "Save")}
+                <% true -> %>
+                  {dgettext("dashboard_automation_chat", "Update")}
+              <% end %>
+            </.loading_button>
+          </div>
+        </form>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp shared_bot_step1(%{link_expired: true} = assigns) do
+    ~H"""
+    <.empty_state
+      size={:lg}
+      tone={:warning}
+      heading={:h3}
+      title={dgettext("dashboard_automation_chat", "Link Expired")}
+      description={
+        dgettext(
+          "dashboard_automation_chat",
+          "The link has expired. Click below to generate a new one."
+        )
+      }
+    >
+      <:graphic><.icon name="brand-telegram" class="w-10 h-10" /></:graphic>
+      <:action>
+        <.action_button phx-click="refresh_telegram_link" phx-target={@parent_component}>
+          {dgettext("dashboard_automation_chat", "Generate New Link")}
+        </.action_button>
+      </:action>
+    </.empty_state>
+    """
+  end
+
+  defp shared_bot_step1(assigns) do
+    ~H"""
+    <.empty_state
+      size={:lg}
+      tone={:brand}
+      heading={:h3}
+      title={dgettext("dashboard_automation_chat", "Connect Telegram")}
+      description={
+        dgettext(
+          "dashboard_automation_chat",
+          "Click the button below to open Telegram and link your account. Once connected, you'll configure notification preferences."
+        )
+      }
+    >
+      <:graphic><.icon name="brand-telegram" class="w-10 h-10" /></:graphic>
+      <:action :if={@deep_link}>
+        <.action_link href={@deep_link} target="_blank" rel="noopener noreferrer">
+          <.icon name="brand-telegram" class="w-5 h-5" />
+          {dgettext("dashboard_automation_chat", "Open in Telegram")}
+        </.action_link>
+      </:action>
+
+      <%= if @deep_link do %>
+        <div class="flex items-center justify-center gap-2 text-token-sm text-tymeslot-500">
+          <.icon
+            name="hero-clock"
+            class="w-4 h-4 animate-pulse text-turquoise-500"
+          />
+          <span>{dgettext(
+            "dashboard_automation_chat",
+            "Waiting for Telegram connection... (link expires in 10 minutes)"
+          )}</span>
+        </div>
+
+        <div class="mt-6 p-4 rounded-token-xl bg-tymeslot-50 border border-tymeslot-100 text-left max-w-md mx-auto">
+          <p class="text-token-xs font-black text-tymeslot-700 mb-2 uppercase tracking-wide">
+            {dgettext(
+              "dashboard_automation_chat",
+              "Button didn't work? Already started the bot before?"
+            )}
+          </p>
+          <p class="text-token-xs text-tymeslot-600 mb-3">
+            {dgettext(
+              "dashboard_automation_chat",
+              "Send this command directly in the Telegram bot chat:"
+            )}
+          </p>
+          <code class="block text-token-xs font-mono bg-white border border-tymeslot-200 rounded-token-lg px-3 py-2 break-all select-all text-tymeslot-800">
+            /start {String.split(@deep_link, "start=") |> List.last() |> String.trim_trailing("#")}
+          </code>
+        </div>
+      <% else %>
+        <div class="text-tymeslot-500 font-medium">
+          {dgettext("dashboard_automation_chat", "Setting up connection...")}
+        </div>
+      <% end %>
+    </.empty_state>
+    """
+  end
+
+  defp can_submit?(assigns) do
+    values = assigns.form_values
+    errors = assigns.form_errors
+
+    base =
+      AutomationHelpers.field_present?(values, "name") &&
+        AutomationHelpers.any_events_selected?(values) &&
+        Enum.empty?(errors)
+
+    if assigns.shared_bot_mode do
+      base
+    else
+      base && bot_token_given?(assigns.mode, values) &&
+        AutomationHelpers.field_present?(values, "chat_id")
+    end
+  end
+
+  # On edit a blank token keeps the stored one, so only a new integration
+  # needs it typed.
+  defp bot_token_given?(:create, values),
+    do: AutomationHelpers.field_present?(values, "bot_token")
+
+  defp bot_token_given?(:edit, _values), do: true
+
+  defp form_title(:create, true, 1), do: dgettext("dashboard_automation_chat", "Connect Telegram")
+
+  defp form_title(:create, _shared_bot, _step),
+    do: dgettext("dashboard_automation_chat", "Add Telegram Account")
+
+  defp form_title(:edit, _shared_bot, _step),
+    do: dgettext("dashboard_automation_chat", "Edit Telegram Integration")
+end

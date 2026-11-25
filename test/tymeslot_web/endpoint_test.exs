@@ -1,0 +1,144 @@
+defmodule TymeslotWeb.EndpointTest do
+  # credo:global-config-safe — :robots_file is read only while serving
+  # /robots.txt, and no other test requests that path.
+  use TymeslotWeb.ConnCase, async: true
+
+  @moduletag :infrastructure
+
+  import Tymeslot.ConfigTestHelpers
+
+  alias Tymeslot.Infrastructure.CorrelationId
+  alias TymeslotWeb.Endpoint
+
+  describe "request_log_level/1" do
+    test "disables request logging for paths carrying a capability token" do
+      for path_info <- [
+            ["auth", "verify-complete", "secret-token"],
+            ["auth", "reset-password", "secret-token"],
+            ["auth", "oauth", "confirm", "secret-token"],
+            ["auth", "invitation", "secret-token"],
+            ["auth", "invitation", "secret-token", "github"],
+            ["email-change", "secret-token"],
+            ["guest", "secret-token", "accept"],
+            ["seat", "secret-token", "cancel"],
+            ["seat", "secret-token", "reschedule"],
+            ["seat", "secret-token", "calendar.ics"],
+            ["free-busy", "abc"],
+            ["meeting-request", "secret-token"],
+            ["verify-booking", "secret-token"],
+            ["invite", "secret-token"],
+            ["themes", "quill", "payment-processing", "meeting-id"],
+            ["themes", "rhythm", "payment-cancelled", "meeting-id"],
+            ["alice", "poll", "secret-token"],
+            ["alice", "meeting", "secret-uid", "cancel"],
+            ["alice", "meeting", "secret-uid", "cancel-confirmed"],
+            ["alice", "meeting", "secret-uid", "reschedule"],
+            ["alice", "meeting", "secret-uid", "calendar.ics"],
+            ["alice", "series", "secret-uid"],
+            ["series", "secret-uid"]
+          ] do
+        assert {path_info, Endpoint.request_log_level(%Plug.Conn{path_info: path_info})} ==
+                 {path_info, false}
+      end
+    end
+
+    test "demotes healthcheck requests to :debug" do
+      assert Endpoint.request_log_level(%Plug.Conn{path_info: ["healthcheck"]}) == :debug
+    end
+
+    test "keeps :info logging for ordinary paths, including look-alikes" do
+      for path_info <- [
+            [],
+            ["dashboard"],
+            ["auth", "login"],
+            ["auth", "reset-password"],
+            ["auth", "reset-password-sent"],
+            ["email-change"],
+            ["meeting-request"],
+            ["verify-booking"],
+            ["invite"],
+            ["themes", "quill", "payment-cancelled"],
+            ["alice", "poll"],
+            ["alice", "series"],
+            ["series"],
+            # A meeting type slugged "meeting" has its booking page here.
+            ["alice", "meeting", "book"],
+            ["dashboard", "meetings"]
+          ] do
+        assert {path_info, Endpoint.request_log_level(%Plug.Conn{path_info: path_info})} ==
+                 {path_info, :info}
+      end
+    end
+  end
+
+  describe "correlation ID plug" do
+    test "the response's x-correlation-id is the request id", %{conn: conn} do
+      conn = get(conn, ~p"/auth/login")
+
+      assert [request_id] = get_resp_header(conn, "x-request-id")
+      assert get_resp_header(conn, "x-correlation-id") == [request_id]
+    end
+
+    test "an incoming x-correlation-id becomes the log and process correlation id",
+         %{conn: conn} do
+      existing_id = CorrelationId.generate()
+
+      conn =
+        conn
+        |> put_req_header("x-correlation-id", existing_id)
+        |> get(~p"/auth/login")
+
+      assert Logger.metadata()[:correlation_id] == existing_id
+      assert CorrelationId.get_from_process() == existing_id
+      assert get_resp_header(conn, "x-correlation-id") == [existing_id]
+    end
+
+    test "a malformed incoming x-correlation-id is neither adopted nor echoed",
+         %{conn: conn} do
+      conn =
+        conn
+        |> put_req_header("x-correlation-id", "bad id")
+        |> get(~p"/auth/login")
+
+      assert [request_id] = get_resp_header(conn, "x-request-id")
+      assert get_resp_header(conn, "x-correlation-id") == [request_id]
+      assert Logger.metadata()[:correlation_id] == request_id
+    end
+  end
+
+  describe "robots.txt" do
+    test "serves robots.txt file", %{conn: conn} do
+      conn = get(conn, "/robots.txt")
+
+      assert conn.status == 200
+      assert hd(get_resp_header(conn, "content-type")) =~ "text/plain"
+      assert byte_size(conn.resp_body) > 0
+    end
+
+    test "resolves an {otp_app, file} tuple in :robots_file", %{conn: conn} do
+      # Safe in an async module: the tuple points at the same file the
+      # string default resolves to, so concurrent readers see no difference.
+      with_config(:tymeslot, :robots_file, {:tymeslot, "robots.core.txt"})
+
+      conn = get(conn, "/robots.txt")
+
+      assert conn.status == 200
+
+      assert conn.resp_body ==
+               File.read!(Path.join(:code.priv_dir(:tymeslot), "static/robots.core.txt"))
+    end
+  end
+
+  describe "session cookie" do
+    test "response sets _tymeslot_key cookie", %{conn: conn} do
+      conn = get(conn, ~p"/auth/login")
+
+      assert %{"_tymeslot_key" => cookie} = conn.resp_cookies
+
+      # The session cookie must stay unreadable to scripts and same-site.
+      assert cookie.http_only
+      assert cookie.same_site == "Lax"
+      assert byte_size(cookie.value) > 0
+    end
+  end
+end

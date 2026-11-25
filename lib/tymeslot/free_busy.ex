@@ -1,0 +1,134 @@
+defmodule Tymeslot.FreeBusy do
+  @moduledoc """
+  Publishes a profile's busy intervals as an iCalendar `VFREEBUSY` feed.
+
+  The feed is exposed at `GET /free-busy/:token`. A profile opts in by
+  generating a secret token (`enable_feed/1`); clearing it (`disable_feed/1`)
+  takes the feed offline. Busy intervals are derived from the same connected
+  calendar events the availability engine treats as blocking, plus the
+  profile's time off, so a holiday entered in the scheduler rather than in a
+  calendar is published as busy too.
+
+  An event counts as the booking page counts it
+  (`Tymeslot.Availability.Bookability.busy_for_bookings?/2`), so the
+  organiser's "Treat as Busy" or "Treat as Free" on an all-day event reaches
+  the feed too.
+  """
+
+  alias Tymeslot.Availability.{Bookability, Events, TimeOff}
+  alias Tymeslot.Clock
+  alias Tymeslot.Integrations.Calendar.AvailabilityView
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Integrations.Calendar.CalendarEventQueries
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationQueries
+  alias Tymeslot.Integrations.Calendar.FreebusyGenerator
+  alias Tymeslot.Integrations.Calendar.SeriesPreview
+  alias Tymeslot.Profiles
+  alias Tymeslot.Profiles.ProfileQueries
+  alias Tymeslot.Profiles.ProfileSchema
+  alias Tymeslot.Security.Token
+
+  @token_bytes 24
+  @default_horizon_days 60
+
+  @doc "Returns the profile owning `token`, or `{:error, :not_found}`."
+  @spec get_profile_by_token(String.t()) :: {:ok, ProfileSchema.t()} | {:error, :not_found}
+  def get_profile_by_token(token), do: ProfileQueries.get_by_freebusy_token(token)
+
+  @doc "Whether the profile has an active free/busy feed."
+  @spec feed_enabled?(ProfileSchema.t()) :: boolean()
+  def feed_enabled?(%ProfileSchema{freebusy_token: token}),
+    do: is_binary(token) and token != ""
+
+  @doc """
+  Ensures the profile has a feed token, generating one if absent. Idempotent —
+  an already-enabled feed keeps its existing token.
+  """
+  @spec enable_feed(ProfileSchema.t()) ::
+          {:ok, ProfileSchema.t()} | {:error, Ecto.Changeset.t()}
+  def enable_feed(%ProfileSchema{} = profile) do
+    if feed_enabled?(profile) do
+      {:ok, profile}
+    else
+      ProfileQueries.update_freebusy_token(profile, Token.generate(@token_bytes))
+    end
+  end
+
+  @doc "Issues a fresh token, invalidating any previously shared feed URL."
+  @spec regenerate_token(ProfileSchema.t()) ::
+          {:ok, ProfileSchema.t()} | {:error, Ecto.Changeset.t()}
+  def regenerate_token(%ProfileSchema{} = profile),
+    do: ProfileQueries.update_freebusy_token(profile, Token.generate(@token_bytes))
+
+  @doc "Disables the feed by clearing the token."
+  @spec disable_feed(ProfileSchema.t()) ::
+          {:ok, ProfileSchema.t()} | {:error, Ecto.Changeset.t()}
+  def disable_feed(%ProfileSchema{} = profile),
+    do: ProfileQueries.update_freebusy_token(profile, nil)
+
+  @doc """
+  Renders the `VFREEBUSY` document for the profile over a rolling window
+  (`now` → `now + horizon_days`, default #{@default_horizon_days}).
+  """
+  @spec feed(ProfileSchema.t(), keyword()) :: String.t()
+  def feed(%ProfileSchema{} = profile, opts \\ []) do
+    horizon_days = Keyword.get(opts, :horizon_days, @default_horizon_days)
+    window_start = DateTime.truncate(Keyword.get_lazy(opts, :now, &Clock.utc_now/0), :second)
+    window_end = DateTime.add(window_start, horizon_days, :day)
+
+    FreebusyGenerator.generate(
+      uid: "freebusy-#{profile.id}@tymeslot.com",
+      window_start: window_start,
+      window_end: window_end,
+      organizer_email: organizer_email(profile),
+      intervals: busy_intervals(profile, window_start, window_end)
+    )
+  end
+
+  @doc """
+  Returns the profile's busy intervals (UTC `{start, end}` pairs) overlapping
+  the window, derived from connected-calendar events that block availability
+  and from the profile's time off.
+  """
+  @spec busy_intervals(ProfileSchema.t(), DateTime.t(), DateTime.t()) ::
+          [FreebusyGenerator.interval()]
+  def busy_intervals(%ProfileSchema{} = profile, window_start, window_end) do
+    integrations = CalendarIntegrationQueries.list_active_for_user(profile.user_id)
+    by_id = Map.new(integrations, &{&1.id, &1})
+    overrides = Bookability.for_user(profile.user_id)
+
+    # This reads the event cache directly rather than through
+    # `Ics.Provider.list_events/2`, so it applies a subscription's
+    # `all_events_busy` itself, or a holiday that blocks bookings would be
+    # published as free.
+    ids = Enum.map(integrations, & &1.id)
+    rules = AvailabilityView.rules(integrations)
+
+    # A series written from the calendar is cached as one row until its next
+    # sync, so its later occurrences are previewed from that row.
+    event_intervals =
+      ids
+      |> CalendarEventQueries.in_range({window_start, window_end}, rules)
+      |> Enum.concat(SeriesPreview.blocking_events(ids, {window_start, window_end}, rules))
+      |> Enum.map(&Bookability.as_presented(&1, Map.get(by_id, &1.calendar_integration_id)))
+      |> Enum.filter(&Bookability.busy_for_bookings?(&1, overrides))
+      |> Enum.flat_map(&event_interval(&1, Profiles.timezone(profile)))
+
+    event_intervals ++ TimeOff.busy_intervals(profile, window_start, window_end)
+  end
+
+  # An all-day event spans the owner's local day, as it does on the booking
+  # page. A profile with no timezone is read as UTC, as its time off is.
+  defp event_interval(%CalendarEvent{} = event, timezone) do
+    case Events.to_interval(event, timezone) do
+      {:ok, interval} -> [interval]
+      :error -> []
+    end
+  end
+
+  defp organizer_email(%ProfileSchema{user: %{email: email}})
+       when is_binary(email) and email != "",
+       do: email
+
+  defp organizer_email(_profile), do: nil
+end

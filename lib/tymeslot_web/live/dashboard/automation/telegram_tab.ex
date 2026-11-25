@@ -1,0 +1,106 @@
+defmodule TymeslotWeb.Dashboard.Automation.TelegramTab do
+  @moduledoc """
+  Markup for the Telegram tab of `TymeslotWeb.Dashboard.AutomationSettingsComponent`.
+
+  Rendering only: every interaction is pushed back to the owning LiveComponent
+  through the `:myself` target passed in by the caller.
+  """
+  use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias TymeslotWeb.Dashboard.Automation.TelegramCard
+
+  attr :integrations, :list, required: true
+  attr :time_format, :string, required: true
+  attr :telegram_testing, :any, required: true
+  attr :myself, :any, required: true
+
+  attr :paused, :boolean,
+    default: false,
+    doc: "The owner's plan doesn't include automations: cards paused, nothing can be added"
+
+  @spec telegram_tab_content(map()) :: Phoenix.LiveView.Rendered.t()
+  def telegram_tab_content(assigns) do
+    ~H"""
+    <%= if @integrations != [] do %>
+      <div class="space-y-6">
+        <.section_header
+          title={dgettext("dashboard_automation_chat", "Your Telegram Integrations")}
+          count={length(@integrations)}
+        >
+          <:actions>
+            <.action_button
+              disabled={@paused}
+              phx-click={!@paused && "show_telegram_form"}
+              phx-target={@myself}
+            >
+              {dgettext("dashboard_automation_chat", "Add Telegram Account")}
+            </.action_button>
+          </:actions>
+        </.section_header>
+
+        <div class="grid grid-cols-1 gap-6">
+          <%= for integration <- @integrations do %>
+            <TelegramCard.telegram_card
+              time_format={@time_format}
+              integration={integration}
+              testing={@telegram_testing == integration.id}
+              paused={@paused}
+              target={@myself}
+              on_edit={
+                JS.push("show_edit_telegram_form", value: %{"id" => integration.id}, target: @myself)
+              }
+              on_delete={
+                JS.push("show_telegram_delete_modal",
+                  value: %{"id" => integration.id},
+                  target: @myself
+                )
+              }
+              on_toggle="toggle_telegram"
+              on_test={JS.push("test_telegram", value: %{"id" => integration.id}, target: @myself)}
+              on_view_deliveries={
+                JS.push("show_telegram_deliveries", value: %{"id" => integration.id}, target: @myself)
+              }
+              on_reenable={
+                JS.push("reenable_telegram", value: %{"id" => integration.id}, target: @myself)
+              }
+              on_disconnect={
+                JS.push("disconnect_telegram", value: %{"id" => integration.id}, target: @myself)
+              }
+              on_reconnect={
+                if integration.bot_mode == :shared do
+                  JS.push("reconnect_telegram", value: %{"id" => integration.id}, target: @myself)
+                end
+              }
+            />
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <.empty_state
+        size={:lg}
+        tone={:brand}
+        heading={:h2}
+        title={dgettext("dashboard_automation_chat", "No Telegram Integrations")}
+        description={
+          dgettext(
+            "dashboard_automation_chat",
+            "Connect Telegram to receive instant notifications when meetings are booked, cancelled, or rescheduled."
+          )
+        }
+      >
+        <:graphic><.icon name="brand-telegram" class="w-10 h-10" /></:graphic>
+        <:action>
+          <.action_button
+            disabled={@paused}
+            phx-click={!@paused && "show_telegram_form"}
+            phx-target={@myself}
+          >
+            {dgettext("dashboard_automation_chat", "Add Telegram Account")}
+          </.action_button>
+        </:action>
+      </.empty_state>
+    <% end %>
+    """
+  end
+end

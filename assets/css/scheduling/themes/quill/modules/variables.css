@@ -1,0 +1,396 @@
+/* Quill Theme Variables - Comprehensive Design Token System */
+
+/* Responsive height ladder (convention — NOT tokenisable: @media feature values
+   can't use var()). Every `@media (max-height: …)` query in this theme snaps to
+   one of these tiers so the compaction reads as one coherent system:
+     800px  gentle — trim outer gutters / decorative bias (base, steps, calendar)
+     700px  medium — reduce card padding; hide the step-indicator band
+     600px  short  — compact section spacing and headings
+     500px  shorter— smaller paddings; drop step labels / footer chrome
+     400px  minimal— strip remaining chrome
+   The calendar's month↔week reflow is a SEPARATE, tuned mechanism on its own
+   thresholds (620px toggle, 640px header-chrome drop just above it) — see
+   calendar.css. Keep new height queries on the ladder above unless they belong
+   to that reflow. */
+:root {
+  /* Typography - Font Family */
+  --theme-font-family: var(--font-stack-inter);
+
+  /* Typography - Font Size Scale (fluid responsive using clamp()) */
+  --theme-font-size-3xs: clamp(0.625rem, 1.0vw, 0.688rem);    /* ~10-11px - tiny labels */
+  --theme-font-size-2xs: clamp(0.688rem, 1.1vw, 0.75rem);     /* ~11-12px - smallest interactive */
+  --theme-font-size-xs: clamp(0.75rem, 1.2vw, 0.813rem);      /* ~12-13px - small labels */
+  --theme-font-size-sm: clamp(0.813rem, 1.4vw, 0.938rem);     /* ~13-15px - small text */
+  --theme-font-size-base: clamp(0.938rem, 1.6vw, 1.063rem);   /* ~15-17px - body text */
+  --theme-font-size-md: clamp(1rem, 1.7vw, 1.125rem);         /* ~16-18px - emphasized body */
+  --theme-font-size-lg: clamp(1.063rem, 2.0vw, 1.188rem);     /* ~17-19px - subheadings */
+  --theme-font-size-xl: clamp(1.25rem, 2.4vw, 1.375rem);      /* ~20-22px - headings */
+  --theme-font-size-2xl: clamp(1.438rem, 2.8vw, 1.625rem);    /* ~23-26px - large headings */
+  --theme-font-size-3xl: clamp(1.75rem, 3.5vw, 2.5rem);       /* ~28-40px - hero text */
+  --theme-font-size-4xl: clamp(2rem, 4vw, 3rem);              /* ~32-48px - display text */
+
+  /* Typography - Line Heights */
+  --theme-line-height-tight: 1.1;
+  --theme-line-height-normal: 1.4;
+
+  /* Typography - Font Weights */
+  --font-weight-normal: 400;
+
+  /* Typography - Letter Spacing */
+  --letter-spacing-wide: 0.025em;
+
+  /* Theme Colors - Primary Palette */
+  --theme-primary: #06b6d4;
+  --theme-primary-hover: #0891b2;
+  --theme-secondary: #14b8a6;
+  --theme-accent: #10b981;
+
+  /* Filled-control ink and surface (WCAG 1.4.3 / 1.4.11).
+     A palette colour used as a *surface* needs a foreground that passes on top
+     of it, which white does not: white on the default primary below is 2.43:1.
+     `Tymeslot.ThemeCustomizations.ContrastTokens` derives these per palette and
+     the generated :root block overrides them; the values here are that
+     derivation applied to the defaults above, and are what self-hosted Core
+     uses when the organiser has saved no customisation.
+     Only filled surfaces read *-solid — --theme-primary itself stays as chosen,
+     because borders, focus rings and bright text on the dark card need it
+     bright. */
+  --theme-on-primary: #0f172a;
+  --theme-on-accent: #0f172a;
+
+  /* Theme Colors - Status Colors */
+  --theme-success: #10b981;
+  --theme-warning: #fbbf24;
+  --theme-info: #6366f1;
+  --theme-danger: #ef4444;
+  --theme-danger-dark: #dc2626;
+  /* The danger button's lower stop: white keeps 4.5:1 across the whole
+     gradient from --theme-danger-dark (4.83:1) down to here. */
+  --theme-danger-deep: #b91c1c;
+  /* Ink on a success fill (the confirmation badge's dot): white is 2.54:1 on
+     the success green, this slate 7:1. */
+  --theme-on-success: #0f172a;
+  --theme-error-bg: rgba(254, 226, 226, 0.08);
+  --theme-error-border: rgba(239, 68, 68, 0.6);
+  --theme-error-border-focus: rgba(239, 68, 68, 0.8);
+  --theme-error-light: #fca5a5;
+
+  /* Theme Colors - Base Colors */
+  --theme-background-color: #0f172a;
+  /* The palette's page colour. The server overrides it per organiser; it is
+     what shows behind an image or video background (--theme-background falls
+     back to it). */
+  --theme-canvas: #0f172a;
+  --theme-text: #e2e8f0;
+  --theme-text-secondary: #94a3b8;
+
+  /* Theme Colors - Text Opacity Variants */
+  --text-opacity-high: rgba(255, 255, 255, 0.95);
+  --text-opacity-medium-high: rgba(255, 255, 255, 0.9);
+  --text-opacity-medium: rgba(255, 255, 255, 0.85);
+  --text-opacity-medium-low: rgba(255, 255, 255, 0.8);
+  --text-opacity-low: rgba(255, 255, 255, 0.7);
+  --text-opacity-subtle: rgba(255, 255, 255, 0.6);
+  --text-opacity-very-subtle: rgba(255, 255, 255, 0.5);
+
+  /* Glassmorphism Surface Opacity Levels */
+  --surface-transparent: rgba(255, 255, 255, 0.02);
+  --surface-subtle: rgba(255, 255, 255, 0.05);
+  --surface-very-light: rgba(255, 255, 255, 0.08);
+  --surface-light: rgba(255, 255, 255, 0.1);
+  --surface-medium-light: rgba(255, 255, 255, 0.12);
+  --surface-medium: rgba(255, 255, 255, 0.15);
+  --surface-strong: rgba(255, 255, 255, 0.18);
+  --surface-intense: rgba(255, 255, 255, 0.2);
+
+  /* Dark Surface Overlays (for backgrounds) */
+  --surface-dark-medium: rgba(0, 0, 0, 0.4);
+  --surface-dark-strong: rgba(0, 0, 0, 0.5);
+
+  /* Border Opacity Levels */
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.15);
+  --border-medium: rgba(255, 255, 255, 0.2);
+  --border-strong: rgba(255, 255, 255, 0.25);
+  --border-intense: rgba(255, 255, 255, 0.3);
+
+  /* Border Radius Scale */
+  --radius-sm: 0.375rem;   /* 6px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-3xl: 2rem;      /* 32px */
+  --radius-full: 9999px;   /* pills and circular avatars */
+
+  /* Spacing Scale - Fluid Responsive */
+  --space-hairline: 0.125rem;                    /* 2px — sub-grid gap, compact calendar cells only */
+  --space-3xs: 0.25rem;                          /* 4px */
+  --space-2xs: 0.375rem;                         /* 6px */
+  --space-xs: clamp(0.5rem, 1.0vw, 0.625rem);    /* 8-10px */
+  --space-sm: clamp(0.625rem, 1.4vw, 0.75rem);   /* 10-12px */
+  --space-md: clamp(0.75rem, 1.6vw, 1rem);       /* 12-16px */
+  --space-lg: clamp(1rem, 2.0vw, 1.25rem);       /* 16-20px */
+  --space-xl: clamp(1.25rem, 2.4vw, 1.5rem);     /* 20-24px */
+  --space-2xl: clamp(1.5rem, 3.0vw, 2rem);       /* 24-32px */
+  --space-3xl: clamp(2rem, 3.5vw, 2.5rem);       /* 32-40px */
+  /* The height the corner language switcher takes from the top of the
+     page from 641px: the wrapper's top-6 (1.5rem), its button (py-2 round
+     a text-sm line, about 2.4rem) and a gap. A demo page's theme switcher
+     starts below it (language-switcher.css). */
+  --quill-language-clearance: 4.5rem;
+
+  /* Transition Speeds */
+  --transition-smooth: 0.3s ease;
+
+  /* Elevation Shadows - Base Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
+
+  /* Coloured-shadow geometry (offset and blur). The colour is mixed from the
+     palette in shared/tokens.css, so a custom palette's shadows follow it. */
+  --shadow-geometry-sm: 0 4px 12px;
+  --shadow-geometry-md: 0 6px 20px;
+  --shadow-geometry-lg: 0 12px 32px;
+
+  /* Inset Shadows (highlights) */
+  --inset-highlight-subtle: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --inset-highlight-strong: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  /* Component-Specific Tokens - Avatars (fluid, scales with container) */
+  --avatar-size-lg: clamp(96px, 15cqi, 128px);
+
+  /* Component-Specific Tokens - Icons */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+
+  /* Component-Specific Tokens - Touch Targets */
+  --min-touch-target: 44px;
+
+  /* Component-Specific Tokens - Calendar */
+  --calendar-gap: 0.25rem;
+  --calendar-gap-sm: 0.375rem;
+  --calendar-gap-md: 0.5rem;
+  --calendar-day-height: 2.5rem;
+  --calendar-day-height-sm: 2.75rem;
+  --calendar-day-height-md: 3rem;
+  --calendar-day-height-lg: 3.25rem;
+  --calendar-day-height-mobile: 2.25rem;
+
+  /* Component-Specific Tokens - Time Slots */
+  --time-slot-min-height: 2.75rem;
+  --time-slot-min-height-sm: 2.5rem;
+  --time-slot-padding: 0.75rem 0.5rem;
+  --time-slot-padding-sm: 0.625rem 0.375rem;
+  --time-slot-padding-lg: 0.625rem 0.5rem;
+
+  /* Component-Specific Tokens - Seat Availability (group bookings) */
+  --seat-green: var(--theme-success);
+  --seat-amber: var(--theme-warning);
+  --seat-red: var(--theme-danger);
+  --seat-green-bg: rgba(16, 185, 129, 0.18);
+  --seat-amber-bg: rgba(251, 191, 36, 0.18);
+  --seat-red-bg: rgba(239, 68, 68, 0.18);
+  /* The exact count without the traffic light: a fact, not a warning, so it
+     takes the slot's own text colour on a faint wash of it. */
+  --seat-neutral: currentColor;
+  --seat-neutral-bg: color-mix(in srgb, currentColor 12%, transparent);
+  /* A selected slot sits on the primary gradient, whose text colour is
+     --theme-on-primary, so the badge takes that colour on a faint wash of it,
+     so a custom palette's contrast pair carries over to the badge. */
+  --seat-selected: var(--theme-on-primary);
+  --seat-selected-bg: color-mix(in srgb, var(--theme-on-primary) 14%, transparent);
+  /* The duration badge on a selected meeting-type card: the same faint wash
+     of the on-primary ink over the primary fill. */
+  --duration-badge-selected-surface: color-mix(in srgb, var(--theme-on-primary) 14%, transparent);
+
+  /* Component-Specific Tokens - Container Widths */
+  --container-xs: 280px;
+  --container-sm: 360px;
+  --container-md: 600px;
+  --container-lg: 800px;
+  --container-xl: 1024px;
+  --container-2xl: 1280px;
+
+  /* Component-Specific Tokens - Card Heights (fluid, scales with viewport) */
+  --card-height-sm: clamp(300px, 55vh, 450px);
+  --card-height-md: clamp(350px, 60vh, 500px);
+  --card-height-lg: clamp(400px, 70vh, 600px);
+  --card-height-xl: clamp(420px, 75vh, 650px);
+  --card-height-2xl: clamp(450px, 80vh, 700px);
+
+  /* Component-Specific Tokens - Buttons */
+  --button-padding: 0.75rem 1.5rem;
+  --button-padding-sm: 0.625rem 1rem;
+  --button-radius: 0.75rem;
+  --button-radius-sm: 0.5rem;
+  --button-hover-transform: translateY(-2px);
+
+  /* Component-Specific Tokens - Forms */
+  --input-border-radius: 0.75rem;
+  --input-padding: 0.75rem 1rem;
+  --textarea-min-height: clamp(60px, 15vh, 120px);
+  --textarea-max-height: clamp(200px, 45vh, 400px);
+
+  /* Component-Specific Tokens - Step Indicators */
+  --step-circle-size: 2rem;
+  --step-connector-height: 2px;
+  --step-connector-width: 2rem;
+
+  /* Component-Specific Tokens - Scrollbar */
+  --scrollbar-width: 6px;
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+
+  /* Background Gradients */
+  --theme-background: linear-gradient(135deg, #1a1b3a 0%, #2d1b69 100%);
+
+  /* Background media veil — a dark layer composited over image/video
+     backgrounds so the glass content keeps the contrast it has over the default
+     dark gradient. Without it a bright photo or video leaves card text, the step
+     heading, and the floating chrome under-contrasted. */
+  --background-media-scrim: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55));
+  /* The veil over a solid colour background (video.css), black at an alpha
+     that grows with the colour's OKLCH lightness: nothing up to 0.3 (the
+     default gradient's stops sit below it), 0.7 from about 0.88 (white,
+     yellow). --theme-background holds the organiser's colour then. */
+  --background-colour-scrim: oklch(from var(--theme-background) 0 0 0 / clamp(0, (l - 0.3) * 1.2, 0.7));
+
+  /* Glassmorphism Effects */
+  --glass-blur: 20px;
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 10px;
+  --glass-blur-lg: 15px;
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 24px 48px rgba(0, 0, 0, 0.28), 0 8px 16px rgba(0, 0, 0, 0.16);
+
+  /* Card Border Radius (legacy - use radius tokens) */
+  --card-border-radius: 1.5rem;
+
+  /* Form field focus (the fields themselves are the light ones below) */
+  --input-error-focus-ring: var(--theme-primary-focus);
+  --input-shadow-focus: rgba(0, 0, 0, 0.2);
+
+  /* Option / Yes-No Tile Glassmorphism (custom-questions step) — the selectable
+     glass tiles share one surface system; tokenised here so both the yes/no
+     tiles and the option cards read from a single source. */
+  --option-tile-bg: var(--surface-very-light);
+  --option-tile-bg-hover: rgba(255, 255, 255, 0.14);
+  --option-tile-border: rgba(255, 255, 255, 0.18);
+  --option-tile-border-hover: rgba(255, 255, 255, 0.35);
+  --option-tile-text: rgba(255, 255, 255, 0.85);
+  --option-tile-selected-glow: var(--theme-primary-glow);
+
+  /* Edge of every selected control. The selected fill is the primary, and a
+     background in the same hue as the primary (an orange image under the
+     Sunset palette) shows through the glass card around it, so the fill alone
+     can vanish into its surroundings. The page's text colour is the one
+     colour the palette guarantees reads on that card. */
+  --selected-ring: inset 0 0 0 var(--border-width-medium) var(--theme-text);
+  --option-indicator-idle: rgba(255, 255, 255, 0.45);
+  --option-indicator-hover: rgba(255, 255, 255, 0.7);
+  --option-tile-text-hover: white;
+  --option-tile-focus-ring: 0 0 0 3px var(--theme-primary-focus);
+  --option-card-min-height: 3.5rem;
+
+  /* Roles (shared/tokens.css, section 2), as aliases of Quill's own names */
+  --surface-2: var(--surface-very-light);
+  --surface-3: var(--surface-medium);
+  --ink-1: var(--text-opacity-high);
+  --ink-2: var(--text-opacity-medium);
+  --ink-3: var(--text-opacity-subtle);
+  --notice-warning-surface: rgba(251, 191, 36, 0.1);
+  --notice-warning-border: rgba(251, 191, 36, 0.35);
+  --radius-control: var(--input-border-radius);
+  --radius-card: var(--card-border-radius);
+
+  /* Shared status screens (shared/layout.css: awaiting payment, readiness) */
+  --status-surface: rgba(255, 255, 255, 0.08);
+  --status-surface-opaque: linear-gradient(135deg, rgba(20, 20, 35, 0.86) 0%, rgba(15, 15, 25, 0.78) 100%);
+  --status-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.35);
+  --status-ink-heading: #ffffff;
+  --status-ink: rgba(255, 255, 255, 0.92);
+  --status-ink-soft: rgba(255, 255, 255, 0.85);
+  --status-ink-hint: rgba(255, 255, 255, 0.7);
+
+  /* Meeting pages (modules/meeting-pages.css) */
+  --text-opacity-full: #ffffff;
+  --text-shadow-title: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Approval notice (shared/components/approval-notice.css) */
+  --approval-pill-surface: rgba(251, 191, 36, 0.12);
+  --approval-icon-surface: rgba(251, 191, 36, 0.18);
+  --approval-notice-gap: var(--space-sm);
+  --approval-notice-font-size: var(--theme-font-size-sm);
+  --approval-notice-ink: var(--text-opacity-medium-high);
+  --approval-notice-max-width: 32rem;
+
+  /* Poll voting page (shared/components/polls.css) */
+  --poll-voting-padding: 0;
+  --poll-panel-surface: rgba(255, 255, 255, 0.08);
+  --poll-input-surface: rgba(255, 255, 255, 0.08);
+  --poll-input-line: rgba(255, 255, 255, 0.18);
+  --poll-input-focus-ring: 0 0 0 3px var(--theme-primary-focus);
+  --poll-row-surface: rgba(255, 255, 255, 0.06);
+  --poll-row-line: rgba(255, 255, 255, 0.14);
+  --poll-option-line: rgba(255, 255, 255, 0.2);
+  --poll-option-selected-surface: var(--theme-primary-focus);
+
+  /* Payment return pages (shared/components/payment-pages.css) */
+  --payment-page-max-width: 42rem;
+  --payment-heading-ink: var(--text-opacity-high);
+  --payment-body-ink: var(--text-opacity-medium-high);
+  --payment-link-radius: var(--button-radius-sm);
+  --payment-link-weight: var(--font-weight-semibold);
+  --payment-link-transition: var(--transition-smooth);
+
+  /* Booking fields (shared/components/booking-fields.css) */
+  --guest-remove-ink-hover: #ffffff;
+
+  /* Language switcher (shared/components/language-switcher.css) */
+  --lang-switcher-surface: rgba(0, 0, 0, 0.45);
+  --lang-switcher-surface-hover: rgba(0, 0, 0, 0.55);
+  --lang-switcher-panel-surface: rgba(255, 255, 255, 0.95);
+  --lang-switcher-panel-line: rgba(0, 0, 0, 0.1);
+  --lang-switcher-item-line: rgba(0, 0, 0, 0.05);
+  --lang-switcher-item-hover: rgba(59, 130, 246, 0.1);
+  --lang-switcher-item-active: rgba(59, 130, 246, 0.15);
+  --lang-switcher-ink: #ffffff;
+
+  /* Slot list (shared/components/slot-list.css) */
+  --slot-list-grid-gap: var(--space-xs);
+
+  /* Timezone picker (shared/components/timezone-picker.css). The dropdown
+     surface is fixed dark: it must not use --theme-background, which is
+     overridable by per-profile customisations and could produce a light
+     surface where white text becomes invisible. */
+  --dropdown-surface: linear-gradient(135deg, rgba(20, 15, 45, 0.98) 0%, rgba(30, 20, 60, 0.97) 100%);
+
+  /* Text shadows */
+  --text-shadow-strong: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --text-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --text-shadow-faint: 0 1px 2px rgba(0, 0, 0, 0.2);
+
+  /* Light form fields (booking form, questions, phone location). The field
+     is near white whatever the background, so every colour here is judged
+     against white: the placeholder clears 4.5:1 (WCAG 1.4.3), the edge and
+     the error edge clear 3:1 against both the field and the dark card
+     (1.4.11). An invalid or disabled field stays light, so its typed text
+     keeps the field's dark ink. */
+  --input-light-surface: rgba(255, 255, 255, 0.92);
+  --input-light-line: #64748b;
+  --input-light-line-hover: #475569;
+  --input-light-ink: rgb(15, 23, 42);
+  --input-light-placeholder: #475569;
+  --input-light-error-surface: #fef2f2;
+  --input-light-error-line: #dc2626;
+  --input-light-surface-disabled: #cbd5e1;
+  --input-light-line-disabled: #94a3b8;
+  --input-light-ink-disabled: #334155;
+  /* The custom-question dropdown's chevron sits on that light field
+     (shared/components/custom-questions.css). */
+  --select-chevron-ink: var(--input-light-ink);
+}

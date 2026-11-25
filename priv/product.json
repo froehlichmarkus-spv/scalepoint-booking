@@ -1,0 +1,10 @@
+{
+  "umbrella": "ScalePoint Outreach OS",
+  "tagline": "Reach prospects. Start conversations. Get booked.",
+  "products": [
+    {"key": "booking", "name": "ScalePoint Booking", "role": "Scheduler"},
+    {"key": "mail", "name": "ScalePoint Mail", "role": "Email outreach"},
+    {"key": "connect", "name": "ScalePoint Connect", "role": "LinkedIn outreach"}
+  ],
+  "note": "House product names. They are not copied onto a tenant unless that tenant's own config says so. The neutral tenant does not read this file."
+}

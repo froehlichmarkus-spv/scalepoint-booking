@@ -1,0 +1,560 @@
+defmodule Tymeslot.Bookings.Reschedule do
+  @moduledoc """
+  Orchestrates the booking rescheduling process.
+  Handles meeting time updates, calendar event migration, and notifications.
+
+  ## Rescheduling does not bypass the approval gate
+
+  On a meeting type requiring the host's approval, moving a booking to a new
+  time returns it to the gate rather than carrying the old answer across. The
+  host agreed to a specific time, not to the invitee's standing right to pick
+  another one, and a confirmed booking that can be silently moved anywhere is
+  the gate with an obvious hole in it.
+
+  That only applies, though, when the booking's current status is one the
+  gate is meaningful for: `:confirmed` (the host answered, and the reschedule
+  asks them again) or `:awaiting_approval` (a held request being moved before
+  anyone has answered). A booking that never paid (`:awaiting_payment`) or
+  one whose window already lapsed (`:expired`, already released and
+  refunded) has nothing to gate; forcing either into `:awaiting_approval`
+  would let the host approve a booking nobody paid for, or one the invitee
+  has already been refunded for. Their status is left untouched instead,
+  exactly as an ungated meeting type's is.
+
+  So a reschedule on such a meeting type, from one of those two statuses,
+  re-enters `:awaiting_approval` with a fresh window, the provider event
+  goes back to tentative, and the invitee is told a request was made rather
+  than that their meeting has moved.
+  """
+
+  require Logger
+
+  alias Tymeslot.Auth
+
+  alias Tymeslot.Availability
+
+  alias Tymeslot.Bookings.{
+    Activation,
+    CalendarCheck,
+    CalendarJobs,
+    Errors,
+    Policy,
+    RescheduleGate,
+    RescheduleLocation,
+    Validation
+  }
+
+  alias Tymeslot.Availability.Schedules
+  alias Tymeslot.BookingSeries
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Meetings
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.Meetings.MeetingCalendarQueries
+  alias Tymeslot.Meetings.MeetingQueries
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.Scheduling
+  alias Tymeslot.Meetings.VideoRooms
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Notifications.{Events, GuestNotifications, Orchestrator}
+  alias Tymeslot.Repo
+  alias Tymeslot.Utils.DateTimeUtils.Duration, as: UrlDuration
+  alias Tymeslot.Workers.VideoSyncWorker
+
+  @typedoc """
+  Parameters for rescheduling a meeting to a new time slot.
+
+  `duration` is accepted for shape-compatibility with the booking form but is
+  never used: the rescheduled meeting keeps the original meeting's persisted
+  duration (see `Tymeslot.Bookings.Validation.prepare_new_times/4`), never
+  the request's.
+
+  `location_option_id`, `location_phone`, `location_video_integration_id` and
+  `location_venue_id` are the booker's location choice, applied only when it
+  differs from the meeting's current location (see
+  `Tymeslot.Bookings.RescheduleLocation`).
+  """
+  @type reschedule_params :: %{
+          required(:date) => String.t(),
+          required(:time) => String.t(),
+          required(:duration) => integer() | String.t(),
+          required(:user_timezone) => String.t(),
+          optional(:location_option_id) => String.t() | nil,
+          optional(:location_phone) => String.t() | nil,
+          optional(:location_video_integration_id) => integer() | String.t() | nil,
+          optional(:location_venue_id) => integer() | String.t() | nil,
+          optional(atom()) => term()
+        }
+
+  @doc """
+  Reschedules an existing meeting.
+
+  This includes:
+  1. Validating the new time, against the organiser's schedule and their
+     connected calendars
+  2. Cancelling the original calendar event
+  3. Updating meeting times with conflict checking, together with any video
+     join URLs that are only valid relative to the meeting time, and the
+     location when the booker chose a new one
+  4. Creating new calendar event
+  5. Deleting a video room the new location no longer uses, and creating one
+     it does
+  6. Sending rescheduling notifications, which a room being created sends
+     instead once its join link exists
+
+  The `organizer_user_id` is required and scopes the meeting lookup, as in
+  `Tymeslot.Bookings.Orchestrator.get_meeting_for_reschedule/2`.
+
+  Returns `{:ok, meeting}` or `{:error, reason}`, where `reason` is either a
+  semantic atom (`Tymeslot.Bookings.Errors.classified_error/0` — currently
+  `:meeting_not_found` when the lookup fails or the organiser's account is
+  pending deletion, `:slot_taken` when a concurrent
+  booking claims the new time first, when the requested time is one the
+  organiser's schedule never offers, or when their connected calendar has
+  since been blocked over it, `:availability_unverifiable` when their
+  connected calendars could not all be read to check the new time, or
+  `:failed_to_update_meeting` when persisting the new time fails for any
+  other reason) or a refusal from `Tymeslot.Bookings.Policy` or
+  `Tymeslot.Bookings.Validation` (`Tymeslot.Bookings.Refusal.t/0`).
+  """
+  @spec execute(String.t(), reschedule_params(), integer()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Errors.classified_error()}
+  def execute(meeting_uid, new_params, organizer_user_id)
+      when is_binary(meeting_uid) and is_integer(organizer_user_id) do
+    with {:ok, original_meeting} <- fetch_meeting(meeting_uid, organizer_user_id),
+         :ok <- validate_can_reschedule(original_meeting),
+         :ok <- Policy.can_booker_move_meeting?(original_meeting),
+         meeting_type <-
+           fetch_meeting_type(
+             original_meeting.meeting_type_id,
+             organizer_user_id,
+             original_meeting.duration
+           ),
+         # A session of a series may move as far as the series reaches,
+         # past the booking window, which binds its first session alone.
+         config <-
+           original_meeting.organizer_user_id
+           |> Schedules.booking_config(meeting_type)
+           |> BookingSeries.widen_window(original_meeting),
+         {:ok, new_times} <-
+           Validation.prepare_new_times(new_params, original_meeting, meeting_type, config),
+         :ok <- verify_calendar_free(original_meeting, new_times, config) do
+      apply_new_time(
+        original_meeting,
+        new_times,
+        meeting_type,
+        RescheduleLocation.attributes(original_meeting, meeting_type, new_params)
+      )
+    else
+      {:error, :not_found} -> {:error, :meeting_not_found}
+      error -> error
+    end
+  end
+
+  @doc """
+  Writes `new_times` to `original`, a meeting the caller has already found
+  movable, and sets off what a committed move does: fresh availability, the
+  video room and calendar entry moved, reminders pinned to the new time and
+  the reschedule emails. The step a booker's reschedule (`execute/3`) and a
+  host's move (`Tymeslot.Bookings.HostMove`) share; the meeting is checked
+  again under its lock, and another meeting at the new time refuses it
+  (`:slot_taken`).
+
+  The host's booking limits and buffers are checked too, as they shape the
+  times a booker may pick. Pass `host_chosen: true` for a time the host
+  picked themselves (`Tymeslot.Bookings.HostMove`), to which neither applies.
+  """
+  @spec apply_new_time(MeetingSchema.t(), map(), map() | nil, map(), keyword()) ::
+          {:ok, MeetingSchema.t()} | {:error, Errors.classified_error()}
+  def apply_new_time(original, new_times, meeting_type, location_attrs, opts \\ []) do
+    with {:ok, {updated, pending}} <-
+           apply_time_update_and_schedule_job(
+             original,
+             new_times,
+             meeting_type,
+             location_attrs,
+             opts
+           ) do
+      after_commit(updated, original, pending)
+      {:ok, updated}
+    end
+  end
+
+  # Private functions
+
+  # A reschedule page opened before its host asked to delete their account can
+  # still submit; the host's meetings are about to go, so the meeting is unknown.
+  defp fetch_meeting(meeting_uid, organizer_user_id) do
+    if Auth.deletion_pending?(organizer_user_id),
+      do: {:error, :meeting_not_found},
+      else: MeetingQueries.get_meeting_by_uid_for_attendee(meeting_uid, organizer_user_id)
+  end
+
+  # Everything a committed reschedule sets off outside the meeting row: fresh
+  # availability, the provider side of any room the move left behind or
+  # moved, and the emails. `pending` is the integration fan-out a booking
+  # confirmed outright still owes (see `activate_if_confirmed_outright/2`).
+  defp after_commit(updated_meeting, original_meeting, pending) do
+    Availability.changed(updated_meeting.organizer_user_id)
+    RescheduleLocation.release_abandoned_room(updated_meeting, original_meeting)
+    sync_provider_video_room(updated_meeting)
+    announce(updated_meeting, original_meeting, pending)
+  end
+
+  defp apply_time_update_and_schedule_job(
+         meeting,
+         %{start_time: start_dt, end_time: end_dt, duration_minutes: _dur},
+         meeting_type,
+         location_attrs,
+         opts
+       ) do
+    # Booking a new time settles any pending organizer reschedule request
+    # (`reschedule_requested_at` is cleared), and the reminder tracking and
+    # external-change flags described the old time, so they are reset.
+    #
+    # The location lands in the same write as the times, so the calendar job
+    # scheduled below already carries it.
+    #
+    # Join links that expire relative to the meeting time (Jitsi tokens) are
+    # rebuilt here, before the write, rather than in `VideoSyncWorker`: the
+    # reschedule emails are rendered from the meeting this write returns, and
+    # the calendar and webhook jobs read the row it commits, so a link
+    # refreshed later would already have gone out stale. A failure to build
+    # them keeps the stored links rather than failing the reschedule.
+    #
+    # The new time is a new revision of the calendar entry, so `ical_sequence`
+    # rises (SEQUENCE has to rise, not run consecutively). A reschedule that
+    # re-enters the approval gate sends no calendar entry (see `announce/3`),
+    # so the bump only reserves the revision for the confirmation ICS the
+    # host's approval sends; a declined or expired request leaves it unspent.
+    # The bump is taken from the locked row (see `update_meeting/2`), not
+    # from `meeting`, because a host-side change committed while the calendar
+    # was being checked may have advanced it.
+    attrs =
+      %{
+        start_time: start_dt,
+        end_time: end_dt,
+        reschedule_requested_at: nil,
+        reminders_sent: [],
+        reminder_email_sent: false,
+        calendar_sync_status: nil,
+        calendar_sync_status_dismissed_at: nil
+      }
+      |> Map.merge(RescheduleGate.attributes(meeting_type, start_dt, meeting))
+      |> Map.merge(VideoRooms.refreshed_join_url_attrs(meeting, start_dt))
+      |> Map.merge(location_attrs)
+
+    case Repo.transaction(fn ->
+           with {:ok, updated} <- update_meeting(meeting, attrs, opts),
+                {:ok, _result} <- schedule_calendar_job(updated),
+                {:ok, pending} <- activate_if_confirmed_outright(updated, meeting),
+                :ok <- settle_reminders(updated, meeting) do
+             # Everyone is told the new times (see `announce/3`), so an end
+             # change still waiting to be announced has nothing left to say.
+             :ok = MeetingCalendarQueries.clear_notified_ends(updated.id)
+             {updated, pending}
+           else
+             {:error, reason} ->
+               Repo.rollback(reason)
+           end
+         end) do
+      {:ok, {_updated, _pending}} = ok -> ok
+      {:error, :slot_taken} -> {:error, :slot_taken}
+      {:error, :booking_limit_reached} -> {:error, :booking_limit_reached}
+      {:error, :meeting_not_found} -> {:error, :meeting_not_found}
+      {:error, {:refused, reason}} -> {:error, reason}
+      {:error, _reason} -> {:error, :failed_to_update_meeting}
+    end
+  end
+
+  # A held request this reschedule confirms outright (see
+  # `RescheduleGate.attributes/3`) is a new booking nobody has been told
+  # about, so its emails and reminders commit with the reschedule, as an
+  # approval's commit with the approval, or the reschedule fails and is
+  # retried whole.
+  defp activate_if_confirmed_outright(
+         %{status: :confirmed} = updated,
+         %{status: :awaiting_approval}
+       ),
+       do: Activation.activate_in_transaction(updated, with_video_room: true)
+
+  defp activate_if_confirmed_outright(_updated, _meeting), do: {:ok, []}
+
+  # A booking back in the gate has not been rescheduled from the invitee's
+  # point of view — it has been re-requested. Sending the reschedule email
+  # would tell them their meeting has moved to a time nobody has agreed to,
+  # which is the confusion the whole feature exists to remove.
+  #
+  # Known gap: when the booking being re-gated came from `:confirmed`, the
+  # invitee's calendar client may already hold an event from the original
+  # confirmation's ICS attachment (`AppointmentConfirmation`'s
+  # `IcsGenerator.generate_ics_attachment/2`). The request email sent below
+  # (`BookingRequestReceived`) carries no calendar attachment, so that entry
+  # is left showing the old, no-longer-accurate confirmed time until the host
+  # answers again. Both outcomes heal it: the reschedule notice approval now
+  # sends carries an ICS for the new time stamped with the `ical_sequence`
+  # this reschedule advanced, so the client supersedes the entry it holds
+  # rather than judging two entries of equal revision by their DTSTAMP, and a
+  # decline or an expiry cancels the booking, whose outcome email
+  # (`BookingRequestOutcome`) carries a cancellation ICS for it. Correcting
+  # the entry while the request is still open would need a calendar-only path
+  # analogous to `Tymeslot.Meetings.AttendeeNotifications`'s ICS handling,
+  # which lives outside this module's booking-email templates and is left for
+  # that work rather than bolted on here.
+  defp announce(%{status: :awaiting_approval} = updated, original, _pending) do
+    GuestNotifications.reset_for_new_time(updated)
+
+    case Events.meeting_requested(updated, previous_start_opts(updated, original)) do
+      {:ok, _result} ->
+        Logger.info("Reschedule returned the booking to the approval gate",
+          meeting_id: updated.id
+        )
+
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to send booking request notifications on reschedule",
+          meeting_id: updated.id,
+          reason: LogFormat.reason(reason)
+        )
+
+        :ok
+    end
+  end
+
+  # `RescheduleGate.attributes/3` confirms a held request outright when its
+  # meeting type stopped requiring approval since the request was made: see
+  # the comment there. That booking is a new confirmed meeting nobody has ever
+  # been told about: it was held from the moment it was created, so it has no
+  # confirmation email, no ICS, no video room, no reminders and an unclaimed
+  # `announced_at`. Telling the invitee their meeting "has been rescheduled"
+  # would be the only thing they ever heard about it.
+  #
+  # So this takes the approval side effects rather than the reschedule ones,
+  # as `Approval.approve/1` does. The meeting was activated with its video
+  # room in the reschedule's own transaction (`activate_if_confirmed_outright/2`),
+  # so its confirmation and reminders committed with the new time or not at
+  # all; what is left runs here, through the very function approval uses
+  # after its commit (`Approval.activate_confirmed/2`): the request
+  # notifications are cancelled, the tentative calendar hold is flipped to a
+  # real event, and the integrations are told. Sharing it rather than
+  # repeating its steps here is what keeps this path from drifting away from
+  # the approval it is standing in for.
+  #
+  # The duplicate calendar "update" job this schedules on top of
+  # `apply_time_update_and_schedule_job/5`'s own is harmless:
+  # `CalendarJobs.schedule_job/2` is uniqueness-guarded and reports the second
+  # insert as `:already_scheduled`.
+  defp announce(%{status: :confirmed} = updated, %{status: :awaiting_approval}, pending) do
+    Approval.activate_confirmed(updated, pending)
+  end
+
+  # A room on a newly chosen video integration, or one still on its way when
+  # the reschedule came, is scheduled here rather than alongside the release,
+  # because only this path confirms nothing on its own: the two clauses above
+  # leave room creation to the approval that confirms the booking. When a room
+  # is on its way, its job sends these notifications once the join link
+  # exists.
+  defp announce(updated, original, _pending) do
+    case RescheduleLocation.create_room(updated, original) do
+      :scheduled -> :ok
+      :not_scheduled -> send_reschedule_notifications(updated, original)
+    end
+  end
+
+  # A booking confirmed before (`first_announced_at`) is being moved, and its
+  # request emails say so; showing the time it was moved from needs the
+  # original, which nothing else keeps once the new time is saved.
+  defp previous_start_opts(%{first_announced_at: %DateTime{}}, %{start_time: %DateTime{} = start}),
+       do: [previous_start_time: start]
+
+  defp previous_start_opts(_updated, _original), do: []
+
+  # A moved booking's reminders are settled in the reschedule's transaction,
+  # so they commit with the new time or the reschedule fails for a retry: a
+  # reminder left at the old time would block the new one, then discard
+  # itself as overtaken, leaving the booking with none.
+  #
+  # A booking re-entering the gate must not carry reminders pinned to the
+  # time it was confirmed for before: left alone, they would fire and remind
+  # the attendee about a meeting nobody has agreed to yet, so they are
+  # cleared, and `Approval.approve/1` pins them afresh once the host answers.
+  # A held request confirmed outright got its reminders from its activation.
+  # Any other move replaces the reminders with ones pinned to the new time,
+  # including those an organiser's reschedule request had cleared.
+  defp settle_reminders(updated, meeting) do
+    case reminder_step(updated, meeting) do
+      :ok -> :ok
+      {:ok, _result} -> :ok
+      {:error, reason} -> {:error, {:reminders_not_settled, reason}}
+    end
+  rescue
+    exception -> {:error, {:reminders_not_settled, exception}}
+  end
+
+  defp reminder_step(%{status: :awaiting_approval} = updated, _meeting),
+    do: Orchestrator.cancel_reminder_notifications(updated)
+
+  defp reminder_step(%{status: :confirmed}, %{status: :awaiting_approval}), do: :ok
+
+  defp reminder_step(updated, _meeting),
+    do: Orchestrator.schedule_reminder_notifications(updated, replace: true)
+
+  defp validate_can_reschedule(meeting) do
+    with :ok <- Policy.can_reschedule_meeting?(meeting) do
+      refuse_group_meeting(meeting)
+    end
+  end
+
+  # A group slot is shared, so moving the meeting row would move everybody on
+  # it without asking, and the notification would go to an attendee that a
+  # group meeting does not have. Participants move their own seat through
+  # `Tymeslot.Bookings.RescheduleSeat`; a host who wants the whole slot moved
+  # sends a reschedule request, which now reaches every participant.
+  #
+  # Decided from the meeting's own `capacity` snapshot, not from who
+  # currently holds a seat: a group slot stays a group slot even while
+  # temporarily empty (the last participant leaving cancels the meeting
+  # outright — see `Tymeslot.Bookings.SeatRelease` — so a live group meeting
+  # with zero live participants should not occur, but must not silently
+  # become reschedulable if it ever does).
+  defp refuse_group_meeting(meeting) do
+    if Meetings.group?(meeting) do
+      {:error, :group_meeting_not_reschedulable}
+    else
+      :ok
+    end
+  end
+
+  # The schedule check in `Validation.prepare_new_times/4` re-derives the
+  # organiser's windows and breaks, but
+  # it computes them against an empty event list by design
+  # (`Calculate.offers_slot/6`), and the write below only looks at the scheduler's
+  # own meetings. Without this, nothing on the reschedule path ever consults the
+  # host's connected calendar: a time the host blocked in Google, Outlook or
+  # CalDAV after the reschedule page rendered, or one the page's cached event
+  # list never knew about, could still be moved onto. The booking submit has
+  # re-read the calendar at this point for as long as it has existed; this is
+  # the same check, through the same module.
+  #
+  # The meeting being moved is excluded, because its own event is sitting in
+  # that calendar: counting it would refuse every move onto a time overlapping
+  # or (through the buffer) adjacent to the slot it already occupies, so a
+  # booking could not be nudged by fifteen minutes.
+  #
+  # A clash collapses to `:slot_taken`, returning the invitee to the grid to
+  # pick another time; a busy set that could not be read stays
+  # `:availability_unverifiable`, as `Create` classifies it, since every other
+  # time would be refused the same way.
+  defp verify_calendar_free(meeting, %{start_time: start_time, end_time: end_time}, config) do
+    slot = %{
+      organizer_user_id: meeting.organizer_user_id,
+      start_datetime: start_time,
+      end_datetime: end_time
+    }
+
+    case CalendarCheck.enforce(slot, config, exclude: meeting) do
+      :ok -> :ok
+      {:error, :availability_unverifiable} = unverifiable -> unverifiable
+      {:error, _reason} -> {:error, :slot_taken}
+    end
+  end
+
+  # Ad-hoc meetings (no `meeting_type_id`) mirror the reschedule page's own
+  # fallback (`ThemeFlow.resolve_meeting_type_for_duration/2`): resolve by a
+  # duration match rather than jumping straight to the organiser's default
+  # schedule, so the enforcement side checks the same schedule the displayed
+  # grid was drawn from. Only when no type matches that duration does this
+  # resolve to `nil`, which in turn falls back to the default schedule.
+  defp fetch_meeting_type(nil, organizer_user_id, duration_minutes) do
+    duration_minutes
+    |> UrlDuration.format_for_url()
+    |> MeetingTypes.normalize_duration_slug()
+    |> then(&MeetingTypes.find_by_duration_string(organizer_user_id, &1))
+  end
+
+  defp fetch_meeting_type(meeting_type_id, organizer_user_id, _duration_minutes),
+    do: MeetingTypes.get_meeting_type(meeting_type_id, organizer_user_id)
+
+  # The meeting was read and validated before the provider calendar fetch,
+  # which can take seconds; a cancellation (or anything else that ends it)
+  # may have committed since. The guard re-runs the same validation against
+  # the row as it stands under its lock, so a meeting cancelled meanwhile is
+  # refused rather than moved, or returned to the approval gate.
+  defp update_meeting(meeting, attrs, opts) do
+    case Scheduling.update_meeting_with_conflict_check(
+           meeting,
+           attrs,
+           [
+             guard: &validate_can_reschedule/1,
+             locked_attrs: &%{ical_sequence: &1.ical_sequence + 1}
+           ] ++ host_choice_opts(opts)
+         ) do
+      {:ok, updated} -> {:ok, updated}
+      {:error, :time_conflict} -> {:error, :slot_taken}
+      {:error, :booking_limit_reached} -> {:error, :booking_limit_reached}
+      {:error, :not_found} -> {:error, :meeting_not_found}
+      {:error, {:refused, _reason} = refused} -> {:error, refused}
+      {:error, _reason} -> {:error, :failed_to_update_meeting}
+    end
+  end
+
+  # A time the host picked is theirs to pick: the limits and buffers that
+  # shape what a booker is offered do not apply to it.
+  defp host_choice_opts(opts) do
+    if Keyword.get(opts, :host_chosen, false),
+      do: [enforce_booking_limits: false, buffers: false],
+      else: []
+  end
+
+  defp schedule_calendar_job(updated) do
+    CalendarJobs.schedule_job(updated, "update")
+  end
+
+  # Enqueues the video-sync job that updates the provider-side meeting (e.g.
+  # Zoom) to the new booking time. It goes through Oban rather than running
+  # inline so a transient provider 5xx/429 retries instead of leaving the
+  # meeting permanently out of step; providers without a server-side meeting
+  # object resolve to :ok inside the job. Never blocks the reschedule: the
+  # booking is already updated locally, and its join URLs either stay valid
+  # across the move or were already rebuilt for the new time by
+  # `apply_time_update_and_schedule_job/5`. Whether an integration can still
+  # reach the room is decided inside the job by `IntegrationResolver`, so a
+  # meeting whose integration was disconnected is still synced rather than left
+  # advertising the old time.
+  #
+  # A room the reschedule detached for a new location has no `video_room_id`
+  # left on `updated`, so it is skipped here; `RescheduleLocation` releases it.
+  defp sync_provider_video_room(%{video_room_id: nil}), do: :ok
+  defp sync_provider_video_room(%{organizer_user_id: nil}), do: :ok
+
+  defp sync_provider_video_room(meeting) do
+    case VideoSyncWorker.enqueue(meeting.id, "update") do
+      {:ok, _status} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to enqueue provider video sync on reschedule",
+          meeting_id: meeting.id,
+          reason: LogFormat.reason(reason)
+        )
+
+        :ok
+    end
+  end
+
+  defp send_reschedule_notifications(updated_meeting, original_meeting) do
+    case Events.meeting_rescheduled(updated_meeting, original_meeting) do
+      {:ok, _result} ->
+        Logger.info("Reschedule notifications scheduled", meeting_id: updated_meeting.id)
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to send reschedule notifications",
+          meeting_id: updated_meeting.id,
+          reason: LogFormat.reason(reason)
+        )
+
+        :ok
+    end
+  end
+end

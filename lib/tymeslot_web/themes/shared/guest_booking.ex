@@ -1,0 +1,264 @@
+defmodule TymeslotWeb.Themes.Shared.GuestBooking do
+  @moduledoc """
+  Socket-state orchestration for the booking form's "add guests" field.
+
+  Owns the in-flight guest list while the invitee fills in the booking form:
+  adding (with inline validation), removing, and tracking the draft input.
+  The committed list lives in the `:guest_emails` assign; the booking
+  submission reads it from there.
+
+  Client-side validation here is for fast UX feedback only — the authoritative
+  sanitisation (self-exclusion, de-dup, cap) is re-applied server-side in
+  `Tymeslot.Meetings.Guests.sanitize_emails/3` before persistence, with the
+  meeting type's own limit (`Tymeslot.Meetings.Guests.limit_for/1`).
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  import Phoenix.Component, only: [assign: 3]
+
+  alias Tymeslot.Meetings.Guests
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Security.FieldValidators.EmailValidator
+  alias TymeslotWeb.Components.MeetingUtils
+  alias TymeslotWeb.Themes.Shared.Components.SeatBadge
+  alias TymeslotWeb.Themes.Shared.Journey.Facts.Series
+
+  @doc "Initial assigns for the guest field, set once at scheduling mount."
+  @spec assign_defaults(Phoenix.LiveView.Socket.t()) :: Phoenix.LiveView.Socket.t()
+  def assign_defaults(socket) do
+    socket
+    |> assign(:guest_emails, [])
+    |> assign(:guest_input, "")
+    |> assign(:guest_error, nil)
+    |> assign(:guests_open, false)
+    |> assign(:max_guests, Guests.default_booking_limit())
+    |> assign(:guest_cap_visible, true)
+  end
+
+  @doc "Tracks the draft guest email as the invitee types."
+  @spec set_input(Phoenix.LiveView.Socket.t(), String.t()) :: Phoenix.LiveView.Socket.t()
+  def set_input(socket, value), do: assign(socket, :guest_input, to_string(value))
+
+  @doc "Reveals the guest field from its collapsed state."
+  @spec open(Phoenix.LiveView.Socket.t()) :: Phoenix.LiveView.Socket.t()
+  def open(socket), do: assign(socket, :guests_open, true)
+
+  @doc """
+  Collapses the guest field back to its "+ Add guests" call to action.
+
+  Clears any in-flight guests and the draft input — the close (×) control
+  abandons the guest section entirely, so the field is reset to its initial
+  state.
+  """
+  @spec close(Phoenix.LiveView.Socket.t()) :: Phoenix.LiveView.Socket.t()
+  def close(socket) do
+    socket
+    |> assign(:guests_open, false)
+    |> assign(:guest_emails, [])
+    |> assign(:guest_input, "")
+    |> assign(:guest_error, nil)
+  end
+
+  @doc """
+  Validates and adds a guest email to the in-flight list.
+
+  Returns the socket with `:guest_emails` extended and the input cleared on
+  success, or `:guest_error` set (and the draft preserved) on a validation
+  failure.
+  """
+  @spec add(Phoenix.LiveView.Socket.t(), String.t()) :: Phoenix.LiveView.Socket.t()
+  def add(socket, raw_email) do
+    email = normalize(raw_email)
+    emails = socket.assigns[:guest_emails] || []
+
+    case validate(email, emails, socket) do
+      :ok ->
+        socket
+        |> assign(:guest_emails, emails ++ [email])
+        |> assign(:guest_input, "")
+        |> assign(:guest_error, nil)
+
+      {:error, message} ->
+        assign(socket, :guest_error, message)
+    end
+  end
+
+  @doc """
+  Returns whether the booking form should show the guest field.
+
+  Guests are allowed when the meeting type has `allow_guests: true` and the
+  current flow is not a reschedule (adding guests to an existing meeting is
+  not supported) or a series (whose sessions take no guests yet: the booker
+  who switches to a single session gets the field back). Hidden outright once the seat cap has been driven to zero
+  (the last seat on a group slot) — there is no room for a guest at all —
+  unless the field was already open: a booker who had typed guests in before
+  a seat broadcast dropped the cap to zero must still see the field (now
+  capped at 0/0, with `assign_seat_cap/1`'s trim notice) rather than have it,
+  and the explanation for why their guests vanished, disappear together.
+  """
+  @spec guests_allowed?(map()) :: boolean()
+  def guests_allowed?(assigns) do
+    if Series.request(assigns), do: false, else: single_guests_allowed?(assigns)
+  end
+
+  defp single_guests_allowed?(%{max_guests: 0} = assigns), do: assigns[:guests_open] == true
+
+  defp single_guests_allowed?(assigns) do
+    case assigns[:meeting_type] do
+      %{allow_guests: true} -> assigns[:is_rescheduling] != true
+      _other -> false
+    end
+  end
+
+  @doc """
+  Recomputes the `:max_guests` assign from the seats left on the selected slot,
+  trimming any guests the new slot has no room for.
+
+  Call whenever the booker commits to a slot (booking-step entry) and after a
+  live seat refresh — the cap must always reflect the seats the booker can
+  actually still claim beyond their own.
+
+  The trim matters as much as the cap. A booker who added three guests while
+  five seats were free, and then lost seats to other bookers, would otherwise
+  carry all three into every later slot: the seat transaction refuses
+  `1 + guests` over capacity, so every slot small enough would bounce back as
+  "no longer available" without ever mentioning guests. Dropping the guests
+  that no longer fit — newest first, since the earliest invited are the ones
+  the booker chose first — keeps the list honest and the error truthful.
+  """
+  @spec assign_seat_cap(Phoenix.LiveView.Socket.t()) :: Phoenix.LiveView.Socket.t()
+  def assign_seat_cap(socket) do
+    prev_cap = socket.assigns[:max_guests]
+    cap = seat_cap(socket.assigns)
+    before = socket.assigns[:guest_emails] || []
+    kept = Enum.take(before, cap)
+    notice = trim_notice(before, kept)
+
+    # A broadcast that leaves this booker's cap unchanged must not clobber an
+    # in-flight validation error from the add form. One that does change the
+    # cap clears any stale notice unless it produces a fresh one of its own.
+    error =
+      cond do
+        notice -> notice
+        cap == prev_cap -> socket.assigns[:guest_error]
+        true -> nil
+      end
+
+    socket
+    |> assign(:max_guests, cap)
+    |> assign(:guest_cap_visible, cap_visible?(socket.assigns))
+    |> assign(:guest_emails, kept)
+    |> assign(:guest_error, error)
+  end
+
+  defp trim_notice(before, kept) when length(before) > length(kept) do
+    dngettext(
+      "booking",
+      "This time only has room for %{count} of your guests, so the rest were removed.",
+      "This time only has room for %{count} of your guests, so the rest were removed.",
+      length(kept)
+    )
+  end
+
+  defp trim_notice(_before, _kept), do: nil
+
+  @doc """
+  Effective guest cap: the meeting type's guest limit (`Guests.limit_for/1`),
+  bounded by `seats_left - 1` for a group meeting type with a known selected
+  slot.
+  """
+  @spec seat_cap(map()) :: non_neg_integer()
+  def seat_cap(assigns) do
+    limit = Guests.limit_for(assigns[:meeting_type])
+
+    with true <- MeetingTypes.group_type?(assigns[:meeting_type]),
+         %{seats_left: seats_left} when is_integer(seats_left) <- selected_slot(assigns) do
+      max(min(limit, seats_left - 1), 0)
+    else
+      _other -> limit
+    end
+  end
+
+  @doc """
+  Whether the guest field may show its cap (`added/cap`).
+
+  On a group slot the cap is derived from the seats left, so showing it gives
+  away the exact count. It is shown only where the slot itself shows that
+  count (`SeatBadge.display/2` returns `spots_left`); otherwise the field
+  shows just the number added, and the cap surfaces only as the refusal when
+  the booker tries to add one guest too many.
+  """
+  @spec cap_visible?(map()) :: boolean()
+  def cap_visible?(assigns) do
+    with true <- MeetingTypes.group_type?(assigns[:meeting_type]),
+         %{seats_left: seats_left} = slot when is_integer(seats_left) <- selected_slot(assigns) do
+      match?(
+        %{spots_left: spots} when is_integer(spots),
+        SeatBadge.display(slot, assigns[:meeting_type])
+      )
+    else
+      _other -> true
+    end
+  end
+
+  defp selected_slot(%{selected_time: time} = assigns) when is_binary(time) do
+    assigns[:available_slots]
+    |> MeetingUtils.normalize_slot_list()
+    |> Enum.find(&(&1.time == time))
+  end
+
+  defp selected_slot(_assigns), do: nil
+
+  @doc "Removes a guest email from the in-flight list."
+  @spec remove(Phoenix.LiveView.Socket.t(), String.t()) :: Phoenix.LiveView.Socket.t()
+  def remove(socket, email) do
+    target = normalize(email)
+    emails = Enum.reject(socket.assigns[:guest_emails] || [], &(&1 == target))
+
+    socket
+    |> assign(:guest_emails, emails)
+    |> assign(:guest_error, nil)
+  end
+
+  defp validate("", _emails, _socket), do: {:error, blank_message()}
+
+  defp validate(email, emails, socket) do
+    max_guests = socket.assigns[:max_guests] || Guests.default_booking_limit()
+
+    cond do
+      length(emails) >= max_guests ->
+        {:error,
+         dngettext(
+           "booking",
+           "You can add up to %{count} guest.",
+           "You can add up to %{count} guests.",
+           max_guests,
+           count: max_guests
+         )}
+
+      email in emails ->
+        {:error, dgettext("booking", "%{email} has already been added.", email: email)}
+
+      primary_email?(socket, email) ->
+        {:error, dgettext("booking", "You don't need to add your own email as a guest.")}
+
+      EmailValidator.validate(email) != :ok ->
+        {:error, dgettext("booking", "Enter a valid email address.")}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp blank_message, do: dgettext("booking", "Enter a valid email address.")
+
+  defp primary_email?(socket, email) do
+    case socket.assigns[:form] do
+      %{params: %{"email" => primary}} when is_binary(primary) -> normalize(primary) == email
+      _other -> false
+    end
+  end
+
+  defp normalize(value), do: value |> to_string() |> String.trim() |> String.downcase()
+end

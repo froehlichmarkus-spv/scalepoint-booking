@@ -1,0 +1,351 @@
+defmodule Tymeslot.Utils.DateTimeUtilsTest do
+  use ExUnit.Case, async: true
+
+  @moduletag :utils
+
+  use ExUnitProperties
+
+  alias Tymeslot.Utils.DateTimeUtils
+  alias Tymeslot.Utils.DateTimeUtils.Duration
+
+  describe "parse_duration/1" do
+    test "parses time durations (PT)" do
+      assert {:ok, 3600} == Duration.parse("PT1H")
+      assert {:ok, 90} == Duration.parse("PT1M30S")
+      assert {:ok, 5400} == Duration.parse("PT1H30M")
+      assert {:ok, 3661} == Duration.parse("PT1H1M1S")
+    end
+
+    test "parses day and week durations (P)" do
+      assert {:ok, 86_400} == Duration.parse("P1D")
+      assert {:ok, 604_800} == Duration.parse("P1W")
+      assert {:ok, 691_200} == Duration.parse("P1W1D")
+    end
+
+    test "returns error for invalid formats" do
+      assert {:error, "Invalid duration format"} == Duration.parse("invalid")
+      assert {:error, "Invalid duration format"} == Duration.parse("")
+
+      assert {:error, "Unsupported or invalid duration format"} ==
+               Duration.parse("P")
+    end
+
+    test "parse_nominal/1 keeps nominal days apart from the exact time part" do
+      assert {:ok, {1, 7200}} == Duration.parse_nominal("P1DT2H")
+      assert {:ok, {8, 0}} == Duration.parse_nominal("P1W1D")
+      assert {:ok, {0, 5400}} == Duration.parse_nominal("PT1H30M")
+      assert {:error, "Negative duration"} == Duration.parse_nominal("-P1D")
+      assert {:error, "Invalid duration format"} == Duration.parse_nominal("P1Y")
+    end
+
+    property "never crashes and returns either ok or error for random strings" do
+      check all(s <- string(:ascii)) do
+        assert {status, _payload} = Duration.parse(s)
+        assert status in [:ok, :error]
+      end
+    end
+
+    property "correctly parses generated PT durations" do
+      check all(
+              h <- integer(0..1000),
+              m <- integer(0..59),
+              s <- integer(0..59)
+            ) do
+        duration_str = "PT#{h}H#{m}M#{s}S"
+        expected_seconds = h * 3600 + m * 60 + s
+        assert {:ok, ^expected_seconds} = Duration.parse(duration_str)
+      end
+    end
+
+    property "correctly parses generated P durations" do
+      check all(
+              w <- integer(0..52),
+              d <- integer(0..31)
+            ) do
+        duration_str = "P#{w}W#{d}D"
+        expected_seconds = w * 604_800 + d * 86_400
+        assert {:ok, ^expected_seconds} = Duration.parse(duration_str)
+      end
+    end
+
+    test "reads a day part combined with a time part" do
+      assert Duration.parse("P1DT2H") == {:ok, 93_600}
+      assert Duration.parse("P1W2DT3H4M5S") == {:ok, 604_800 + 2 * 86_400 + 3 * 3600 + 4 * 60 + 5}
+    end
+
+    test "reads any letter case and a leading plus" do
+      assert Duration.parse("p1w") == {:ok, 604_800}
+      assert Duration.parse("pt1h30m") == {:ok, 5400}
+      assert Duration.parse("+PT15M") == {:ok, 900}
+    end
+
+    test "refuses a negative duration, which is no length" do
+      assert {:error, _reason} = Duration.parse("-PT1H")
+      assert {:error, _reason} = Duration.parse("-P1D")
+    end
+
+    test "refuses a time marker with no time after it" do
+      assert {:error, _reason} = Duration.parse("PT")
+      assert {:error, _reason} = Duration.parse("P1DT")
+      assert {:error, _reason} = Duration.parse("PT5")
+    end
+
+    test "handles unsupported P components gracefully (e.g. months)" do
+      # Now returns error for unsupported components because of regex anchors
+      assert {:error, _reason} = Duration.parse("P1M")
+      assert {:error, _reason} = Duration.parse("P1Y")
+    end
+  end
+
+  describe "Duration.parse_signed/1" do
+    test "reads a negative duration as negative seconds" do
+      assert Duration.parse_signed("-P1D") == {:ok, -86_400}
+      assert Duration.parse_signed("-PT1H30M") == {:ok, -5400}
+      assert Duration.parse_signed("-P1W") == {:ok, -604_800}
+    end
+
+    test "reads an unsigned or plus-signed duration as positive seconds" do
+      assert Duration.parse_signed("PT15M") == {:ok, 900}
+      assert Duration.parse_signed("+PT15M") == {:ok, 900}
+    end
+
+    test "refuses what is not a duration" do
+      assert {:error, _reason} = Duration.parse_signed("-P")
+      assert {:error, _reason} = Duration.parse_signed("--PT1H")
+      assert {:error, _reason} = Duration.parse_signed("-P1M")
+    end
+  end
+
+  describe "Duration.parse_minutes/1" do
+    test "reads the lengths booking links and forms write" do
+      assert Duration.parse_minutes("30min") == {:ok, 30}
+      assert Duration.parse_minutes(" 45 minutes ") == {:ok, 45}
+      assert Duration.parse_minutes("90-Min") == {:ok, 90}
+      assert Duration.parse_minutes("60") == {:ok, 60}
+      assert Duration.parse_minutes(Duration.format_for_url(15)) == {:ok, 15}
+    end
+
+    test "refuses anything that is not a length in minutes" do
+      assert Duration.parse_minutes("soon") == :error
+      assert Duration.parse_minutes("1h") == :error
+      assert Duration.parse_minutes("-30min") == :error
+      assert Duration.parse_minutes("") == :error
+    end
+  end
+
+  describe "resolve_local/3" do
+    test "resolves an ordinary wall-clock time" do
+      assert {:ok, dt} =
+               DateTimeUtils.resolve_local(~D[2024-06-01], ~T[12:00:00], "Europe/Berlin")
+
+      assert DateTime.compare(dt, ~U[2024-06-01 10:00:00Z]) == :eq
+      assert dt.time_zone == "Europe/Berlin"
+    end
+
+    test "resolves a time in an hour-long spring-forward gap to the end of the gap" do
+      # 2024-03-31 Europe/Berlin jumps from 02:00 CET to 03:00 CEST.
+      assert {:ok, dt} =
+               DateTimeUtils.resolve_local(~D[2024-03-31], ~T[02:30:00], "Europe/Berlin")
+
+      assert DateTime.compare(dt, ~U[2024-03-31 01:00:00Z]) == :eq
+      assert {dt.hour, dt.minute} == {3, 0}
+    end
+
+    test "resolves a time in a half-hour gap to the end of the gap" do
+      # 2026-10-04 Australia/Lord_Howe jumps from 02:00 to 02:30.
+      assert {:ok, dt} =
+               DateTimeUtils.resolve_local(~D[2026-10-04], ~T[02:15:00], "Australia/Lord_Howe")
+
+      assert {dt.hour, dt.minute} == {2, 30}
+    end
+
+    test "resolves a repeated fall-back time to its first occurrence" do
+      # 2024-10-27 Europe/Berlin repeats 02:00-03:00; the first pass is CEST.
+      assert {:ok, dt} =
+               DateTimeUtils.resolve_local(~D[2024-10-27], ~T[02:30:00], "Europe/Berlin")
+
+      assert DateTime.compare(dt, ~U[2024-10-27 00:30:00Z]) == :eq
+      assert dt.zone_abbr == "CEST"
+    end
+
+    test "returns an error for an unknown timezone" do
+      assert {:error, _reason} =
+               DateTimeUtils.resolve_local(~D[2024-01-01], ~T[12:00:00], "Invalid/Timezone")
+    end
+  end
+
+  describe "create_datetime_safe/3" do
+    test "handles standard time correctly" do
+      date = ~D[2024-06-01]
+      time = ~T[12:00:00]
+      timezone = "Europe/London"
+
+      dt = DateTimeUtils.create_datetime_safe(date, time, timezone)
+      assert dt.year == 2024
+      assert dt.month == 6
+      assert dt.day == 1
+      assert dt.hour == 12
+      assert dt.time_zone == "Europe/London"
+    end
+
+    test "handles spring forward gap (non-existing time)" do
+      # In Europe/London, 2024-03-31 01:00:00 moved to 02:00:00
+      # 01:30:00 does not exist
+      date = ~D[2024-03-31]
+      time = ~T[01:30:00]
+      timezone = "Europe/London"
+
+      dt = DateTimeUtils.create_datetime_safe(date, time, timezone)
+
+      # Resolves to the end of the gap, when the clocks land at 02:00 BST
+      assert dt.hour == 2
+      assert dt.minute == 0
+      assert dt.zone_abbr == "BST"
+      assert dt.time_zone == "Europe/London"
+    end
+
+    test "handles fall back ambiguity (repeated time)" do
+      # In Europe/London, 2024-10-27 02:00:00 moved back to 01:00:00
+      # 01:30:00 occurs twice
+      date = ~D[2024-10-27]
+      time = ~T[01:30:00]
+      timezone = "Europe/London"
+
+      dt = DateTimeUtils.create_datetime_safe(date, time, timezone)
+
+      # Should pick the first occurrence (BST)
+      assert dt.hour == 1
+      assert dt.minute == 30
+      assert dt.zone_abbr == "BST"
+      assert dt.time_zone == "Europe/London"
+    end
+
+    test "falls back to UTC for invalid timezone" do
+      date = ~D[2024-01-01]
+      time = ~T[12:00:00]
+      timezone = "Invalid/Timezone"
+
+      dt = DateTimeUtils.create_datetime_safe(date, time, timezone)
+      assert dt.time_zone == "Etc/UTC"
+      assert dt.hour == 12
+    end
+  end
+
+  describe "parse_time_string/1" do
+    test "parses 12h time strings" do
+      assert {:ok, ~T[14:30:00]} == DateTimeUtils.parse_time_string("2:30 PM")
+      assert {:ok, ~T[02:30:00]} == DateTimeUtils.parse_time_string("2:30 AM")
+      assert {:ok, ~T[00:00:00]} == DateTimeUtils.parse_time_string("12:00 AM")
+      assert {:ok, ~T[12:00:00]} == DateTimeUtils.parse_time_string("12:00 PM")
+    end
+
+    test "parses 24h time strings" do
+      assert {:ok, ~T[14:30:00]} == DateTimeUtils.parse_time_string("14:30")
+      assert {:ok, ~T[09:00:00]} == DateTimeUtils.parse_time_string("09:00")
+    end
+
+    test "parses map input (demo data format)" do
+      assert {:ok, ~T[22:30:00]} ==
+               DateTimeUtils.parse_time_string(%{time: "10:30 pm", available: true})
+
+      assert {:ok, ~T[09:00:00]} == DateTimeUtils.parse_time_string(%{time: "9:00 am"})
+    end
+
+    test "returns error for invalid input" do
+      assert {:error, :invalid_time_format} == DateTimeUtils.parse_time_string("invalid")
+      assert {:error, :invalid_time_format} == DateTimeUtils.parse_time_string("")
+
+      assert {:error, :invalid_time_format} ==
+               DateTimeUtils.parse_time_string(%{not_time: "10:00"})
+    end
+  end
+
+  describe "shift_or_utc/2" do
+    test "shifts into a known zone and labels it with that zone" do
+      assert {shifted, "Europe/Tallinn"} =
+               DateTimeUtils.shift_or_utc(~U[2026-03-10 14:00:00Z], "Europe/Tallinn")
+
+      assert shifted.hour == 16
+      assert shifted.time_zone == "Europe/Tallinn"
+    end
+
+    test "falls back to the same instant in UTC, labelled UTC, for an unknown zone" do
+      {:ok, berlin} = DateTime.shift_zone(~U[2026-03-10 14:00:00Z], "Europe/Berlin")
+
+      assert {utc, "UTC"} = DateTimeUtils.shift_or_utc(berlin, "Mars/Olympus_Mons")
+      assert utc == ~U[2026-03-10 14:00:00Z]
+    end
+
+    test "falls back to UTC when no zone is given" do
+      assert {~U[2026-03-10 14:00:00Z], "UTC"} =
+               DateTimeUtils.shift_or_utc(~U[2026-03-10 14:00:00Z], nil)
+
+      assert {~U[2026-03-10 14:00:00Z], "UTC"} =
+               DateTimeUtils.shift_or_utc(~U[2026-03-10 14:00:00Z], "")
+    end
+  end
+
+  describe "convert_to_utc/2" do
+    test "converts naive datetime with valid IANA timezone to UTC" do
+      # Europe/Brussels is UTC+2 in summer (CEST)
+      naive = ~N[2024-07-15 14:00:00]
+      assert {:ok, utc} = DateTimeUtils.convert_to_utc(naive, "Europe/Brussels")
+      assert utc.time_zone == "Etc/UTC"
+      assert utc.hour == 12
+      assert utc.day == 15
+    end
+
+    test "strips surrounding double-quotes from TZID before converting (regression #38)" do
+      # Zimbra and some CalDAV clients emit TZID="Europe/Brussels"
+      naive = ~N[2024-07-15 14:00:00]
+      assert {:ok, utc_quoted} = DateTimeUtils.convert_to_utc(naive, ~s("Europe/Brussels"))
+      assert {:ok, utc_plain} = DateTimeUtils.convert_to_utc(naive, "Europe/Brussels")
+      assert utc_quoted == utc_plain
+    end
+
+    test "normalises Windows zone name to IANA and converts correctly" do
+      # "Romance Standard Time" maps to "Europe/Paris" (UTC+2 in summer)
+      naive = ~N[2024-07-15 14:00:00]
+      assert {:ok, utc} = DateTimeUtils.convert_to_utc(naive, "Romance Standard Time")
+      assert utc.time_zone == "Etc/UTC"
+      # Europe/Paris is CEST (UTC+2) in July
+      assert utc.hour == 12
+    end
+
+    test "falls back to UTC when timezone is nil" do
+      naive = ~N[2024-01-01 10:00:00]
+      assert {:ok, utc} = DateTimeUtils.convert_to_utc(naive, nil)
+      assert utc.time_zone == "Etc/UTC"
+      assert utc.hour == 10
+    end
+
+    test "falls back to UTC and logs a warning for empty timezone string" do
+      naive = ~N[2024-01-01 10:00:00]
+      assert {:ok, utc} = DateTimeUtils.convert_to_utc(naive, "   ")
+      assert utc.time_zone == "Etc/UTC"
+      assert utc.hour == 10
+    end
+
+    test "DST fall-back: ambiguous local time returns ok with the earlier (pre-clock-change) UTC offset" do
+      # 2024-10-27 01:30 Europe/London is ambiguous: exists as both BST (+01:00) and GMT (+00:00)
+      # The earlier occurrence is BST, so UTC result should be 00:30
+      naive = ~N[2024-10-27 01:30:00]
+      assert {:ok, utc} = DateTimeUtils.convert_to_utc(naive, "Europe/London")
+      assert utc.time_zone == "Etc/UTC"
+      # BST is UTC+1, so 01:30 BST → 00:30 UTC
+      assert utc.hour == 0
+      assert utc.minute == 30
+    end
+
+    test "DST spring-forward: gap time returns ok resolving to just_after" do
+      # 2024-03-31 01:30 Europe/London does not exist — clocks jumped from 01:00 GMT to 02:00 BST
+      # just_after is 02:00:00 BST (UTC+1), i.e. 01:00 UTC
+      naive = ~N[2024-03-31 01:30:00]
+      assert {:ok, utc} = DateTimeUtils.convert_to_utc(naive, "Europe/London")
+      assert utc.time_zone == "Etc/UTC"
+      # just_after is 02:00 BST = 01:00 UTC
+      assert utc.hour == 1
+      assert utc.minute == 0
+    end
+  end
+end

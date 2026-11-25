@@ -1,0 +1,66 @@
+defmodule TymeslotWeb.Components.Auth.AuthVideoConfig do
+  @moduledoc """
+  Video configuration for authentication and onboarding flows.
+
+  Handles video background settings for login, registration, and onboarding pages.
+  Separate from scheduling theme configurations.
+  """
+
+  @spec get_auth_video_config() :: %{
+          required(:background_videos) => [map()],
+          required(:poster) => String.t(),
+          required(:video_ids) => [String.t()]
+        }
+  defp get_auth_video_config do
+    %{
+      background_videos: [
+        %{
+          src: "/videos/backgrounds/background-video-desktop.webm",
+          type: "video/webm",
+          media: "(min-width: 1024px)"
+        },
+        %{
+          src: "/videos/backgrounds/background-video-mobile.mp4",
+          type: "video/mp4",
+          media: "(max-width: 768px)"
+        },
+        %{
+          src: "/videos/background-video-low.mp4",
+          type: "video/mp4",
+          media: "(max-width: 480px)"
+        },
+        %{
+          src: "/videos/background-video-original.mp4",
+          type: "video/mp4",
+          media: nil
+        }
+      ],
+      poster: "/images/ui/posters/auth-background-poster.webp",
+      video_ids: ["auth-background-video-1", "auth-background-video-2"]
+    }
+  end
+
+  @doc """
+  Get video sources for authentication flows.
+  """
+  @spec auth_video_sources() :: [map()]
+  def auth_video_sources do
+    Map.get(get_auth_video_config(), :background_videos, [])
+  end
+
+  @doc """
+  Get poster image for authentication flows.
+  """
+  @spec auth_video_poster() :: String.t()
+  def auth_video_poster do
+    Map.get(get_auth_video_config(), :poster)
+  end
+
+  @doc """
+  Get video element IDs for authentication flows.
+  """
+  @spec auth_video_ids() :: [String.t()]
+  def auth_video_ids do
+    Map.get(get_auth_video_config(), :video_ids, [])
+  end
+end

@@ -1,0 +1,199 @@
+defmodule Tymeslot.Infrastructure.Logging.RedactorTest do
+  use ExUnit.Case, async: true
+  @moduletag :infrastructure
+
+  alias Tymeslot.Infrastructure.Logging.Redactor
+
+  doctest Redactor
+
+  describe "redact/1" do
+    test "redacts Bearer tokens" do
+      text = "Authorization: Bearer abcd-1234-efgh-5678"
+      assert Redactor.redact(text) == "Authorization: Bearer [REDACTED]"
+    end
+
+    test "redacts access tokens in strings" do
+      text = "Received access_token: \"secret-token-123\""
+      assert Redactor.redact(text) == "Received access_token: \"[REDACTED]\""
+    end
+
+    test "redacts refresh tokens" do
+      text = "Stored refresh_token: \"refresh-123456\""
+      assert Redactor.redact(text) == "Stored refresh_token: \"[REDACTED]\""
+    end
+
+    test "redacts API keys" do
+      text = "Configured api_key: \"mirotalk-api-key-xyz\""
+      assert Redactor.redact(text) == "Configured api_key: \"[REDACTED]\""
+    end
+
+    test "redacts multiple sensitive items" do
+      text = "Bearer token123 with api_key: \"key456\""
+      result = Redactor.redact(text)
+      assert result == "Bearer [REDACTED] with api_key: \"[REDACTED]\""
+    end
+
+    test "redacts inspected terms" do
+      map = %{
+        access_token: "secret",
+        other: "public"
+      }
+
+      result = Redactor.redact(map)
+      assert String.contains?(result, "access_token: \"[REDACTED]\"")
+      assert String.contains?(result, "other: \"public\"")
+    end
+
+    test "redacts complex nested inspected structures" do
+      error_tuple = {:error, :unauthorized, "Invalid token: Bearer ya29.a0AfH6SM..."}
+      result = Redactor.redact(error_tuple)
+      assert result =~ "Bearer [REDACTED]"
+      refute result =~ "ya29.a0AfH6SM"
+    end
+
+    test "redacts client_secret in strings" do
+      text = "config: [client_id: \"abc\", client_secret: \"super-secret-123\"]"
+      assert Redactor.redact(text) =~ "client_secret: \"[REDACTED]\""
+    end
+
+    test "redacts Basic auth tokens" do
+      text = "Authorization: Basic YWxhZGRpbjpvcGVuc2VzYW1l"
+      assert Redactor.redact(text) == "Authorization: Basic [REDACTED]"
+    end
+
+    test "redacts query parameters" do
+      assert Redactor.redact("https://example.com?token=abc-123&other=val") ==
+               "https://example.com?token=[REDACTED]&other=val"
+
+      assert Redactor.redact("https://example.com?code=xyz&other=val") ==
+               "https://example.com?code=[REDACTED]&other=val"
+
+      assert Redactor.redact("https://example.com?state=secret&other=val") ==
+               "https://example.com?state=[REDACTED]&other=val"
+
+      assert Redactor.redact("url?first=1&token=abc") == "url?first=1&token=[REDACTED]"
+    end
+
+    test "redacts code and state at the start of a bare query string" do
+      assert Redactor.redact("code=abc&state=xyz&tab=1") ==
+               "code=[REDACTED]&state=[REDACTED]&tab=1"
+    end
+
+    test "leaves a parameter that only ends in code or state alone" do
+      assert Redactor.redact("zipcode=12345&estate=big") == "zipcode=12345&estate=big"
+    end
+
+    test "redacts an invitation token in a query string and under an invite key" do
+      assert Redactor.redact("/jane/intro?invite=inv-tok-1&duration=30") ==
+               "/jane/intro?invite=[REDACTED]&duration=30"
+
+      assert Redactor.redact("duration=30&invite=inv-tok-2") == "duration=30&invite=[REDACTED]"
+      assert Redactor.redact("invite=inv-tok-3") == "invite=[REDACTED]"
+
+      redacted = Redactor.redact(inspect(%{"invite" => "inv-tok-4", "duration" => "30"}))
+      refute redacted =~ "inv-tok-4"
+      assert redacted =~ ~s(invite: "[REDACTED]")
+    end
+
+    test "leaves parameters and keys that only start with invite alone" do
+      text = ~s(invitee_name=Ann&invited=1 %{"invitee_name" => "Ann", invited_by: "Bo"})
+      assert Redactor.redact(text) == text
+    end
+
+    test "redacts a quoted value under any secret-bearing key name" do
+      text =
+        ~s(%{webhook_secret: "whsec-1", bot_token: "123:abc", secret_key: "sk-2", ) <>
+          ~s("stripe_secret_key" => "sk-3", "signing_key":"sig-4", DATA_ENCRYPTION_KEY: "ek-5"})
+
+      redacted = Redactor.redact(text)
+
+      for secret <- ~w(whsec-1 123:abc sk-2 sk-3 sig-4 ek-5), do: refute(redacted =~ secret)
+      assert redacted =~ ~s(webhook_secret: "[REDACTED]")
+      assert redacted =~ ~s(stripe_secret_key: "[REDACTED]")
+    end
+
+    test "redacts a secret in a tuple pair" do
+      assert Redactor.redact(~s([{"client_secret", "cs-1"}])) =~ ~s(client_secret: "[REDACTED]")
+    end
+
+    test "redacts secret-bearing query parameters" do
+      assert Redactor.redact("https://x.test/hook?client_secret=cs%2F1&id=2") ==
+               "https://x.test/hook?client_secret=[REDACTED]&id=2"
+
+      assert Redactor.redact("url?bot_token=123:abc") == "url?bot_token=[REDACTED]"
+    end
+
+    test "keeps the message of an error tagged with a token-like atom" do
+      text = ~s({:error, :invalid_token, "Token has expired"})
+      assert Redactor.redact(text) == text
+    end
+
+    test "leaves diagnostic key names alone" do
+      text = ~s(cache_key: "user:1", idempotency_key: "idem-1", dedup_key: "d-1")
+      assert Redactor.redact(text) == text
+    end
+
+    test "redacts api_key in different formats" do
+      assert Redactor.redact("api_key:\"key123\"") =~ "api_key: \"[REDACTED]\""
+      assert Redactor.redact("api_key : \"key456\"") =~ "api_key: \"[REDACTED]\""
+    end
+  end
+
+  describe "redact_and_truncate/2" do
+    test "redacts and truncates a long string" do
+      # Put sensitive info early so it survives truncation
+      long_text =
+        "access_token: \"secret\", then some very long content: #{String.duplicate("a", 3000)}"
+
+      result = Redactor.redact_and_truncate(long_text, 100)
+
+      assert String.contains?(result, "access_token: \"[REDACTED]\"")
+      assert result =~ "[TRUNCATED]"
+    end
+
+    test "does not truncate if within limit" do
+      text = "access_token: \"secret\""
+      result = Redactor.redact_and_truncate(text, 100)
+      assert result == "access_token: \"[REDACTED]\""
+      refute result =~ "[TRUNCATED]"
+    end
+
+    test "handles multi-byte UTF-8 characters correctly during truncation" do
+      # Emoji 🚀 is 4 bytes: 0xF0 0x9F 0x9A 0x80
+      # If we truncate at 1, 2, or 3 bytes into the emoji, it's invalid UTF-8.
+      text = "ABC" <> "🚀🚀🚀"
+
+      # Cut in middle of first emoji (index 4)
+      result = Redactor.redact_and_truncate(text, 4)
+      assert String.valid?(result)
+      assert String.starts_with?(result, "ABC")
+      assert result =~ "[TRUNCATED]"
+
+      # Cut in middle of second emoji
+      result = Redactor.redact_and_truncate(text, 8)
+      assert String.valid?(result)
+      assert result =~ "ABC🚀"
+      assert result =~ "[TRUNCATED]"
+    end
+  end
+
+  describe "fingerprint/1" do
+    test "reduces a value to eight hex characters that do not spell it out" do
+      # A video room id is the join link for a link-based provider, so what goes
+      # into the logs must not be reversible to it. The expected value is pinned
+      # rather than recomputed: derived from `fingerprint/1` itself it could
+      # never fail.
+      assert Redactor.fingerprint("https://mirotalk.example.com/room123") == "b0e92c16"
+    end
+
+    test "tells two different values apart" do
+      refute Redactor.fingerprint("987654321") == Redactor.fingerprint("987654322")
+    end
+
+    test "has nothing to fingerprint for an absent or empty value" do
+      assert Redactor.fingerprint(nil) == "none"
+      assert Redactor.fingerprint("") == "none"
+      assert Redactor.fingerprint(%{room_id: "secret"}) == "none"
+    end
+  end
+end

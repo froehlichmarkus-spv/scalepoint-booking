@@ -1,0 +1,158 @@
+defmodule TymeslotWeb.Dashboard.Automation.WebhookCard do
+  @moduledoc """
+  UI component for displaying a single webhook card.
+  """
+  use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Webhooks.DeliveryStatus
+  alias TymeslotWeb.Components.Dashboard.Integrations.Shared.IntegrationCard
+  alias TymeslotWeb.Dashboard.Automation.Helpers
+
+  attr :webhook, :map, required: true
+  attr :time_format, :string, required: true
+  attr :testing, :boolean, default: false
+  attr :target, :any, required: true
+  attr :on_edit, :any, required: true
+  attr :on_delete, :any, required: true
+  attr :on_toggle, :string, required: true
+  attr :on_test, :any, required: true
+  attr :on_view_deliveries, :any, required: true
+
+  attr :paused, :boolean,
+    default: false,
+    doc: "The owner's plan doesn't include automations: shown as paused, controls inert"
+
+  @spec webhook_card(map()) :: Phoenix.LiveView.Rendered.t()
+  def webhook_card(assigns) do
+    ~H"""
+    <IntegrationCard.integration_card
+      id={"#{@webhook.id}"}
+      title={@webhook.name}
+      status={status(@webhook, @paused)}
+      summary={@webhook.url}
+      summary_mono
+      active={@webhook.is_active}
+      toggle_event={@on_toggle}
+      toggle_id={"webhook-toggle-#{@webhook.id}"}
+      toggle_disabled={@paused}
+      target={@target}
+      tags={@webhook.events}
+      notice={notice(@webhook, @paused)}
+      notice_tone={(@paused && :neutral) || :danger}
+    >
+      <:icon><.icon name="hero-link" class="w-6 h-6" /></:icon>
+      <:last_activity :if={@webhook.last_triggered_at}>
+        {dgettext("dashboard_automation", "Last triggered: %{time}",
+          time: Helpers.format_datetime(@webhook.last_triggered_at, @time_format)
+        )}
+        <span :if={@webhook.last_status} class={["ml-1", status_color(@webhook.last_status)]}>
+          ({status_label(@webhook.last_status)})
+        </span>
+      </:last_activity>
+      <:last_activity :if={!@webhook.last_triggered_at} muted>
+        {dgettext("dashboard_automation", "Never triggered")}
+      </:last_activity>
+      <:actions>
+        <.loading_button
+          id={"webhook-test-#{@webhook.id}"}
+          variant={:secondary}
+          size={:sm}
+          icon="hero-bolt"
+          loading={@testing}
+          loading_text={dgettext("dashboard_automation", "Testing")}
+          disabled={@paused or !@webhook.is_active}
+          phx-click={!@paused && @on_test}
+          tooltip={
+            cond do
+              @paused -> nil
+              !@webhook.is_active -> dgettext("dashboard_automation", "Enable webhook to test")
+              true -> dgettext("dashboard_automation", "Test Connection")
+            end
+          }
+        >
+          {dgettext("dashboard_automation", "Test")}
+        </.loading_button>
+        <.action_button
+          id={"webhook-logs-#{@webhook.id}"}
+          variant={:secondary}
+          size={:sm}
+          icon="hero-document-text"
+          phx-click={@on_view_deliveries}
+          tooltip={dgettext("dashboard_automation", "View Delivery Logs")}
+        >
+          {dgettext("dashboard_automation", "Logs")}
+        </.action_button>
+      </:actions>
+      <:end_actions>
+        <.icon_button
+          icon="hero-pencil-square"
+          label={dgettext("dashboard_automation", "Edit Webhook")}
+          disabled={@paused}
+          phx-click={!@paused && @on_edit}
+        />
+        <.icon_button
+          id={"webhook-delete-#{@webhook.id}"}
+          icon="hero-trash"
+          variant={:danger}
+          label={dgettext("dashboard_automation", "Delete %{name}", name: @webhook.name)}
+          tooltip={dgettext("dashboard_automation", "Delete")}
+          phx-click={@on_delete}
+        />
+      </:end_actions>
+    </IntegrationCard.integration_card>
+    """
+  end
+
+  # A plan without automations pauses every webhook, whatever its own state.
+  # Otherwise an auto-disabled webhook (a `disabled_reason` is recorded) is a
+  # fault to fix; one the owner switched off is simply off.
+  defp status(_webhook, true), do: {:neutral, dgettext("dashboard_automation", "Paused")}
+
+  defp status(%{is_active: true}, false),
+    do: {:success, dgettext("dashboard_automation", "Active")}
+
+  defp status(%{disabled_reason: reason}, false) when is_binary(reason),
+    do: {:danger, dgettext("dashboard_automation", "Disabled")}
+
+  defp status(_webhook, false), do: {:neutral, dgettext("dashboard_automation", "Disabled")}
+
+  defp notice(_webhook, true),
+    do:
+      dgettext(
+        "dashboard_automation",
+        "Paused: your plan doesn't include automations. Upgrading resumes it."
+      )
+
+  defp notice(%{disabled_reason: reason}, false) when is_binary(reason),
+    do: dgettext("dashboard_automation", "Disabled: %{reason}", reason: reason)
+
+  defp notice(_webhook, false), do: nil
+
+  defp status_color(last_status) do
+    case DeliveryStatus.state(last_status) do
+      :success -> "text-green-600 font-bold"
+      :failed -> "text-red-600 font-bold"
+      :unknown -> "text-tymeslot-600 font-medium"
+    end
+  end
+
+  # The raw reason (e.g. "HTTP 500", "connection refused") is machine
+  # diagnostic text, not UI copy, so only the state word is translated; the
+  # reason is interpolated untranslated, same as the disabled-reason badge.
+  defp status_label(last_status) do
+    case DeliveryStatus.state(last_status) do
+      :success ->
+        dgettext("dashboard_automation", "Succeeded")
+
+      :failed ->
+        case DeliveryStatus.reason(last_status) do
+          nil -> dgettext("dashboard_automation", "Failed")
+          reason -> dgettext("dashboard_automation", "Failed: %{reason}", reason: reason)
+        end
+
+      :unknown ->
+        last_status
+    end
+  end
+end

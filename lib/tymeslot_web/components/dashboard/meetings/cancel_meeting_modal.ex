@@ -1,0 +1,339 @@
+defmodule TymeslotWeb.Components.Dashboard.Meetings.CancelMeetingModal do
+  @moduledoc """
+  Modal component for confirming meeting cancellation.
+
+  When the meeting has an associated paid `booking_payment`, the modal
+  shows three refund options: full refund, partial refund, or cancel
+  without refunding (gated behind a confirmation tickbox). For free
+  bookings the modal preserves the original confirm-or-keep flow.
+  """
+
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+  use TymeslotWeb.Components.CoreComponents, only: [info_box: 1]
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.MeetingPayments
+  alias Tymeslot.MeetingPayments.Money
+  alias Tymeslot.Meetings.HostManaged
+  alias TymeslotWeb.Components.CoreComponents.Forms
+  alias TymeslotWeb.Components.CoreComponents.Modal
+  alias TymeslotWeb.Components.Dashboard.Meetings.Helpers
+
+  import TymeslotWeb.Components.PaymentHelpers, only: [format_amount: 2]
+
+  @doc """
+  Renders a cancel meeting confirmation modal.
+
+  ## Attributes
+
+    * `id` - The modal ID (required)
+    * `show` - Boolean to show/hide the modal (required)
+    * `meeting` - The meeting to be cancelled (required)
+    * `timezone` - The timezone to display times in (optional, defaults to UTC)
+    * `cancelling` - Boolean indicating if cancellation is in progress (required)
+    * `on_cancel` - JS command to execute when cancelling (required)
+    * `confirm_event` - Event name pushed when the form is submitted (required)
+    * `target` - phx-target reference for the confirm event (required)
+    * `booking_payment` - Optional booking_payment record. When set and
+      refundable, the modal exposes refund options.
+  """
+  attr :id, :string, required: true
+  attr :show, :boolean, required: true
+  attr :meeting, :map, required: true
+  attr :timezone, :string, default: "UTC"
+  attr :time_format, :string, default: "24h"
+  attr :cancelling, :boolean, required: true
+  attr :on_cancel, JS, required: true
+  attr :confirm_event, :string, required: true
+  attr :target, :any, required: true
+  attr :booking_payment, :map, default: nil
+  attr :refund_error, :map, default: %{}, doc: "`:amount` and `:acknowledgement` messages"
+  attr :refund_form, :map, default: %{choice: "full", amount: "", acknowledged: false}
+
+  @spec cancel_meeting_modal(map()) :: Phoenix.LiveView.Rendered.t()
+  def cancel_meeting_modal(assigns) do
+    assigns = assign(assigns, :paid?, MeetingPayments.refundable?(assigns[:booking_payment]))
+
+    ~H"""
+    <Modal.confirm_modal
+      id={@id}
+      show={@show}
+      title={dgettext("dashboard_bookings", "Cancel meeting")}
+      confirm_label={
+        if @paid?,
+          do: dgettext("dashboard_bookings", "Confirm cancellation"),
+          else: dgettext("dashboard_bookings", "Cancel Meeting")
+      }
+      cancel_label={dgettext("dashboard_bookings", "Keep Meeting")}
+      confirm_form="cancel-meeting-form"
+      loading={@cancelling}
+      loading_label={dgettext("dashboard_bookings", "Cancelling...")}
+      on_cancel={@on_cancel}
+    >
+      <form
+        :if={@meeting}
+        id="cancel-meeting-form"
+        phx-submit={@confirm_event}
+        phx-target={@target}
+        class="space-y-4"
+        novalidate
+      >
+        <p>
+          {confirm_question(@meeting, @timezone, @time_format)}
+        </p>
+
+        <.refund_choices
+          :if={@paid?}
+          booking_payment={@booking_payment}
+          refund_error={@refund_error}
+          refund_form={@refund_form}
+        >
+          <:full :if={is_binary(@booking_payment.series_id)}>
+            <strong>{dgettext("dashboard_bookings", "Refund this session.")}</strong>
+            {dgettext(
+              "dashboard_bookings",
+              "Refunds one session's share of the series payment (%{amount}).",
+              amount:
+                format_amount(
+                  MeetingPayments.default_cancellation_refund_cents(@booking_payment),
+                  @booking_payment.currency
+                )
+            )}
+          </:full>
+          <:full :if={!is_binary(@booking_payment.series_id)}>
+            <strong>{dgettext("dashboard_bookings", "Full refund.")}</strong>
+            {dgettext("dashboard_bookings", "Refunds the remaining balance (%{amount}).",
+              amount: format_amount(refundable_remaining(@booking_payment), @booking_payment.currency)
+            )}
+          </:full>
+        </.refund_choices>
+        <.no_refund_warning booking_payment={@booking_payment} />
+        <p :if={not @paid?} class="text-tymeslot-500">
+          {if Helpers.group_meeting?(@meeting),
+            do:
+              dgettext(
+                "dashboard_bookings",
+                "This action cannot be undone. Every participant will be notified of the cancellation."
+              ),
+            else:
+              dgettext(
+                "dashboard_bookings",
+                "This action cannot be undone. The attendee will be notified of the cancellation."
+              )}
+        </p>
+      </form>
+    </Modal.confirm_modal>
+    """
+  end
+
+  # A group meeting has no single attendee to name: it is with however many
+  # people currently hold a seat on it. Nor has a meeting the host manages:
+  # the one in its attendee fields is only the first of its guests, so it is
+  # named by its title, as its card is.
+  defp confirm_question(meeting, timezone, time_format) do
+    scheduled_for =
+      "#{Helpers.format_meeting_date(meeting, timezone)} • #{Helpers.format_meeting_time(meeting, timezone, time_format)}"
+
+    cond do
+      Helpers.group_meeting?(meeting) ->
+        count = length(Helpers.participants(meeting))
+
+        dngettext(
+          "dashboard_bookings",
+          "Are you sure you want to cancel this group meeting with %{count} participant scheduled for %{when}?",
+          "Are you sure you want to cancel this group meeting with %{count} participants scheduled for %{when}?",
+          count,
+          when: scheduled_for
+        )
+
+      HostManaged.managed?(meeting) ->
+        dgettext(
+          "dashboard_bookings",
+          "Are you sure you want to cancel “%{title}” scheduled for %{when}? Every guest is told.",
+          title: meeting.title,
+          when: scheduled_for
+        )
+
+      true ->
+        dgettext(
+          "dashboard_bookings",
+          "Are you sure you want to cancel the meeting with %{name} scheduled for %{when}?",
+          name: meeting.attendee_name,
+          when: scheduled_for
+        )
+    end
+  end
+
+  attr :booking_payment, :map, required: true
+  attr :refund_error, :map, default: %{}
+  attr :refund_form, :map, required: true
+  attr :id_prefix, :string, default: "cancel", doc: "prefixes the acknowledgement error's id"
+  slot :full, required: true, doc: "what the full refund option says it refunds"
+
+  @doc """
+  The refund a host chooses when cancelling something paid for: the full
+  refund (worded by the `:full` slot), a partial amount, or none at all
+  behind an acknowledgement. Posts `cancel_refund_choice`,
+  `cancel_refund_amount` and `cancel_refund_no_refund_ack`. Shared by the
+  single cancel dialog and the cancel-remaining dialog of a series.
+  """
+  @spec refund_choices(map()) :: Phoenix.LiveView.Rendered.t()
+  def refund_choices(assigns) do
+    assigns = assign(assigns, :remaining, refundable_remaining(assigns.booking_payment))
+
+    ~H"""
+    <div class="rounded-token-md border border-tymeslot-200 bg-tymeslot-50 p-3 text-token-sm space-y-3">
+      <p>
+        {dgettext(
+          "dashboard_bookings",
+          "This booking was paid. Choose how to handle the refund - the attendee always receives the full amount you refund."
+        )}
+      </p>
+
+      <div class="space-y-2">
+        <label class="flex items-start gap-2">
+          <Forms.input
+            type="radio"
+            name="cancel_refund_choice"
+            value="full"
+            checked={@refund_form.choice == "full"}
+          />
+          <span>{render_slot(@full)}</span>
+        </label>
+
+        <label class="flex items-start gap-2">
+          <Forms.input
+            type="radio"
+            name="cancel_refund_choice"
+            value="partial"
+            checked={@refund_form.choice == "partial"}
+          />
+          <span>
+            <strong>{dgettext("dashboard_bookings", "Partial refund.")}</strong>
+            {dgettext("dashboard_bookings", "Refund only part of the booking amount.")}
+          </span>
+        </label>
+
+        <div class="ml-6">
+          <Forms.input
+            type="number"
+            name="cancel_refund_amount"
+            label={dgettext("dashboard_bookings", "Partial amount")}
+            min="0.01"
+            max={Money.to_major_string(@remaining, @booking_payment.currency)}
+            step="0.01"
+            placeholder={"0.00 #{String.upcase(@booking_payment.currency)}"}
+            value={@refund_form.amount}
+            errors={List.wrap(@refund_error[:amount])}
+          />
+        </div>
+
+        <label class="flex items-start gap-2">
+          <Forms.input
+            type="radio"
+            name="cancel_refund_choice"
+            value="none"
+            checked={@refund_form.choice == "none"}
+          />
+          <span>
+            <strong>{dgettext("dashboard_bookings", "Cancel without refund.")}</strong>
+            {dgettext(
+              "dashboard_bookings",
+              "The attendee keeps no money. Use only if the attendee already agreed."
+            )}
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2 ml-6">
+          <%!-- raw-input: acknowledgement checkbox inside its inline label beside the text; <.input> would nest block wrappers inside the label --%>
+          <input
+            type="checkbox"
+            name="cancel_refund_no_refund_ack"
+            value="true"
+            checked={@refund_form.acknowledged}
+          />
+          <span class="text-tymeslot-700">
+            {dgettext(
+              "dashboard_bookings",
+              "I understand the attendee will not receive a refund."
+            )}
+          </span>
+        </label>
+        <p
+          :if={@refund_error[:acknowledgement]}
+          id={"#{@id_prefix}-refund-ack-error"}
+          class="form-error ml-6"
+          role="alert"
+        >
+          {@refund_error[:acknowledgement]}
+        </p>
+      </div>
+    </div>
+    """
+  end
+
+  defp refundable_remaining(%{amount_cents: amount, refunded_amount_cents: refunded}),
+    do: max(amount - refunded, 0)
+
+  defp refundable_remaining(_payment), do: 0
+
+  attr :booking_payment, :map, default: nil
+
+  @doc """
+  Says, before the host confirms, why cancelling refunds none of the money
+  the attendee paid (`MeetingPayments.refund_refusal/1`): past the refund
+  window, under dispute, or never paid. Renders nothing when nothing is owed
+  or it can be refunded. Shared by the single cancel dialog and the
+  cancel-remaining dialog of a series.
+  """
+  @spec no_refund_warning(map()) :: Phoenix.LiveView.Rendered.t()
+  def no_refund_warning(assigns) do
+    assigns = assign(assigns, :reason, no_refund_reason_for(assigns.booking_payment))
+
+    ~H"""
+    <.info_box :if={@reason} variant={:warning} class="mb-0!">
+      {no_refund_sentence(@reason)}
+    </.info_box>
+    """
+  end
+
+  # Money the attendee paid that cannot be refunded from here. Nil when
+  # nothing is owed, or it can be.
+  defp no_refund_reason_for(payment) do
+    with true <- unrefunded?(payment),
+         {:error, reason} <- MeetingPayments.refund_refusal(payment) do
+      reason
+    else
+      _refundable_or_settled -> nil
+    end
+  end
+
+  # A disputed payment is not outstanding (Stripe holds the money), but
+  # cancelling still refunds none of it.
+  defp unrefunded?(%{status: :disputed}), do: true
+  defp unrefunded?(payment), do: MeetingPayments.refund_outstanding?(payment)
+
+  # Each refusal has its own whole sentence, so a translation is never
+  # stitched together from a lower-case fragment.
+  defp no_refund_sentence(:outside_refund_window),
+    do:
+      dgettext(
+        "dashboard_bookings",
+        "Cancelling won't refund the attendee: the payment is older than the 60-day refund window. You can refund it from Stripe."
+      )
+
+  defp no_refund_sentence(:under_dispute),
+    do:
+      dgettext(
+        "dashboard_bookings",
+        "Cancelling won't refund the attendee: the payment is under dispute. Settle the dispute in Stripe first."
+      )
+
+  defp no_refund_sentence(:not_paid),
+    do:
+      dgettext(
+        "dashboard_bookings",
+        "Cancelling won't refund the attendee: the booking was not paid."
+      )
+end

@@ -1,0 +1,577 @@
+defmodule TymeslotWeb.Themes.Shared.LocalizationHelpers do
+  @moduledoc """
+  Localized formatting helpers for date, time, and durations.
+  Used specifically within theme contexts to handle translation.
+  """
+  use Gettext, backend: TymeslotWeb.Gettext
+  alias Calendar
+  alias Tymeslot.Availability.TimeSlots
+  alias Tymeslot.MeetingTypes.Lengths
+  alias Tymeslot.Timezones
+  alias Tymeslot.Utils.DateTimeUtils
+  alias TymeslotWeb.Helpers.LocaleFormat
+  alias TymeslotWeb.Themes.Shared.ChosenLength
+
+  @doc """
+  Groups normalised slot maps (`TymeslotWeb.Components.MeetingUtils.slot/0`)
+  by period of day with translated period names.
+  """
+  @spec group_slots_by_period([map()]) :: [{String.t(), [map()]}]
+  def group_slots_by_period(slots) do
+    grouped = Enum.group_by(slots, &time_period(&1.time))
+
+    [
+      {dgettext("datetime", "Early Morning"), sorted_period(grouped, :early_morning)},
+      {dgettext("datetime", "Morning"), sorted_period(grouped, :morning)},
+      {dgettext("datetime", "Afternoon"), sorted_period(grouped, :afternoon)},
+      {dgettext("datetime", "Evening"), sorted_period(grouped, :evening)},
+      {dgettext("datetime", "Late Night"), sorted_period(grouped, :late_night)}
+    ]
+  end
+
+  # A slot whose time does not parse falls in no period and is not shown.
+  defp time_period(slot_time) do
+    case DateTimeUtils.parse_time_string(slot_time) do
+      {:ok, %Time{hour: hour}} when hour < 5 -> :early_morning
+      {:ok, %Time{hour: hour}} when hour < 12 -> :morning
+      {:ok, %Time{hour: hour}} when hour < 17 -> :afternoon
+      {:ok, %Time{hour: hour}} when hour < 21 -> :evening
+      {:ok, %Time{}} -> :late_night
+      {:error, _parse_error} -> :unknown
+    end
+  end
+
+  defp sorted_period(grouped, period) do
+    grouped
+    |> Map.get(period, [])
+    |> Enum.sort_by(fn slot ->
+      case DateTimeUtils.parse_time_string(slot.time) do
+        {:ok, time} -> {time.hour, time.minute, time.second}
+        {:error, _reason} -> {99, 99, 99}
+      end
+    end)
+  end
+
+  @doc """
+  Formats booking datetime for display with localized names.
+  """
+  @spec format_booking_datetime(String.t(), String.t(), String.t()) :: String.t()
+  def format_booking_datetime(date, time, timezone)
+      when is_binary(date) and is_binary(time) and is_binary(timezone) do
+    with {:ok, date_struct} <- parse_date(date),
+         {:ok, time_obj} <- DateTimeUtils.parse_time_string(time),
+         {:ok, naive_dt} <- NaiveDateTime.new(date_struct, time_obj),
+         {:ok, dt} <- DateTime.from_naive(naive_dt, timezone) do
+      weekday = weekday_name(Date.day_of_week(DateTime.to_date(dt)))
+      month = month_in_date(dt.month)
+      time_str = format_time_by_locale(dt)
+
+      dgettext("datetime", "%{weekday}, %{day} %{month} %{year} at %{time} %{timezone}",
+        weekday: weekday,
+        day: dt.day,
+        month: month,
+        year: dt.year,
+        time: time_str,
+        timezone: dt.zone_abbr
+      )
+    else
+      _error ->
+        dgettext("datetime", "%{date} at %{time}", date: date, time: time)
+    end
+  end
+
+  def format_booking_datetime(_date, _time, _timezone),
+    do: dgettext("datetime", "Invalid date/time")
+
+  @doc """
+  The visitor's zone named as a time, "Berlin time (UTC+1)", with the offset in
+  force at the slot starting at `time` on `date`; the offset now when no single
+  slot is chosen.
+  """
+  @spec format_zone_label(Date.t() | String.t() | nil, String.t() | nil, String.t()) ::
+          String.t()
+  def format_zone_label(date, time, timezone) when is_binary(timezone) do
+    case slot_instant(date, time, timezone) do
+      {:ok, at} -> Timezones.time_label(timezone, at)
+      _no_single_slot -> Timezones.time_label(timezone)
+    end
+  end
+
+  defp slot_instant(date, time, timezone) when is_binary(time) do
+    with {:ok, day} <- to_date(date),
+         {:ok, clock} <- DateTimeUtils.parse_time_string(time) do
+      DateTimeUtils.resolve_local(day, clock, timezone)
+    end
+  end
+
+  defp slot_instant(_date, _time, _timezone), do: :error
+
+  defp to_date(%Date{} = date), do: {:ok, date}
+  defp to_date(date) when is_binary(date), do: parse_date(date)
+  defp to_date(_other), do: :error
+
+  @doc """
+  When a meeting starting at `time` on `date` (the booker's clock) ends on a
+  later date, a short line saying when; nil when it ends the day it starts or
+  the inputs cannot be read. `duration` is minutes or a slug such as "60min".
+  """
+  @spec format_next_day_end(
+          String.t() | nil,
+          String.t() | nil,
+          integer() | String.t() | nil,
+          String.t() | nil
+        ) :: String.t() | nil
+  def format_next_day_end(_date, _time, nil, _timezone), do: nil
+
+  def format_next_day_end(date, time, duration, timezone)
+      when is_binary(date) and is_binary(time) and is_binary(timezone) do
+    with {:ok, start_date} <- parse_date(date),
+         {:ok, start_time} <- DateTimeUtils.parse_time_string(time),
+         {:ok, start} <- DateTimeUtils.resolve_local(start_date, start_time, timezone),
+         finish = DateTime.add(start, TimeSlots.parse_duration(duration), :minute),
+         :gt <- Date.compare(DateTime.to_date(finish), start_date) do
+      dgettext("datetime", "Ends %{time} on %{weekday} %{day} %{month}",
+        time: format_time_by_locale(finish),
+        weekday: mid_sentence_weekday(Date.day_of_week(DateTime.to_date(finish))),
+        day: finish.day,
+        month: month_in_date(finish.month)
+      )
+    else
+      _same_day_or_unreadable -> nil
+    end
+  end
+
+  def format_next_day_end(_date, _time, _duration, _timezone), do: nil
+
+  @doc """
+  `format_next_day_end/4` for a booking or confirmation step's assigns: the
+  chosen date and time, the length being booked (`ChosenLength.meeting_type/1`,
+  or the bare `duration` without a meeting type) and the booker's timezone.
+  """
+  @spec booking_next_day_end(map()) :: String.t() | nil
+  def booking_next_day_end(assigns) do
+    duration =
+      case ChosenLength.meeting_type(assigns) do
+        %{duration_minutes: minutes} -> minutes
+        _no_meeting_type -> assigns[:duration]
+      end
+
+    format_next_day_end(
+      assigns[:selected_date],
+      assigns[:selected_time],
+      duration,
+      assigns[:user_timezone]
+    )
+  end
+
+  @doc """
+  Formats a meeting start time for the payment return pages — localized and
+  shifted into the attendee's timezone, so the confirmation shows the time the
+  attendee will actually keep rather than raw UTC. Falls back to UTC if the
+  timezone is missing or unknown, and to an empty string for an unusable value.
+  """
+  @spec format_meeting_datetime(DateTime.t() | NaiveDateTime.t() | nil, String.t() | nil) ::
+          String.t()
+  def format_meeting_datetime(start_time, timezone) do
+    case to_attendee_datetime(start_time, timezone) do
+      {:ok, dt} ->
+        dgettext("datetime", "%{day} %{month} %{year} at %{time} %{timezone}",
+          day: dt.day,
+          month: month_in_date(dt.month),
+          year: dt.year,
+          time: format_time_by_locale(dt),
+          timezone: dt.zone_abbr
+        )
+
+      :error ->
+        ""
+    end
+  end
+
+  @doc """
+  Formats a meeting start time for lists that repeat it on every row.
+
+  Same shift and fallback behaviour as `format_meeting_datetime/2`, but drops
+  the year and the timezone abbreviation and adds the weekday. In a poll every
+  candidate slot carries a date, so the year and zone are the same on every row
+  and only cost width, while the weekday is exactly what a voter is choosing
+  between. **The caller must state the timezone once for the list**, or the
+  times are unlabelled.
+  """
+  @spec format_meeting_datetime_compact(
+          DateTime.t() | NaiveDateTime.t() | nil,
+          String.t() | nil
+        ) :: String.t()
+  def format_meeting_datetime_compact(start_time, timezone) do
+    case to_attendee_datetime(start_time, timezone) do
+      {:ok, dt} ->
+        dgettext("datetime", "%{weekday} %{day} %{month}, %{time}",
+          weekday: weekday_name(Date.day_of_week(DateTime.to_date(dt))),
+          day: dt.day,
+          month: month_in_date(dt.month),
+          time: format_time_by_locale(dt)
+        )
+
+      :error ->
+        ""
+    end
+  end
+
+  @doc """
+  Shifts a meeting's stored UTC `start_time` into the zone it should be shown in.
+
+  `start_time` is a `:utc_datetime`, so it must be shifted before formatting or
+  the rendered clock is UTC. The returned struct carries the zone it actually
+  landed in (`time_zone`), which is what callers must label it with: when
+  `timezone` is nil, empty, or unresolvable the value stays UTC, and labelling
+  it with the requested zone would assert a time that is not that time.
+  """
+  @spec to_attendee_datetime(DateTime.t() | NaiveDateTime.t() | nil, String.t() | nil) ::
+          {:ok, DateTime.t()} | :error
+  def to_attendee_datetime(%DateTime{} = dt, timezone), do: {:ok, shift_or_utc(dt, timezone)}
+
+  def to_attendee_datetime(%NaiveDateTime{} = naive, timezone) do
+    case DateTime.from_naive(naive, "Etc/UTC") do
+      {:ok, dt} -> {:ok, shift_or_utc(dt, timezone)}
+      _error -> :error
+    end
+  end
+
+  def to_attendee_datetime(_other, _timezone), do: :error
+
+  @doc """
+  Formats a date string or struct for display in the current locale's word
+  order, via `LocaleFormat.format_date/2`: "15 July 2026", "15. Juli 2026".
+  """
+  @spec format_date(String.t() | Date.t() | DateTime.t() | nil) :: String.t()
+  def format_date(nil), do: ""
+
+  def format_date(date_string) when is_binary(date_string) do
+    case Date.from_iso8601(date_string) do
+      {:ok, date} -> format_date(date)
+      _other -> date_string
+    end
+  end
+
+  @spec format_date(Date.t()) :: String.t()
+  def format_date(%Date{} = date) do
+    LocaleFormat.format_date(date, current_locale())
+  end
+
+  @spec format_date(DateTime.t()) :: String.t()
+  def format_date(%DateTime{} = datetime) do
+    datetime |> DateTime.to_date() |> format_date()
+  end
+
+  @doc """
+  Builds a full, screen-reader-friendly date label — the localized weekday
+  followed by the localized date, e.g. "Monday, 15 July 2026". Accepts an ISO
+  date string (as carried in the calendar day maps) or a `Date`, and falls back
+  to the raw input on a parse failure so a day button is never left unlabelled.
+  """
+  @spec format_full_date_label(String.t() | Date.t() | nil) :: String.t()
+  def format_full_date_label(nil), do: ""
+
+  def format_full_date_label(date_string) when is_binary(date_string) do
+    case Date.from_iso8601(date_string) do
+      {:ok, date} -> format_full_date_label(date)
+      _other -> date_string
+    end
+  end
+
+  def format_full_date_label(%Date{} = date) do
+    dgettext("datetime", "%{weekday}, %{date}",
+      weekday: weekday_name(Date.day_of_week(date)),
+      date: format_date(date)
+    )
+  end
+
+  @doc """
+  Formats duration for display.
+  """
+  @spec format_duration(String.t()) :: String.t()
+  def format_duration(duration_string) when is_binary(duration_string) do
+    cond do
+      # Handle "30min" format
+      match = Regex.run(~r/^(\d+)min$/, duration_string) ->
+        [_first, minutes_str] = match
+        minutes = String.to_integer(minutes_str)
+        format_minutes(minutes)
+
+      # Handle "30-minutes" slug format
+      match = Regex.run(~r/^(\d+)-minutes?$/, duration_string) ->
+        [_first, minutes_str] = match
+        minutes = String.to_integer(minutes_str)
+        format_minutes(minutes)
+
+      true ->
+        dgettext("datetime", "Unknown duration")
+    end
+  end
+
+  @spec format_duration(integer()) :: String.t()
+  def format_duration(minutes) when is_integer(minutes) do
+    format_minutes(minutes)
+  end
+
+  @spec format_duration(any()) :: String.t()
+  def format_duration(_other), do: dgettext("datetime", "Unknown duration")
+
+  @doc """
+  The badge for a meeting type on the overview: its duration, or the span of
+  lengths it offers when the booker chooses one ("15–120 min").
+  """
+  @spec format_length_badge(map()) :: String.t()
+  def format_length_badge(meeting_type) do
+    case Lengths.offered(meeting_type) do
+      [shortest, _next | _rest] = offered ->
+        dgettext("booking", "%{min}–%{max} min", min: shortest, max: List.last(offered))
+
+      _single ->
+        format_duration(Map.get(meeting_type, :duration_minutes))
+    end
+  end
+
+  @doc """
+  The full name of ISO weekday `day` (1 is Monday) in the booking language,
+  as the long date labels write it: "Thursday", "Donnerstag".
+  """
+  @spec weekday_name(1..7) :: String.t()
+  def weekday_name(day) do
+    case day do
+      1 -> dgettext("datetime", "Monday")
+      2 -> dgettext("datetime", "Tuesday")
+      3 -> dgettext("datetime", "Wednesday")
+      4 -> dgettext("datetime", "Thursday")
+      5 -> dgettext("datetime", "Friday")
+      6 -> dgettext("datetime", "Saturday")
+      7 -> dgettext("datetime", "Sunday")
+    end
+  end
+
+  @doc """
+  `weekday_name/1` as it reads inside a sentence: German nouns and English
+  weekdays keep their capital; in the other catalogues (French, Italian,
+  Czech, Ukrainian, Polish, Portuguese) a weekday is capitalised only as a
+  heading, so here it is lower-cased ("jeudi", "giovedì").
+  """
+  @spec mid_sentence_weekday(1..7) :: String.t()
+  def mid_sentence_weekday(day) do
+    name = weekday_name(day)
+    if current_locale() in ["en", "de"], do: name, else: String.downcase(name)
+  end
+
+  # A month named inside a date takes a different form from a standalone one in
+  # several locales: Ukrainian and Czech use the genitive ("15 червня 2026"),
+  # French and Italian lowercase it. The headings below use the standalone form
+  # (`LocaleFormat.format_standalone_month_name/2`); this is the in-date form.
+  @spec month_in_date(integer()) :: String.t()
+  defp month_in_date(month) do
+    LocaleFormat.format_month_name(month, current_locale())
+  end
+
+  @spec standalone_month(integer()) :: String.t()
+  defp standalone_month(month) do
+    LocaleFormat.format_standalone_month_name(month, current_locale())
+  end
+
+  defp current_locale, do: Gettext.get_locale(TymeslotWeb.Gettext)
+
+  @doc """
+  The month grid's column headings, abbreviated and translated, starting on
+  `week_start` (`:monday` or `:sunday`), as
+  `Tymeslot.Availability.Calculate.display_range/3` lays the window out. A
+  translation longer than three characters is cut so it cannot widen its
+  column.
+  """
+  @spec weekday_headings(:monday | :sunday) :: [String.t()]
+  def weekday_headings(week_start) do
+    headings =
+      Enum.map(
+        [
+          dgettext("datetime", "Mon"),
+          dgettext("datetime", "Tue"),
+          dgettext("datetime", "Wed"),
+          dgettext("datetime", "Thu"),
+          dgettext("datetime", "Fri"),
+          dgettext("datetime", "Sat"),
+          dgettext("datetime", "Sun")
+        ],
+        &String.slice(&1, 0, 3)
+      )
+
+    case week_start do
+      :monday -> headings
+      :sunday -> [List.last(headings) | Enum.drop(headings, -1)]
+    end
+  end
+
+  @doc """
+  Gets short weekday name translated.
+  """
+  @spec day_name_short(integer()) :: String.t()
+  def day_name_short(day_of_week) do
+    case day_of_week do
+      1 -> dgettext("datetime", "MON")
+      2 -> dgettext("datetime", "TUE")
+      3 -> dgettext("datetime", "WED")
+      4 -> dgettext("datetime", "THU")
+      5 -> dgettext("datetime", "FRI")
+      6 -> dgettext("datetime", "SAT")
+      7 -> dgettext("datetime", "SUN")
+    end
+  end
+
+  @doc """
+  The booking window as a phrase for the schedule step's header, in the largest
+  whole unit that fits ("same day only", "3 days in advance", "2 weeks in
+  advance"). `nil` means the organiser never set a window, so the default of
+  90 days applies.
+  """
+  @spec format_advance_booking_days(integer() | nil) :: String.t()
+  def format_advance_booking_days(days) when is_integer(days) and days <= 0,
+    do: dgettext("datetime", "same day only")
+
+  def format_advance_booking_days(1), do: dgettext("datetime", "1 day in advance")
+
+  def format_advance_booking_days(days) when is_integer(days) and days < 7,
+    do: dgettext("datetime", "%{days} days in advance", days: days)
+
+  def format_advance_booking_days(7), do: dgettext("datetime", "1 week in advance")
+
+  def format_advance_booking_days(days) when is_integer(days) and days < 30,
+    do: format_weeks_advance(days)
+
+  def format_advance_booking_days(30), do: dgettext("datetime", "1 month in advance")
+
+  def format_advance_booking_days(days) when is_integer(days) and days < 365,
+    do: format_months_advance(days)
+
+  def format_advance_booking_days(365), do: dgettext("datetime", "1 year in advance")
+  def format_advance_booking_days(days) when is_integer(days), do: format_years_advance(days)
+  def format_advance_booking_days(_arg), do: dgettext("datetime", "90 days in advance")
+
+  @doc """
+  Formats a time on the clock the visitor's language uses.
+
+  The booking page is read by attendees, who never saw the organiser's clock
+  setting and are frequently reading in a different language, so the visitor's
+  own locale decides here. `LocaleFormat` holds that mapping and is what the
+  confirmation email already uses, so the page and the email agree.
+
+  The clock style is never read from a translatable msgid: a translator could
+  then change how every time renders by editing what looks like an ordinary
+  string.
+
+  Takes anything with a clock face, `Time` as readily as `DateTime`: an hour
+  label and a bare interval example carry no date, and only the clock fields
+  are read.
+  """
+  @spec format_time_by_locale(Calendar.time()) :: String.t()
+  def format_time_by_locale(time) do
+    LocaleFormat.format_time(time, current_locale())
+  end
+
+  @doc """
+  Labels a slot key ("5:30 PM") on the visitor's clock.
+
+  The key is the slot's identity: the URL `time` param, slot matching and the
+  booking submission all read it verbatim, so it is formatted here, at render
+  time, and never stored formatted. A key that does not parse is shown as it
+  stands rather than replaced by some other time; `nil` passes through so a
+  template can fall back to its own placeholder.
+  """
+  @spec format_slot_label(String.t() | nil) :: String.t() | nil
+  def format_slot_label(nil), do: nil
+
+  def format_slot_label(slot_key) when is_binary(slot_key) do
+    case DateTimeUtils.parse_time_string(slot_key) do
+      {:ok, time} -> format_time_by_locale(time)
+      {:error, _reason} -> slot_key
+    end
+  end
+
+  @doc """
+  Gets month and year display string: "September 2026", "Leden 2026".
+  """
+  @spec get_month_year_display(integer(), integer()) :: String.t()
+  def get_month_year_display(year, month) do
+    LocaleFormat.format_month_year(month, year, current_locale())
+  end
+
+  @doc """
+  Gets a display string for a week starting on `week_start`.
+
+  Returns "March 2026" when the week falls within a single month,
+  "March – April 2026" when it spans two months in the same year,
+  or "December 2025 – January 2026" when it spans a year boundary: an en
+  dash with a space either side, as `LocaleFormat`'s date ranges join
+  their words.
+
+  Months are the standalone form, and only the heading's first letter is
+  capitalised: French reads "Septembre – octobre 2026".
+  """
+  @spec get_week_display(Date.t()) :: String.t()
+  def get_week_display(week_start) do
+    week_end = Date.add(week_start, 6)
+
+    cond do
+      week_start.month == week_end.month ->
+        get_month_year_display(week_start.year, week_start.month)
+
+      week_start.year == week_end.year ->
+        LocaleFormat.capitalize_first(
+          dgettext("datetime", "%{start_month} – %{end_month} %{year}",
+            start_month: standalone_month(week_start.month),
+            end_month: standalone_month(week_end.month),
+            year: week_start.year
+          )
+        )
+
+      true ->
+        LocaleFormat.capitalize_first(
+          dgettext("datetime", "%{start_month} %{start_year} – %{end_month} %{end_year}",
+            start_month: standalone_month(week_start.month),
+            start_year: week_start.year,
+            end_month: standalone_month(week_end.month),
+            end_year: week_end.year
+          )
+        )
+    end
+  end
+
+  # Internal helpers
+
+  defp format_minutes(minutes) when minutes < 60, do: minute_text(minutes)
+
+  defp format_minutes(minutes) when rem(minutes, 60) == 0, do: hour_text(div(minutes, 60))
+
+  # Hours and minutes each take the plural form of the number they show
+  defp format_minutes(minutes) do
+    dgettext("datetime", "%{hour_text} %{minute_text}",
+      hour_text: hour_text(div(minutes, 60)),
+      minute_text: minute_text(rem(minutes, 60))
+    )
+  end
+
+  defp hour_text(hours), do: dngettext("datetime", "%{count} hour", "%{count} hours", hours)
+
+  defp minute_text(minutes),
+    do: dngettext("datetime", "%{count} minute", "%{count} minutes", minutes)
+
+  defp parse_date(date) when is_binary(date), do: Date.from_iso8601(date)
+
+  defp shift_or_utc(dt, timezone) do
+    {shifted, _label} = DateTimeUtils.shift_or_utc(dt, timezone)
+    shifted
+  end
+
+  defp format_weeks_advance(days),
+    do: dgettext("datetime", "%{weeks} weeks in advance", weeks: div(days, 7))
+
+  defp format_months_advance(days),
+    do: dgettext("datetime", "%{months} months in advance", months: div(days, 30))
+
+  defp format_years_advance(days),
+    do: dgettext("datetime", "%{years} years in advance", years: div(days, 365))
+end

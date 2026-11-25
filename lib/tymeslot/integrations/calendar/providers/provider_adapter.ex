@@ -1,0 +1,392 @@
+defmodule Tymeslot.Integrations.Calendar.Providers.ProviderAdapter do
+  @moduledoc """
+  Adapter that wraps calendar provider calls with common functionality.
+
+  This module provides a unified interface for all calendar providers,
+  handling common concerns like error handling, logging, and metrics.
+  """
+
+  require Logger
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Infrastructure.Metrics
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationSchema
+  alias Tymeslot.Integrations.Calendar.CreatedEvent
+  alias Tymeslot.Integrations.Calendar.ProviderConfig
+  alias Tymeslot.Integrations.Calendar.Providers.ProviderRegistry
+  alias Tymeslot.Integrations.Calendar.Shared.FetchAggregate.Outcome
+
+  @type adapter_client :: %{
+          required(:provider_type) => atom(),
+          required(:client) => term(),
+          required(:provider_module) => module()
+        }
+
+  @doc """
+  Creates a new client using the specified provider.
+
+  ## Options
+  - `skip_validation`: Skip config validation for operational client creation (default: false)
+  """
+  @spec new_client(atom(), map() | term(), keyword()) :: adapter_client() | {:error, term()}
+  def new_client(provider_type, config, opts) do
+    case ProviderRegistry.create_client(provider_type, config, opts) do
+      {:ok, client} ->
+        %{
+          provider_type: provider_type,
+          client: client,
+          provider_module: ProviderRegistry.get_provider!(provider_type)
+        }
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  @doc """
+  Creates a new adapter client from a persisted `CalendarIntegrationSchema`.
+
+  Handles the CalDAV-vs-everything-else branching and credential decryption
+  internally. CalDAV providers decrypt credentials and create a real client via
+  `ProviderRegistry`; every other provider takes the integration struct itself
+  as the client and reads what it needs from there — OAuth providers because
+  the tokens live on the struct, EWS because a CalDAV-shaped config carries
+  neither `verify_ssl` nor the mailbox address its availability read needs.
+
+  Returns `{:ok, adapter_client()}` or `{:error, reason}`.
+  """
+  @spec new_client_from_integration(CalendarIntegrationSchema.t()) ::
+          {:ok, adapter_client()} | {:error, term()}
+  def new_client_from_integration(%CalendarIntegrationSchema{} = integration) do
+    with {:ok, provider_atom} <- ProviderConfig.parse_known(integration.provider),
+         {:ok, provider_module} <- ProviderRegistry.get_provider(provider_atom) do
+      if ProviderConfig.caldav_based?(provider_atom) do
+        decrypted = CalendarIntegrationSchema.decrypt_credentials(integration)
+
+        config = %{
+          base_url: decrypted.base_url,
+          username: decrypted.username,
+          password: decrypted.password,
+          calendar_paths: decrypted.calendar_paths
+        }
+
+        case ProviderRegistry.create_client(provider_atom, config, skip_validation: true) do
+          {:ok, client} ->
+            {:ok,
+             %{
+               provider_type: provider_atom,
+               client: client,
+               provider_module: provider_module
+             }}
+
+          {:error, _reason} = error ->
+            error
+        end
+      else
+        {:ok,
+         %{
+           provider_type: provider_atom,
+           client: integration,
+           provider_module: provider_module
+         }}
+      end
+    end
+  end
+
+  @doc """
+  Lists all events from the calendar in `default_window/0`.
+  """
+  @spec get_events(adapter_client()) ::
+          {:ok, list()} | {:error, atom(), term()} | {:error, term()}
+  def get_events(adapter_client) do
+    {start_time, end_time} = default_window()
+    get_events(adapter_client, start_time, end_time)
+  end
+
+  @doc """
+  The range `get_events/1` reads: from 30 days ago to 365 days ahead, at
+  `now`.
+  """
+  @spec default_window(DateTime.t()) :: {DateTime.t(), DateTime.t()}
+  def default_window(now \\ DateTime.utc_now()) do
+    now = DateTime.truncate(now, :second)
+    {DateTime.add(now, -30, :day), DateTime.add(now, 365, :day)}
+  end
+
+  @doc """
+  Lists events within a specific date range.
+  """
+  @spec get_events(adapter_client(), DateTime.t(), DateTime.t()) ::
+          {:ok, list()} | {:error, atom(), term()} | {:error, term()}
+  def get_events(adapter_client, start_time, end_time) do
+    Metrics.time_operation(
+      :calendar_get_events_range,
+      %{provider: adapter_client.provider_type},
+      fn ->
+        Logger.debug("Getting events from calendar",
+          provider: adapter_client.provider_type,
+          start_time: start_time,
+          end_time: end_time
+        )
+
+        opts = [start_time: start_time, end_time: end_time]
+
+        case adapter_client.provider_module.list_events(
+               adapter_client.client,
+               opts
+             ) do
+          {:ok, events} = result ->
+            Logger.debug("Successfully retrieved events in range",
+              provider: adapter_client.provider_type,
+              event_count: length(events)
+            )
+
+            result
+
+          {:error, type, reason} = error ->
+            Logger.error("Failed to get events in range",
+              provider: adapter_client.provider_type,
+              error_type: type,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+
+          # An %Outcome{} carries the full events list of every calendar
+          # that succeeded in the round, so it must never reach `inspect/1`
+          # below; its failures were already logged, once each, by the
+          # `FetchAggregate.collect/3` that classified them.
+          {:error, %Outcome{}} = error ->
+            error
+
+          {:error, reason} = error ->
+            Logger.error("Failed to get events in range",
+              provider: adapter_client.provider_type,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+        end
+      end
+    )
+  end
+
+  @doc """
+  Creates a new event in the calendar.
+  """
+  @spec create_event(adapter_client(), map()) ::
+          {:ok, CreatedEvent.t()} | {:error, atom(), term()} | {:error, term()}
+  def create_event(adapter_client, event_data) do
+    Metrics.time_operation(
+      :calendar_create_event,
+      %{provider: adapter_client.provider_type},
+      fn ->
+        Logger.info("Creating event in calendar", provider: adapter_client.provider_type)
+
+        case adapter_client.provider_module.create_event(adapter_client.client, event_data) do
+          {:ok, _result} = result ->
+            Logger.info("Successfully created event")
+            result
+
+          {:error, type, reason} = error ->
+            Logger.error("Failed to create event",
+              provider: adapter_client.provider_type,
+              error_type: type,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+
+          {:error, reason} = error ->
+            Logger.error("Failed to create event",
+              provider: adapter_client.provider_type,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+        end
+      end
+    )
+  end
+
+  @doc """
+  Updates an existing event in the calendar.
+
+  An edit of one or more occurrences of a CalDAV series (an `:occurrence`
+  in `event_data`) answers `{:ok, %{document: document}}`, the document the
+  series now lives in, which the caller needs to refresh its cache, with the
+  resource made for the following occurrences under `:tail` when the edit
+  split the series. An edit of every occurrence of a Google or Outlook
+  series (an `:occurrence` of scope `:all`) is written to the series' master
+  and answers `:ok`; one that split the series (scope `:following`) answers
+  `{:ok, %{tail: tail}}`, the series made for the following occurrences.
+  """
+  @spec update_event(adapter_client(), String.t(), map()) ::
+          :ok
+          | {:ok, %{optional(:document) => String.t(), optional(:tail) => map()}}
+          | {:error, atom(), term()}
+          | {:error, term()}
+  def update_event(adapter_client, uid, event_data) do
+    Metrics.time_operation(
+      :calendar_update_event,
+      %{provider: adapter_client.provider_type},
+      fn ->
+        Logger.info("Updating event in calendar",
+          provider: adapter_client.provider_type,
+          uid: uid
+        )
+
+        case adapter_client.provider_module.update_event(adapter_client.client, uid, event_data) do
+          :ok ->
+            Logger.info("Successfully updated event", uid: uid)
+            :ok
+
+          # A rewritten CalDAV series, and for a split the resource made
+          # for its following occurrences.
+          {:ok, %{document: _document} = rewritten} = updated_occurrence
+          when map_size(rewritten) == 1 or
+                 (map_size(rewritten) == 2 and is_map_key(rewritten, :tail)) ->
+            Logger.info("Successfully updated event occurrence", uid: uid)
+            updated_occurrence
+
+          # A split Google or Outlook series: the series made for its
+          # following occurrences.
+          {:ok, %{tail: _tail} = split} = split_series when map_size(split) == 1 ->
+            Logger.info("Successfully split event series", uid: uid)
+            split_series
+
+          {:ok, _updated} ->
+            # Be tolerant of providers that return {:ok, event}
+            Logger.info("Successfully updated event", uid: uid)
+            :ok
+
+          {:error, type, reason} = error ->
+            Logger.error("Failed to update event",
+              provider: adapter_client.provider_type,
+              error_type: type,
+              uid: uid,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+
+          {:error, reason} = error ->
+            Logger.error("Failed to update event",
+              provider: adapter_client.provider_type,
+              uid: uid,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+        end
+      end
+    )
+  end
+
+  @doc """
+  Fetches one event straight from the provider (see the provider's
+  `fetch_event/2`). A provider that cannot fetch a single event answers
+  `{:error, :unsupported}`.
+  """
+  @spec fetch_event(adapter_client(), map()) ::
+          {:ok, list()} | {:error, :not_found} | {:error, term()}
+  def fetch_event(%{provider_module: module} = adapter_client, event_ref) do
+    if Code.ensure_loaded?(module) and function_exported?(module, :fetch_event, 2) do
+      Metrics.time_operation(
+        :calendar_fetch_event,
+        %{provider: adapter_client.provider_type},
+        fn -> module.fetch_event(adapter_client.client, event_ref) end
+      )
+    else
+      {:error, :unsupported}
+    end
+  end
+
+  @doc """
+  Looks for an event in every calendar of the account (see the provider's
+  `find_moved_event/2`). A provider that cannot answers `{:error, :not_found}`,
+  since `fetch_event/2` has already said so for every calendar it reaches.
+  """
+  @spec find_moved_event(adapter_client(), map()) ::
+          {:ok, list()} | {:error, :not_found} | {:error, term()}
+  def find_moved_event(%{provider_module: module} = adapter_client, event_ref) do
+    if Code.ensure_loaded?(module) and function_exported?(module, :find_moved_event, 2) do
+      Metrics.time_operation(
+        :calendar_find_moved_event,
+        %{provider: adapter_client.provider_type},
+        fn -> module.find_moved_event(adapter_client.client, event_ref) end
+      )
+    else
+      {:error, :not_found}
+    end
+  end
+
+  @doc """
+  Deletes an event from the calendar.
+  """
+  @spec delete_event(adapter_client(), String.t(), keyword()) ::
+          :ok
+          | {:ok, %{document: String.t() | nil}}
+          | {:error, atom(), term()}
+          | {:error, term()}
+  def delete_event(adapter_client, uid, opts \\ []) do
+    Metrics.time_operation(
+      :calendar_delete_event,
+      %{provider: adapter_client.provider_type},
+      fn ->
+        Logger.info("Deleting event from calendar",
+          provider: adapter_client.provider_type,
+          uid: uid
+        )
+
+        # CalDAV providers use the iCalendar UID natively; OAuth providers
+        # (Google, Outlook) need the provider-specific event ID.
+        effective_id =
+          if opts[:provider_event_id] &&
+               !ProviderConfig.caldav_based?(adapter_client.provider_type) do
+            opts[:provider_event_id]
+          else
+            uid
+          end
+
+        case adapter_client.provider_module.delete_event(
+               adapter_client.client,
+               effective_id,
+               opts
+             ) do
+          :ok ->
+            Logger.info("Successfully deleted event", uid: uid)
+            :ok
+
+          # One occurrence of a series went, and the rest of the series is
+          # what the resource now holds: the caller refreshes its cache from it.
+          {:ok, %{document: _document}} = deleted_occurrence ->
+            Logger.info("Successfully deleted event occurrence", uid: uid)
+            deleted_occurrence
+
+          {:ok, _deleted} ->
+            Logger.info("Successfully deleted event", uid: uid)
+            :ok
+
+          {:error, type, reason} = error ->
+            Logger.error("Failed to delete event",
+              provider: adapter_client.provider_type,
+              error_type: type,
+              uid: uid,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+
+          {:error, reason} = error ->
+            Logger.error("Failed to delete event",
+              provider: adapter_client.provider_type,
+              uid: uid,
+              reason: LogFormat.reason(reason)
+            )
+
+            error
+        end
+      end
+    )
+  end
+end

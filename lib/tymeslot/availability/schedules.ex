@@ -1,0 +1,514 @@
+defmodule Tymeslot.Availability.Schedules do
+  @moduledoc """
+  Named availability schedules: the single entry point for creating, editing and
+  resolving the schedule a meeting type is booked against.
+
+  Every profile has exactly one default schedule. A meeting type with no
+  `availability_schedule_id` resolves to that default, so a meeting type is
+  never left without a schedule, including after the schedule it pointed at is
+  deleted, which nilifies the reference at the database level.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Availability
+  alias Tymeslot.Availability.AvailabilityOverrideQueries
+  alias Tymeslot.Availability.AvailabilityScheduleQueries
+  alias Tymeslot.Availability.AvailabilityScheduleSchema
+  alias Tymeslot.Availability.Breaks
+  alias Tymeslot.Availability.WeeklyAvailabilityQueries
+  alias Tymeslot.MeetingTypes.MeetingTypeQueries
+  alias Tymeslot.MeetingTypes.OfferedTimes
+  alias Tymeslot.Profiles
+  alias Tymeslot.Profiles.ProfileQueries
+  alias Tymeslot.Repo
+  alias Tymeslot.Utils.TimeRange
+  alias Tymeslot.Validation.Constraints
+
+  @default_schedule_name "Working hours"
+
+  # A profile's schedules are presented as a tab strip, which stops reading as
+  # navigation once there are too many of them. The cap keeps that surface
+  # legible; it is deliberately low and easy to raise.
+  @max_schedules 5
+
+  @policy_fields [
+    :buffer_before_minutes,
+    :buffer_after_minutes,
+    :min_advance_hours,
+    :advance_booking_days
+  ]
+
+  @type schedule :: AvailabilityScheduleSchema.t()
+  @type result :: {:ok, schedule()} | {:error, Ecto.Changeset.t() | atom()}
+
+  @doc """
+  Lists a profile's schedules, default first.
+  """
+  @spec list_for_profile(integer()) :: [schedule()]
+  defdelegate list_for_profile(profile_id), to: AvailabilityScheduleQueries, as: :list_by_profile
+
+  @doc """
+  Fetches a profile's default schedule, or `nil` when the profile has none.
+  """
+  @spec get_default(integer() | nil) :: schedule() | nil
+  defdelegate get_default(profile_id), to: AvailabilityScheduleQueries
+
+  @doc """
+  Fetches one of a profile's schedules by id, scoped so a caller cannot read
+  another account's schedule by guessing an id.
+  """
+  @spec get_for_profile(integer(), integer()) :: schedule() | nil
+  defdelegate get_for_profile(id, profile_id), to: AvailabilityScheduleQueries
+
+  @doc """
+  Creates the profile's default schedule and seeds its seven weekday rows.
+
+  Accepts an optional repo so profile creation can run it inside the surrounding
+  transaction.
+  """
+  @spec create_default(integer(), Ecto.Repo.t()) :: result()
+  def create_default(profile_id, repo \\ Repo) do
+    attrs = %{profile_id: profile_id, name: @default_schedule_name, is_default: true}
+
+    with {:ok, schedule} <- AvailabilityScheduleQueries.insert(attrs, repo),
+         {:ok, _count} <- WeeklyAvailabilityQueries.create_default_weekly_days(schedule.id, repo) do
+      {:ok, schedule}
+    end
+  end
+
+  @doc """
+  The maximum number of schedules one profile may own.
+  """
+  @spec max_schedules() :: pos_integer()
+  def max_schedules, do: @max_schedules
+
+  # Whether a profile has room for another schedule.
+  @spec can_create?(integer()) :: boolean()
+  defp can_create?(profile_id) do
+    AvailabilityScheduleQueries.count_by_profile(profile_id) < @max_schedules
+  end
+
+  @doc """
+  Creates an additional (non-default) schedule and seeds its seven weekday rows,
+  so a new schedule is immediately editable rather than half-populated.
+
+  Returns `{:error, :schedule_limit_reached}` once the profile owns
+  `max_schedules/0` of them.
+  """
+  @spec create(integer(), map()) :: result()
+  def create(profile_id, attrs) do
+    attrs =
+      attrs
+      |> normalise_attrs()
+      |> Map.merge(%{profile_id: profile_id, is_default: false})
+
+    Repo.transaction(fn ->
+      # Counted inside the transaction so two concurrent creates cannot both
+      # read a count below the cap and each insert past it.
+      with :ok <- check_limit(profile_id),
+           {:ok, schedule} <- AvailabilityScheduleQueries.insert(attrs),
+           {:ok, _count} <- WeeklyAvailabilityQueries.create_default_weekly_days(schedule.id) do
+        schedule
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
+  @doc """
+  Renames a schedule.
+  """
+  @spec rename(schedule(), String.t()) :: result()
+  def rename(%AvailabilityScheduleSchema{} = schedule, name) do
+    AvailabilityScheduleQueries.update(schedule, %{name: name})
+  end
+
+  @doc """
+  Updates the schedule's buffers, minimum notice and advance booking window.
+  """
+  @spec update_policy(schedule(), map()) :: result()
+  def update_policy(%AvailabilityScheduleSchema{} = schedule, attrs) do
+    schedule
+    |> AvailabilityScheduleQueries.update_policy(normalise_attrs(attrs))
+    |> invalidate_cache(schedule)
+  end
+
+  @doc """
+  Makes `schedule` the profile's default, clearing the flag from the previous one
+  in the same transaction so the partial unique index is never violated.
+  """
+  @spec set_default(schedule()) :: result()
+  def set_default(%AvailabilityScheduleSchema{is_default: true} = schedule), do: {:ok, schedule}
+
+  def set_default(%AvailabilityScheduleSchema{} = schedule) do
+    promoted =
+      Repo.transaction(fn ->
+        # Clearing before marking matters: the partial unique index allows only
+        # one default per profile, so the two writes cannot be reordered.
+        AvailabilityScheduleQueries.clear_default(schedule.profile_id)
+        AvailabilityScheduleQueries.mark_default(schedule.id)
+
+        %{schedule | is_default: true}
+      end)
+
+    invalidate_cache(promoted, schedule)
+  end
+
+  @doc """
+  Copies a schedule's weekly pattern, breaks and policy under a "(copy)" name.
+
+  The name is chosen inside the insert's transaction from the profile's current
+  schedule names: the first of "<name> (copy)", "<name> (copy) 2", ... that no
+  schedule holds. When the result would pass the name length limit, the source
+  name is shortened rather than the suffix, so every candidate stays distinct
+  and within the limit.
+
+  Date overrides are deliberately not copied: they name specific calendar dates,
+  and carrying a stale exception list into a copy is more often wrong than right.
+
+  Returns `{:error, :schedule_limit_reached}` once the profile owns
+  `max_schedules/0` of them.
+  """
+  @spec duplicate(schedule()) ::
+          result() | {:error, {:break_outside_hours, map(), map()}}
+  def duplicate(%AvailabilityScheduleSchema{} = source) do
+    copy =
+      Repo.transaction(fn ->
+        with :ok <- check_limit(source.profile_id),
+             attrs = copy_attrs(source),
+             {:ok, inserted} <- AvailabilityScheduleQueries.insert(attrs) do
+          copy_weekly_days(source.id, inserted.id)
+          inserted
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    invalidate_cache(copy, source)
+  end
+
+  @doc """
+  Deletes a schedule.
+
+  The default schedule cannot be deleted; meeting types pointing at any other
+  schedule revert to the default when it goes.
+  """
+  @spec delete(schedule()) :: result()
+  def delete(%AvailabilityScheduleSchema{is_default: true}), do: {:error, :cannot_delete_default}
+
+  def delete(%AvailabilityScheduleSchema{} = schedule) do
+    schedule
+    |> AvailabilityScheduleQueries.delete()
+    |> invalidate_cache(schedule)
+  end
+
+  @doc """
+  Names of the meeting types currently using a schedule, so a delete
+  confirmation can say which ones fall back to the default.
+  """
+  @spec meeting_type_names(integer()) :: [String.t()]
+  defdelegate meeting_type_names(schedule_id), to: AvailabilityScheduleQueries
+
+  @doc """
+  Whether a schedule has any date overrides.
+
+  `duplicate/1` leaves them behind on purpose, so a caller can use this to say
+  so at the moment it matters rather than letting the copy quietly differ.
+  """
+  @spec has_overrides?(integer()) :: boolean()
+  def has_overrides?(schedule_id) do
+    AvailabilityOverrideQueries.count_by_schedule(schedule_id) > 0
+  end
+
+  @doc """
+  Resolves the schedule a meeting type is booked against: its own when set, the
+  owning profile's default otherwise.
+
+  Returns `nil` only when no meeting type is given, or when the owner has no
+  profile; the engine treats a nil schedule as "use fallback hours".
+  """
+  @spec resolve_for_meeting_type(map() | nil) :: schedule() | nil
+  def resolve_for_meeting_type(nil), do: nil
+
+  def resolve_for_meeting_type(%{availability_schedule_id: id}) when is_integer(id) do
+    AvailabilityScheduleQueries.get(id)
+  end
+
+  def resolve_for_meeting_type(%{user_id: user_id}) when is_integer(user_id) do
+    case ProfileQueries.get_by_user_id(user_id) do
+      {:ok, profile} -> get_default(profile.id)
+      {:error, :not_found} -> nil
+    end
+  end
+
+  def resolve_for_meeting_type(_meeting_type), do: nil
+
+  @doc """
+  Resolves the schedule for a meeting type, falling back to the given profile's
+  default without a second profile lookup.
+
+  This is the variant used by the booking page, where the organiser's profile is
+  already loaded.
+  """
+  @spec resolve_for(map() | nil, map() | nil) :: schedule() | nil
+  def resolve_for(%{availability_schedule_id: id}, _profile) when is_integer(id) do
+    AvailabilityScheduleQueries.get(id)
+  end
+
+  def resolve_for(_meeting_type, %{id: profile_id}) when is_integer(profile_id) do
+    get_default(profile_id)
+  end
+
+  def resolve_for(_meeting_type, _profile), do: nil
+
+  @doc """
+  The name given to a profile's default schedule at creation time.
+  """
+  @spec default_schedule_name() :: String.t()
+  def default_schedule_name, do: @default_schedule_name
+
+  @doc """
+  One scheduling policy value for a resolved schedule.
+
+  A nil schedule means none could be resolved (a profile mid-creation, or demo
+  data) and falls back to `Tymeslot.Validation.Constraints`, which is the same
+  table the engine and the schema's column defaults use. Every caller that can
+  hold a nil schedule reads through here, so the offered slots and the
+  booking-time re-check cannot disagree about what applies when there is none.
+  """
+  @spec policy(schedule() | nil, atom()) :: integer()
+  def policy(nil, key), do: Map.fetch!(Constraints.scheduling_policy_defaults(), key)
+  def policy(schedule, key), do: Map.fetch!(schedule, key)
+
+  @typedoc "The scheduling rules every availability and booking config carries."
+  @type config :: %{
+          required(:schedule_id) => integer() | nil,
+          required(:buffer_before_minutes) => non_neg_integer(),
+          required(:buffer_after_minutes) => non_neg_integer(),
+          required(:min_advance_hours) => non_neg_integer(),
+          required(:max_advance_booking_days) => pos_integer(),
+          required(:slot_interval_minutes) => pos_integer() | nil,
+          optional(:offered_starts) => [DateTime.t()]
+        }
+
+  @doc """
+  The scheduling rules a resolved schedule and meeting type impose, as the
+  keys the slot engine and the booking validation both read.
+
+  This is the one place those keys are assembled. The booking page builds its
+  offer from it and the submit re-checks against it, so a rule added here
+  reaches both; a key present in one copy but not the other is how a slot
+  comes to be offered and then refused.
+
+  Each rule is the meeting type's override where it sets one, and the
+  schedule's value otherwise (see `effective_policy/3`).
+
+  `max_advance_booking_days` is this map's name for the schedule's
+  `advance_booking_days`. `schedule_id` is carried so callers can recompute
+  the schedule's own windows from the config alone.
+
+  A one-to-one type with fixed dates also carries `offered_starts`, its
+  upcoming offered times (`Tymeslot.MeetingTypes.OfferedTimes`), which
+  replace the schedule's weekly hours as the source of candidate starts
+  (`Tymeslot.Availability.SlotGrid`); every other rule here still applies.
+  """
+  @spec config(schedule() | nil, map() | nil) :: config()
+  def config(schedule, meeting_type) do
+    base = %{
+      schedule_id: schedule && schedule.id,
+      buffer_before_minutes: effective_policy(schedule, meeting_type, :buffer_before_minutes),
+      buffer_after_minutes: effective_policy(schedule, meeting_type, :buffer_after_minutes),
+      min_advance_hours: effective_policy(schedule, meeting_type, :min_advance_hours),
+      max_advance_booking_days: effective_policy(schedule, meeting_type, :advance_booking_days),
+      slot_interval_minutes: slot_interval_minutes(meeting_type)
+    }
+
+    case OfferedTimes.starts_for(meeting_type) do
+      nil -> base
+      starts -> Map.put(base, :offered_starts, starts)
+    end
+  end
+
+  @doc """
+  The `{before, after}` buffers each of an organiser's meeting types books
+  with, keyed by meeting type id, resolved as `booking_config/2` resolves
+  them: the type's own override, else its schedule's value, else the
+  organiser's default schedule's.
+
+  `nil` among the ids (a meeting with no type) and an id the organiser does
+  not own resolve the default schedule, like `booking_config/2` given a nil
+  meeting type. Answers any number of meeting types in at most three queries,
+  so a caller weighing many bookings does not resolve them one at a time.
+  """
+  @spec buffers_by_meeting_type(integer(), [integer() | nil]) ::
+          %{optional(integer() | nil) => TimeRange.buffers()}
+  def buffers_by_meeting_type(organizer_user_id, meeting_type_ids) do
+    meeting_type_ids = Enum.uniq(meeting_type_ids)
+
+    types =
+      organizer_user_id
+      |> MeetingTypeQueries.list_with_schedules(Enum.reject(meeting_type_ids, &is_nil/1))
+      |> Map.new(&{&1.id, &1})
+
+    # Read only when some id falls back to it.
+    default =
+      if Enum.any?(meeting_type_ids, &falls_back_to_default?(Map.get(types, &1))),
+        do: resolve_for_meeting_type(%{user_id: organizer_user_id})
+
+    Map.new(meeting_type_ids, fn id ->
+      type = Map.get(types, id)
+      schedule = (type && type.availability_schedule) || default
+
+      {id,
+       {effective_policy(schedule, type, :buffer_before_minutes),
+        effective_policy(schedule, type, :buffer_after_minutes)}}
+    end)
+  end
+
+  defp falls_back_to_default?(nil), do: true
+  defp falls_back_to_default?(%{availability_schedule: nil}), do: true
+  defp falls_back_to_default?(_type), do: false
+
+  @doc """
+  One scheduling rule as it applies to a meeting type: the meeting type's own
+  override when it sets one, else the schedule's value (`policy/2`).
+
+  A nil override means "use the schedule's", so a meeting type follows later
+  changes to its schedule until it is given a value of its own. Meeting-type
+  maps that omit the key (such as the demo provider's) inherit too.
+  """
+  @spec effective_policy(schedule() | nil, map() | nil, atom()) :: integer()
+  def effective_policy(schedule, meeting_type, key) do
+    case meeting_type && Map.get(meeting_type, key) do
+      value when is_integer(value) -> value
+      _inherit -> policy(schedule, key)
+    end
+  end
+
+  @typedoc "`config/0` for a booking, with the organiser's timezone."
+  @type booking_config :: %{
+          required(:schedule_id) => integer() | nil,
+          required(:buffer_before_minutes) => non_neg_integer(),
+          required(:buffer_after_minutes) => non_neg_integer(),
+          required(:min_advance_hours) => non_neg_integer(),
+          required(:max_advance_booking_days) => pos_integer(),
+          required(:slot_interval_minutes) => pos_integer() | nil,
+          optional(:offered_starts) => [DateTime.t()],
+          required(:owner_timezone) => String.t()
+        }
+
+  @doc """
+  Scheduling policy for a booking: buffers, minimum notice, advance window and
+  the organiser's timezone.
+
+  The policy comes from the schedule the meeting type is booked against, so
+  server-side validation applies exactly the rules the offered slots were
+  computed from. A nil meeting type resolves the organiser's default schedule.
+  """
+  @spec booking_config(integer() | nil, map() | nil) :: booking_config()
+  def booking_config(nil, _meeting_type) do
+    nil
+    |> config(nil)
+    |> Map.put(:owner_timezone, Profiles.get_default_timezone())
+  end
+
+  def booking_config(organizer_user_id, meeting_type) do
+    # `Profiles.get_profile_settings/1` already resolves a profile with no
+    # timezone to `Profiles.get_default_timezone()`, the same fallback the
+    # booking page applies, so a nil profile timezone resolves to one zone on
+    # both sides.
+    settings = Profiles.get_profile_settings(organizer_user_id)
+
+    (meeting_type || %{user_id: organizer_user_id})
+    |> resolve_for_meeting_type()
+    |> config(meeting_type)
+    |> Map.put(:owner_timezone, settings.timezone)
+  end
+
+  @doc """
+  A meeting type's booking interval, in minutes.
+
+  NULL means "use the meeting type's own duration", the default for almost
+  every meeting type. Nil for a nil meeting type and for meeting-type maps
+  (such as the demo provider's) that omit the key entirely, so this never
+  raises whatever shape of meeting type it is handed.
+  """
+  @spec slot_interval_minutes(map() | nil) :: pos_integer() | nil
+  def slot_interval_minutes(%{slot_interval_minutes: minutes}), do: minutes
+  def slot_interval_minutes(_meeting_type), do: nil
+
+  defp copy_attrs(source) do
+    source
+    |> Map.take(@policy_fields)
+    |> Map.merge(%{profile_id: source.profile_id, name: copy_name(source), is_default: false})
+  end
+
+  # One more candidate than there are names guarantees a free one, so the
+  # search is bounded by the profile's schedule count.
+  defp copy_name(%{name: name, profile_id: profile_id}) do
+    taken =
+      profile_id
+      |> AvailabilityScheduleQueries.list_by_profile()
+      |> MapSet.new(& &1.name)
+
+    1..(MapSet.size(taken) + 1)
+    |> Enum.map(&with_copy_suffix(name, &1))
+    |> Enum.find(&(not MapSet.member?(taken, &1)))
+  end
+
+  defp with_copy_suffix(name, number) do
+    suffix = " " <> copy_suffix(number)
+    max = AvailabilityScheduleSchema.name_max_length()
+
+    String.slice(name, 0, max - String.length(suffix)) <> suffix
+  end
+
+  defp copy_suffix(1), do: dgettext("dashboard_availability", "(copy)")
+
+  defp copy_suffix(number),
+    do: dgettext("dashboard_availability", "(copy) %{number}", number: number)
+
+  defp check_limit(profile_id) do
+    if can_create?(profile_id), do: :ok, else: {:error, :schedule_limit_reached}
+  end
+
+  defp copy_weekly_days(source_schedule_id, target_schedule_id) do
+    source_schedule_id
+    |> WeeklyAvailabilityQueries.get_weekly_schedule_with_breaks()
+    |> Enum.each(fn day ->
+      {:ok, copy} =
+        WeeklyAvailabilityQueries.create_weekly_availability(%{
+          schedule_id: target_schedule_id,
+          day_of_week: day.day_of_week,
+          is_available: day.is_available,
+          start_time: day.start_time,
+          end_time: day.end_time,
+          ends_next_day: day.ends_next_day
+        })
+
+      with {:error, reason} <- Breaks.replace_breaks(copy, day.breaks || []),
+           do: Repo.rollback(reason)
+    end)
+  end
+
+  # The UI submits string-keyed params while internal callers use atoms; the
+  # merges above need one consistent key type.
+  # The slot engine reads these rows. Changing the default or deleting a
+  # schedule re-points every meeting type that follows the default, so leaving
+  # it to the cache's lifetime would keep offering the old hours to whoever is
+  # on the booking page meanwhile. A failed write changed nothing.
+  defp invalidate_cache({:ok, _result} = outcome, %AvailabilityScheduleSchema{} = schedule) do
+    Availability.changed(schedule)
+    outcome
+  end
+
+  defp invalidate_cache(outcome, _schedule), do: outcome
+
+  defp normalise_attrs(attrs) do
+    Map.new(attrs, fn
+      {key, value} when is_binary(key) -> {String.to_existing_atom(key), value}
+      {key, value} -> {key, value}
+    end)
+  end
+end

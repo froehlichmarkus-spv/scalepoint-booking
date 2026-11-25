@@ -1,0 +1,380 @@
+defmodule Tymeslot.Meetings.SchedulingCompositionTest do
+  @moduledoc """
+  Composition tests for `Tymeslot.Meetings.Scheduling`. The module wraps
+  meeting create/update in a conflict-checked transaction with buffered
+  windows derived from the organiser's profile. These tests exercise the
+  buffer arithmetic and the short-circuit path that skips the conflict
+  check when the update does not touch time.
+  """
+
+  use Tymeslot.DataCase, async: false
+
+  @moduletag :meetings
+  @moduletag :integration
+
+  import ExUnit.CaptureLog
+  import Tymeslot.ConfigTestHelpers
+  import Tymeslot.Factory
+
+  alias Ecto.UUID
+  alias ErrorTracker.Error
+  alias Tymeslot.Meetings.Scheduling
+
+  setup do
+    user = insert(:user)
+    profile = insert(:profile, user: user)
+
+    insert(:availability_schedule,
+      profile: profile,
+      is_default: true,
+      buffer_before_minutes: 15,
+      buffer_after_minutes: 15
+    )
+
+    %{user: user, profile: profile}
+  end
+
+  describe "create_meeting_with_conflict_check/1" do
+    test "records a database failure and returns :database_error", %{user: user} do
+      # Stands in for an outage: every insert into meetings fails. Created in
+      # the sandbox transaction, so rolled back with the test.
+      Repo.query!("""
+      CREATE FUNCTION fail_meeting_insert() RETURNS trigger AS $$
+      BEGIN RAISE EXCEPTION 'meetings unavailable'; END;
+      $$ LANGUAGE plpgsql
+      """)
+
+      Repo.query!("""
+      CREATE TRIGGER fail_meeting_insert BEFORE INSERT ON meetings
+      FOR EACH ROW EXECUTE FUNCTION fail_meeting_insert()
+      """)
+
+      with_config(:error_tracker, enabled: true)
+
+      capture_log(fn ->
+        assert {:error, :database_error} =
+                 Scheduling.create_meeting_with_conflict_check(attrs(user, future_time(2, :day)))
+      end)
+
+      assert [%Error{kind: "Elixir.Postgrex.Error"} = error] =
+               Error |> Repo.all() |> Repo.preload(:occurrences)
+
+      assert [%{context: %{"operation" => "create", "organizer_user_id" => user_id}}] =
+               error.occurrences
+
+      assert user_id == user.id
+    end
+
+    test "creates meeting when no conflicts exist", %{user: user} do
+      start_time = future_time(2, :day)
+
+      assert {:ok, meeting} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, start_time))
+
+      assert DateTime.compare(meeting.start_time, start_time) == :eq
+    end
+
+    test "rejects meeting that overlaps with existing meeting", %{user: user} do
+      base = future_time(2, :day)
+      insert_meeting(user, base)
+
+      overlap_start = DateTime.add(base, 15, :minute)
+
+      assert {:error, :time_conflict} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, overlap_start))
+    end
+
+    test "rejects meeting within 15-minute buffer of existing meeting", %{user: user} do
+      base = future_time(2, :day)
+      insert_meeting(user, base)
+
+      # existing ends at base+30m; new starts at base+35m -> 5m gap, < 15m buffer
+      buffer_start = DateTime.add(base, 35, :minute)
+
+      assert {:error, :time_conflict} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, buffer_start))
+    end
+
+    test "buffers: false counts only meetings at the time itself", %{user: user} do
+      base = future_time(2, :day)
+      insert_meeting(user, base)
+
+      # existing ends at base+30m; new starts at base+35m, inside the 15m buffer
+      buffer_start = DateTime.add(base, 35, :minute)
+
+      assert {:ok, meeting} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, buffer_start),
+                 buffers: false
+               )
+
+      assert DateTime.compare(meeting.start_time, buffer_start) == :eq
+    end
+
+    test "buffers: false still refuses a meeting overlapping the time", %{user: user} do
+      base = future_time(2, :day)
+      insert_meeting(user, base)
+
+      assert {:error, :time_conflict} =
+               Scheduling.create_meeting_with_conflict_check(
+                 attrs(user, DateTime.add(base, 15, :minute)),
+                 buffers: false
+               )
+    end
+
+    test "allows meeting outside the buffer window", %{user: user} do
+      base = future_time(2, :day)
+      insert_meeting(user, base)
+
+      # existing ends at base+30m; buffer is 15m -> clear after base+45m
+      outside_start = DateTime.add(base, 60, :minute)
+
+      assert {:ok, _meeting} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, outside_start))
+    end
+
+    test "pins the strict buffer boundary (exact edge at base+45m)", %{user: user} do
+      base = future_time(2, :day)
+      insert_meeting(user, base)
+
+      # existing ends at base+30m; with a 15m buffer the buffered_end is base+45m.
+      # A new meeting starting at base+45m has buffered_start = base+30m.
+      # The conflict query uses end_time > ^buffered_start (strict), so
+      # base+45m == base+45m is false -> no conflict.
+      exact_edge = DateTime.add(base, 45, :minute)
+
+      assert {:ok, _meeting} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, exact_edge))
+
+      # One minute inside the buffer (base+44m): buffered_start = base+29m,
+      # existing end_time = base+45m -> base+45m > base+29m is true -> conflict.
+      one_inside = DateTime.add(base, 44, :minute)
+
+      assert {:error, :time_conflict} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, one_inside))
+    end
+
+    test "returns {:error, {:validation_error, changeset}} when attrs fail schema validation",
+         %{user: user} do
+      start_time = future_time(2, :day)
+      # omit organizer_email, which is required by the changeset
+      invalid_attrs = user |> attrs(start_time) |> Map.delete(:organizer_email)
+
+      assert {:error, {:validation_error, %Ecto.Changeset{valid?: false}}} =
+               Scheduling.create_meeting_with_conflict_check(invalid_attrs)
+    end
+
+    test "returns :invalid_time_range when start_time missing", %{user: user} do
+      attrs = user |> attrs(future_time(1, :day)) |> Map.delete(:start_time)
+
+      assert {:error, :invalid_time_range} =
+               Scheduling.create_meeting_with_conflict_check(attrs)
+    end
+
+    test "does not see other users' meetings as conflicts", %{user: user} do
+      other_user = insert(:user)
+      other_profile = insert(:profile, user: other_user)
+
+      insert(:availability_schedule,
+        profile: other_profile,
+        is_default: true,
+        buffer_before_minutes: 15,
+        buffer_after_minutes: 15
+      )
+
+      base = future_time(2, :day)
+      insert_meeting(other_user, base)
+
+      # Same time slot for `user` — the other user's meeting must not block it.
+      assert {:ok, _meeting} =
+               Scheduling.create_meeting_with_conflict_check(attrs(user, base))
+    end
+  end
+
+  describe "update_meeting_with_conflict_check/2" do
+    test "moves a meeting to a clear slot", %{user: user} do
+      meeting = insert_meeting(user, future_time(2, :day))
+      new_start = future_time(5, :day)
+
+      assert {:ok, updated} =
+               Scheduling.update_meeting_with_conflict_check(meeting, %{
+                 start_time: new_start,
+                 end_time: DateTime.add(new_start, 30, :minute)
+               })
+
+      assert DateTime.compare(updated.start_time, new_start) == :eq
+    end
+
+    test "rejects a move that collides with another meeting", %{user: user} do
+      other = insert_meeting(user, future_time(5, :day))
+      meeting = insert_meeting(user, future_time(2, :day))
+
+      assert {:error, :time_conflict} =
+               Scheduling.update_meeting_with_conflict_check(meeting, %{
+                 start_time: other.start_time,
+                 end_time: other.end_time
+               })
+    end
+
+    test "pads the new time with the organiser's buffers", %{user: user} do
+      other = insert_meeting(user, future_time(5, :day))
+      meeting = insert_meeting(user, future_time(2, :day))
+
+      # Five minutes after `other` ends: inside its 15-minute buffer.
+      new_start = DateTime.add(other.end_time, 5, :minute)
+
+      assert {:error, :time_conflict} =
+               Scheduling.update_meeting_with_conflict_check(meeting, %{
+                 start_time: new_start,
+                 end_time: DateTime.add(new_start, 30, :minute)
+               })
+    end
+
+    test "buffers: false counts only meetings at the time itself", %{user: user} do
+      other = insert_meeting(user, future_time(5, :day))
+      meeting = insert_meeting(user, future_time(2, :day))
+      new_start = DateTime.add(other.end_time, 5, :minute)
+
+      assert {:ok, updated} =
+               Scheduling.update_meeting_with_conflict_check(
+                 meeting,
+                 %{start_time: new_start, end_time: DateTime.add(new_start, 30, :minute)},
+                 buffers: false
+               )
+
+      assert DateTime.compare(updated.start_time, new_start) == :eq
+    end
+
+    test "buffers: false still refuses a meeting at the same time", %{user: user} do
+      other = insert_meeting(user, future_time(5, :day))
+      meeting = insert_meeting(user, future_time(2, :day))
+
+      assert {:error, :time_conflict} =
+               Scheduling.update_meeting_with_conflict_check(
+                 meeting,
+                 %{start_time: other.start_time, end_time: other.end_time},
+                 buffers: false
+               )
+    end
+
+    test "skips conflict check when attrs contain no time fields", %{user: user} do
+      # `meeting` and `_blocker` are in overlapping slots for the same organiser.
+      # Because the blocker has a different uid it is not excluded from the
+      # conflict query. If the skip path were removed, updating only the title
+      # would run the conflict check, find the blocker, and rollback. The skip
+      # path must short-circuit for this update to succeed.
+      base = future_time(2, :day)
+      meeting = insert_meeting(user, base)
+      # Start the blocker 10 minutes later so it overlaps but avoids the unique
+      # constraint on (organizer_user_id, start_time).
+      _blocker = insert_meeting(user, DateTime.add(base, 10, :minute))
+
+      assert {:ok, updated} =
+               Scheduling.update_meeting_with_conflict_check(meeting, %{title: "Renamed"})
+
+      assert updated.title == "Renamed"
+    end
+  end
+
+  # ----- helpers -----
+
+  defp future_time(amount, unit) do
+    DateTime.utc_now() |> DateTime.add(amount, unit) |> DateTime.truncate(:second)
+  end
+
+  describe "a venue deleted between resolving the booker's choice and the write" do
+    # The venue the booking resolved to, deleted before the meeting is
+    # written: the write must not fail on its foreign key.
+    defp deleted_venue(user) do
+      venue = insert(:venue, user: user, name: "Berlin office", description: "Friedrichstrasse 1")
+      Repo.delete!(venue)
+      venue
+    end
+
+    @at_venue %{
+      location: "Berlin office (Friedrichstrasse 1)",
+      location_kind: :in_person,
+      address_to_arrange: false
+    }
+
+    test "books the meeting without it, keeping the address it resolved to", %{user: user} do
+      venue = deleted_venue(user)
+
+      attrs =
+        user
+        |> attrs(future_time(2, :day))
+        |> Map.merge(@at_venue)
+        |> Map.put(:venue_id, venue.id)
+
+      assert {:ok, meeting} = Scheduling.create_meeting_with_conflict_check(attrs)
+
+      assert meeting.venue_id == nil
+      assert meeting.location == "Berlin office (Friedrichstrasse 1)"
+      assert meeting.address_to_arrange == false
+    end
+
+    test "moves the meeting without it, keeping the address it resolved to", %{user: user} do
+      venue = deleted_venue(user)
+      meeting = insert_meeting(user, future_time(2, :day))
+      new_start = future_time(5, :day)
+
+      assert {:ok, moved} =
+               Scheduling.update_meeting_with_conflict_check(
+                 meeting,
+                 Map.merge(@at_venue, %{
+                   start_time: new_start,
+                   end_time: DateTime.add(new_start, 30, :minute),
+                   venue_id: venue.id
+                 })
+               )
+
+      assert moved.venue_id == nil
+      assert moved.location == "Berlin office (Friedrichstrasse 1)"
+      assert DateTime.compare(moved.start_time, new_start) == :eq
+    end
+
+    test "keeps a venue that still exists", %{user: user} do
+      venue = insert(:venue, user: user, name: "Munich office")
+
+      attrs =
+        user
+        |> attrs(future_time(2, :day))
+        |> Map.merge(%{@at_venue | location: "Munich office"})
+        |> Map.put(:venue_id, venue.id)
+
+      assert {:ok, meeting} = Scheduling.create_meeting_with_conflict_check(attrs)
+      assert meeting.venue_id == venue.id
+    end
+  end
+
+  defp attrs(user, start_time) do
+    %{
+      uid: UUID.generate(),
+      title: "Composition Test Meeting",
+      summary: "Composition Test Meeting",
+      description: "",
+      start_time: start_time,
+      end_time: DateTime.add(start_time, 30, :minute),
+      duration: 30,
+      organizer_user_id: user.id,
+      organizer_name: "Organiser",
+      organizer_email: "organiser-#{user.id}@example.com",
+      attendee_name: "Attendee",
+      attendee_email: "attendee-#{System.unique_integer([:positive])}@example.com",
+      attendee_timezone: "Etc/UTC",
+      attendee_locale: "en",
+      status: :confirmed
+    }
+  end
+
+  defp insert_meeting(user, start_time) do
+    insert(:meeting,
+      uid: UUID.generate(),
+      organizer_user_id: user.id,
+      organizer_email: "organiser-#{user.id}@example.com",
+      start_time: start_time,
+      end_time: DateTime.add(start_time, 30, :minute),
+      duration: 30,
+      status: :confirmed
+    )
+  end
+end

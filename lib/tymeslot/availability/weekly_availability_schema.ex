@@ -1,0 +1,73 @@
+defmodule Tymeslot.Availability.WeeklyAvailabilitySchema do
+  @moduledoc """
+  Schema for weekly availability settings per day of week.
+  """
+  use Gettext, backend: TymeslotWeb.Gettext
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  alias Tymeslot.Availability.AvailabilityBreakSchema
+  alias Tymeslot.Availability.AvailabilityScheduleSchema
+  alias Tymeslot.ChangesetValidators.AvailabilityWindow
+
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          schedule_id: integer() | nil,
+          day_of_week: integer() | nil,
+          is_available: boolean(),
+          start_time: Time.t() | nil,
+          end_time: Time.t() | nil,
+          ends_next_day: boolean(),
+          schedule: AvailabilityScheduleSchema.t() | Ecto.Association.NotLoaded.t(),
+          breaks: [AvailabilityBreakSchema.t()] | Ecto.Association.NotLoaded.t(),
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
+  schema "weekly_availability" do
+    field(:day_of_week, :integer)
+    field(:is_available, :boolean, default: false)
+    field(:start_time, :time)
+    field(:end_time, :time)
+    field(:ends_next_day, :boolean, default: false)
+
+    belongs_to(:schedule, AvailabilityScheduleSchema)
+    has_many(:breaks, AvailabilityBreakSchema, foreign_key: :weekly_availability_id)
+
+    timestamps(type: :utc_datetime)
+  end
+
+  @doc false
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
+  def changeset(weekly_availability, attrs) do
+    weekly_availability
+    |> cast(attrs, [
+      :schedule_id,
+      :day_of_week,
+      :is_available,
+      :start_time,
+      :end_time,
+      :ends_next_day
+    ])
+    |> validate_required([:schedule_id, :day_of_week])
+    |> validate_inclusion(:day_of_week, 1..7,
+      message: dgettext_noop("errors", "must be between 1 (Monday) and 7 (Sunday)")
+    )
+    |> AvailabilityWindow.normalise_next_day(:weekly_availability_next_day_end_check)
+    |> validate_times()
+    |> unique_constraint([:schedule_id, :day_of_week])
+    |> foreign_key_constraint(:schedule_id)
+  end
+
+  defp validate_times(changeset) do
+    if get_field(changeset, :is_available) do
+      changeset
+      |> validate_required([:start_time, :end_time],
+        message: dgettext_noop("errors", "are required when day is available")
+      )
+      |> AvailabilityWindow.validate_window()
+    else
+      changeset
+    end
+  end
+end

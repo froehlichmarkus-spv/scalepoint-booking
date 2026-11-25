@@ -1,0 +1,273 @@
+defmodule Tymeslot.Meetings.MeetingStateTest do
+  @moduledoc """
+  Unit tests for the meeting-state predicates, including the legacy
+  `status == :reschedule_requested` value the moduledoc claims to keep
+  reading correctly.
+  """
+
+  use ExUnit.Case, async: true
+
+  @moduletag :meetings
+  @moduletag :unit
+
+  import Tymeslot.Test.ClockHelpers
+
+  alias Tymeslot.Meetings.MeetingState
+
+  describe "active?/1" do
+    test "true for confirmed and pending meetings" do
+      assert MeetingState.active?(%{status: :confirmed})
+      assert MeetingState.active?(%{status: :pending})
+    end
+
+    test "true for the legacy reschedule_requested status" do
+      assert MeetingState.active?(%{status: :reschedule_requested})
+    end
+
+    test "false for cancelled, completed, awaiting_payment, and expired" do
+      refute MeetingState.active?(%{status: :cancelled})
+      refute MeetingState.active?(%{status: :completed})
+      refute MeetingState.active?(%{status: :awaiting_payment})
+      refute MeetingState.active?(%{status: :expired})
+    end
+  end
+
+  describe "status groupings" do
+    test "each grouping agrees with its predicate" do
+      for status <- MeetingState.active(), do: assert(MeetingState.active?(%{status: status}))
+      for status <- MeetingState.terminal(), do: assert(MeetingState.terminal?(%{status: status}))
+      for status <- MeetingState.released(), do: assert(MeetingState.released_status?(status))
+    end
+
+    test "every grouping is drawn from the statuses the schema accepts" do
+      groupings =
+        MeetingState.active() ++
+          MeetingState.occupying() ++ MeetingState.released() ++ MeetingState.terminal()
+
+      assert Enum.uniq(groupings) -- MeetingState.statuses() == []
+    end
+
+    test "a released booking is terminal, and neither occupies a slot" do
+      assert MeetingState.released() -- MeetingState.terminal() == []
+      assert Enum.filter(MeetingState.terminal(), &(&1 in MeetingState.occupying())) == []
+    end
+  end
+
+  describe "released_status?/1" do
+    test "true for a cancelled booking and an expired request" do
+      assert MeetingState.released_status?(:cancelled)
+      assert MeetingState.released_status?(:expired)
+    end
+
+    test "false for every status that may still take place, and for none" do
+      for status <- [:pending, :awaiting_payment, :awaiting_approval, :confirmed, :completed] do
+        refute MeetingState.released_status?(status), inspect(status)
+      end
+
+      refute MeetingState.released_status?(nil)
+    end
+  end
+
+  describe "cancelled?/1, confirmed?/1 and expired?/1" do
+    @statuses ~w(pending awaiting_payment awaiting_approval confirmed cancelled completed expired)a
+
+    test "each holds for its own status alone" do
+      assert Enum.filter(@statuses, &MeetingState.cancelled?(%{status: &1})) == [:cancelled]
+      assert Enum.filter(@statuses, &MeetingState.confirmed?(%{status: &1})) == [:confirmed]
+      assert Enum.filter(@statuses, &MeetingState.expired?(%{status: &1})) == [:expired]
+    end
+  end
+
+  describe "awaiting_approval?/1" do
+    test "true only for the held status" do
+      assert MeetingState.awaiting_approval?(%{status: :awaiting_approval})
+
+      refute MeetingState.awaiting_approval?(%{status: :confirmed})
+      refute MeetingState.awaiting_approval?(%{status: :pending})
+      refute MeetingState.awaiting_approval?(%{status: :awaiting_payment})
+    end
+
+    test "a held request is active, so the invitee may still cancel or move it" do
+      assert MeetingState.active?(%{status: :awaiting_approval})
+    end
+
+    test "a held request expects a calendar event, because a tentative one is written" do
+      assert MeetingState.expects_calendar_event?(%{
+               status: :awaiting_approval,
+               reschedule_requested_at: nil
+             })
+    end
+
+    test "a held request is not awaiting a new time from the attendee" do
+      refute MeetingState.awaiting_new_time?(%{
+               status: :awaiting_approval,
+               reschedule_requested_at: nil
+             })
+    end
+  end
+
+  describe "slot_void?/1" do
+    test "true when cancelled, regardless of reschedule_requested_at" do
+      assert MeetingState.slot_void?(%{status: :cancelled, reschedule_requested_at: nil})
+    end
+
+    test "true for the legacy reschedule_requested status" do
+      assert MeetingState.slot_void?(%{
+               status: :reschedule_requested,
+               reschedule_requested_at: nil
+             })
+    end
+
+    test "true when an organizer reschedule request is pending" do
+      assert MeetingState.slot_void?(%{
+               status: :confirmed,
+               reschedule_requested_at: DateTime.utc_now()
+             })
+    end
+
+    test "false for a live meeting with no pending request" do
+      refute MeetingState.slot_void?(%{status: :confirmed, reschedule_requested_at: nil})
+      refute MeetingState.slot_void?(%{status: :pending, reschedule_requested_at: nil})
+    end
+  end
+
+  describe "expects_calendar_event?/1" do
+    test "true for a plain confirmed meeting with no pending reschedule request" do
+      assert MeetingState.expects_calendar_event?(%{
+               status: :confirmed,
+               reschedule_requested_at: nil
+             })
+    end
+
+    test "false when a reschedule request is pending, even though the meeting is active" do
+      refute MeetingState.expects_calendar_event?(%{
+               status: :confirmed,
+               reschedule_requested_at: DateTime.utc_now()
+             })
+    end
+
+    test "false for the legacy reschedule_requested status" do
+      refute MeetingState.expects_calendar_event?(%{
+               status: :reschedule_requested,
+               reschedule_requested_at: nil
+             })
+    end
+
+    test "false for cancelled, completed, and awaiting_payment meetings" do
+      refute MeetingState.expects_calendar_event?(%{
+               status: :cancelled,
+               reschedule_requested_at: nil
+             })
+
+      refute MeetingState.expects_calendar_event?(%{
+               status: :completed,
+               reschedule_requested_at: nil
+             })
+
+      refute MeetingState.expects_calendar_event?(%{
+               status: :awaiting_payment,
+               reschedule_requested_at: nil
+             })
+    end
+  end
+
+  describe "awaiting_new_time?/1" do
+    test "true when reschedule_requested_at is set" do
+      assert MeetingState.awaiting_new_time?(%{
+               status: :confirmed,
+               reschedule_requested_at: DateTime.utc_now()
+             })
+    end
+
+    test "true for the legacy reschedule_requested status, even without the timestamp" do
+      assert MeetingState.awaiting_new_time?(%{
+               status: :reschedule_requested,
+               reschedule_requested_at: nil
+             })
+    end
+
+    test "false for a meeting with no pending request" do
+      refute MeetingState.awaiting_new_time?(%{status: :confirmed, reschedule_requested_at: nil})
+    end
+  end
+
+  describe "approval_deadline_passed?/2" do
+    @deadline ~U[2026-03-10 12:00:00.000000Z]
+
+    test "true exactly at the deadline" do
+      assert MeetingState.approval_deadline_passed?(%{approval_deadline_at: @deadline}, @deadline)
+    end
+
+    test "false one microsecond before the deadline" do
+      now = DateTime.add(@deadline, -1, :microsecond)
+
+      refute MeetingState.approval_deadline_passed?(%{approval_deadline_at: @deadline}, now)
+    end
+
+    test "true after the deadline" do
+      now = DateTime.add(@deadline, 1, :second)
+
+      assert MeetingState.approval_deadline_passed?(%{approval_deadline_at: @deadline}, now)
+    end
+
+    test "false when the meeting has no deadline" do
+      refute MeetingState.approval_deadline_passed?(%{approval_deadline_at: nil}, @deadline)
+    end
+
+    test "reads the clock when no time is given" do
+      freeze_clock(@deadline)
+
+      assert MeetingState.approval_deadline_passed?(%{approval_deadline_at: @deadline})
+    end
+  end
+
+  describe "awaiting_verification" do
+    test "an unverified booking expects no calendar event and is not active" do
+      meeting = %{status: :awaiting_verification, reschedule_requested_at: nil}
+
+      refute MeetingState.active?(meeting)
+      refute MeetingState.expects_calendar_event?(meeting)
+      assert MeetingState.awaiting_verification?(meeting)
+      assert MeetingState.awaiting_verification_status?(:awaiting_verification)
+      refute MeetingState.awaiting_verification_status?(:confirmed)
+      assert :awaiting_verification in MeetingState.occupying()
+      refute :awaiting_verification in MeetingState.terminal()
+      refute :awaiting_verification in MeetingState.released()
+    end
+
+    test "unverified?/1 and visible_to_organiser?/1 read the columns" do
+      deadline = ~U[2026-11-12 10:00:00Z]
+
+      assert MeetingState.unverified?(%{
+               verification_deadline_at: deadline,
+               email_verified_at: nil
+             })
+
+      refute MeetingState.unverified?(%{verification_deadline_at: nil, email_verified_at: nil})
+
+      refute MeetingState.unverified?(%{
+               verification_deadline_at: deadline,
+               email_verified_at: deadline
+             })
+
+      refute MeetingState.visible_to_organiser?(%{
+               status: :expired,
+               verification_deadline_at: deadline,
+               email_verified_at: nil
+             })
+    end
+
+    test "visible_to_organiser?/1 hides a booking that never got past payment" do
+      gate = %{verification_deadline_at: nil, email_verified_at: nil, approval_resolved_at: nil}
+      resolved = %{gate | approval_resolved_at: ~U[2026-11-12 10:00:00Z]}
+
+      refute MeetingState.visible_to_organiser?(Map.put(gate, :status, :awaiting_payment))
+      # A lapsed checkout: expired with no approval decision on record.
+      refute MeetingState.visible_to_organiser?(Map.put(gate, :status, :expired))
+      # A lapsed approval request, which `Approval` always stamps.
+      assert MeetingState.visible_to_organiser?(Map.put(resolved, :status, :expired))
+      assert MeetingState.visible_to_organiser?(Map.put(gate, :status, :confirmed))
+      assert MeetingState.visible_to_organiser?(Map.put(gate, :status, :cancelled))
+    end
+  end
+end

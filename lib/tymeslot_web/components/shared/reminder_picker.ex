@@ -1,0 +1,325 @@
+defmodule TymeslotWeb.Components.Shared.ReminderPicker do
+  @moduledoc """
+  Reminder picker shared by the surfaces that decide when the scheduler emails a
+  reminder: the meeting type form, a poll, and a the scheduler meeting booked from
+  the calendar's side panel.
+
+  All hold the same thing, a list of `%{value: integer, unit: "minutes" |
+  "hours" | "days"}` reminders, capped by `ReminderValidation.max_reminders/0`
+  and checked by `ReminderValidation.check_policy/2`, so all offer the same
+  control: the two lead times most reminders use as one-click buttons, and a
+  custom value with its unit for anything else.
+
+  Polls, whose reminders run days before a deadline rather than minutes
+  before a meeting, pass their own `presets`.
+
+  The owning LiveComponent keeps the picker's state (the list, the custom
+  input's value and unit, whether the custom row is open, the last error and
+  confirmation) and receives the picker's events through `phx-target`. Event
+  names are prefixed with `event_prefix` so a component that already answers
+  to `add_reminder` for something else can namespace them; the names are
+  otherwise `add_quick_reminder`, `toggle_custom_reminder`,
+  `update_reminder_input`, `add_reminder`, `remove_reminder` and
+  `commit_custom_reminder`.
+
+  The last comes from the `ReminderCustomRow` hook when focus leaves the open
+  custom row with a value still in it, so a reminder typed but never added is
+  not lost when the host moves on; owners answer it with
+  `ReminderPickerState.commit_pending/2`.
+  """
+
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  use TymeslotWeb.Components.CoreComponents
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.MeetingTypes.Reminders, as: MeetingTypeReminders
+  alias Tymeslot.MeetingTypes.ReminderValidation
+
+  @doc """
+  The reminder picker.
+
+  `description` is the caller's own one-line explanation of what the reminders
+  being configured will do (a meeting type and a single meeting booked from
+  the calendar's side panel word that differently), and `extra_errors` are messages from the caller's own
+  validation, shown below the picker's.
+  """
+  attr :reminders, :list, required: true
+  attr :max_reminders, :integer, required: true
+  attr :new_reminder_value, :string, required: true
+  attr :new_reminder_unit, :string, required: true
+  attr :reminder_error, :string, required: true
+  attr :description, :string, required: true
+  attr :show_custom_reminder, :boolean, default: false
+  attr :reminder_confirmation, :string, default: nil
+  attr :extra_errors, :list, default: []
+  attr :event_prefix, :string, default: ""
+
+  attr :presets, :list,
+    default: nil,
+    doc:
+      "The one-click lead times, as `%{value:, unit:}` maps; 30 minutes and an hour when omitted."
+
+  attr :myself, :any, required: true
+
+  @spec reminder_picker(map()) :: Phoenix.LiveView.Rendered.t()
+  def reminder_picker(assigns) do
+    assigns =
+      assigns
+      |> assign(:limit_reached?, length(assigns.reminders) >= assigns.max_reminders)
+      |> assign(:presets, assigns.presets || default_presets())
+
+    ~H"""
+    <section class="space-y-2">
+      <.subsection_header
+        icon="hero-bell"
+        title={dgettext("common", "Reminders")}
+        description={@description}
+      />
+
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        <%= if @reminders == [] do %>
+          <span class="text-token-sm text-tymeslot-500 italic">
+            {dgettext("common", "No reminders configured.")}
+          </span>
+        <% else %>
+          <%= for reminder <- @reminders do %>
+            <span class="tag-semantic tag-semantic-turquoise">
+              {dgettext("common", "%{label} before", label: reminder_label(reminder))}
+              <button
+                type="button"
+                phx-click={
+                  JS.push(@event_prefix <> "remove_reminder",
+                    value: %{value: reminder.value, unit: reminder.unit},
+                    target: @myself
+                  )
+                }
+                data-testid="reminder-remove"
+                class="inline-flex items-center justify-center rounded-token-full border border-turquoise-200 bg-white text-turquoise-600 hover:text-turquoise-700 hover:border-turquoise-300"
+                aria-label={dgettext("common", "Remove reminder")}
+              >
+                <.icon name="hero-x-mark" class="h-4 w-4" />
+              </button>
+            </span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="mt-4 space-y-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <%!-- One-click buttons, one per preset not yet held --%>
+          <button
+            :for={preset <- @presets}
+            :if={not held?(@reminders, preset)}
+            type="button"
+            phx-click={
+              JS.push(@event_prefix <> "add_quick_reminder",
+                value: %{amount: preset.value, unit: preset.unit},
+                target: @myself
+              )
+            }
+            data-testid={"reminder-preset-#{preset.value}-#{preset.unit}"}
+            disabled={@limit_reached?}
+            aria-describedby={@limit_reached? && @event_prefix <> "reminder-limit-hint"}
+            class="btn-tag-selector btn-tag-selector-turquoise"
+          >
+            + {preset_label(preset)}
+          </button>
+
+          <button
+            type="button"
+            phx-click={@event_prefix <> "toggle_custom_reminder"}
+            phx-target={@myself}
+            data-discards-custom-reminder
+            data-testid="reminder-custom-toggle"
+            disabled={@limit_reached?}
+            aria-describedby={@limit_reached? && @event_prefix <> "reminder-limit-hint"}
+            class={[
+              "btn-tag-selector btn-tag-selector-turquoise",
+              if(@show_custom_reminder, do: "btn-tag-selector-turquoise--active")
+            ]}
+          >
+            {if @show_custom_reminder,
+              do: dgettext("common", "Cancel Custom"),
+              else: dgettext("common", "Add Custom")}
+          </button>
+
+          <%= if @reminder_confirmation do %>
+            <span class="inline-flex items-center gap-1 text-token-sm text-turquoise-600 font-bold">
+              <.icon name="hero-check-mini" class="w-4 h-4" />
+              {@reminder_confirmation}
+            </span>
+          <% end %>
+        </div>
+
+        <p
+          :if={@limit_reached?}
+          id={@event_prefix <> "reminder-limit-hint"}
+          class="text-token-xs text-tymeslot-500"
+        >
+          {limit_message(@max_reminders)}
+        </p>
+
+        <%= if @show_custom_reminder && !@limit_reached? do %>
+          <div
+            id={@event_prefix <> "reminder-custom-row"}
+            phx-hook="ReminderCustomRow"
+            phx-target={@myself}
+            data-commit-event={@event_prefix <> "commit_custom_reminder"}
+            class="flex items-center gap-2 p-3 bg-turquoise-50/50 rounded-token-2xl border-2 border-turquoise-100/50 max-w-sm animate-in slide-in-from-top-2 duration-300"
+          >
+            <div class="flex-1 flex items-center gap-2">
+              <%!-- raw-input: compact w-20 number box in the inline custom-reminder row; the full-width field wrapper would break the row --%>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                inputmode="numeric"
+                name="reminder[value]"
+                value={@new_reminder_value}
+                placeholder="30"
+                class="input py-1.5 px-3 w-20 text-token-sm"
+                phx-change={@event_prefix <> "update_reminder_input"}
+                phx-target={@myself}
+              />
+              <.select
+                id={@event_prefix <> "reminder-unit"}
+                name="reminder[unit]"
+                class="w-28"
+                compact
+                aria-label={dgettext("common", "Time unit")}
+                value={@new_reminder_unit}
+                options={[
+                  {dgettext("common", "Minutes"), "minutes"},
+                  {dgettext("common", "Hours"), "hours"},
+                  {dgettext("common", "Days"), "days"}
+                ]}
+                phx-change={@event_prefix <> "update_reminder_input"}
+                phx-target={@myself}
+              />
+            </div>
+            <.action_button
+              size={:sm}
+              phx-click={@event_prefix <> "add_reminder"}
+              phx-target={@myself}
+              data-testid="reminder-custom-add"
+            >
+              {dgettext("common", "Add")}
+            </.action_button>
+          </div>
+        <% end %>
+      </div>
+
+      <%= if @reminder_error do %>
+        <p class="form-error mt-2">{@reminder_error}</p>
+      <% end %>
+      <%= for error <- @extra_errors do %>
+        <p class="form-error mt-2">{error}</p>
+      <% end %>
+    </section>
+    """
+  end
+
+  @doc """
+  A reminder's lead time in the reader's own language: "30 minutes",
+  "1 Stunde", "5 хвилин".
+
+  The unit word is a plural form rather than a lookup, so a language that
+  inflects after a number ("1 minutu", "2 minuty", "5 minut") can say it
+  properly, while the sentences around it ("%{label} before", "Added %{label}
+  before") stay one msgid each.
+  """
+  @spec reminder_label(%{value: integer() | String.t(), unit: String.t()}) :: String.t()
+  def reminder_label(%{value: value, unit: unit}) do
+    value = MeetingTypeReminders.parse_reminder_value(value)
+
+    case MeetingTypeReminders.normalize_reminder_unit(unit) do
+      "hours" -> dngettext("common", "%{count} hour", "%{count} hours", value)
+      "days" -> dngettext("common", "%{count} day", "%{count} days", value)
+      _minutes -> dngettext("common", "%{count} minute", "%{count} minutes", value)
+    end
+  end
+
+  @doc """
+  Validates a reminder about to be added to `reminders` and returns
+  `{:ok, reminder}` or `{:error, message}`.
+
+  The input checks are the picker's own; whether the resulting list is allowed
+  is `ReminderValidation.check_policy/2`, the same rule the save path applies,
+  so a reminder accepted here cannot later block what holds it from saving.
+  The reminders already in the list are passed as held, so the year limit
+  judges the one being added and not a longer one saved before the limit.
+  """
+  @spec validate_new_reminder(list(), any(), any()) :: {:ok, map()} | {:error, String.t()}
+  def validate_new_reminder(reminders, value, unit) do
+    cond do
+      is_nil(value) or value == "" ->
+        {:error, dgettext("common", "Reminder value is required")}
+
+      match?({:error, _reason}, MeetingTypeReminders.validate_reminder_value(value)) ->
+        {:error, dgettext("common", "Reminder value must be a positive number")}
+
+      unit not in ["minutes", "hours", "days"] ->
+        {:error, dgettext("common", "Select a valid reminder unit")}
+
+      true ->
+        reminder = %{value: MeetingTypeReminders.parse_reminder_value(value), unit: unit}
+
+        case ReminderValidation.check_policy(reminders ++ [reminder], reminders) do
+          :ok -> {:ok, reminder}
+          {:error, reason} -> {:error, policy_message(reason)}
+        end
+    end
+  end
+
+  # --- Private helpers ---
+
+  # What most meeting reminders use. Their labels predate the presets and keep
+  # their own wording.
+  defp default_presets,
+    do: [%{value: 30, unit: "minutes"}, %{value: 60, unit: "minutes"}]
+
+  defp preset_label(%{value: 30, unit: "minutes"}), do: dgettext("common", "30 min. before")
+  defp preset_label(%{value: 60, unit: "minutes"}), do: dgettext("common", "1 hour before")
+
+  defp preset_label(preset),
+    do: dgettext("common", "%{label} before", label: reminder_label(preset))
+
+  # A preset is held when a reminder with the same lead time is, however it is
+  # written: 60 minutes and 1 hour are the same reminder.
+  defp held?(reminders, preset) do
+    seconds = MeetingTypeReminders.reminder_interval_seconds(preset.value, preset.unit)
+
+    Enum.any?(
+      reminders,
+      &(MeetingTypeReminders.reminder_interval_seconds(&1.value, &1.unit) == seconds)
+    )
+  end
+
+  defp policy_message(:too_many) do
+    dngettext(
+      "common",
+      "You can configure up to %{count} reminder",
+      "You can configure up to %{count} reminders",
+      ReminderValidation.max_reminders()
+    )
+  end
+
+  defp policy_message(:duplicate),
+    do: dgettext("common", "This reminder already exists")
+
+  defp policy_message(:exceeds_max),
+    do: dgettext("common", "Reminders cannot be set for more than 1 year in advance")
+
+  # Why the add buttons are disabled: shown under them while the cap is reached.
+  @spec limit_message(pos_integer()) :: String.t()
+  defp limit_message(max_reminders) do
+    dngettext(
+      "common",
+      "Maximum of %{count} reminder allowed",
+      "Maximum of %{count} reminders allowed",
+      max_reminders
+    )
+  end
+end

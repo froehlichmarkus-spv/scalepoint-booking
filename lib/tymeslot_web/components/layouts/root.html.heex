@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang={assigns[:locale] || "en"}>
+  <head>
+    <meta charset="utf-8" />
+    <%!-- Dashboard pages pad their own safe areas, so only they run under the
+    notch; Android resizes them for the on-screen keyboard as iOS does. --%>
+    <meta
+      name="viewport"
+      content={
+        if assigns[:viewport_fit] == :cover,
+          do:
+            "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
+          else: "width=device-width, initial-scale=1"
+      }
+    />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <meta name="csp-nonce" content={assigns[:csp_nonce]} />
+    <%!-- Every surface rendered through this layout is private (auth, dashboard,
+    onboarding, admin), so none of it belongs in a search index. Stated here
+    rather than in robots.txt because disallowing a path only stops the crawl:
+    a page linked from elsewhere still gets indexed, snippet-less, and the
+    crawler never reads the directive that would have kept it out. --%>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={TymeslotWeb.Layouts.current_url(assigns)} />
+    <%= if assigns[:meta_description] do %>
+      <meta name="description" content={@meta_description} />
+    <% end %>
+    <.live_title suffix={Tymeslot.Brands.chrome_suffix()}>
+      {assigns[:page_title] || dgettext("common", "Schedule a Meeting")}
+    </.live_title>
+    <link rel="icon" href={Tymeslot.Brands.favicon()} />
+    <%!-- Default app styles --%>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <%!-- A page with the onboarding stage fits it before the first paint:
+         a classic script in the head blocks that paint, which a module
+         script, or one placed after the stage, does not in every browser
+         (assets/js/stage_prefit.js). --%>
+    <script :if={assigns[:stage_prefit]} phx-track-static src={~p"/assets/stage_prefit.js"}>
+    </script>
+    <%!-- Core bundle: always loaded (LiveSocket + utilities) --%>
+    <script phx-track-static type="module" src={~p"/assets/app.js"}>
+    </script>
+    <%!-- Route-specific bundle: loaded conditionally based on assigns[:route_bundle] --%>
+    <%= if assigns[:route_bundle] do %>
+      <script
+        phx-track-static
+        type="module"
+        src={TymeslotWeb.Endpoint.static_path("/assets/bundles/#{@route_bundle}.js")}
+      >
+      </script>
+    <% else %>
+      <%!-- Fallback: connect LiveSocket with core-only hooks for pages without route bundles --%>
+      <script type="module" nonce={assigns[:csp_nonce]}>
+        // Wait for core bundle to load, then connect LiveSocket
+        (async function() {
+          let retries = 0;
+          const maxRetries = 100;
+          const interval = 100;
+
+          while (!window.liveSocket && retries < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, interval));
+            retries++;
+          }
+
+          if (window.liveSocket && !window.liveSocket.isConnected()) {
+            window.liveSocket.connect();
+          }
+        })();
+      </script>
+    <% end %>
+    <.nomodule_fallback nonce={assigns[:csp_nonce]} />
+    <.analytics_scripts
+      nonce={assigns[:csp_nonce]}
+      live_module={assigns[:live_module]}
+      live_action={assigns[:live_action]}
+    />
+  </head>
+  <body>
+    <.noscript_warning message={
+      dgettext(
+        "common",
+        "This app requires JavaScript to function. Please enable it in your browser settings."
+      )
+    } />
+    <%!-- No flash group here: the `app` layout inside `@inner_content` owns the
+    only one. A root layout is never diffed after the initial response, so a
+    group at this level would render every flash a second time and still miss
+    every flash raised while the page is live. --%>
+    {@inner_content}
+  </body>
+</html>

@@ -1,0 +1,317 @@
+defmodule TymeslotWeb.Dashboard.ProfileSettings.UsernameFormComponent do
+  @moduledoc """
+  Username form component for profile settings.
+  Allows users to update their unique booking URL.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Polls
+  alias Tymeslot.Profiles
+  alias Tymeslot.Security.FieldValidators.UsernameValidator
+  alias Tymeslot.Security.InputProcessor
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.Utils.UrlBuilder
+  alias Tymeslot.Validation.Constraints
+  alias TymeslotWeb.Dashboard.ProfileSettings.UsernameChangeModal
+  alias TymeslotWeb.Helpers.FormErrors
+  alias TymeslotWeb.Live.Shared.FormValidationHelpers
+
+  import UsernameChangeModal, only: [username_change_modal: 1]
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     assign(socket,
+       username_check: nil,
+       username_input: nil,
+       username_available: nil,
+       pending_username: nil,
+       open_poll_count: 0,
+       saving: false,
+       form_errors: %{}
+     )}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(assigns, socket) do
+    {:ok, assign(socket, assigns)}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("check_username_availability", %{"username" => username}, socket) do
+    user_id = socket.assigns.current_user.id
+
+    case RateLimiter.check(:username_check, "user:#{user_id}") do
+      {:error, :rate_limited, _message} ->
+        {:noreply, socket}
+
+      :ok ->
+        metadata = DashboardHelpers.get_security_metadata(socket)
+        socket = update_username_availability(socket, username, metadata)
+        {:noreply, socket}
+    end
+  end
+
+  # A username that cannot be used is explained inline straight away, before
+  # anything else: asking to confirm a change that is bound to be refused wastes
+  # the organiser's decision. Setting a username for the first time breaks
+  # nothing, so it saves straight away. Replacing one that is already live is
+  # irreversible for everybody holding a link to it, so it stops for a
+  # confirmation that says which surfaces go with it. Resubmitting the current
+  # username changes nothing.
+  def handle_event("update_username", %{"username" => username}, socket) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+    socket = assign(socket, :username_input, username)
+    profile = socket.assigns.profile
+
+    case {Profiles.username_status(profile, username), live_username?(profile)} do
+      {:ok, true} ->
+        {:noreply,
+         assign(socket,
+           pending_username: String.trim(username),
+           open_poll_count: Polls.count_open_polls(socket.assigns.current_user.id)
+         )}
+
+      {:ok, false} ->
+        perform_username_update(socket, username, metadata)
+
+      {:unchanged, _live} ->
+        {:noreply, clear_username_error(socket)}
+
+      {{:invalid, message}, _live} ->
+        {:noreply, put_username_error(socket, message)}
+
+      {reason, _live} when reason in [:reserved, :taken] ->
+        {:noreply, put_username_error(socket, username_error(reason))}
+    end
+  end
+
+  def handle_event("cancel_username_change", _params, socket) do
+    {:noreply, assign(socket, pending_username: nil)}
+  end
+
+  def handle_event("confirm_username_change", _params, socket) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+    username = socket.assigns.pending_username
+
+    socket
+    |> assign(pending_username: nil)
+    |> perform_username_update(username, metadata)
+  end
+
+  defp live_username?(%{username: username}) when is_binary(username) and username != "",
+    do: true
+
+  defp live_username?(_profile), do: false
+
+  defp update_username_availability(socket, "", _metadata),
+    do: assign(socket, username_check: nil, username_available: nil)
+
+  defp update_username_availability(socket, username, _metadata) do
+    available =
+      case Profiles.username_status(socket.assigns.profile, username) do
+        :unchanged -> :current
+        :ok -> true
+        :taken -> false
+        :reserved -> {:error, username_error(:reserved)}
+        {:invalid, message} -> {:error, message}
+      end
+
+    assign(socket, username_check: username, username_available: available)
+  end
+
+  defp perform_username_update(socket, username, _metadata) do
+    profile = socket.assigns.profile
+
+    socket = assign(socket, :saving, true)
+
+    with {:ok, sanitized_username} <-
+           InputProcessor.validate_field(String.trim(username), :username),
+         {:ok, updated_profile} <-
+           Profiles.change_username(profile, sanitized_username) do
+      handle_successful_username_update(socket, updated_profile, sanitized_username)
+    else
+      error -> handle_username_update_error(socket, error)
+    end
+  end
+
+  defp handle_successful_username_update(socket, updated_profile, sanitized_username) do
+    send(self(), {:profile_updated, updated_profile})
+
+    booking_page_url = "#{display_url()}/#{sanitized_username}"
+
+    send(
+      self(),
+      {:flash,
+       {:info,
+        dgettext("dashboard_profile", "Username updated! Your booking page: %{url}",
+          url: booking_page_url
+        )}}
+    )
+
+    {:noreply,
+     socket
+     |> assign(profile: updated_profile)
+     |> assign(saving: false)
+     |> clear_username_error()}
+  end
+
+  defp handle_username_update_error(socket, error) do
+    case error do
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply,
+         socket
+         |> assign(saving: false)
+         |> explain_refused_changeset(changeset)}
+
+      {:error, message} when is_binary(message) ->
+        Flash.error(message)
+        {:noreply, assign(socket, saving: false)}
+    end
+  end
+
+  # The username can still be refused on write, e.g. taken since it was checked.
+  defp explain_refused_changeset(socket, changeset) do
+    case Profiles.username_error(changeset) do
+      nil ->
+        Flash.error(
+          FormErrors.first(changeset, %{username: dgettext("dashboard_profile", "Username")})
+        )
+
+        socket
+
+      reason ->
+        put_username_error(socket, username_error(reason))
+    end
+  end
+
+  defp put_username_error(socket, message),
+    do: assign(socket, :form_errors, Map.put(socket.assigns.form_errors, :username, message))
+
+  defp clear_username_error(socket) do
+    socket
+    |> assign(:username_input, nil)
+    |> assign(
+      :form_errors,
+      FormValidationHelpers.delete_field_error(socket.assigns.form_errors, :username)
+    )
+  end
+
+  defp username_error(:reserved), do: dgettext("dashboard_profile", "This username is reserved")
+
+  defp username_error(:taken),
+    do: dgettext("dashboard_profile", "This username is already taken")
+
+  defp display_url, do: String.replace(UrlBuilder.base_url(), ~r/^https?:\/\//, "")
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns = assign(assigns, :display_url, display_url())
+
+    ~H"""
+    <div id="username-form-container">
+      <.subsection_header
+        id="custom-url-heading"
+        title={dgettext("dashboard_profile", "Custom URL")}
+        class="mb-4"
+      />
+      <form
+        id="username-form"
+        phx-submit="update_username"
+        phx-change="check_username_availability"
+        phx-target={@myself}
+        class="space-y-4"
+        novalidate
+      >
+        <div>
+          <div class="flex flex-col sm:flex-row items-stretch gap-4">
+            <div class="flex-1">
+              <% prefix_length = String.length(@display_url) + 1 %>
+              <% input_padding = "--leading-icon-width: #{prefix_length}ch;" %>
+              <.input
+                name="username"
+                aria-labelledby="custom-url-heading"
+                value={@username_input || (@profile && @profile.username) || ""}
+                placeholder={dgettext("dashboard_profile", "yourname")}
+                pattern={UsernameValidator.html_pattern()}
+                minlength={Constraints.username_length_range().first}
+                maxlength={Constraints.username_length_range().last}
+                phx-debounce="500"
+                errors={FormValidationHelpers.field_errors(@form_errors, :username)}
+                style={input_padding}
+              >
+                <:leading_icon>
+                  <span class="text-tymeslot-400 font-bold text-token-sm tracking-tight whitespace-nowrap">{@display_url}/</span>
+                </:leading_icon>
+
+                <%= if @username_check && (!@profile || @username_check != @profile.username) do %>
+                  <div class="absolute right-3 top-1/2 -translate-y-1/2 shrink-0">
+                    <%= case @username_available do %>
+                      <% true -> %>
+                        <.pill tone={:success} icon="hero-check-mini" uppercase>
+                          {dgettext("dashboard_profile", "Available")}
+                        </.pill>
+                      <% false -> %>
+                        <.pill tone={:danger} icon="hero-x-mark-mini" uppercase>
+                          {dgettext("dashboard_profile", "Taken")}
+                        </.pill>
+                      <% {:error, _message} -> %>
+                        <.pill tone={:warning} icon="hero-exclamation-triangle-mini" uppercase>
+                          {dgettext("dashboard_profile", "Invalid")}
+                        </.pill>
+                      <% _ -> %>
+                    <% end %>
+                  </div>
+                <% end %>
+              </.input>
+            </div>
+            <div class="flex items-end">
+              <%!-- The fixed height matches the input beside it; the component sets
+                    padding, not height, so this is layout only. --%>
+              <.action_button
+                type="submit"
+                class="h-[52px]"
+                phx-disable-with={dgettext("dashboard_profile", "Saving...")}
+              >
+                {dgettext("dashboard_profile", "Update URL")}
+              </.action_button>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <%= if @profile && @profile.username do %>
+              <div class="flex items-center gap-2 text-token-sm font-bold text-tymeslot-500">
+                <.icon name="hero-check" class="w-4 h-4 text-green-500" />
+                {dgettext("dashboard_profile", "Live at:")}
+                <a
+                  href={"#{UrlBuilder.base_url()}/#{@profile.username}"}
+                  target="_blank"
+                  class="text-turquoise-600 hover:text-turquoise-700 underline decoration-2 decoration-turquoise-100 underline-offset-4 transition-colors"
+                >
+                  {@display_url}/{@profile.username}
+                </a>
+              </div>
+            <% else %>
+              <p class="text-token-sm text-tymeslot-500 font-medium">
+                {dgettext(
+                  "dashboard_profile",
+                  "Choose a unique username for your personal booking page."
+                )}
+              </p>
+            <% end %>
+          </div>
+        </div>
+      </form>
+
+      <.username_change_modal
+        pending_username={@pending_username}
+        current_username={(@profile && @profile.username) || ""}
+        display_url={@display_url}
+        open_poll_count={@open_poll_count}
+        myself={@myself}
+      />
+    </div>
+    """
+  end
+end

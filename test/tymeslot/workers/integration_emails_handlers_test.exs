@@ -1,0 +1,623 @@
+defmodule Tymeslot.Notifications.Email.IntegrationEmailsTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :workers
+
+  import Mox
+  import Tymeslot.Factory
+
+  alias Tymeslot.EmailServiceMock
+  alias Tymeslot.Integrations.HealthCheck.IntegrationHealthStateQueries
+  alias Tymeslot.Notifications.EmailHandlers
+
+  setup :verify_on_exit!
+
+  describe "handle_calendar_invitation/1" do
+    test "sends an invitation with parsed datetimes and organiser identity" do
+      user = insert(:user, name: "Alice Account", email: "alice@example.com")
+      # The handler loads this row itself: the name the guest knows the
+      # organiser by, and the clock the event is stated in.
+      insert(:profile, user: user, full_name: "Alice Organiser", timezone: "Europe/Berlin")
+
+      expect(EmailServiceMock, :send_calendar_invitation, fn "bob@example.com", details ->
+        assert details.event_title == "Team Sync"
+        assert details.event_uid == "evt-uid-1"
+        # The same instants, stated in the organiser's timezone: 10:00 UTC is
+        # 12:00 in Berlin in April.
+        assert DateTime.compare(details.start_time, ~U[2026-04-10 10:00:00Z]) == :eq
+        assert DateTime.compare(details.end_time, ~U[2026-04-10 11:00:00Z]) == :eq
+        assert details.timezone == "Europe/Berlin"
+        assert {details.start_time.time_zone, details.start_time.hour} == {"Europe/Berlin", 12}
+        assert details.duration == 60
+        assert details.location == "Office"
+        assert details.organizer_name == "Alice Organiser"
+        assert details.organizer_email == "alice@example.com"
+        {:ok, "sent"}
+      end)
+
+      assert :ok =
+               EmailHandlers.execute_email_action("send_calendar_invitation", %{
+                 "user_id" => user.id,
+                 "attendee_email" => "bob@example.com",
+                 "event_title" => "Team Sync",
+                 "event_uid" => "evt-uid-1",
+                 "event_start_at" => "2026-04-10T10:00:00Z",
+                 "event_end_at" => "2026-04-10T11:00:00Z",
+                 "event_location" => "Office",
+                 "event_description" => "Discuss Q2 roadmap"
+               })
+    end
+
+    test "falls back to user.email as organiser_name when name is blank" do
+      user = insert(:user, name: nil, email: "noname@example.com")
+
+      expect(EmailServiceMock, :send_calendar_invitation, fn _email, details ->
+        assert details.organizer_name == "noname@example.com"
+        {:ok, "sent"}
+      end)
+
+      assert :ok =
+               EmailHandlers.execute_email_action("send_calendar_invitation", %{
+                 "user_id" => user.id,
+                 "attendee_email" => "guest@example.com",
+                 "event_title" => "Quick chat",
+                 "event_uid" => "evt-uid-2",
+                 "event_start_at" => "2026-04-10T10:00:00Z",
+                 "event_end_at" => "2026-04-10T10:15:00Z",
+                 "event_location" => nil,
+                 "event_description" => nil
+               })
+    end
+
+    test "discards when the user does not exist" do
+      assert {:discard, "User not found"} =
+               EmailHandlers.execute_email_action("send_calendar_invitation", %{
+                 "user_id" => 999_999,
+                 "attendee_email" => "bob@example.com",
+                 "event_title" => "X",
+                 "event_uid" => "evt-x",
+                 "event_start_at" => "2026-04-10T10:00:00Z",
+                 "event_end_at" => "2026-04-10T11:00:00Z",
+                 "event_location" => nil,
+                 "event_description" => nil
+               })
+    end
+
+    test "discards on malformed datetime strings" do
+      user = insert(:user)
+
+      assert {:discard, "Invalid datetime:" <> _rest} =
+               EmailHandlers.execute_email_action("send_calendar_invitation", %{
+                 "user_id" => user.id,
+                 "attendee_email" => "bob@example.com",
+                 "event_title" => "X",
+                 "event_uid" => "evt-y",
+                 "event_start_at" => "not-a-date",
+                 "event_end_at" => "2026-04-10T11:00:00Z",
+                 "event_location" => nil,
+                 "event_description" => nil
+               })
+    end
+
+    test "returns retriable error when delivery fails" do
+      user = insert(:user)
+
+      expect(EmailServiceMock, :send_calendar_invitation, fn _email, _details ->
+        {:error, :smtp_unavailable}
+      end)
+
+      assert {:error, _reason} =
+               EmailHandlers.execute_email_action("send_calendar_invitation", %{
+                 "user_id" => user.id,
+                 "attendee_email" => "bob@example.com",
+                 "event_title" => "X",
+                 "event_uid" => "evt-z",
+                 "event_start_at" => "2026-04-10T10:00:00Z",
+                 "event_end_at" => "2026-04-10T11:00:00Z",
+                 "event_location" => nil,
+                 "event_description" => nil
+               })
+    end
+  end
+
+  describe "handle_event_update_notification/2" do
+    setup do
+      user = insert(:user, name: "Organiser", email: "org@example.com")
+      integration = insert(:calendar_integration, user: user)
+
+      event =
+        insert(:provider_calendar_event,
+          calendar_integration: integration,
+          uid: "evt-update-1",
+          summary: "Updated Title",
+          location: "New Room",
+          description: "Updated description",
+          start_at: ~U[2026-04-10 14:00:00.000000Z],
+          end_at: ~U[2026-04-10 15:00:00.000000Z]
+        )
+
+      %{user: user, integration: integration, event: event}
+    end
+
+    test "sends one notification per attendee when fields changed", %{
+      user: user,
+      integration: integration,
+      event: event
+    } do
+      test_pid = self()
+
+      stub(EmailServiceMock, :send_event_update_notification, fn email, details ->
+        send(test_pid, {:notification, email, details})
+        {:ok, "sent"}
+      end)
+
+      assert :ok =
+               EmailHandlers.execute_email_action("send_event_update_notification", %{
+                 "user_id" => user.id,
+                 "integration_id" => integration.id,
+                 "event_uid" => event.uid,
+                 "attendee_emails" => ["a@example.com", "b@example.com"],
+                 "before_title" => "Old Title",
+                 "before_location" => "Old Room",
+                 "before_description" => "Old description",
+                 "before_start_at" => "2026-04-10T14:00:00Z",
+                 "before_end_at" => "2026-04-10T15:00:00Z",
+                 "method" => "request"
+               })
+
+      assert_received {:notification, "a@example.com", details}
+      assert_received {:notification, "b@example.com", _details}
+
+      assert details.event_title == "Updated Title"
+      assert details.organizer_email == "org@example.com"
+      assert details.method == :request
+
+      titles = Enum.map(details.changes, &elem(&1, 0))
+      assert :title in titles
+      assert :location in titles
+      assert :description in titles
+    end
+
+    test "is a no-op when nothing relevant changed", %{
+      user: user,
+      integration: integration,
+      event: event
+    } do
+      stub(EmailServiceMock, :send_event_update_notification, fn _email, _details ->
+        flunk("should not deliver when no changes are detected")
+      end)
+
+      assert :ok =
+               EmailHandlers.execute_email_action("send_event_update_notification", %{
+                 "user_id" => user.id,
+                 "integration_id" => integration.id,
+                 "event_uid" => event.uid,
+                 "attendee_emails" => ["x@example.com"],
+                 "before_title" => event.summary,
+                 "before_location" => event.location,
+                 "before_description" => event.description,
+                 "before_start_at" => DateTime.to_iso8601(event.start_at),
+                 "before_end_at" => DateTime.to_iso8601(event.end_at),
+                 "method" => "request"
+               })
+    end
+
+    test "parses method=cancel into a :cancel atom", %{
+      user: user,
+      integration: integration,
+      event: event
+    } do
+      test_pid = self()
+
+      stub(EmailServiceMock, :send_event_update_notification, fn _email, details ->
+        send(test_pid, {:method, details.method})
+        {:ok, "sent"}
+      end)
+
+      EmailHandlers.execute_email_action("send_event_update_notification", %{
+        "user_id" => user.id,
+        "integration_id" => integration.id,
+        "event_uid" => event.uid,
+        "attendee_emails" => ["x@example.com"],
+        "before_title" => "Old",
+        "before_location" => nil,
+        "before_description" => nil,
+        "before_start_at" => nil,
+        "before_end_at" => nil,
+        "method" => "cancel"
+      })
+
+      assert_received {:method, :cancel}
+    end
+
+    test "discards when the user is not found", %{integration: integration, event: event} do
+      assert {:discard, "Event or user not found"} =
+               EmailHandlers.execute_email_action("send_event_update_notification", %{
+                 "user_id" => 999_999,
+                 "integration_id" => integration.id,
+                 "event_uid" => event.uid,
+                 "attendee_emails" => ["x@example.com"],
+                 "before_title" => "Old",
+                 "before_location" => nil,
+                 "before_description" => nil,
+                 "before_start_at" => nil,
+                 "before_end_at" => nil,
+                 "method" => "request"
+               })
+    end
+
+    test "discards when the cached event is missing", %{user: user, integration: integration} do
+      assert {:discard, "Event or user not found"} =
+               EmailHandlers.execute_email_action("send_event_update_notification", %{
+                 "user_id" => user.id,
+                 "integration_id" => integration.id,
+                 "event_uid" => "evt-does-not-exist",
+                 "attendee_emails" => ["x@example.com"],
+                 "before_title" => "Old",
+                 "before_location" => nil,
+                 "before_description" => nil,
+                 "before_start_at" => nil,
+                 "before_end_at" => nil,
+                 "method" => "request"
+               })
+    end
+  end
+
+  describe "handle_integration_unhealthy_notification/1" do
+    test "sends and records notification_sent_at on success" do
+      user = insert(:user)
+      integration = insert(:calendar_integration, user: user)
+
+      # Pre-existing health state row required for update_fields to update.
+      {:ok, _state} =
+        IntegrationHealthStateQueries.get_or_init(:calendar, integration.id, user.id)
+
+      expect(EmailServiceMock, :send_integration_unhealthy_notification, fn _user,
+                                                                            _integration,
+                                                                            :calendar ->
+        {:ok, "sent"}
+      end)
+
+      assert :ok =
+               EmailHandlers.execute_email_action(
+                 "send_integration_unhealthy_notification",
+                 %{
+                   "user_id" => user.id,
+                   "integration_id" => integration.id,
+                   "integration_type" => "calendar"
+                 }
+               )
+
+      {:ok, state} = IntegrationHealthStateQueries.get(:calendar, integration.id)
+      assert %DateTime{} = state.notification_sent_at
+    end
+
+    test "discards for an integration switched off or disconnected meanwhile" do
+      user = insert(:user)
+
+      switched_off =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          is_active: false,
+          room_creation_error: :password_required
+        )
+
+      disconnected =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          base_url: "https://gone.example.com",
+          deleted_at: DateTime.utc_now(:second),
+          room_creation_error: :password_required
+        )
+
+      for integration <- [switched_off, disconnected] do
+        assert {:discard, "Room creation error no longer recorded"} =
+                 execute_room_creation_error_notification(
+                   user.id,
+                   integration.id,
+                   "password_required"
+                 )
+      end
+    end
+
+    # The owner is emailed about a code once, so an email that never goes out
+    # must leave that one email to the next refusal.
+    test "gives the claim on the email back when it discards" do
+      user = insert(:user)
+
+      integration =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          room_creation_error: nil,
+          room_creation_error_notices: %{
+            "password_required" => DateTime.to_iso8601(DateTime.utc_now(:second))
+          }
+        )
+
+      assert {:discard, _reason} =
+               execute_room_creation_error_notification(
+                 user.id,
+                 integration.id,
+                 "password_required"
+               )
+
+      assert Repo.reload!(integration).room_creation_error_notices == %{}
+    end
+
+    test "discards a code no refusal uses any more" do
+      user = insert(:user)
+      integration = insert(:video_integration, user: user, provider: "nextcloud_talk")
+
+      assert {:discard, "Unknown room creation error code"} =
+               execute_room_creation_error_notification(
+                 user.id,
+                 integration.id,
+                 "conversations_forbidden_in_2025"
+               )
+    end
+
+    test "discards when the user or integration is missing" do
+      assert {:discard, "User or integration not found"} =
+               EmailHandlers.execute_email_action(
+                 "send_integration_unhealthy_notification",
+                 %{
+                   "user_id" => 999_999,
+                   "integration_id" => 999_999,
+                   "integration_type" => "calendar"
+                 }
+               )
+    end
+
+    test "returns retriable error when delivery fails" do
+      user = insert(:user)
+      integration = insert(:calendar_integration, user: user)
+
+      expect(EmailServiceMock, :send_integration_unhealthy_notification, fn _user,
+                                                                            _integration,
+                                                                            :calendar ->
+        {:error, :timeout}
+      end)
+
+      assert {:error, _reason} =
+               EmailHandlers.execute_email_action(
+                 "send_integration_unhealthy_notification",
+                 %{
+                   "user_id" => user.id,
+                   "integration_id" => integration.id,
+                   "integration_type" => "calendar"
+                 }
+               )
+    end
+  end
+
+  describe "handle_integration_reauth_notification/1" do
+    test "sends the reconnect notice for a flagged integration" do
+      user = insert(:user)
+
+      integration =
+        insert(:video_integration,
+          user: user,
+          provider: "zoom",
+          needs_reauth: true,
+          sync_error: "Zoom is missing the permission needed to reschedule meetings."
+        )
+
+      expect(EmailServiceMock, :send_integration_reauth_notification, fn _user,
+                                                                         sent_integration,
+                                                                         :video ->
+        assert sent_integration.id == integration.id
+        assert sent_integration.sync_error =~ "reschedule meetings"
+        {:ok, "sent"}
+      end)
+
+      assert :ok =
+               EmailHandlers.execute_email_action(
+                 "send_integration_reauth_notification",
+                 %{
+                   "user_id" => user.id,
+                   "integration_id" => integration.id,
+                   "integration_type" => "video"
+                 }
+               )
+    end
+
+    test "discards when the user reconnected before the job ran" do
+      # The queue is not instantaneous, and telling someone to reconnect
+      # something they already reconnected is worse than saying nothing.
+      user = insert(:user)
+      integration = insert(:video_integration, user: user, provider: "zoom", needs_reauth: false)
+
+      assert {:discard, "Integration no longer needs reauth"} =
+               EmailHandlers.execute_email_action(
+                 "send_integration_reauth_notification",
+                 %{
+                   "user_id" => user.id,
+                   "integration_id" => integration.id,
+                   "integration_type" => "video"
+                 }
+               )
+    end
+
+    test "discards for an account pending deletion" do
+      # A leaving owner who revoked access is not asked to reconnect it.
+      user =
+        insert(:user, deletion_scheduled_at: DateTime.add(DateTime.utc_now(:second), 7, :day))
+
+      integration =
+        insert(:calendar_integration, user: user, provider: "google", needs_reauth: true)
+
+      assert {:discard, "Account pending deletion" = reason} =
+               EmailHandlers.execute_email_action(
+                 "send_integration_reauth_notification",
+                 %{
+                   "user_id" => user.id,
+                   "integration_id" => integration.id,
+                   "integration_type" => "calendar"
+                 }
+               )
+
+      # An expected end of the job, so it is not recorded as an error.
+      assert EmailHandlers.expected_discard?(reason)
+    end
+
+    test "discards when the user or integration is missing" do
+      assert {:discard, "User or integration not found"} =
+               EmailHandlers.execute_email_action(
+                 "send_integration_reauth_notification",
+                 %{
+                   "user_id" => 999_999,
+                   "integration_id" => 999_999,
+                   "integration_type" => "video"
+                 }
+               )
+    end
+
+    test "returns retriable error when delivery fails" do
+      user = insert(:user)
+      integration = insert(:video_integration, user: user, provider: "zoom", needs_reauth: true)
+
+      expect(EmailServiceMock, :send_integration_reauth_notification, fn _user,
+                                                                         _integration,
+                                                                         :video ->
+        {:error, :timeout}
+      end)
+
+      assert {:error, _reason} =
+               EmailHandlers.execute_email_action(
+                 "send_integration_reauth_notification",
+                 %{
+                   "user_id" => user.id,
+                   "integration_id" => integration.id,
+                   "integration_type" => "video"
+                 }
+               )
+    end
+  end
+
+  describe "handle_video_room_creation_error_notification/1" do
+    test "sends the notice for the refusal still recorded on the integration" do
+      user = insert(:user)
+
+      integration =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          room_creation_error: :password_required
+        )
+
+      expect(EmailServiceMock, :send_video_room_creation_error_notification, fn sent_user,
+                                                                                sent_integration ->
+        assert sent_user.id == user.id
+        assert sent_integration.id == integration.id
+        assert sent_integration.room_creation_error == :password_required
+        {:ok, "sent"}
+      end)
+
+      assert :ok =
+               execute_room_creation_error_notification(
+                 user.id,
+                 integration.id,
+                 "password_required"
+               )
+    end
+
+    test "discards when a room was created, or another refusal recorded, before the job ran" do
+      user = insert(:user)
+      cleared = insert(:video_integration, user: user, provider: "nextcloud_talk")
+
+      changed =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          base_url: "https://other.example.com",
+          room_creation_error: :conversation_creation_restricted
+        )
+
+      for integration <- [cleared, changed] do
+        assert {:discard, "Room creation error no longer recorded"} =
+                 execute_room_creation_error_notification(
+                   user.id,
+                   integration.id,
+                   "password_required"
+                 )
+      end
+    end
+
+    test "discards when the user or integration is missing" do
+      assert {:discard, "User or integration not found"} =
+               execute_room_creation_error_notification(999_999, 999_999, "password_required")
+    end
+
+    test "returns a retriable error when delivery fails, keeping the claim for the retry" do
+      user = insert(:user)
+
+      integration =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          room_creation_error: :password_required,
+          room_creation_error_notices: %{
+            "password_required" => DateTime.to_iso8601(DateTime.utc_now(:second))
+          }
+        )
+
+      expect(EmailServiceMock, :send_video_room_creation_error_notification, fn _user,
+                                                                                _integration ->
+        {:error, :timeout}
+      end)
+
+      assert {:error, _reason} =
+               execute_room_creation_error_notification(
+                 user.id,
+                 integration.id,
+                 "password_required"
+               )
+
+      assert Map.has_key?(
+               Repo.reload!(integration).room_creation_error_notices,
+               "password_required"
+             )
+    end
+
+    # A rejected address is the one failure no retry mends, so the next refusal
+    # gets the email instead of nobody getting one.
+    test "gives the claim back when the address is refused for good" do
+      user = insert(:user)
+
+      integration =
+        insert(:video_integration,
+          user: user,
+          provider: "nextcloud_talk",
+          room_creation_error: :password_required,
+          room_creation_error_notices: %{
+            "password_required" => DateTime.to_iso8601(DateTime.utc_now(:second))
+          }
+        )
+
+      expect(EmailServiceMock, :send_video_room_creation_error_notification, fn _user,
+                                                                                _integration ->
+        {:error, {:recipient_rejected, "550 unknown recipient"}}
+      end)
+
+      assert {:error, _reason} =
+               execute_room_creation_error_notification(
+                 user.id,
+                 integration.id,
+                 "password_required"
+               )
+
+      assert Repo.reload!(integration).room_creation_error_notices == %{}
+    end
+  end
+
+  defp execute_room_creation_error_notification(user_id, integration_id, code) do
+    EmailHandlers.execute_email_action("send_video_room_creation_error_notification", %{
+      "user_id" => user_id,
+      "integration_id" => integration_id,
+      "error_code" => code
+    })
+  end
+end

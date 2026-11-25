@@ -1,0 +1,571 @@
+defmodule Tymeslot.Workers.DataRetentionWorkerTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :workers
+  @moduletag :auth
+
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  import Tymeslot.Factory
+
+  alias Tymeslot.Analytics.EventSchema
+  alias Tymeslot.Analytics.SaltSchema
+  alias Tymeslot.Availability.AvailabilityOverrideSchema
+  alias Tymeslot.Integrations.Shared.OAuth.PendingFlow
+  alias Tymeslot.Integrations.Shared.OAuth.PendingFlowSchema
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.MeetingTypes.OfferedTimeSchema
+  alias Tymeslot.Payments.Webhooks.StripeEventSchema
+  alias Tymeslot.Repo
+  alias Tymeslot.Slack.SlackDeliverySchema
+  alias Tymeslot.Slack.SlackIntegrationSchema
+  alias Tymeslot.Telegram.TelegramDeliverySchema
+  alias Tymeslot.Telegram.TelegramIntegrationSchema
+  alias Tymeslot.Webhooks.WebhookDeliverySchema
+  alias Tymeslot.Workers.DataRetentionWorker
+
+  import Tymeslot.Test.ClockHelpers
+
+  describe "perform/1 - never-verified bookings" do
+    test "the retention run prunes unverified bookings" do
+      user = insert(:user)
+      deadline = DateTime.add(DateTime.utc_now(:second), -25, :hour)
+
+      lapsed =
+        insert(:awaiting_verification_meeting,
+          organizer_user_id: user.id,
+          status: :expired,
+          verification_deadline_at: deadline
+        )
+
+      kept =
+        insert(:meeting, organizer_user_id: user.id, status: :expired)
+
+      assert :ok = perform_job(DataRetentionWorker, %{"retention_days" => 60})
+
+      refute Repo.get(MeetingSchema, lapsed.id)
+      assert Repo.get(MeetingSchema, kept.id)
+    end
+  end
+
+  describe "perform/1 - outgoing webhook delivery cleanup" do
+    test "removes delivery records older than the retention period" do
+      webhook = insert(:webhook)
+
+      old_date = DateTime.add(DateTime.utc_now(), -61, :day)
+      old_delivery = insert(:webhook_delivery, webhook: webhook, inserted_at: old_date)
+
+      recent_date = DateTime.add(DateTime.utc_now(), -10, :day)
+      recent_delivery = insert(:webhook_delivery, webhook: webhook, inserted_at: recent_date)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(WebhookDeliverySchema, old_delivery.id)
+      assert Repo.get(WebhookDeliverySchema, recent_delivery.id)
+    end
+
+    test "respects the retention_days argument" do
+      webhook = insert(:webhook)
+
+      date_35 = DateTime.add(DateTime.utc_now(), -35, :day)
+      delivery_35 = insert(:webhook_delivery, webhook: webhook, inserted_at: date_35)
+
+      assert :ok = perform_job(DataRetentionWorker, %{"retention_days" => 30})
+      refute Repo.get(WebhookDeliverySchema, delivery_35.id)
+
+      delivery_35_new = insert(:webhook_delivery, webhook: webhook, inserted_at: date_35)
+      assert :ok = perform_job(DataRetentionWorker, %{"retention_days" => 40})
+      assert Repo.get(WebhookDeliverySchema, delivery_35_new.id)
+    end
+
+    test "guards against negative retention days to prevent unintended bulk deletion" do
+      webhook = insert(:webhook)
+
+      recent_delivery = insert(:webhook_delivery, webhook: webhook)
+
+      old_delivery =
+        insert(:webhook_delivery,
+          webhook: webhook,
+          inserted_at: DateTime.add(DateTime.utc_now(), -100, :day)
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{"retention_days" => -1})
+
+      # Negative retention is treated as a guard: no records are deleted
+      assert Repo.get(WebhookDeliverySchema, recent_delivery.id)
+      assert Repo.get(WebhookDeliverySchema, old_delivery.id)
+    end
+
+    test "zero retention days is a safe no-op and deletes nothing" do
+      webhook = insert(:webhook)
+
+      recent_delivery = insert(:webhook_delivery, webhook: webhook)
+
+      old_delivery =
+        insert(:webhook_delivery,
+          webhook: webhook,
+          inserted_at: DateTime.add(DateTime.utc_now(), -10, :day)
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{"retention_days" => 0})
+
+      # Zero is treated as a guard, like negative: a misconfigured
+      # `retention_days: 0` can never wipe the whole table.
+      assert Repo.get(WebhookDeliverySchema, recent_delivery.id)
+      assert Repo.get(WebhookDeliverySchema, old_delivery.id)
+    end
+
+    test "very large retention days keeps all records" do
+      webhook = insert(:webhook)
+
+      very_old_delivery =
+        insert(:webhook_delivery,
+          webhook: webhook,
+          inserted_at: DateTime.add(DateTime.utc_now(), -1000, :day)
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{"retention_days" => 10_000})
+
+      assert Repo.get(WebhookDeliverySchema, very_old_delivery.id)
+    end
+  end
+
+  describe "perform/1 - incoming Stripe webhook event cleanup" do
+    # Use insert_all to bypass Ecto's autogenerate for inserted_at, which would
+    # override any value we set via Repo.insert!/1 with the current timestamp.
+    defp insert_webhook_event(stripe_event_id, dt, opts \\ []) do
+      truncated = DateTime.truncate(dt, :second)
+
+      base_attrs = %{
+        stripe_event_id: stripe_event_id,
+        event_type: "customer.subscription.updated",
+        processed_at: truncated,
+        inserted_at: truncated
+      }
+
+      attrs =
+        case Keyword.get(opts, :payload) do
+          nil -> base_attrs
+          payload -> Map.put(base_attrs, :payload, payload)
+        end
+
+      {1, [%{id: id}]} =
+        Repo.insert_all("webhook_events", [attrs], returning: [:id])
+
+      id
+    end
+
+    test "nullifies payloads older than 30 days but keeps the row" do
+      old_date = DateTime.add(DateTime.utc_now(), -31, :day)
+      recent_date = DateTime.add(DateTime.utc_now(), -10, :day)
+      payload = %{"type" => "invoice.paid", "data" => %{"amount" => 1000}}
+
+      old_id =
+        insert_webhook_event("evt_old_payload_#{System.unique_integer()}", old_date,
+          payload: payload
+        )
+
+      recent_id =
+        insert_webhook_event("evt_recent_payload_#{System.unique_integer()}", recent_date,
+          payload: payload
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      old_event = Repo.get(StripeEventSchema, old_id)
+      assert old_event, "row should still exist"
+      assert is_nil(old_event.payload), "payload should be nullified"
+
+      recent_event = Repo.get(StripeEventSchema, recent_id)
+      assert recent_event.payload == payload, "recent payload should be preserved"
+    end
+
+    test "respects the payload_retention_days argument" do
+      date_15 = DateTime.add(DateTime.utc_now(), -15, :day)
+      payload = %{"type" => "invoice.paid"}
+
+      event_id =
+        insert_webhook_event("evt_15d_payload_#{System.unique_integer()}", date_15,
+          payload: payload
+        )
+
+      # With 10-day retention the 15-day-old payload should be nullified
+      assert :ok = perform_job(DataRetentionWorker, %{"payload_retention_days" => 10})
+
+      event = Repo.get(StripeEventSchema, event_id)
+      assert is_nil(event.payload)
+    end
+
+    test "removes Stripe event records older than the retention period" do
+      old_date = DateTime.add(DateTime.utc_now(), -91, :day)
+      recent_date = DateTime.add(DateTime.utc_now(), -10, :day)
+
+      old_id = insert_webhook_event("evt_old_#{System.unique_integer()}", old_date)
+      recent_id = insert_webhook_event("evt_recent_#{System.unique_integer()}", recent_date)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(StripeEventSchema, old_id)
+      assert Repo.get(StripeEventSchema, recent_id)
+    end
+
+    test "respects the stripe_event_retention_days argument" do
+      date_45 = DateTime.add(DateTime.utc_now(), -45, :day)
+      event_id = insert_webhook_event("evt_45d_#{System.unique_integer()}", date_45)
+
+      # With 30-day retention the 45-day-old event should be removed
+      assert :ok = perform_job(DataRetentionWorker, %{"stripe_event_retention_days" => 30})
+      refute Repo.get(StripeEventSchema, event_id)
+    end
+
+    test "outgoing delivery cleanup and Stripe event cleanup run together in a single job" do
+      webhook = insert(:webhook)
+      old_date = DateTime.add(DateTime.utc_now(), -91, :day)
+
+      old_delivery = insert(:webhook_delivery, webhook: webhook, inserted_at: old_date)
+      old_event_id = insert_webhook_event("evt_combined_#{System.unique_integer()}", old_date)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(WebhookDeliverySchema, old_delivery.id)
+      refute Repo.get(StripeEventSchema, old_event_id)
+    end
+  end
+
+  describe "perform/1 - Slack delivery log cleanup" do
+    test "removes Slack delivery rows older than 60 days, keeps recent ones" do
+      integration = insert(:slack_integration)
+      old_date = DateTime.add(DateTime.utc_now(), -61, :day)
+      recent_date = DateTime.add(DateTime.utc_now(), -10, :day)
+
+      old = insert(:slack_delivery, integration: integration, inserted_at: old_date)
+      recent = insert(:slack_delivery, integration: integration, inserted_at: recent_date)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(SlackDeliverySchema, old.id)
+      assert Repo.get(SlackDeliverySchema, recent.id)
+    end
+
+    test "respects the slack_delivery_retention_days argument" do
+      integration = insert(:slack_integration)
+      date_45 = DateTime.add(DateTime.utc_now(), -45, :day)
+
+      delivery = insert(:slack_delivery, integration: integration, inserted_at: date_45)
+
+      assert :ok = perform_job(DataRetentionWorker, %{"slack_delivery_retention_days" => 30})
+      refute Repo.get(SlackDeliverySchema, delivery.id)
+    end
+  end
+
+  describe "perform/1 - Telegram delivery log cleanup" do
+    test "removes Telegram delivery rows older than 60 days, keeps recent ones" do
+      integration = insert(:telegram_integration)
+      old_date = DateTime.add(DateTime.utc_now(), -61, :day)
+      recent_date = DateTime.add(DateTime.utc_now(), -10, :day)
+
+      old = insert(:telegram_delivery, integration: integration, inserted_at: old_date)
+      recent = insert(:telegram_delivery, integration: integration, inserted_at: recent_date)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(TelegramDeliverySchema, old.id)
+      assert Repo.get(TelegramDeliverySchema, recent.id)
+    end
+
+    test "respects the telegram_delivery_retention_days argument" do
+      integration = insert(:telegram_integration)
+      date_45 = DateTime.add(DateTime.utc_now(), -45, :day)
+
+      delivery = insert(:telegram_delivery, integration: integration, inserted_at: date_45)
+
+      assert :ok = perform_job(DataRetentionWorker, %{"telegram_delivery_retention_days" => 30})
+      refute Repo.get(TelegramDeliverySchema, delivery.id)
+    end
+  end
+
+  describe "perform/1 - integration OAuth flow cleanup" do
+    test "removes flows past their expiry, with the verifiers they hold" do
+      user = insert(:user)
+      freeze_clock(~U[2026-10-07 12:00:00Z])
+      {:ok, %{nonce: expired}} = PendingFlow.start(user.id, :outlook)
+      freeze_clock(~U[2026-10-07 13:30:00Z])
+      {:ok, %{nonce: live}} = PendingFlow.start(user.id, :outlook)
+
+      assert :ok = DataRetentionWorker.perform(%Oban.Job{args: %{}})
+
+      assert Repo.get_by(PendingFlowSchema, nonce: expired) == nil
+      assert Repo.get_by(PendingFlowSchema, nonce: live)
+    end
+  end
+
+  describe "perform/1 - unfinished Slack OAuth installs" do
+    # An install whose channel was never picked, as the OAuth callback leaves
+    # it: written once, never updated.
+    defp slack_stub(user, age_seconds) do
+      at = DateTime.add(DateTime.utc_now(), -age_seconds, :second)
+
+      insert(:slack_integration,
+        user: user,
+        channel_id: nil,
+        channel_name: nil,
+        inserted_at: at,
+        updated_at: at
+      )
+    end
+
+    test "removes an install left unfinished for more than a day" do
+      stale = slack_stub(insert(:user), 25 * 3600)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(SlackIntegrationSchema, stale.id)
+    end
+
+    test "keeps an install started less than a day ago" do
+      fresh = slack_stub(insert(:user), 23 * 3600)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.get(SlackIntegrationSchema, fresh.id)
+    end
+
+    test "keeps a finished integration however old it is" do
+      at = DateTime.add(DateTime.utc_now(), -30, :day)
+      active = insert(:slack_integration, inserted_at: at, updated_at: at)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.get(SlackIntegrationSchema, active.id)
+    end
+
+    test "keeps a finished integration the user disconnected back to pending" do
+      at = DateTime.add(DateTime.utc_now(), -30, :day)
+
+      disconnected =
+        insert(:slack_integration,
+          channel_id: nil,
+          channel_name: nil,
+          inserted_at: at,
+          updated_at: DateTime.add(at, 3600, :second)
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.get(SlackIntegrationSchema, disconnected.id)
+    end
+  end
+
+  describe "perform/1 - abandoned Telegram setup stub cleanup" do
+    test "removes stubs abandoned past the link TTL" do
+      user = insert(:user)
+
+      abandoned = telegram_stub(user, inserted_at: forty_minutes_ago())
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(TelegramIntegrationSchema, abandoned.id)
+    end
+
+    test "keeps a stub created within the link TTL" do
+      user = insert(:user)
+
+      fresh = telegram_stub(user)
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.get(TelegramIntegrationSchema, fresh.id)
+    end
+
+    test "keeps an old stub whose link token was issued within the TTL" do
+      user = insert(:user)
+
+      refreshed =
+        telegram_stub(user,
+          inserted_at: forty_minutes_ago(),
+          link_token_issued_at: DateTime.utc_now(:second)
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.get(TelegramIntegrationSchema, refreshed.id)
+    end
+
+    test "keeps an integration that was linked and later lost its chat" do
+      user = insert(:user)
+
+      disconnected =
+        telegram_stub(user,
+          inserted_at: forty_minutes_ago(),
+          linked_at: forty_minutes_ago()
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.get(TelegramIntegrationSchema, disconnected.id)
+    end
+
+    defp telegram_stub(user, attrs \\ []) do
+      defaults = [
+        user: user,
+        bot_mode: :shared,
+        chat_id: nil,
+        link_token: "tok-#{System.unique_integer([:positive])}"
+      ]
+
+      insert(:telegram_integration, Keyword.merge(defaults, attrs))
+    end
+
+    defp forty_minutes_ago, do: DateTime.add(DateTime.utc_now(:second), -40, :minute)
+  end
+
+  describe "perform/1 - analytics event cleanup" do
+    defp insert_analytics_event(inserted_at) do
+      Repo.insert!(%EventSchema{
+        event_type: "page_view",
+        path: "/#{System.unique_integer([:positive])}",
+        visitor_hash: "v#{System.unique_integer([:positive])}",
+        inserted_at: inserted_at
+      })
+    end
+
+    test "removes analytics events older than 90 days, keeps recent ones" do
+      old = insert_analytics_event(DateTime.add(DateTime.utc_now(), -91, :day))
+      recent = insert_analytics_event(DateTime.add(DateTime.utc_now(), -30, :day))
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.get(EventSchema, old.id)
+      assert Repo.get(EventSchema, recent.id)
+    end
+
+    test "respects the analytics_event_retention_days argument" do
+      event = insert_analytics_event(DateTime.add(DateTime.utc_now(), -45, :day))
+
+      assert :ok = perform_job(DataRetentionWorker, %{"analytics_event_retention_days" => 30})
+      refute Repo.get(EventSchema, event.id)
+    end
+  end
+
+  describe "perform/1 - analytics salt cleanup" do
+    test "deletes the salts of past days and keeps today's" do
+      today = ~D[2031-03-10]
+      freeze_clock(DateTime.new!(today, ~T[04:00:00], "Etc/UTC"))
+
+      for date <- [~D[2031-02-01], ~D[2031-03-09], today] do
+        Repo.insert!(%SaltSchema{date: date, salt: :crypto.strong_rand_bytes(32)})
+      end
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.all(from(s in SaltSchema, select: s.date)) == [today]
+    end
+  end
+
+  describe "perform/1 - past extra available times" do
+    test "deletes extra times before yesterday, keeps yesterday's and later ones" do
+      today = ~D[2031-03-10]
+      freeze_clock(DateTime.new!(today, ~T[04:00:00], "Etc/UTC"))
+      schedule = insert(:availability_schedule)
+
+      for date <- [~D[2031-02-01], ~D[2031-03-08], ~D[2031-03-09], today, ~D[2031-04-01]] do
+        insert(:availability_override,
+          schedule: schedule,
+          date: date,
+          override_type: :extra_hours,
+          start_time: ~T[09:00:00],
+          end_time: ~T[10:00:00]
+        )
+      end
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.all(
+               from(o in AvailabilityOverrideSchema,
+                 where: o.schedule_id == ^schedule.id,
+                 select: o.date,
+                 order_by: o.date
+               )
+             ) == [~D[2031-03-09], today, ~D[2031-04-01]]
+    end
+  end
+
+  describe "perform/1 - offered times that have started" do
+    test "deletes them and keeps the ones still to come" do
+      freeze_clock(~U[2031-03-10 12:00:00Z])
+      meeting_type = insert(:meeting_type, max_participants: 1, fixed_dates: true)
+
+      for starts_at <- [~U[2031-03-10 11:00:00Z], ~U[2031-03-10 13:00:00Z]] do
+        Repo.insert!(%OfferedTimeSchema{meeting_type_id: meeting_type.id, starts_at: starts_at})
+      end
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert Repo.all(from(t in OfferedTimeSchema, select: t.starts_at)) == [
+               ~U[2031-03-10 13:00:00Z]
+             ]
+    end
+  end
+
+  describe "perform/1 - financial records past their retention period" do
+    test "deletes a deleted host's expired records and scrubs a live host's attendee" do
+      freeze_clock(~U[2037-01-01 04:00:00Z])
+
+      retained =
+        insert(:paid_booking_payment,
+          attendee_email: nil,
+          attendee_name: nil,
+          host_deleted_at: ~U[2030-05-01 00:00:00Z],
+          paid_at: ~U[2026-12-31 23:59:59Z]
+        )
+
+      live = insert(:paid_booking_payment, paid_at: ~U[2026-06-01 12:00:00Z])
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      refute Repo.reload(retained)
+      assert %{attendee_email: nil, attendee_name: nil} = Repo.reload(live)
+    end
+  end
+
+  describe "perform/1 - invitee data" do
+    test "anonymises meetings that ended more than two years ago by default" do
+      old_end = DateTime.utc_now() |> DateTime.add(-731, :day) |> DateTime.truncate(:second)
+      recent_end = DateTime.add(old_end, 2, :day)
+
+      old =
+        insert(:meeting,
+          start_time: DateTime.add(old_end, -1, :hour),
+          end_time: old_end,
+          status: :completed
+        )
+
+      recent =
+        insert(:meeting,
+          start_time: DateTime.add(recent_end, -1, :hour),
+          end_time: recent_end,
+          status: :completed
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{})
+
+      assert %{attendee_email: nil, invitee_data_erased_at: %DateTime{}} = Repo.reload(old)
+      assert %{attendee_email: email, invitee_data_erased_at: nil} = Repo.reload(recent)
+      assert email == recent.attendee_email
+    end
+
+    test "respects the invitee_data_retention_days argument" do
+      ended = DateTime.utc_now() |> DateTime.add(-40, :day) |> DateTime.truncate(:second)
+
+      meeting =
+        insert(:meeting,
+          start_time: DateTime.add(ended, -1, :hour),
+          end_time: ended,
+          status: :completed
+        )
+
+      assert :ok = perform_job(DataRetentionWorker, %{"invitee_data_retention_days" => 30})
+      assert %{attendee_email: nil} = Repo.reload(meeting)
+    end
+  end
+end

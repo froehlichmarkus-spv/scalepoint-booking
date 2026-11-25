@@ -1,0 +1,385 @@
+defmodule Tymeslot.Integrations.Calendar.Exchange.EventNormaliser do
+  @moduledoc """
+  Turns the `CalendarItem` elements of a `GetItem` response into canonical
+  `CalendarEvent` structs.
+
+  Every field except the item id is treated as optional. This is not
+  defensiveness for its own sake: a live server was observed silently dropping
+  requested properties it does not implement rather than answering a fault, so
+  a missing element carries no signal about whether the request was valid.
+
+  One unusable item costs that item rather than the whole batch, matching the
+  posture the CalDAV and ICS paths take: a single malformed event must not
+  empty an organiser's diary. Dropping it is still data loss, so it is
+  recorded with `InvalidEventReport` like those paths' skips, and the sync run
+  raises the `:invalid_calendar_event` operator alert for it, which is the
+  only thing that makes a quietly missing meeting visible.
+
+  ## All-day events and the item's time zone
+
+  EWS answers in UTC and this provider sends no `t:TimeZoneContext` header, but
+  an all-day event is midnight to midnight in the *item's* own zone: a Berlin
+  mailbox reports 3 September as `2026-09-02T22:00:00Z`, so reading the UTC
+  date straight off that value misfiles the event everywhere east of Greenwich.
+
+  `Requests.get_item/1` asks for `calendar:StartTimeZone`, which makes the day
+  exact wherever the server answers it. Its `Id` attribute carries a *Windows*
+  zone name ("W. Europe Standard Time"), so it goes through
+  `Timezones.sanitize/1` for the CLDR mapping onto an IANA id.
+
+  Servers that drop the property silently rather than faulting need a fallback,
+  which anchors inside the local day: shifting the instant forward by `A` hours
+  before taking the date lands on the intended day for every UTC offset in
+  `(A-24, A]`, and is also correct when a server reports the boundary with an
+  explicit offset rather than in UTC. No `A` is right everywhere, because
+  inhabited offsets span 25 hours and any single anchor covers 24. `A` is
+  thirteen hours, so the window is `(-11:00, +13:00]`: it reaches New Zealand
+  year-round, and misfiles `-11:00`, `+13:45` and `+14:00`, which
+  `StartTimeZone` gets right wherever a server provides it.
+
+  ## An occurrence is cached under its own item id
+
+  A windowed read can answer a recurring series as its occurrences: Exchange
+  always does, and grommunio does in current versions. Every occurrence carries
+  the series' iCalendar `UID`, so keying the cache on it, as a single item is,
+  would have the occurrences overwrite one another and leave one per series on
+  the grid. An `Occurrence` or `Exception` is therefore keyed by its item id,
+  which is distinct per occurrence and stable across reads, as Google keys an
+  instance by its own event id. The series' `UID` is kept in
+  `provider_metadata` under `"ical_uid"`. A single item and a recurring master
+  keep the `UID`, so their cached rows and anything keyed on them survive.
+  """
+
+  # Only the sigil: every xpath goes through `Soap.xpath/2,3`, which binds the
+  # EWS namespace prefixes onto the spec and onto every subspec.
+  import SweetXml, only: [sigil_x: 2]
+
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Integrations.Calendar.Exchange.Soap
+  alias Tymeslot.Integrations.Calendar.InvalidEventReport
+  alias Tymeslot.Timezones
+
+  require Logger
+
+  @type context :: %{
+          calendar_integration_id: integer(),
+          provider_calendar_id: String.t(),
+          synced_at: DateTime.t()
+        }
+
+  # See the module doc on all-day events for why this number and not another.
+  @all_day_anchor 13 * 60 * 60
+
+  # The series members a windowed read expands a recurring series into. Each
+  # carries the series' `UID`, so each is cached under its own item id.
+  @expanded_series_types ["Occurrence", "Exception"]
+
+  @doc """
+  Returns the `CalendarItem` elements of a parsed `GetItem` response.
+
+  A response message that did not succeed carries no `m:Items`, so it drops
+  out of this walk structurally, and what comes back is exactly the readable
+  items. Whether a batch that lost messages this way should be answered at all
+  is `require_readable_batch/1`'s decision, not this walk's.
+  """
+  @spec parse_items(Soap.document()) :: [Soap.document()]
+  def parse_items(doc) do
+    Soap.xpath(doc, ~x"//m:GetItemResponseMessage/m:Items/t:CalendarItem"l)
+  end
+
+  @doc """
+  States whether a `GetItem` batch may be read as an answer at all.
+
+  `GetItem` answers one response message per requested id, so the guard
+  `Exchange.ItemDiscovery` applies to `FindItem` — fail on the first stated
+  failure — is the wrong shape here, and a partly successful batch is not an
+  anomaly. The ids come from a *separate* round trip, so an item the organiser
+  deleted between the two calls is answered with its own `ErrorItemNotFound`;
+  failing the window over that would break the grid for the calendar every time
+  someone deletes a meeting mid-sync, and permanently for a single item nobody
+  can read.
+
+  So a batch that lost only some of its messages is `:ok`, and the failed ones
+  are logged under the server's own codes, with one exception: a batch in which
+  *every* message failed is refused, because that is the emptied-calendar case
+  the guard exists for and it is indistinguishable from an empty window
+  otherwise. What this trades away is the partial case — an event denied on its
+  own message disappears from the grid with only a log line to say so.
+  Availability is unaffected either way: it comes from `GetUserAvailability`
+  over the whole mailbox, never from these items.
+
+  Takes one response, or every response of a read that was split into several
+  requests. The verdict covers the read as a whole: one request in which every
+  message failed does not refuse a read whose other requests were answered.
+  """
+  @spec require_readable_batch(Soap.document() | [Soap.document()]) ::
+          :ok | {:error, Soap.failure()}
+  def require_readable_batch(docs) when is_list(docs) do
+    case Enum.flat_map(docs, &Soap.response_messages(&1, "GetItemResponseMessage")) do
+      [] -> {:error, :no_response_messages}
+      messages -> classify_batch(messages, Enum.reject(messages, &Soap.succeeded?/1))
+    end
+  end
+
+  def require_readable_batch(doc), do: require_readable_batch([doc])
+
+  @doc """
+  States whether the server answered the properties `Requests.get_item/1`
+  asked for at all.
+
+  The request names its properties one by one on top of `BaseShape=IdOnly`, so
+  a server that ignored `t:AdditionalProperties` would answer bare item ids
+  under `NoError`. Every one of those items fails `CalendarEvent.new/1` for
+  want of a start, and a read made of them would look like an empty calendar.
+  Start and end are the two properties every calendar item has, so a read in
+  which *every* item lacks one is refused: the cache keeps what it holds and
+  the failure is logged for operators.
+
+  A read in which only some items are bare is not that signature, and is
+  answered: each bare item is skipped and reported by `normalise_events/2`
+  like any other unusable item, for the reason `require_readable_batch/1`
+  gives for not failing a window over one item.
+  """
+  @spec require_requested_properties([Soap.document()], integer() | nil) ::
+          :ok | {:error, :item_properties_missing}
+  def require_requested_properties(items, calendar_integration_id) when is_list(items) do
+    if items != [] and Enum.all?(items, &bare?/1) do
+      Logger.error("Exchange GetItem answered no item with the requested properties",
+        provider: :exchange,
+        calendar_integration_id: calendar_integration_id,
+        item_count: length(items)
+      )
+
+      {:error, :item_properties_missing}
+    else
+      :ok
+    end
+  end
+
+  defp bare?(item) do
+    is_nil(Soap.text(item, ~x"./t:Start/text()")) or is_nil(Soap.text(item, ~x"./t:End/text()"))
+  end
+
+  defp classify_batch(_messages, []), do: :ok
+
+  defp classify_batch(messages, failed) when length(failed) == length(messages),
+    do: {:error, {:response_code, Soap.response_code(hd(failed))}}
+
+  # Only counts and the server's own codes travel: a failed message names no
+  # item, and nothing else in the response is safe to log — a subject or a
+  # location is mailbox content.
+  defp classify_batch(_messages, failed) do
+    Logger.warning("Exchange GetItem batch was partly unreadable",
+      provider: :exchange,
+      failed_item_count: length(failed),
+      response_codes: failed |> Soap.response_codes() |> Enum.uniq() |> Enum.join(", ")
+    )
+
+    :ok
+  end
+
+  @doc """
+  Normalises `CalendarItem` elements into `CalendarEvent` structs.
+
+  Takes the list `parse_items/1` returns, which is the shape the `Provider`
+  behaviour's `normalise_events/2` callback is defined over, rather than a
+  whole document. Keeping the two steps apart lets a caller count what the
+  response carried before any of it is dropped.
+  """
+  @spec normalise_events([Soap.document()], context()) :: {:ok, [CalendarEvent.t()]}
+  def normalise_events(items, context) when is_list(items) do
+    events =
+      items
+      |> Enum.map(&normalise_item(&1, context))
+      |> Enum.reject(&is_nil/1)
+
+    {:ok, events}
+  end
+
+  @doc """
+  Whether a normalised event is a recurring series' master item.
+
+  A master's dates describe only the series' first occurrence, so it cannot
+  stand in for the series on the grid. It reaches a reader only where the
+  server answers the series unexpanded: a change feed always does, and older
+  grommunio versions do for a windowed read too.
+  """
+  @spec series_master?(CalendarEvent.t()) :: boolean()
+  def series_master?(%CalendarEvent{provider_metadata: %{"calendar_item_type" => type}}),
+    do: type == "RecurringMaster"
+
+  def series_master?(%CalendarEvent{}), do: false
+
+  defp normalise_item(item, context) do
+    attrs = extract(item, context)
+
+    case CalendarEvent.new(attrs) do
+      {:ok, event} ->
+        event
+
+      {:error, reason} ->
+        # `attrs.uid` is nil exactly when the item carried neither a UID nor an
+        # item id, which is itself one of the reasons an item is rejected.
+        # The alert renders this value straight into the operator's email, so
+        # a blank one would name nothing at all.
+        uid = attrs.uid || "unknown"
+
+        # A skipped item is silent data loss in the organiser's diary, so it
+        # gets a warning and an operator alert rather than a debug line, which
+        # is what the CalDAV and Google paths do with theirs. Only identifiers
+        # and the reason travel: the subject, location and attendees are
+        # mailbox content and must not reach a log line or an alert email.
+        Logger.warning("Skipping unusable Exchange calendar item",
+          calendar_integration_id: context.calendar_integration_id,
+          event_uid: uid,
+          reason: reason
+        )
+
+        InvalidEventReport.record(:exchange, context, uid, reason)
+
+        nil
+    end
+  end
+
+  defp extract(item, context) do
+    item_id = Soap.text(item, ~x"./t:ItemId/@Id")
+    ical_uid = Soap.text(item, ~x"./t:UID/text()")
+    item_type = Soap.text(item, ~x"./t:CalendarItemType/text()")
+    all_day = Soap.text(item, ~x"./t:IsAllDayEvent/text()") == "true"
+
+    base = %{
+      uid: cache_uid(item_type, ical_uid, item_id),
+      calendar_integration_id: context.calendar_integration_id,
+      provider: :exchange,
+      provider_calendar_id: context.provider_calendar_id,
+      provider_event_id: item_id,
+      synced_at: context.synced_at,
+      summary: Soap.text(item, ~x"./t:Subject/text()"),
+      location: Soap.text(item, ~x"./t:Location/text()"),
+      etag: Soap.text(item, ~x"./t:ItemId/@ChangeKey"),
+      all_day: all_day,
+      status: map_status(Soap.text(item, ~x"./t:IsCancelled/text()")),
+      transparency: map_transparency(Soap.text(item, ~x"./t:LegacyFreeBusyStatus/text()")),
+      reminders:
+        map_reminders(
+          Soap.text(item, ~x"./t:ReminderIsSet/text()"),
+          Soap.text(item, ~x"./t:ReminderMinutesBeforeStart/text()")
+        ),
+      provider_metadata: metadata(item_type, ical_uid)
+    }
+
+    Map.merge(base, timing(item, all_day))
+  end
+
+  defp timing(item, true) do
+    # Both boundaries are read in the zone `t:StartTimeZone` names, which is
+    # the only one `Requests.get_item/1` asks for. An all-day event does not
+    # cross zones, so the end boundary reusing it is not an approximation.
+    zone = start_zone(item)
+
+    %{
+      start_date: to_all_day_date(Soap.text(item, ~x"./t:Start/text()"), zone),
+      end_date: to_all_day_date(Soap.text(item, ~x"./t:End/text()"), zone)
+    }
+  end
+
+  defp timing(item, false) do
+    %{
+      start_at: to_datetime(Soap.text(item, ~x"./t:Start/text()")),
+      end_at: to_datetime(Soap.text(item, ~x"./t:End/text()"))
+    }
+  end
+
+  # A cancelled item must stop blocking: `CalendarEvent.blocking?/1` honours
+  # `:cancelled`, and every other provider maps its own cancellation flag the
+  # same way. A server that does not implement `IsCancelled` omits it, which
+  # reads back as nil and leaves the event confirmed.
+  defp map_status("true"), do: :cancelled
+  defp map_status(_other), do: :confirmed
+
+  # An item carries one reminder, a pop-up at a lead time in minutes. EWS
+  # keeps the lead time of a reminder that was switched off, so it counts only
+  # while `ReminderIsSet` is true; a server that omits either reads as none.
+  defp map_reminders("true", minutes) when is_binary(minutes) do
+    case Integer.parse(minutes) do
+      {minutes_before, ""} when minutes_before >= 0 ->
+        [%{method: :popup, minutes_before: minutes_before}]
+
+      _unreadable ->
+        []
+    end
+  end
+
+  defp map_reminders(_is_set, _minutes), do: []
+
+  # `Free` is the only status that does not consume the organiser's time.
+  # `Tentative`, `Busy`, `OOF`, `WorkingElsewhere` and `NoData` all block,
+  # matching how the Google and Outlook normalisers treat their equivalents.
+  defp map_transparency("Free"), do: :transparent
+  defp map_transparency(_other), do: :opaque
+
+  # The moduledoc's "An occurrence is cached under its own item id" says why
+  # the two series members a window expands into are keyed apart from the
+  # `UID` they share. An item without an id falls through to the `UID`, and
+  # `CalendarEvent.new/1` rejects it for the missing id regardless.
+  defp cache_uid(type, _ical_uid, item_id)
+       when type in @expanded_series_types and is_binary(item_id),
+       do: item_id
+
+  defp cache_uid(_type, ical_uid, item_id), do: ical_uid || item_id
+
+  # The item type is the only signal distinguishing a single item from a
+  # member of a series (`Recurrence.Series.member?/1` reads it), and the `UID`
+  # is what still ties an occurrence to its series once its row is keyed by
+  # item id. An element the server omitted is left out rather than stored nil.
+  defp metadata(type, ical_uid) do
+    Map.reject(%{"calendar_item_type" => type, "ical_uid" => ical_uid}, fn {_key, value} ->
+      is_nil(value)
+    end)
+  end
+
+  # An omitted boundary reads back as nil and leaves the field unset, which is
+  # what makes `CalendarEvent.new/1` reject the item.
+  defp to_datetime(nil), do: nil
+
+  defp to_datetime(value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, datetime, _offset} -> DateTime.truncate(datetime, :second)
+      {:error, _reason} -> nil
+    end
+  end
+
+  # The `Id` attribute is a Windows zone name, not an IANA one, so it goes
+  # through the shared sanitiser that owns the CLDR mapping. A server that
+  # omits the element yields nil, which sanitises to nil and leaves the anchor
+  # as the only path.
+  defp start_zone(item) do
+    item |> Soap.text(~x"./t:StartTimeZone/@Id") |> Timezones.sanitize()
+  end
+
+  defp to_all_day_date(value, zone) do
+    case to_datetime(value) do
+      nil -> nil
+      datetime -> all_day_date(datetime, zone)
+    end
+  end
+
+  # The exact route. An unrecognised zone name falls through to the anchor
+  # exactly as an absent one does: the sanitiser passes anything it cannot map
+  # through unchanged, so this is the only place that finds out whether the
+  # name names a real zone.
+  defp all_day_date(datetime, zone) when is_binary(zone) do
+    case DateTime.shift_zone(datetime, zone) do
+      {:ok, shifted} -> DateTime.to_date(shifted)
+      {:error, _reason} -> anchored_date(datetime)
+    end
+  end
+
+  defp all_day_date(datetime, nil), do: anchored_date(datetime)
+
+  # The degraded route, for a server that named no zone. See the module doc on
+  # all-day events for which offsets the anchor reaches and which it misfiles.
+  defp anchored_date(datetime) do
+    datetime |> DateTime.add(@all_day_anchor, :second) |> DateTime.to_date()
+  end
+end

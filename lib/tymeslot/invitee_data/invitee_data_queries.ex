@@ -1,0 +1,575 @@
+defmodule Tymeslot.InviteeData.InviteeDataQueries do
+  @moduledoc """
+  Finds and scrubs the personal data invitees give a host, across every table
+  that holds it: meetings, group seats, guests, poll participants, the
+  invitees a draft poll holds, invitation links, booking payments, booking
+  series and the outgoing delivery logs.
+
+  Pure data access. Which rows are scrubbed, and when, is decided by
+  `Tymeslot.InviteeData`.
+
+  Lookups take a `scope`: `:all`, or a host's user id to keep to that host's
+  meetings and polls. Emails are compared case-insensitively against an
+  already lower-cased `email`.
+
+  A scrubbed row is kept, so that counts and statistics still add up. Columns
+  that cannot be null and must stay unique per meeting or poll take a
+  placeholder address built from the row's own id under the reserved
+  `.invalid` domain, which also marks a poll participant as already scrubbed.
+  """
+
+  import Ecto.Query
+
+  alias Tymeslot.BookingSeries.SeriesSchema, as: Series
+  alias Tymeslot.Invitations.InvitationSchema, as: Invitation
+  alias Tymeslot.MeetingPayments.BookingPaymentSchema
+  alias Tymeslot.Meetings.GuestSchema, as: Guest
+  alias Tymeslot.Meetings.MeetingSchema, as: Meeting
+  alias Tymeslot.Meetings.MeetingState
+  alias Tymeslot.Meetings.ParticipantSchema, as: Participant
+  alias Tymeslot.Polls.PollParticipantSchema, as: PollParticipant
+  alias Tymeslot.Polls.PollSchema, as: Poll
+  alias Tymeslot.Polls.PollTimeSlotSchema, as: PollTimeSlot
+  alias Tymeslot.Repo
+  alias Tymeslot.Slack.SlackDeliverySchema
+  alias Tymeslot.Telegram.TelegramDeliverySchema
+  alias Tymeslot.Webhooks.WebhookDeliverySchema
+
+  @erased_suffix "@erased.invalid"
+
+  # The title a booking is given names the invitee ("Intro call with Ada"), so
+  # a scrubbed meeting falls back to its meeting type's name.
+  @fallback_title "Meeting"
+
+  @type scope :: :all | integer()
+  @type rows :: {:ids, [binary()]} | {:meetings, [binary()]}
+
+  # ---------------------------------------------------------------------------
+  # Lookups by email
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  The uids of meetings still to take place that `email` is booked into, as
+  the booker, a group seat or a guest.
+
+  A booking still held for email confirmation is left out, whether a
+  one-to-one booking or a group seat, on a held slot or a live one: the
+  organiser must not learn of it before it is confirmed, and it may never be.
+  """
+  @spec upcoming_meeting_uids(String.t(), scope(), DateTime.t()) :: [String.t()]
+  def upcoming_meeting_uids(email, scope, %DateTime{} = now) do
+    booked = from(m in Meeting, where: fragment("lower(?)", m.attendee_email) == ^email)
+
+    seated =
+      from(m in Meeting,
+        join: p in Participant,
+        on:
+          p.meeting_id == m.id and is_nil(p.cancelled_at) and
+            (is_nil(p.verification_deadline_at) or not is_nil(p.email_verified_at)),
+        where: fragment("lower(?)", p.email) == ^email
+      )
+
+    invited =
+      from(m in Meeting,
+        join: g in Guest,
+        on: g.meeting_id == m.id,
+        where: fragment("lower(?)", g.email) == ^email
+      )
+
+    [booked, seated, invited]
+    |> Enum.flat_map(fn query ->
+      query
+      |> where([m], m.end_time > ^now)
+      |> MeetingState.where_not_released()
+      |> MeetingState.where_not_awaiting_verification()
+      |> scope_meetings(scope)
+      |> select([m], m.uid)
+      |> Repo.all()
+    end)
+    |> Enum.uniq()
+  end
+
+  @doc "The meetings `email` booked as the attendee that are still held for email confirmation."
+  @spec held_meetings_for_attendee(String.t(), scope()) :: [Meeting.t()]
+  def held_meetings_for_attendee(email, scope) do
+    from(m in Meeting, where: fragment("lower(?)", m.attendee_email) == ^email)
+    |> MeetingState.where_awaiting_verification()
+    |> scope_meetings(scope)
+    |> Repo.all()
+  end
+
+  @doc """
+  The group seats taken under `email` that are still held for email
+  confirmation, ordered by slot so that releasing them locks the slots in a
+  stable order.
+  """
+  @spec held_seats_for_email(String.t(), scope()) :: [Participant.t()]
+  def held_seats_for_email(email, scope) do
+    from(p in Participant,
+      join: m in assoc(p, :meeting),
+      as: :meeting,
+      where:
+        fragment("lower(?)", p.email) == ^email and is_nil(p.cancelled_at) and
+          not is_nil(p.verification_deadline_at) and is_nil(p.email_verified_at),
+      order_by: [p.meeting_id, p.id]
+    )
+    |> scope_joined_meeting(scope)
+    |> Repo.all()
+  end
+
+  @doc "Ids of the meetings `email` booked as the attendee."
+  @spec meeting_ids_for_attendee(String.t(), scope()) :: [binary()]
+  def meeting_ids_for_attendee(email, scope) do
+    from(m in Meeting, where: fragment("lower(?)", m.attendee_email) == ^email, select: m.id)
+    |> scope_meetings(scope)
+    |> Repo.all()
+  end
+
+  @doc "`{id, meeting_id}` of every group seat held under `email`."
+  @spec participant_rows_for_email(String.t(), scope()) :: [{binary(), binary()}]
+  def participant_rows_for_email(email, scope) do
+    from(p in Participant,
+      join: m in assoc(p, :meeting),
+      as: :meeting,
+      where: fragment("lower(?)", p.email) == ^email,
+      select: {p.id, p.meeting_id}
+    )
+    |> scope_joined_meeting(scope)
+    |> Repo.all()
+  end
+
+  @doc "`{id, meeting_id}` of every guest invitation sent to `email`."
+  @spec guest_rows_for_email(String.t(), scope()) :: [{binary(), binary()}]
+  def guest_rows_for_email(email, scope) do
+    from(g in Guest,
+      join: m in assoc(g, :meeting),
+      as: :meeting,
+      where: fragment("lower(?)", g.email) == ^email,
+      select: {g.id, g.meeting_id}
+    )
+    |> scope_joined_meeting(scope)
+    |> Repo.all()
+  end
+
+  @doc "Ids of the poll participants answering under `email`."
+  @spec poll_participant_ids_for_email(String.t(), scope()) :: [binary()]
+  def poll_participant_ids_for_email(email, scope) do
+    from(pp in PollParticipant,
+      join: p in Poll,
+      as: :poll,
+      on: p.id == pp.poll_id,
+      where: fragment("lower(?)", pp.email) == ^email,
+      select: pp.id
+    )
+    |> scope_joined_poll(scope)
+    |> Repo.all()
+  end
+
+  # ---------------------------------------------------------------------------
+  # Lookups by age
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Up to `limit` ids of meetings that ended before `cutoff` and still hold
+  invitee data.
+  """
+  @spec meeting_ids_ended_before(DateTime.t(), pos_integer()) :: [binary()]
+  def meeting_ids_ended_before(%DateTime{} = cutoff, limit) do
+    query =
+      from(m in Meeting,
+        where: m.end_time < ^cutoff and is_nil(m.invitee_data_erased_at),
+        order_by: m.end_time,
+        limit: ^limit,
+        select: m.id
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Up to `limit` ids of not yet scrubbed participants of polls whose last
+  proposed time ended before `cutoff`.
+  """
+  @spec poll_participant_ids_ended_before(DateTime.t(), pos_integer()) :: [binary()]
+  def poll_participant_ids_ended_before(%DateTime{} = cutoff, limit) do
+    ended_polls =
+      from(s in PollTimeSlot,
+        group_by: s.poll_id,
+        having: max(s.end_time) < ^cutoff,
+        select: s.poll_id
+      )
+
+    query =
+      from(pp in PollParticipant,
+        where: pp.poll_id in subquery(ended_polls),
+        where: not like(pp.email, ^"%#{@erased_suffix}"),
+        limit: ^limit,
+        select: pp.id
+      )
+
+    Repo.all(query)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Scrubbing
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Clears what the attendee gave on the meetings `ids`: their contact details,
+  message and answers, the reasons exchanged on cancelling or declining, the
+  notification snapshot that lists attendee addresses, and the tracking
+  identifiers. The title, which names the attendee, becomes the meeting
+  type's name, and a phone location, which carries their number, is cleared.
+
+  Pass `erased_at:` to also mark the meeting as fully scrubbed for the
+  retention purge.
+  """
+  @spec scrub_meetings([binary()], DateTime.t(), keyword()) :: {non_neg_integer(), nil}
+  def scrub_meetings(ids, %DateTime{} = now, opts \\ []) do
+    erased_at = Keyword.get(opts, :erased_at)
+
+    query =
+      from(m in Meeting,
+        where: m.id in ^ids,
+        update: [
+          set: [
+            title: fragment("coalesce(?, ?)", m.meeting_type, ^@fallback_title),
+            summary: fragment("coalesce(?, ?)", m.meeting_type, ^@fallback_title),
+            location: fragment("CASE WHEN ? IS NULL THEN ? END", m.attendee_phone, m.location),
+            attendee_name: nil,
+            attendee_email: nil,
+            attendee_phone: nil,
+            attendee_company: nil,
+            attendee_message: nil,
+            cancellation_reason: nil,
+            decline_reason: nil,
+            custom_field_answers: ^%{},
+            last_notified_state: ^%{},
+            tracking_params: ^%{},
+            visitor_hash: nil,
+            invitee_data_erased_at:
+              fragment("coalesce(?, ?)", m.invitee_data_erased_at, ^erased_at),
+            updated_at: ^now
+          ]
+        ]
+      )
+
+    Repo.update_all(query, [])
+  end
+
+  @doc """
+  Clears the booker's name and email on the booking series `email` booked,
+  within `scope`, and marks each as erased. The series' sessions are the
+  person's own bookings, erased with it.
+  """
+  @spec scrub_series_for_email(String.t(), scope(), DateTime.t()) :: {non_neg_integer(), nil}
+  def scrub_series_for_email(email, scope, %DateTime{} = now) do
+    from(s in Series, where: fragment("lower(?)", s.attendee_email) == ^email)
+    |> scope_series(scope)
+    |> scrub_series(now)
+  end
+
+  @doc """
+  Clears the booker's name and email on the series that the meetings `ids`
+  (or seats on them) belong to, once every session of the series is erased
+  (`invitee_data_erased_at` on its meeting), and marks each as erased. Run
+  after the meetings are scrubbed, in the same transaction, so the last
+  session to age out takes its series with it.
+  """
+  @spec scrub_finished_series([binary()], DateTime.t()) :: {non_neg_integer(), nil}
+  def scrub_finished_series(meeting_ids, %DateTime{} = now),
+    do: meeting_ids |> finished_series() |> scrub_series(now)
+
+  # The series the meetings `ids` (or seats on them) belong to whose every
+  # session is erased.
+  defp finished_series(meeting_ids) do
+    booked =
+      from(m in Meeting,
+        where: m.id in ^meeting_ids and not is_nil(m.series_id),
+        select: m.series_id
+      )
+
+    seated =
+      from(p in Participant,
+        where: p.meeting_id in ^meeting_ids and not is_nil(p.series_id),
+        select: p.series_id
+      )
+
+    unerased_meeting =
+      from(m in Meeting,
+        where: m.series_id == parent_as(:series).id and is_nil(m.invitee_data_erased_at),
+        select: 1
+      )
+
+    unerased_seat =
+      from(p in Participant,
+        join: m in assoc(p, :meeting),
+        where: p.series_id == parent_as(:series).id and is_nil(m.invitee_data_erased_at),
+        select: 1
+      )
+
+    from(s in Series,
+      as: :series,
+      where: s.id in subquery(booked) or s.id in subquery(seated),
+      where: not exists(unerased_meeting) and not exists(unerased_seat)
+    )
+  end
+
+  # The name and email cannot be null, so they take the placeholder a seat's
+  # do. A series already erased is left as it is.
+  defp scrub_series(query, now) do
+    query
+    |> where([s], is_nil(s.invitee_data_erased_at))
+    |> update([s],
+      set: [
+        attendee_name: "",
+        attendee_email: fragment("'erased-' || ?::text || ?", s.id, ^@erased_suffix),
+        invitee_data_erased_at: ^now,
+        updated_at: ^now
+      ]
+    )
+    |> Repo.update_all([])
+  end
+
+  @doc "Clears the group seats selected by `rows`, keeping each seat."
+  @spec scrub_participants(rows(), DateTime.t()) :: {non_neg_integer(), nil}
+  def scrub_participants(rows, %DateTime{} = now) do
+    from(p in Participant,
+      update: [
+        set: [
+          name: "",
+          email: fragment("'erased-' || ?::text || ?", p.id, ^@erased_suffix),
+          phone: nil,
+          company: nil,
+          message: nil,
+          custom_field_answers: ^%{},
+          management_token: nil,
+          management_token_hash: nil,
+          updated_at: ^now
+        ]
+      ]
+    )
+    |> select_rows(rows)
+    |> Repo.update_all([])
+  end
+
+  @doc "Clears the guest invitations selected by `rows`, keeping each one."
+  @spec scrub_guests(rows(), DateTime.t()) :: {non_neg_integer(), nil}
+  def scrub_guests(rows, %DateTime{} = now) do
+    from(g in Guest,
+      update: [
+        set: [
+          name: nil,
+          email: fragment("'erased-' || ?::text || ?", g.id, ^@erased_suffix),
+          rsvp_token: nil,
+          rsvp_token_hash: nil,
+          updated_at: ^now
+        ]
+      ]
+    )
+    |> select_rows(rows)
+    |> Repo.update_all([])
+  end
+
+  @doc "Clears the poll participants `ids`, keeping their votes."
+  @spec scrub_poll_participants([binary()], DateTime.t()) :: {non_neg_integer(), nil}
+  def scrub_poll_participants(ids, %DateTime{} = now) do
+    query =
+      from(pp in PollParticipant,
+        where: pp.id in ^ids,
+        update: [
+          set: [
+            name: "",
+            email: fragment("'erased-' || ?::text || ?", pp.id, ^@erased_suffix),
+            token: nil,
+            token_hash: nil,
+            updated_at: ^now
+          ]
+        ]
+      )
+
+    Repo.update_all(query, [])
+  end
+
+  @doc """
+  Clears the attendee's name and email on booking payments, selected by the
+  meetings they paid for or by `email` within `scope`. The payment itself is
+  kept for its statutory period (`Tymeslot.MeetingPayments.DataRetention`).
+
+  Selected by meetings, a series payment is cleared only once every session
+  of its series is erased, as its series is (`scrub_finished_series/2`): run
+  it after the meetings are scrubbed, in the same transaction.
+  """
+  @spec scrub_booking_payments(
+          {:meetings, [binary()]} | {:email, String.t(), scope()},
+          DateTime.t()
+        ) ::
+          {non_neg_integer(), nil}
+  def scrub_booking_payments(selection, %DateTime{} = now) do
+    BookingPaymentSchema
+    |> select_payments(selection)
+    |> Repo.update_all(set: [attendee_email: nil, attendee_name: nil, updated_at: now])
+  end
+
+  @doc """
+  Clears the name and email of the invitation links a host addressed to
+  `email`, and of those that booked the meetings `meeting_ids` (the person's
+  own bookings, as `meeting_ids_for_attendee/2` selects them): a link
+  addressed by name only, or to another address than the one the person
+  booked under, still names them. Keeps each link, its token and its status.
+  Invitations hold the address lower-cased already. Keeps to `scope`'s
+  invitations.
+  """
+  @spec scrub_invitations(String.t(), [binary()], scope(), DateTime.t()) ::
+          {non_neg_integer(), nil}
+  def scrub_invitations(email, meeting_ids, scope, %DateTime{} = now) do
+    booked_with =
+      from(m in Meeting,
+        where: m.id in ^meeting_ids and not is_nil(m.invitation_id),
+        select: m.invitation_id
+      )
+
+    from(i in Invitation, where: i.email == ^email or i.id in subquery(booked_with))
+    |> scope_invitations(scope)
+    |> Repo.update_all(set: [name: nil, email: nil, updated_at: now])
+  end
+
+  @doc """
+  Deletes the webhook, Slack and Telegram delivery logs of `meeting_ids`,
+  whose payloads repeat the booking's details.
+  """
+  @spec delete_deliveries([binary()]) :: non_neg_integer()
+  def delete_deliveries([]), do: 0
+
+  def delete_deliveries(meeting_ids) do
+    webhooks = delete_rows(from(d in WebhookDeliverySchema, where: d.meeting_id in ^meeting_ids))
+    slack = delete_rows(from(d in SlackDeliverySchema, where: d.meeting_id in ^meeting_ids))
+    telegram = delete_rows(from(d in TelegramDeliverySchema, where: d.meeting_id in ^meeting_ids))
+
+    webhooks + slack + telegram
+  end
+
+  @doc """
+  Removes `email` from the invitees held on draft polls, which are not yet
+  participants, so nothing else holds them. Keeps to `scope`'s drafts.
+  """
+  @spec remove_draft_invitee(String.t(), scope()) :: {non_neg_integer(), nil}
+  def remove_draft_invitee(email, scope) do
+    from(p in Poll,
+      as: :poll,
+      where: p.status == :draft,
+      where:
+        fragment(
+          "EXISTS (SELECT 1 FROM unnest(?) AS e WHERE lower(e->>'email') = ?)",
+          p.draft_invitees,
+          ^email
+        ),
+      update: [
+        set: [
+          draft_invitees:
+            fragment(
+              "ARRAY(SELECT e FROM unnest(?) AS e WHERE lower(e->>'email') <> ?)",
+              p.draft_invitees,
+              ^email
+            )
+        ]
+      ]
+    )
+    |> scope_joined_poll(scope)
+    |> Repo.update_all([])
+  end
+
+  @doc """
+  Clears the invitees held on draft polls last saved before `cutoff`: a
+  draft left that long is abandoned, and its list was never sent.
+  """
+  @spec clear_draft_invitees_saved_before(DateTime.t()) :: {non_neg_integer(), nil}
+  def clear_draft_invitees_saved_before(%DateTime{} = cutoff) do
+    query =
+      from(p in Poll,
+        where: p.status == :draft and p.updated_at < ^cutoff,
+        where: fragment("cardinality(?) > 0", p.draft_invitees),
+        update: [set: [draft_invitees: ^[]]]
+      )
+
+    Repo.update_all(query, [])
+  end
+
+  @doc """
+  Clears the name and email on invitation links last changed before
+  `cutoff` whose meetings all ended before it, keeping each link, its token
+  and its status. A link with a meeting ending on or after `cutoff` is kept
+  until that meeting ages out too.
+  """
+  @spec clear_invitations_before(DateTime.t(), DateTime.t()) :: {non_neg_integer(), nil}
+  def clear_invitations_before(%DateTime{} = cutoff, %DateTime{} = now) do
+    recent_meetings =
+      from(m in Meeting,
+        where: m.invitation_id == parent_as(:invitation).id and m.end_time >= ^cutoff,
+        select: 1
+      )
+
+    query =
+      from(i in Invitation,
+        as: :invitation,
+        where: not is_nil(i.email) or not is_nil(i.name),
+        where: i.updated_at < ^cutoff,
+        where: not exists(recent_meetings),
+        update: [set: [name: nil, email: nil, updated_at: ^now]]
+      )
+
+    Repo.update_all(query, [])
+  end
+
+  # The guard is what tells Dialyzer the count is an integer: the Repo's own
+  # `delete_all` return carries no type for it.
+  defp delete_rows(query), do: deleted_count(Repo.delete_all(query))
+
+  defp deleted_count({count, _rows}) when is_integer(count), do: count
+
+  defp select_rows(query, {:ids, ids}), do: where(query, [r], r.id in ^ids)
+  defp select_rows(query, {:meetings, ids}), do: where(query, [r], r.meeting_id in ^ids)
+
+  # A paid series' one payment paid for each of its sessions, so it keeps
+  # the booker's details as long as its series does: until every session
+  # is erased (`scrub_finished_series/2`).
+  defp select_payments(query, {:meetings, ids}) do
+    series_ids = ids |> finished_series() |> select([s], s.id)
+
+    where(query, [b], b.meeting_id in ^ids or b.series_id in subquery(series_ids))
+  end
+
+  defp select_payments(query, {:email, email, :all}),
+    do: where(query, [b], fragment("lower(?)", b.attendee_email) == ^email)
+
+  defp select_payments(query, {:email, email, host_user_id}) when is_integer(host_user_id) do
+    query
+    |> select_payments({:email, email, :all})
+    |> where([b], b.host_user_id == ^host_user_id)
+  end
+
+  defp scope_meetings(query, :all), do: query
+
+  defp scope_meetings(query, host_user_id) when is_integer(host_user_id),
+    do: where(query, [m], m.organizer_user_id == ^host_user_id)
+
+  defp scope_series(query, :all), do: query
+
+  defp scope_series(query, host_user_id) when is_integer(host_user_id),
+    do: where(query, [s], s.organizer_user_id == ^host_user_id)
+
+  defp scope_joined_meeting(query, :all), do: query
+
+  defp scope_joined_meeting(query, host_user_id) when is_integer(host_user_id),
+    do: where(query, [meeting: m], m.organizer_user_id == ^host_user_id)
+
+  defp scope_invitations(query, :all), do: query
+
+  defp scope_invitations(query, host_user_id) when is_integer(host_user_id),
+    do: where(query, [i], i.user_id == ^host_user_id)
+
+  defp scope_joined_poll(query, :all), do: query
+
+  defp scope_joined_poll(query, host_user_id) when is_integer(host_user_id),
+    do: where(query, [poll: p], p.user_id == ^host_user_id)
+end

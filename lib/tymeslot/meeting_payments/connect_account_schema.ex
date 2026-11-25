@@ -1,0 +1,61 @@
+defmodule Tymeslot.MeetingPayments.ConnectAccountSchema do
+  @moduledoc """
+  Stripe Connect account linked to a the scheduler host.
+
+  status values:
+    * `:creating` — placeholder row; waiting for the OAuth connection
+    * `:active`   — Stripe account exists and the row tracks its current state
+    * `:deleted`  — host disconnected or was deleted; user_id nilified
+  """
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  alias Tymeslot.Auth.UserSchema
+  alias Tymeslot.MeetingPayments.Currency
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+  @type status :: :creating | :active | :deleted
+  @type t :: %__MODULE__{}
+
+  schema "connect_accounts" do
+    field :stripe_account_id, :string
+    field :country, :string
+    field :default_currency, :string
+    field :charges_enabled, :boolean, default: false
+    field :payouts_enabled, :boolean, default: false
+    field :details_submitted, :boolean, default: false
+    field :disabled_reason, :string
+    field :last_synced_at, :utc_datetime
+    field :last_account_event_at, :utc_datetime
+    field :deleted_at, :utc_datetime
+    # Non-null: connected through OAuth. Null: legacy AccountLink row or placeholder.
+    field :oauth_connected_at, :utc_datetime
+    # Single-use marker for an authorise attempt in flight.
+    field :oauth_nonce, :string
+    field :status, Ecto.Enum, values: [:creating, :active, :deleted], default: :creating
+
+    belongs_to :user, UserSchema, type: :id
+    timestamps(type: :utc_datetime)
+  end
+
+  @castable ~w(
+    user_id stripe_account_id country default_currency
+    charges_enabled payouts_enabled details_submitted disabled_reason
+    last_synced_at last_account_event_at deleted_at status
+    oauth_connected_at oauth_nonce
+  )a
+
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
+  def changeset(schema, attrs) do
+    schema
+    |> cast(attrs, @castable)
+    |> validate_required([:status])
+    |> validate_inclusion(:default_currency, Currency.allowlist())
+    |> unique_constraint(:stripe_account_id,
+      name: :connect_accounts_stripe_account_id_live_unique_index
+    )
+    |> unique_constraint(:user_id, name: :connect_accounts_user_id_live_unique_index)
+    |> foreign_key_constraint(:user_id)
+  end
+end

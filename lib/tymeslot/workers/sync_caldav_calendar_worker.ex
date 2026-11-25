@@ -1,0 +1,396 @@
+defmodule Tymeslot.Workers.SyncCalDavCalendarWorker do
+  @moduledoc """
+  Oban worker that syncs a CalDAV calendar integration.
+
+  The protocol work lives in `Tymeslot.Integrations.Calendar.CalDAV.Sync`,
+  which reports outcomes without deciding what they mean. This module supplies
+  that decision: which failures are worth another attempt, which are permanent
+  until someone reconnects, and which need the integration flagged in the
+  dashboard first.
+
+  ## Per-integration deduplication
+
+  `unique: [period: 300, keys: [:calendar_integration_id]]` prevents duplicate
+  jobs from accumulating when a sweep worker or external trigger enqueues a job
+  for an integration that already has one queued or running. A requested full
+  fetch (`enqueue_full_fetch/1`) is the exception that is not absorbed: it
+  upgrades a waiting job, or makes a running one run again, see
+  `Tymeslot.Workers.SyncRequest`.
+
+  ## Auth errors (REQ-012)
+
+  A 401 or 403 always discards the cycle, since retrying it seconds later
+  re-sends the same credentials to the same server. Whether it also flags the
+  integration's `needs_reauth` field depends on how long the rejection has
+  lasted: only the cycle that makes it
+  `ReauthHandling.password_rejection_threshold/0` consecutive rejected cycles
+  (three by default) flags; see that function for why one 401 is not believed.
+  Any cycle that ends otherwise, a timeout or server error included, breaks
+  the streak `HealthCheck.record_credential_rejection/2` counts, so a server
+  recovering from an outage is not believed on its first stray 401 either.
+
+  Flagging on that one answer would be unrecoverable without the owner: the
+  sweep stops scheduling a flagged integration, so the successful sync that
+  would clear the flag (`SyncHealth.record_outcome/2`) never comes. Below the
+  threshold the cycle still counts toward the failed-sync badge like any
+  other failure, and the next scheduled sync tries again; a credential that
+  really was revoked is flagged a few cycles later.
+
+  Once flagged, the owner has to reconnect. If writing the flag fails the
+  worker returns `{:error, …}` so Oban retries and takes another shot at
+  recording it. The `is_active` flag is left unchanged so the integration
+  stays visible in the dashboard.
+  """
+
+  use Oban.Worker,
+    queue: :calendar_events,
+    max_attempts: 3,
+    unique: [
+      period: 300,
+      keys: [:calendar_integration_id],
+      states: [:available, :scheduled, :executing, :retryable, :suspended]
+    ]
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  require Logger
+
+  alias Tymeslot.Infrastructure.ExpectedJobOutcome
+  alias Tymeslot.Infrastructure.ProviderBreakers
+  alias Tymeslot.Integrations.Calendar.CalDAV.Errors, as: CalDAVErrors
+  alias Tymeslot.Integrations.Calendar.CalDAV.Sync
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationQueries
+  alias Tymeslot.Integrations.Calendar.Management
+  alias Tymeslot.Integrations.Calendar.ProviderConfig
+  alias Tymeslot.Integrations.HealthCheck
+  alias Tymeslot.Integrations.Shared.ReauthHandling
+  alias Tymeslot.Workers.CalendarSyncJob
+  alias Tymeslot.Workers.SyncRequest
+
+  # Without one Oban lets a job run for ever. A sync is the offline queue's
+  # bounded replay (see `CalDAV.OfflineQueue`) followed by the pull; this is
+  # far above what either needs, and only ends a job that is truly stuck.
+  @impl Oban.Worker
+  def timeout(_job), do: :timer.minutes(15)
+
+  @doc """
+  Enqueues a full fetch of the CalDAV integration `integration_id`, the sync
+  the dashboard's Refresh asks for: every calendar is read in full rather
+  than by delta, so a change the delta would not report (or a cached row
+  removed on purpose) comes back. A sync already waiting for the
+  integration runs in its place, as a full fetch; one already running runs
+  again as a full fetch once it finishes, since it may have read the server
+  before the request (see `Tymeslot.Workers.SyncRequest`).
+  """
+  @spec enqueue_full_fetch(pos_integer()) :: {:ok, Oban.Job.t()} | {:error, term()}
+  def enqueue_full_fetch(integration_id) do
+    SyncRequest.insert(__MODULE__, %{
+      "calendar_integration_id" => integration_id,
+      "force_full_fetch" => true
+    })
+  end
+
+  @behaviour ExpectedJobOutcome
+
+  # The integration is gone, or only its owner can fix it by reconnecting.
+  # A server error or a server that never answered is retried by the next
+  # sync, and a refusal (`@server_refused`) is the owner's server
+  # configuration. The deletion circuit breaker refusing a sync is recorded.
+  @integration_gone "Integration not found"
+  @rejections [:unauthorized, :forbidden]
+
+  @credentials_rejected "CalDAV server rejected credentials — reauthentication required"
+  @credentials_rejected_unconfirmed "CalDAV server rejected credentials; retrying next sync before reauth"
+  @calendar_gone "CalDAV booking calendar not found — user action required"
+  @no_calendar "CalDAV integration has no calendar selected — user action required"
+  @server_error "CalDAV server returned a server error; the next scheduled sync will retry"
+  @server_unreachable "CalDAV server did not respond; the next scheduled sync will retry"
+  @too_large "CalDAV server returned more data than the scheduler can process at once"
+  @free_busy_unreadable "A CalDAV calendar shared as busy times only could not be read; its last busy times are kept and the next scheduled sync will retry"
+  @server_refused "CalDAV server refused the sync request"
+
+  # An open breaker is waited out with a snooze, which from Oban 2.24 costs no
+  # attempt; without a bound a host whose breaker never closes would keep the
+  # job snoozing for ever, with no alert.
+  @max_circuit_open_snoozes 12
+
+  @impl ExpectedJobOutcome
+  def expected_outcome?(reason),
+    do:
+      reason in [
+        @integration_gone,
+        @credentials_rejected,
+        @credentials_rejected_unconfirmed,
+        @calendar_gone,
+        @no_calendar,
+        @server_error,
+        @server_unreachable,
+        @too_large,
+        @free_busy_unreadable
+      ] or reason == ReauthHandling.discard_reason() or refusal?(reason)
+
+  defp refusal?(reason) when is_binary(reason),
+    do: String.starts_with?(reason, @server_refused <> ": ")
+
+  defp refusal?(_reason), do: false
+
+  @impl Oban.Worker
+  def perform(%Oban.Job{args: args} = job) do
+    force_full_fetch? = Map.get(args, "force_full_fetch", false) == true
+
+    CalendarSyncJob.run(job, &sync(&1, force_full_fetch?),
+      max_snoozes: @max_circuit_open_snoozes,
+      exhausted_reason: "CalDAV server's circuit breaker did not close within the maximum wait"
+    )
+  end
+
+  defp sync(integration, force_full_fetch?) do
+    integration
+    |> Sync.run(force_full_fetch?)
+    |> tap(&record_failure(integration, &1))
+    |> tap(&break_rejection_streak(integration, &1))
+    |> handle_sync_result(integration)
+  end
+
+  # Every clause below that discards is a failure no operator or user would
+  # otherwise hear about, which is why the verdict they produce is fed to
+  # `SyncHealth.record_outcome/2` above rather than dropped; see that module
+  # for why both halves belong at the job boundary. The streak is not cleared
+  # in `CalDAV.Sync.State.put/2`, which runs once per calendar path and per
+  # tier step: a healthy first calendar would wipe the streak a failing second
+  # calendar was accumulating, and the badge would stay green through an
+  # indefinite outage.
+  defp handle_sync_result(:ok, _integration), do: :ok
+
+  # The server rejected the stored credentials. The cycle is discarded either
+  # way; the streak of rejected cycles decides whether the rejection is
+  # believed yet (see "Auth errors" in the moduledoc). Below the threshold no
+  # `sync_error` is recorded either (`@recorded_elsewhere`): the sentence for a
+  # rejection asks the owner to reconnect, which one 401 does not justify.
+  defp handle_sync_result({:error, reason}, integration)
+       when reason in @rejections do
+    rejected_cycles = HealthCheck.record_credential_rejection(:calendar, integration)
+    threshold = ReauthHandling.password_rejection_threshold()
+
+    if rejected_cycles >= threshold do
+      Logger.warning("CalDAV sync unauthorised; flagging for reauth",
+        calendar_integration_id: integration.id,
+        rejected_cycles: rejected_cycles
+      )
+
+      Management.flag_for_reconnection(
+        integration,
+        rejected_credentials_reason(integration.provider),
+        @credentials_rejected
+      )
+    else
+      Logger.warning("CalDAV sync unauthorised; not flagging for reauth yet",
+        calendar_integration_id: integration.id,
+        rejected_cycles: rejected_cycles,
+        threshold: threshold
+      )
+
+      {:discard, @credentials_rejected_unconfirmed}
+    end
+  end
+
+  # The calendar bookings are written to is gone. Nothing can be synced into it
+  # until the owner picks a different one.
+  defp handle_sync_result({:error, :booking_calendar_missing}, integration) do
+    Logger.warning(
+      "CalDAV booking calendar no longer exists; flagging integration for reconnection",
+      calendar_integration_id: integration.id
+    )
+
+    Management.flag_for_reconnection(
+      integration,
+      dgettext_noop(
+        "integrations_calendar",
+        "The booking calendar no longer exists on the CalDAV server. Please reconnect the integration and select a different calendar."
+      ),
+      @calendar_gone
+    )
+  end
+
+  # No calendar is selected, so there is nothing to sync into. Returning :ok
+  # would report a successful sync of nothing: the failure streak would reset
+  # every cycle, no badge or notification would fire, and the fallback sweep
+  # would re-enqueue the same no-op indefinitely because the timestamps it
+  # keys off never advance. Flagging the integration stops the loop, since the
+  # sweep's population excludes integrations awaiting reconnection.
+  defp handle_sync_result({:error, :no_calendar_paths}, integration) do
+    Logger.warning(
+      "CalDAV integration has no calendar selected; flagging integration for reconnection",
+      calendar_integration_id: integration.id
+    )
+
+    Management.flag_for_reconnection(
+      integration,
+      dgettext_noop(
+        "integrations_calendar",
+        "No calendar is selected for this integration, so nothing can be synced. Please reconnect the integration and select a calendar."
+      ),
+      @no_calendar
+    )
+  end
+
+  # The deletion circuit breaker refuses a listing, not an attempt: a retry
+  # within the same cycle re-fetches the same data and refuses identically, so
+  # retrying costs three times the work for a guaranteed identical outcome and
+  # raises a permanent-failure admin alert every cycle. Discard instead — the
+  # refusal needs no operator action and resolves itself once the absence is
+  # corroborated over time (see `SyncReconciler`'s grace period). The next
+  # scheduled sync re-evaluates from scratch.
+  defp handle_sync_result({:error, :suspicious_bulk_deletion}, _integration) do
+    {:discard, "CalDAV deletion circuit breaker refused a suspicious bulk deletion"}
+  end
+
+  # A 5xx is the remote failing, not the request being wrong, so it stays
+  # retryable in `Base` — but the retry that matters is the next *cycle*, not
+  # the next attempt. The three attempts span under a minute, far too short for
+  # a broken server to recover, and a server that 5xxs persistently (as
+  # Infomaniak's did for a whole day) exhausts them every cycle and raises a
+  # permanent-failure admin alert each time about an outage no operator here
+  # can fix. Discard and let the scheduled sync retry minutes later; the health
+  # check is what surfaces a remote that never comes back.
+  defp handle_sync_result({:error, reason}, _integration)
+       when reason in [:server_error, :service_unavailable] do
+    {:discard, @server_error}
+  end
+
+  # The host's breaker refused the cycle because the server had already been
+  # failing, so nothing was sent and nothing about this integration was
+  # learnt. The breaker is keyed by host, not by integration: on a shared
+  # host one account's outage opens it for every account there. Retrying
+  # inside Oban's minute would only be refused again and then page an
+  # operator once the attempts ran out; the job snoozes past the breaker's
+  # recovery window instead, as the Google, Outlook and Exchange sync workers
+  # do, and is neither recorded against the integration nor counted by its
+  # health state.
+  defp handle_sync_result({:error, :circuit_open}, integration) do
+    Logger.warning("CalDAV circuit breaker open; snoozing sync",
+      calendar_integration_id: integration.id
+    )
+
+    {:snooze, circuit_open_snooze_seconds()}
+  end
+
+  # The remote never answered: a read that timed out, a connection that failed,
+  # or a server that took the connection and then went quiet. Same shape as the
+  # 5xx above (the remote's condition, not the request's), and `Base` has
+  # already retried the transport once with backoff before this. What Oban's
+  # remaining attempts add is the same request against the same unreachable
+  # host inside a single minute, ending in a permanent-failure alert about an
+  # outage no operator here can act on: a host that was down for an hour
+  # produced one such alert per sync cycle. Discard, and let the scheduled
+  # sync pick the server up when it comes back; a server that stays away is
+  # what the health check is for.
+  defp handle_sync_result({:error, reason}, _integration)
+       when reason in [:timeout, :server_unresponsive, :network_error] do
+    {:discard, @server_unreachable}
+  end
+
+  # The server answered, past the read's byte budget. Retrying downloads the
+  # same answer, and it is the size of the owner's calendar rather than a
+  # fault an operator could fix, so it is an expected end of the job. The
+  # health check surfaces the integration.
+  defp handle_sync_result({:error, :response_too_large}, _integration),
+    do: {:discard, @too_large}
+
+  # A calendar shared as busy times only that would not answer its
+  # free-busy-query. Never a reason to reconnect: a 403 there means the share
+  # changed, and discovery is what drops a calendar that is gone. Its last
+  # busy times stay cached; the next cycle asks again.
+  defp handle_sync_result({:error, {:free_busy_unreadable, _reason}}, _integration),
+    do: {:discard, @free_busy_unreadable}
+
+  # A 4xx there (415, 400…, and the modelled `:method_not_allowed`) is the
+  # server refusing the request itself: the remaining attempts re-send the same
+  # bytes for the same refusal, then page an operator about a server-side
+  # condition no operator action can fix. A 3xx lands here too: the redirect is
+  # never followed, and a provider in maintenance (Framagenda pointing every DAV
+  # path at its status page) answers it on every attempt. `Http` has already
+  # logged the status and the server's own explanation, and the health check
+  # surfaces the integration.
+  defp handle_sync_result({:error, reason} = result, _integration) do
+    if CalDAVErrors.terminal_error?(reason) do
+      {:discard, "#{@server_refused}: #{refusal(reason)}"}
+    else
+      result
+    end
+  end
+
+  # The failures that flag the integration for reconnection record their own
+  # reason with the flag, and the deletion breaker's refusal resolves itself
+  # without the owner, as does an open host breaker, which sent nothing to
+  # learn from. Every other failure is stored as the owner-facing
+  # sentence, which the integration card shows while the sync is unhealthy.
+  # A successful cycle clears it in `SyncHealth.record_outcome/2`.
+  @recorded_elsewhere [
+    :unauthorized,
+    :forbidden,
+    :booking_calendar_missing,
+    :no_calendar_paths,
+    :suspicious_bulk_deletion,
+    :circuit_open
+  ]
+
+  defp record_failure(integration, {:error, reason}) when reason not in @recorded_elsewhere do
+    CalendarIntegrationQueries.mark_sync_error(integration, CalDAVErrors.describe_error(reason))
+  end
+
+  defp record_failure(_integration, _result), do: :ok
+
+  # A cycle that synced, or failed any other way, ends the run of rejections
+  # the threshold counts: a 401 after it starts a new run rather than
+  # confirming the old one.
+  defp break_rejection_streak(_integration, {:error, reason})
+       when reason in [:circuit_open | @rejections],
+       do: :ok
+
+  defp break_rejection_streak(integration, _result),
+    do: HealthCheck.clear_credential_rejections(:calendar, integration.id)
+
+  # Long enough to clear the longest `recovery_timeout` any CalDAV-based
+  # breaker has (see `ProviderBreakers`), so the snoozed job wakes to a breaker
+  # that will at least let it probe rather than to a second refusal.
+  defp circuit_open_snooze_seconds do
+    longest_ms =
+      ProviderConfig.caldav_based_providers()
+      |> Enum.map(&ProviderBreakers.config(:calendar, &1).recovery_timeout)
+      |> Enum.max()
+
+    div(longest_ms, 1_000) + 10
+  end
+
+  # The discard reason is what an operator reads on the job record, so it keeps
+  # the status the owner-facing sentence leaves out.
+  defp refusal({:unexpected_status, status}), do: "HTTP #{status}"
+  defp refusal(reason), do: CalDAVErrors.describe_error(reason)
+
+  # The provider rejects stored credentials for a reason the owner can act on
+  # only once they know it. iCloud and Nextcloud only ever hold an app
+  # password here, which is revoked by hand or with a change of the account
+  # password, so the reason can name the likely cause; for any other server
+  # it cannot be told apart from a changed login.
+  defp rejected_credentials_reason("apple"),
+    do:
+      dgettext_noop(
+        "integrations_calendar",
+        "iCloud refused the stored app-specific password. It was most likely revoked, or your Apple ID password was changed, which revokes every app-specific password. Generate a new one and reconnect."
+      )
+
+  defp rejected_credentials_reason("nextcloud"),
+    do:
+      dgettext_noop(
+        "integrations_calendar",
+        "Nextcloud refused the stored app password. It was most likely revoked, or the account password was changed. Create a new app password and reconnect."
+      )
+
+  defp rejected_credentials_reason(_provider),
+    do:
+      dgettext_noop(
+        "integrations_calendar",
+        "CalDAV server rejected the stored credentials. Please reconnect the integration."
+      )
+end

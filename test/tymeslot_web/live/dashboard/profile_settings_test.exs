@@ -1,0 +1,621 @@
+defmodule TymeslotWeb.Dashboard.ProfileSettingsTest do
+  use TymeslotWeb.LiveCase, async: true
+  @moduletag :profiles
+  @moduletag :live
+
+  import Tymeslot.AuthTestHelpers
+  import Tymeslot.DashboardTestHelpers
+  import Tymeslot.Factory
+
+  alias Tymeslot.Media.Uploads
+  alias Tymeslot.Profiles
+  alias Tymeslot.Profiles.Avatars
+  alias Tymeslot.Repo
+
+  alias Ecto.Changeset
+  alias Tymeslot.Test.MediaFixtures
+  alias Tymeslot.Timezones
+
+  setup :setup_dashboard_user
+
+  describe "Avatar upload" do
+    test "successfully uploads an avatar", %{conn: conn, profile: profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Prepare a complete, decodable PNG for upload
+      png_content = MediaFixtures.png()
+
+      avatar = %{
+        last_modified: System.system_time(:millisecond),
+        name: "avatar.png",
+        content: png_content,
+        type: "image/png"
+      }
+
+      # Simulate selecting a file
+      view
+      |> file_input("#avatar-upload-form", :avatar, [avatar])
+      |> render_upload("avatar.png")
+
+      # We wait for the message processing (auto-consumption)
+      render(view)
+
+      # Verify success message appears without manual submit
+      assert render(view) =~ "Avatar updated successfully"
+
+      # Verify profile was updated in DB
+      updated_profile = Repo.reload!(profile)
+      assert updated_profile.avatar =~ ".png"
+    end
+
+    test "stores the finished photo when a second file exceeds max_entries", %{
+      conn: conn,
+      profile: profile
+    } do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      png_content = MediaFixtures.png()
+
+      png = fn name ->
+        %{
+          last_modified: System.system_time(:millisecond),
+          name: name,
+          content: png_content,
+          type: "image/png"
+        }
+      end
+
+      # Two files in one selection against `max_entries: 1`. The excess entry is
+      # `valid?: true` and is never issued an upload token, so unless it is
+      # cancelled the upload never settles and the chosen photo is dropped.
+      view
+      |> file_input("#avatar-upload-form", :avatar, [png.("a.png"), png.("b.png")])
+      |> render_upload("a.png")
+
+      assert render(view) =~ "Avatar updated successfully"
+      assert Repo.reload!(profile).avatar =~ ".png"
+    end
+
+    test "uploaded avatar is reachable via /uploads and has nosniff header", %{
+      conn: conn,
+      profile: profile
+    } do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      png_content = MediaFixtures.png()
+
+      avatar = %{
+        last_modified: System.system_time(:millisecond),
+        name: "avatar.png",
+        content: png_content,
+        type: "image/png"
+      }
+
+      view
+      |> file_input("#avatar-upload-form", :avatar, [avatar])
+      |> render_upload("avatar.png")
+
+      render(view)
+
+      assert render(view) =~ "Avatar updated successfully"
+
+      updated_profile = Repo.reload!(profile)
+      avatar_url = Avatars.avatar_url(updated_profile)
+
+      response = get(build_conn(), avatar_url)
+
+      assert response.status == 200
+      assert get_resp_header(response, "x-content-type-options") == ["nosniff"]
+    end
+
+    test "says in the user's language why a file that is not an image was refused", %{
+      conn: conn,
+      user: user,
+      profile: profile
+    } do
+      user |> Changeset.change(locale: "de") |> Repo.update!()
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      fake = %{
+        last_modified: System.system_time(:millisecond),
+        name: "photo.png",
+        content: "not an image at all",
+        type: "image/png"
+      }
+
+      view
+      |> file_input("#avatar-upload-form", :avatar, [fake])
+      |> render_upload("photo.png")
+
+      html = render(view)
+      assert html =~ "Diese Datei ist kein Bild, das wir lesen können."
+      refute html =~ "invalid_image_format"
+      assert Repo.reload!(profile).avatar == profile.avatar
+    end
+
+    test "publishes a phone photo without its EXIF location, turned upright", %{
+      conn: conn,
+      profile: profile
+    } do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      avatar = %{
+        last_modified: System.system_time(:millisecond),
+        name: "selfie.jpg",
+        content: MediaFixtures.read!("gps_portrait.jpg"),
+        type: "image/jpeg"
+      }
+
+      view
+      |> file_input("#avatar-upload-form", :avatar, [avatar])
+      |> render_upload("selfie.jpg")
+
+      assert render(view) =~ "Avatar updated successfully"
+
+      # What a visitor to the booking page can download.
+      response = get(build_conn(), Avatars.avatar_url(Repo.reload!(profile)))
+      assert response.status == 200
+      assert MediaFixtures.image_metadata_fields(response.resp_body) == []
+      refute response.resp_body =~ "SN12345"
+      assert MediaFixtures.image_dimensions(response.resp_body) == {16, 32}
+    end
+
+    test "stores a PNG sent under a .jpg name as a stripped PNG and deletes the replaced avatar",
+         %{conn: conn, profile: profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      upload = fn name, content ->
+        entry = %{
+          last_modified: System.system_time(:millisecond),
+          name: name,
+          content: content,
+          type: "image/jpeg"
+        }
+
+        view
+        |> file_input("#avatar-upload-form", :avatar, [entry])
+        |> render_upload(name)
+
+        Repo.reload!(profile)
+      end
+
+      first = upload.("selfie.jpg", MediaFixtures.read!("gps_portrait.jpg"))
+      first_path = Path.join([Uploads.root(), "avatars", to_string(profile.id), first.avatar])
+      assert File.exists?(first_path)
+
+      second = upload.("photo.jpg", MediaFixtures.read!("gps.png"))
+
+      assert second.avatar =~ ~r/\A[0-9a-f-]{36}\.png\z/
+      refute File.exists?(first_path)
+
+      response = get(build_conn(), Avatars.avatar_url(second))
+      assert response.status == 200
+      assert [content_type] = get_resp_header(response, "content-type")
+      assert content_type =~ "image/png"
+      assert <<137, 80, 78, 71, _rest::binary>> = response.resp_body
+      assert MediaFixtures.image_metadata_fields(response.resp_body) == []
+    end
+
+    test "refuses an image over 40 megapixels and says how large it may be", %{
+      conn: conn,
+      profile: profile
+    } do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      avatar = %{
+        last_modified: System.system_time(:millisecond),
+        name: "huge.png",
+        content: MediaFixtures.png_declaring(20_000, 20_000),
+        type: "image/png"
+      }
+
+      view
+      |> file_input("#avatar-upload-form", :avatar, [avatar])
+      |> render_upload("huge.png")
+
+      assert render(view) =~
+               "This image is too large (400.0 megapixels). " <>
+                 "Please upload an image of at most 40 megapixels."
+
+      assert Repo.reload!(profile).avatar == nil
+    end
+
+    test "does not show error when no files are provided on submit (auto-upload fallback)", %{
+      conn: conn
+    } do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Submit without any file selected
+      view
+      |> form("#avatar-upload-form", %{})
+      |> render_submit()
+
+      # Wait for message processing
+      render(view)
+
+      # Should NOT show "No file was uploaded" anymore as we silently ignore empty results
+      refute render(view) =~ "No file was uploaded"
+    end
+
+    test "fails with invalid file type", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      avatar = %{
+        last_modified: System.system_time(:millisecond),
+        name: "test.txt",
+        content: "text content",
+        type: "text/plain"
+      }
+
+      view
+      |> file_input("#avatar-upload-form", :avatar, [avatar])
+      |> render_upload("test.txt")
+
+      render(view)
+
+      # Should show the humanized error message from LiveView's extension validation
+      assert render(view) =~ "Not accepted"
+    end
+
+    test "successfully deletes an avatar", %{conn: conn, profile: profile} do
+      # Manually set an avatar for the profile to test deletion
+      profile = Repo.update!(Changeset.change(profile, avatar: "test_avatar.png"))
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Verify the delete button is visible
+      assert has_element?(view, "button", "Delete Photo")
+
+      # Click the show modal button
+      view
+      |> element("button", "Delete Photo")
+      |> render_click()
+
+      # Click the confirm delete button in the modal
+      view
+      |> element("button", "Delete Avatar")
+      |> render_click()
+
+      # Verify success message
+      assert render(view) =~ "Avatar deleted successfully"
+
+      # Verify profile was updated in DB
+      updated_profile = Repo.reload!(profile)
+      assert updated_profile.avatar == nil
+
+      # With nothing left to delete, the action goes away.
+      refute has_element?(view, "button", "Delete Photo")
+    end
+
+    test "cancelling the delete avatar confirmation keeps the avatar", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile = Repo.update!(Changeset.change(profile, avatar: "test_avatar.png"))
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view |> element("button", "Delete Photo") |> render_click()
+
+      assert has_element?(view, "#delete-avatar-modal-modal[style*='display: flex']")
+
+      view |> element("#delete-avatar-modal-modal button", "Cancel") |> render_click()
+
+      refute has_element?(view, "#delete-avatar-modal-modal[style*='display: flex']")
+      assert Repo.reload!(profile).avatar == "test_avatar.png"
+      assert has_element?(view, "button", "Delete Photo")
+      refute render(view) =~ "Avatar deleted successfully"
+    end
+
+    test "offers no delete action when no avatar has been uploaded", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      assert has_element?(view, "#avatar-upload-form")
+      refute has_element?(view, "button", "Delete Photo")
+    end
+  end
+
+  describe "Field headings" do
+    test "each heading names its field once, and still labels the input", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      assert has_element?(view, "h3#display-name-heading", "Display Name")
+
+      assert has_element?(
+               view,
+               ~s|input[name="full_name"][aria-labelledby="display-name-heading"]|
+             )
+
+      refute has_element?(view, "#display-name-form-container label", "Display Name")
+
+      assert has_element?(view, "h3#custom-url-heading", "Custom URL")
+      assert has_element?(view, ~s|input[name="username"][aria-labelledby="custom-url-heading"]|)
+      refute has_element?(view, "#username-form-container label", "Custom URL")
+
+      refute has_element?(view, "#timezone-form-container .label", "Your Timezone")
+    end
+  end
+
+  describe "Display Name updates" do
+    test "successfully updates display name on change", %{conn: conn, profile: profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#display-name-form", %{full_name: "New Display Name"})
+      |> render_change()
+
+      assert has_element?(
+               view,
+               "#display-name-form-status[data-autosave-status='saved']",
+               "Saved"
+             )
+
+      assert_push_event(view, "autosave:clean", %{id: "display-name-form"})
+
+      updated_profile = Repo.reload!(profile)
+      assert updated_profile.full_name == "New Display Name"
+    end
+
+    test "Enter in the field saves the name", %{conn: conn, profile: profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#display-name-form", %{full_name: "Entered Name"})
+      |> render_submit()
+
+      assert Repo.reload!(profile).full_name == "Entered Name"
+    end
+
+    test "shows error for invalid display name", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Assuming too long name is invalid
+      long_name = String.duplicate("a", 101)
+
+      view
+      |> form("#display-name-form", %{full_name: long_name})
+      |> render_change()
+
+      assert render(view) =~ "too long"
+      refute_push_event(view, "autosave:clean", %{id: "display-name-form"})
+    end
+
+    test "does not report a save when display name is unchanged", %{
+      conn: conn,
+      profile: profile
+    } do
+      # Set a known name first
+      profile = Repo.update!(Changeset.change(profile, full_name: "Existing Name"))
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Trigger change with the same value that's already in the DB
+      view
+      |> form("#display-name-form", %{full_name: profile.full_name})
+      |> render_change()
+
+      refute has_element?(view, "#display-name-form-status[data-autosave-status='saved']")
+      assert_push_event(view, "autosave:clean", %{id: "display-name-form"})
+    end
+
+    test "clears display name when empty string is entered", %{conn: conn, profile: profile} do
+      profile = Repo.update!(Changeset.change(profile, full_name: "Some Name"))
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#display-name-form", %{full_name: ""})
+      |> render_change()
+
+      # Empty string is treated as a valid clear — no error, name is nil in DB
+      # Ecto's :string type coerces "" to nil on cast, so nil is the persisted value.
+      updated_profile = Repo.reload!(profile)
+      assert is_nil(updated_profile.full_name)
+    end
+  end
+
+  describe "Username updates" do
+    test "successfully updates username", %{conn: conn, profile: profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#username-form-container form", %{username: "new-username"})
+      |> render_submit()
+
+      assert render(view) =~ "Username updated"
+
+      updated_profile = Repo.reload!(profile)
+      assert updated_profile.username == "new-username"
+    end
+
+    test "a refused username stays in the field to correct", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#username-form-container form", %{username: "x"})
+      |> render_submit()
+
+      assert has_element?(view, "#username-form-container [role=alert]")
+      assert has_element?(view, "#username-form-container input[name=username][value=x]")
+    end
+
+    test "checks username availability", %{conn: conn} do
+      insert(:profile, username: "taken-username")
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Check availability
+      view
+      |> form("#username-form-container form", %{username: "taken-username"})
+      |> render_change()
+
+      assert render(view) =~ "Taken"
+
+      view
+      |> form("#username-form-container form", %{username: "available-username"})
+      |> render_change()
+
+      assert render(view) =~ "Available"
+    end
+
+    test "shows error for invalid username format", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#username-form-container form", %{username: "Invalid Username!"})
+      |> render_change()
+
+      assert render(view) =~ "Invalid"
+    end
+
+    test "shows invalid badge when reserved username is typed", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#username-form-container form", %{username: "admin"})
+      |> render_change()
+
+      # Reserved names are rejected by InputProcessor as invalid, not as taken
+      assert render(view) =~ "Invalid"
+      refute render(view) =~ "Available"
+      refute render(view) =~ "Taken"
+    end
+
+    test "shows error when reserved username is submitted", %{conn: conn, profile: _profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#username-form-container form", %{username: "api"})
+      |> render_submit()
+
+      # Reserved-word check in the schema's validate_username_not_reserved/1 catches this.
+      html = render(view)
+      assert html =~ "reserved"
+    end
+
+    test "shows booking URL after successful username update", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> form("#username-form-container form", %{username: "mybookingpage"})
+      |> render_submit()
+
+      assert render(view) =~ "mybookingpage"
+    end
+  end
+
+  describe "Timezone updates" do
+    test "opens and closes the timezone dropdown", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Dropdown should be closed initially — search input not visible
+      refute render(view) =~ "Search cities"
+
+      # Open it
+      view
+      |> element("#timezone-form-container button[phx-click='toggle_timezone_dropdown']")
+      |> render_click()
+
+      assert render(view) =~ "Search cities"
+
+      # Close it via toggle
+      view
+      |> element("#timezone-form-container button[phx-click='toggle_timezone_dropdown']")
+      |> render_click()
+
+      refute render(view) =~ "Search cities"
+    end
+
+    test "filters timezone options by search term", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Open the dropdown
+      view
+      |> element("#timezone-form-container button[phx-click='toggle_timezone_dropdown']")
+      |> render_click()
+
+      # The search input uses phx-keyup; send the event with the "value" key that the
+      # component expects (name="value" on the input).
+      view
+      |> element("#timezone-search")
+      |> render_keyup(%{value: "London"})
+
+      html = render(view)
+      assert html =~ "London"
+      refute html =~ "New York"
+    end
+
+    test "successfully updates timezone", %{conn: conn, profile: profile} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Open dropdown
+      view
+      |> element("#timezone-form-container button[phx-click='toggle_timezone_dropdown']")
+      |> render_click()
+
+      # Verify search input is visible (means dropdown is open)
+      assert render(view) =~ "Search cities"
+
+      # Search for New York to surface it in the filtered list
+      view
+      |> element("#timezone-search")
+      |> render_keyup(%{value: "New York"})
+
+      # Click the New York option
+      view |> element("[phx-click='change_timezone']", "New York") |> render_click()
+
+      expected_label = Timezones.format("America/New_York")
+      assert render(view) =~ "Timezone updated to #{expected_label}"
+
+      updated_profile = Repo.reload!(profile)
+      assert updated_profile.timezone == "America/New_York"
+    end
+
+    test "shows error for invalid timezone format", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      # Open dropdown to ensure options are in DOM
+      view
+      |> element("#timezone-form-container button[phx-click='toggle_timezone_dropdown']")
+      |> render_click()
+
+      # Search to surface a specific timezone, then click it with an invalid override
+      view
+      |> element("#timezone-search")
+      |> render_keyup(%{value: "Adak"})
+
+      # Click an option but override with an invalid timezone value
+      view
+      |> element("#timezone-form-container [phx-click='change_timezone']", "Adak, United States")
+      |> render_click(%{timezone: "Invalid-Timezone-Format"})
+
+      assert render(view) =~ "Unknown timezone"
+    end
+  end
+
+  describe "an onboarded host with no stored profile" do
+    # The dashboard must work on the stored row: a save made from it has to
+    # land, rather than crash the page and discard what the host entered.
+    setup do
+      user = insert(:user, onboarding_completed_at: DateTime.utc_now())
+      conn = build_conn() |> init_test_session(%{}) |> log_in_user(user)
+      {:ok, conn: conn, user: user}
+    end
+
+    test "saves a timezone change to a stored profile", %{conn: conn, user: user} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/settings")
+
+      view
+      |> element("#timezone-form-container button[phx-click='toggle_timezone_dropdown']")
+      |> render_click()
+
+      view
+      |> element("#timezone-search")
+      |> render_keyup(%{value: "New York"})
+
+      view |> element("[phx-click='change_timezone']", "New York") |> render_click()
+
+      assert render(view) =~ "Timezone updated to #{Timezones.format("America/New_York")}"
+      assert Profiles.get_profile(user.id).timezone == "America/New_York"
+    end
+  end
+end

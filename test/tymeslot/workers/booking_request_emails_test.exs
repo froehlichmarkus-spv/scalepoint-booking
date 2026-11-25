@@ -1,0 +1,529 @@
+defmodule Tymeslot.Workers.BookingRequestEmailsTest do
+  @moduledoc """
+  The worker side of the approval emails.
+
+  Covers what the job does when it finally runs, which is a different question
+  from whether it was enqueued: by then the request may have been answered,
+  withdrawn, or already nudged.
+  """
+
+  use Tymeslot.DataCase, async: false
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  import ExUnit.CaptureLog
+  import Mox
+  import Tymeslot.ConfigTestHelpers
+
+  @moduletag :emails
+  @moduletag :bookings
+
+  alias ErrorTracker.Error
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.Meetings.ApprovalToken
+  alias Tymeslot.Meetings.MeetingTransitionQueries
+  alias Tymeslot.Notifications.EmailHandlers
+  alias Tymeslot.Workers.EmailWorker
+
+  setup :verify_on_exit!
+  setup :set_mox_from_context
+
+  defp held_meeting(attrs \\ %{}) do
+    user = insert(:user)
+
+    defaults = %{
+      status: :awaiting_approval,
+      organizer_user: user,
+      organizer_user_id: user.id,
+      approval_requested_at: DateTime.utc_now(:second),
+      approval_deadline_at: DateTime.add(DateTime.utc_now(:second), 12, :hour)
+    }
+
+    insert(:meeting, Map.merge(defaults, attrs))
+  end
+
+  defp request_job(meeting),
+    do:
+      perform_job(EmailWorker, %{
+        "action" => "send_booking_request_emails",
+        "relevant_until" => nil,
+        "meeting_id" => meeting.id
+      })
+
+  defp outcome_job(meeting, variant),
+    do:
+      perform_job(EmailWorker, %{
+        "action" => "send_booking_request_outcome",
+        "relevant_until" => nil,
+        "meeting_id" => meeting.id,
+        "variant" => variant
+      })
+
+  defp nudge_job(meeting),
+    do:
+      perform_job(EmailWorker, %{
+        "action" => "send_booking_approval_nudge",
+        "relevant_until" => nil,
+        "meeting_id" => meeting.id
+      })
+
+  describe "send_booking_request_emails" do
+    test "sends the invitee's acknowledgement and the host's request" do
+      meeting = held_meeting()
+      test_pid = self()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, fn sent ->
+        send(test_pid, {:invitee_email, sent.id})
+        {:ok, :sent}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn variant,
+                                                                           sent,
+                                                                           urls,
+                                                                           _locale ->
+        send(test_pid, {:host_email, variant, sent.id, urls})
+        {:ok, :sent}
+      end)
+
+      assert :ok = request_job(meeting)
+
+      assert_received {:invitee_email, id} when id == meeting.id
+      assert_received {:host_email, :request, host_id, urls} when host_id == meeting.id
+      # The host must receive links that actually resolve to this request —
+      # not merely a URL shaped like one. Pull the token straight out of the
+      # emailed URL and verify it against the module the LiveView route uses,
+      # rather than asserting a substring both sides could drift out of step
+      # under.
+      assert "/meeting-request/" <> token = URI.parse(urls.review_url).path
+      assert {:ok, verified_meeting} = ApprovalToken.verify(token)
+      assert verified_meeting.id == meeting.id
+
+      assert urls.approve_url == urls.review_url <> "?intent=approve"
+      assert urls.decline_url == urls.review_url <> "?intent=decline"
+    end
+
+    test "sends nothing once the request has been answered" do
+      meeting = held_meeting(%{status: :confirmed})
+
+      # No `expect` is set: a call to either send function fails the test.
+      assert {:discard, _reason} = request_job(meeting)
+    end
+
+    test "discards when the meeting has since been deleted" do
+      meeting = held_meeting()
+      Repo.delete!(meeting)
+
+      assert {:discard, _reason} = request_job(meeting)
+    end
+
+    test "still sends the host's request when the invitee acknowledgement fails" do
+      # The two legs are independent notifications to different people: a
+      # rejected or misbehaving invitee address must never leave the host
+      # unaware a booking request exists at all.
+      meeting = held_meeting()
+      job_id = System.unique_integer([:positive])
+      test_pid = self()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, 2, fn _sent ->
+        send(test_pid, :invitee_email)
+        if Process.get(:invitee_failed), do: {:ok, :sent}, else: fail_once()
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn variant,
+                                                                           sent,
+                                                                           _urls,
+                                                                           _locale ->
+        send(test_pid, {:host_email, variant, sent.id})
+        {:ok, :sent}
+      end)
+
+      # The invitee leg failed while the host's went out, so the job fails
+      # for a retry; the retry, the same job, sends only the invitee's.
+      assert {:error, _reason} = run_request(meeting, job_id)
+      assert_received {:host_email, :request, host_id} when host_id == meeting.id
+
+      assert :ok = run_request(meeting, job_id)
+      assert_received :invitee_email
+      assert_received :invitee_email
+      refute_received {:host_email, _variant, _id}
+    end
+
+    # A suppressed invitee address must not cost the host their retry.
+    test "a rejected invitee address alongside a failing host request still retries for the host" do
+      meeting = held_meeting()
+      job_id = System.unique_integer([:positive])
+      test_pid = self()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, 2, fn _sent ->
+        {:error, {:recipient_rejected, {422, %{"ErrorCode" => 406}}}}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, 2, fn :request,
+                                                                              _sent,
+                                                                              _urls,
+                                                                              _locale ->
+        send(test_pid, :host_email)
+        if Process.get(:host_failed), do: {:ok, :sent}, else: fail_once(:host_failed)
+      end)
+
+      assert {:error, reason} = run_request(meeting, job_id)
+      refute match?({:recipient_rejected, _rejection}, reason)
+
+      assert {:error, {:recipient_rejected, _rejection}} = run_request(meeting, job_id)
+      assert_received :host_email
+      assert_received :host_email
+    end
+
+    test "hands a reschedule's previous time to both emails" do
+      # A reschedule that sent a confirmed booking back into the gate knows
+      # the time it was moved from; nothing else keeps it, so the job does.
+      meeting = held_meeting()
+      previous = ~U[2026-09-01 13:00:00Z]
+      test_pid = self()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, fn _sent, opts ->
+        send(test_pid, {:invitee_opts, opts})
+        {:ok, :sent}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn :request,
+                                                                           _sent,
+                                                                           _urls,
+                                                                           _locale,
+                                                                           opts ->
+        send(test_pid, {:host_opts, opts})
+        {:ok, :sent}
+      end)
+
+      assert :ok =
+               perform_job(EmailWorker, %{
+                 "action" => "send_booking_request_emails",
+                 "relevant_until" => nil,
+                 "meeting_id" => meeting.id,
+                 "previous_start_time" => DateTime.to_iso8601(previous)
+               })
+
+      assert_received {:invitee_opts, [previous_start_time: ^previous]}
+      assert_received {:host_opts, [previous_start_time: ^previous]}
+    end
+
+    test "records an unreadable previous time, and still sends both emails without it" do
+      # Only this application writes the previous time, as ISO 8601, so one
+      # that does not parse is a bug rather than bad input.
+      with_config(:error_tracker, enabled: true)
+      meeting = held_meeting()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, fn _sent ->
+        {:ok, :sent}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn :request,
+                                                                           _sent,
+                                                                           _urls,
+                                                                           _locale ->
+        {:ok, :sent}
+      end)
+
+      capture_log(fn ->
+        assert :ok =
+                 perform_job(EmailWorker, %{
+                   "action" => "send_booking_request_emails",
+                   "relevant_until" => nil,
+                   "meeting_id" => meeting.id,
+                   "previous_start_time" => "not a time"
+                 })
+      end)
+
+      assert [%Error{kind: "Elixir.Tymeslot.Infrastructure.ErrorTracking.HandledError"} = error] =
+               Error |> Repo.all() |> Repo.preload(:occurrences)
+
+      assert [%{context: %{"meeting_id" => meeting_id, "error.reason" => reason}}] =
+               error.occurrences
+
+      assert meeting_id == meeting.id
+      assert reason =~ "invalid_format"
+    end
+
+    test "the retry of a failed host leg keeps the reschedule's previous time" do
+      meeting = held_meeting()
+      previous = ~U[2026-09-01 13:00:00Z]
+      job_id = System.unique_integer([:positive])
+      test_pid = self()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, fn _sent, _opts ->
+        {:ok, :sent}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, 2, fn _variant,
+                                                                              _sent,
+                                                                              _urls,
+                                                                              _locale,
+                                                                              opts ->
+        send(test_pid, {:host_opts, opts})
+        if Process.get(:host_failed), do: {:ok, :sent}, else: fail_once(:host_failed)
+      end)
+
+      args = %{"previous_start_time" => DateTime.to_iso8601(previous)}
+
+      assert {:error, _reason} = run_request(meeting, job_id, args)
+      assert :ok = run_request(meeting, job_id, args)
+
+      assert_received {:host_opts, [previous_start_time: ^previous]}
+      assert_received {:host_opts, [previous_start_time: ^previous]}
+    end
+
+    # A follow-up job queued by older code, after one leg had gone out, names
+    # that leg with a skip flag; it must send only the other one.
+    for {flag, sent_leg} <- [
+          {"skip_host_request", :invitee},
+          {"skip_attendee_ack", :host}
+        ] do
+      test "a follow-up queued by older code with #{flag} sends only the #{sent_leg} leg" do
+        meeting = held_meeting()
+        test_pid = self()
+
+        stub(Tymeslot.EmailServiceMock, :send_booking_request_received, fn _sent ->
+          send(test_pid, :invitee)
+          {:ok, :sent}
+        end)
+
+        stub(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn _variant,
+                                                                           _sent,
+                                                                           _urls,
+                                                                           _locale ->
+          send(test_pid, :host)
+          {:ok, :sent}
+        end)
+
+        assert :ok =
+                 perform_job(EmailWorker, %{
+                   "action" => "send_booking_request_emails",
+                   "relevant_until" => nil,
+                   "meeting_id" => meeting.id,
+                   unquote(flag) => true
+                 })
+
+        assert_received unquote(sent_leg)
+        refute_received unquote(if sent_leg == :host, do: :invitee, else: :host)
+      end
+    end
+  end
+
+  # Runs the request job as Oban runs one execution of a persisted job: the
+  # same id each time, so a retry sees the legs the earlier run claimed.
+  defp run_request(meeting, job_id, extra_args \\ %{}) do
+    EmailHandlers.execute_email_action(
+      "send_booking_request_emails",
+      Map.merge(
+        %{"action" => "send_booking_request_emails", "meeting_id" => meeting.id},
+        extra_args
+      ),
+      job_id
+    )
+  end
+
+  defp fail_once(flag \\ :invitee_failed) do
+    Process.put(flag, true)
+    {:error, "recipient_rejected"}
+  end
+
+  describe "send_booking_approval_nudge" do
+    test "reminds the host and records that it did" do
+      meeting = held_meeting()
+      test_pid = self()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn variant,
+                                                                           _meeting,
+                                                                           _urls,
+                                                                           _locale ->
+        send(test_pid, {:nudged, variant})
+        {:ok, :sent}
+      end)
+
+      assert :ok = nudge_job(meeting)
+      assert_received {:nudged, :nudge}
+
+      assert %DateTime{} = Repo.reload!(meeting).approval_nudge_sent_at
+    end
+
+    test "does not send a second time if a retry re-runs the job" do
+      meeting = held_meeting()
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, 1, fn _v, _m, _u, _l ->
+        {:ok, :sent}
+      end)
+
+      assert :ok = nudge_job(meeting)
+      # The stored timestamp is what survives a job retry; the Oban unique key
+      # cannot help once the job is already running.
+      assert :ok = nudge_job(Repo.reload!(meeting))
+    end
+
+    test "stays silent for a request the host has already answered" do
+      meeting = held_meeting()
+
+      {:ok, _declined} =
+        MeetingTransitionQueries.transition_from_awaiting_approval(meeting.id, status: :cancelled)
+
+      assert {:discard, _reason} = nudge_job(Repo.reload!(meeting))
+    end
+  end
+
+  describe "which language the host is written to in" do
+    test "their own, not the invitee's" do
+      # The one meeting email addressed to the account owner. Reading the
+      # host's locale through `Auth.get_user/1` is easy to get subtly wrong,
+      # and getting it wrong fails silently: every host quietly receives the
+      # default language and nothing errors.
+      host = insert(:user, locale: "de")
+
+      meeting =
+        held_meeting(%{
+          organizer_user: host,
+          organizer_user_id: host.id,
+          attendee_locale: "fr"
+        })
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, fn _meeting ->
+        {:ok, :sent}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn _variant,
+                                                                           _meeting,
+                                                                           _urls,
+                                                                           locale ->
+        assert locale == "de"
+        {:ok, :sent}
+      end)
+
+      assert :ok = request_job(meeting)
+    end
+
+    test "the dashboard fallback language when they have chosen none" do
+      # Every other email to the host falls back to the admin-configured
+      # "Dashboard fallback language", so this one must too, rather than to
+      # the instance-wide default.
+      with_config(:tymeslot, :admin_default_locale, "de")
+
+      host = insert(:user, locale: nil)
+      meeting = held_meeting(%{organizer_user: host, organizer_user_id: host.id})
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_received, fn _meeting ->
+        {:ok, :sent}
+      end)
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_approval_request, fn _variant,
+                                                                           _meeting,
+                                                                           _urls,
+                                                                           locale ->
+        assert locale == "de"
+        {:ok, :sent}
+      end)
+
+      assert :ok = request_job(meeting)
+    end
+  end
+
+  describe "send_reschedule_request_expired" do
+    defp expired_job(meeting),
+      do:
+        perform_job(EmailWorker, %{
+          "action" => "send_reschedule_request_expired",
+          "meeting_id" => meeting.id
+        })
+
+    test "tells the host in their own language" do
+      host = insert(:user, locale: "de")
+
+      meeting =
+        held_meeting(%{
+          organizer_user: host,
+          organizer_user_id: host.id,
+          status: :expired,
+          attendee_locale: "fr",
+          first_announced_at: DateTime.utc_now(:second)
+        })
+
+      expect(Tymeslot.EmailServiceMock, :send_reschedule_request_expired, fn sent, locale ->
+        assert sent.id == meeting.id
+        assert locale == "de"
+        {:ok, :sent}
+      end)
+
+      assert :ok = expired_job(meeting)
+    end
+
+    test "sends nothing for a request that never was a confirmed booking" do
+      meeting = held_meeting(%{status: :expired, first_announced_at: nil})
+
+      assert {:discard, _reason} = expired_job(meeting)
+    end
+
+    test "sends nothing once the booking is no longer the lapsed request" do
+      meeting =
+        held_meeting(%{status: :confirmed, first_announced_at: DateTime.utc_now(:second)})
+
+      assert {:discard, _reason} = expired_job(meeting)
+    end
+  end
+
+  describe "the outcome email" do
+    test "sends the declined variant for a request the host refused" do
+      meeting = held_meeting(%{status: :cancelled, decline_reason: "Away that week"})
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_outcome, fn :declined, sent ->
+        assert sent.id == meeting.id
+        {:ok, :sent}
+      end)
+
+      assert :ok = outcome_job(meeting, "declined")
+    end
+
+    test "sends the expired variant for a request nobody answered" do
+      meeting = held_meeting(%{status: :expired})
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_outcome, fn :expired, _sent ->
+        {:ok, :sent}
+      end)
+
+      assert :ok = outcome_job(meeting, "expired")
+    end
+
+    test "tells the invitee of a request whose deadline fell at its start, once it has started" do
+      # Asked for inside the approval window, the request's deadline is its
+      # start: it expires as the meeting begins, and its email runs after.
+      start = DateTime.add(DateTime.utc_now(:second), -10, :minute)
+
+      meeting =
+        held_meeting(%{
+          start_time: start,
+          end_time: DateTime.add(start, 1, :hour),
+          approval_deadline_at: start
+        })
+
+      {:ok, _expired} = Approval.expire(meeting)
+      [outcome] = all_enqueued(worker: EmailWorker, args: %{"variant" => "expired"})
+
+      expect(Tymeslot.EmailServiceMock, :send_booking_request_outcome, fn :expired, sent ->
+        assert sent.id == meeting.id
+        {:ok, :sent}
+      end)
+
+      assert :ok = perform_job(EmailWorker, outcome.args)
+    end
+
+    test "refuses to tell an invitee a confirmed booking was declined" do
+      # The status is the authority, not the job's args. A request returned to
+      # the gate and then approved between enqueue and execution must not
+      # produce a decline email for a meeting that is going ahead.
+      meeting = held_meeting(%{status: :confirmed})
+
+      assert {:discard, _reason} = outcome_job(meeting, "declined")
+    end
+
+    test "refuses to call an expiry a decline" do
+      meeting = held_meeting(%{status: :expired})
+
+      assert {:discard, _reason} = outcome_job(meeting, "declined")
+    end
+  end
+end

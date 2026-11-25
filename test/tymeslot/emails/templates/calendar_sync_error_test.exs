@@ -1,0 +1,289 @@
+defmodule Tymeslot.Emails.Templates.CalendarSyncErrorTest do
+  use Tymeslot.DataCase, async: true
+  @moduletag :emails
+
+  alias Tymeslot.Auth.UserQueries
+  alias Tymeslot.Emails.Shared.Formatting
+  alias Tymeslot.Emails.Templates.CalendarSyncError
+  alias Tymeslot.Profiles
+
+  import Tymeslot.Factory
+  import Tymeslot.TestFixtures
+
+  describe "CalendarSyncError.render/2 envelope" do
+    test "goes to the organiser, under the sync error subject" do
+      meeting = insert(:meeting, organizer_name: "Sam Host", organizer_email: "sam@example.com")
+
+      email = CalendarSyncError.render(meeting, :network_error)
+
+      assert email.to == [{"Sam Host", "sam@example.com"}]
+      assert email.subject == "⚠️ Calendar Sync Error - Manual Action Required"
+    end
+
+    test "falls back to the instance's sender address and a generic name" do
+      meeting = build(:meeting, organizer_name: nil, organizer_email: nil)
+
+      email = CalendarSyncError.render(meeting, :network_error)
+
+      assert email.to == [
+               {"Calendar Owner", Application.get_env(:tymeslot, :email)[:from_email]}
+             ]
+    end
+  end
+
+  describe "CalendarSyncError.render/2 HTML body" do
+    test "generates valid HTML output" do
+      meeting = insert(:meeting)
+      error_reason = :network_error
+
+      html = html_body(meeting, error_reason)
+
+      assert html =~ "</html>"
+      assert html =~ "Calendar Sync Error"
+      assert html =~ "Meeting Details"
+    end
+
+    test "includes error details in output" do
+      meeting = insert(:meeting)
+      error_reason = :authentication_failed
+
+      html = html_body(meeting, error_reason)
+
+      assert html =~ "Error Details"
+      assert html =~ ":authentication_failed"
+    end
+
+    test "includes meeting details" do
+      meeting = insert(:meeting, location: "Conference Room A", duration: 60)
+      error_reason = :connection_timeout
+
+      html = html_body(meeting, error_reason)
+
+      assert html =~ "Conference Room A"
+    end
+
+    test "handles missing organizer_user_id with fallback timezone" do
+      meeting = insert(:meeting, organizer_user_id: nil)
+      error_reason = :unknown_error
+
+      html = html_body(meeting, error_reason)
+
+      # Falls back to the application default timezone rather than crashing
+      fallback_local = DateTime.shift_zone!(meeting.start_time, Profiles.get_default_timezone())
+
+      assert html =~ Formatting.format_time(fallback_local, "en")
+      assert html =~ "Calendar Sync Error"
+    end
+
+    test "converts meeting time to owner's timezone" do
+      profile = insert(:profile, timezone: "America/New_York")
+      meeting = insert(:meeting, organizer_user: profile.user)
+      error_reason = :rate_limited
+
+      html = html_body(meeting, error_reason)
+
+      owner_local = DateTime.shift_zone!(meeting.start_time, "America/New_York")
+
+      # On the host's clock: one who never chose takes English's 12-hour one.
+      assert html =~ Formatting.format_time(owner_local, "en", "12h")
+      refute html =~ Formatting.format_time(meeting.start_time, "en")
+    end
+
+    test "includes action required section" do
+      meeting = insert(:meeting)
+      error_reason = :server_unavailable
+
+      html = html_body(meeting, error_reason)
+
+      assert html =~ "Action Required"
+    end
+
+    test "includes common causes section" do
+      meeting = insert(:meeting)
+      error_reason = :invalid_credentials
+
+      html = html_body(meeting, error_reason)
+
+      assert html =~ "Common causes:"
+    end
+
+    test "lays the common causes out as list lines, not escaped markup" do
+      html = html_body(insert(:meeting), :invalid_credentials)
+
+      assert html =~ ~r{<br\s*/?>• CalDAV server temporarily unavailable}
+      refute html =~ "&lt;br/&gt;"
+    end
+
+    test "renders each error reason into the error details section" do
+      meeting = insert(:meeting)
+
+      error_reasons = [
+        {:timeout, ":timeout"},
+        {:authentication_failed, ":authentication_failed"},
+        {:rate_limited, ":rate_limited"}
+      ]
+
+      for {error_reason, rendered} <- error_reasons do
+        html = html_body(meeting, error_reason)
+
+        assert html =~ "Error Details"
+        assert html =~ rendered
+      end
+    end
+
+    # A calendar declining the write is discarded on the first attempt and
+    # emailed at once, so the owner reads it in words, not as `:refused`.
+    test "describes the error categories of the calendar write path in words" do
+      meeting = insert(:meeting)
+
+      described = [
+        {:refused, "Your calendar declined to add this event."},
+        {:calendar_event_not_updatable, "could not be updated"},
+        {:not_found, "could not be found"},
+        {:network_error, "could not be reached"},
+        {:server_error, "could not be reached"},
+        {:malformed_response, "could not be reached"}
+      ]
+
+      # Both as the write path raises it and as an email job stores it.
+      for {error_reason, sentence} <- described,
+          given <- [error_reason, CalendarSyncError.storable_reason(error_reason)] do
+        email = CalendarSyncError.render(meeting, given)
+        raw = inspect(error_reason)
+
+        assert email.html_body =~ sentence
+        assert email.text_body =~ sentence
+        refute email.html_body =~ raw
+        refute email.text_body =~ raw
+      end
+    end
+  end
+
+  describe "CalendarSyncError.storable_reason/1" do
+    test "masks addresses and credentials in a provider's error" do
+      reason = {:http_error, 401, %{"body" => "token=abc123secret for jane.doe@example.com"}}
+
+      stored = CalendarSyncError.storable_reason(reason)
+
+      assert stored =~ "401"
+      refute stored =~ "abc123secret"
+      refute stored =~ "jane.doe@example.com"
+    end
+
+    test "masks a provider message given as text, and keeps it readable" do
+      stored = CalendarSyncError.storable_reason("Quota exceeded for jane.doe@example.com")
+
+      assert stored =~ "Quota exceeded for j***@example.com"
+    end
+
+    test "bounds a long provider message" do
+      stored = CalendarSyncError.storable_reason(String.duplicate("x", 10_000))
+
+      assert byte_size(stored) < 2_100
+    end
+  end
+
+  describe "CalendarSyncError.render/2 text body" do
+    test "returns plain text with meeting and error details" do
+      meeting = insert(:meeting, location: "Conference Room A", duration: 60)
+
+      text = text_body(meeting, :network_error)
+
+      assert text =~ "Calendar Sync Error"
+      assert text =~ "Conference Room A"
+      # The duration now goes through the locale-aware formatter, which reads
+      # 60 minutes as "1 hour" — the same wording the HTML body already used.
+      assert text =~ "1 hour"
+      assert text =~ "manually"
+    end
+
+    test "renders in the calendar owner's locale" do
+      user = create_user_fixture()
+      {:ok, user} = UserQueries.update_user_locale(user, "de")
+      meeting = insert(:meeting, organizer_user_id: user.id, duration: 60)
+
+      email = CalendarSyncError.render(meeting, :network_error)
+      text = email.text_body
+
+      assert email.subject == "⚠️ Kalender-Synchronisierungsfehler – Manuelle Aktion erforderlich"
+      assert text =~ "Kalender-Synchronisierungsfehler"
+      assert text =~ "TERMIN-DETAILS:"
+      assert text =~ "1 Stunde"
+      refute text =~ "MEETING DETAILS:"
+    end
+
+    test "describes a refused write in the owner's locale" do
+      user = create_user_fixture()
+      {:ok, user} = UserQueries.update_user_locale(user, "de")
+      meeting = insert(:meeting, organizer_user_id: user.id)
+
+      text = CalendarSyncError.render(meeting, :refused).text_body
+
+      refute text =~ ":refused"
+      refute text =~ "Your calendar declined to add this event."
+      assert text =~ "Ihr Kalender"
+    end
+
+    test "handles missing organizer_user_id" do
+      meeting = insert(:meeting, organizer_user_id: nil)
+
+      text = text_body(meeting, :unknown_error)
+
+      assert text =~ "Calendar Sync Error"
+      assert text =~ ":unknown_error"
+      # 60 minutes reads as "1 hour": durations are formatted for humans, in the
+      # recipient's locale, not echoed back as a raw minute count.
+      assert meeting.duration == 60
+      assert text =~ "Duration: 1 hour"
+    end
+  end
+
+  describe "render/2 HTML body security" do
+    test "HTML body handles XML-hostile error reason without crashing" do
+      meeting = insert(:meeting)
+      html = html_body(meeting, "<CalDAV:error> tag not closed & invalid")
+
+      assert html =~ "</html>"
+      assert html =~ "Error Details"
+      refute html =~ "<CalDAV:error>"
+    end
+
+    test "HTML body handles XML-hostile binary error without crashing" do
+      meeting = insert(:meeting)
+      html = html_body(meeting, "Response: <foo/> & </bar> unclosed")
+
+      assert html =~ "</html>"
+      assert html =~ "Error Details"
+      refute html =~ "<foo/>"
+    end
+  end
+
+  describe "render/2 text body security" do
+    # Plain-text email bodies are not rendered as HTML, so tags are harmless literal
+    # characters. The security properties that matter are: the function never crashes
+    # on adversarial input and the expected structural content is always present.
+
+    test "text body is a valid binary with malicious error reason" do
+      meeting = insert(:meeting)
+      text = text_body(meeting, "<script>alert('xss')</script>")
+
+      assert text =~ "Calendar Sync Error"
+      assert text =~ "ACTION REQUIRED"
+      assert text =~ "<script>alert('xss')</script>"
+    end
+
+    test "text body is a valid binary with malicious location" do
+      meeting = insert(:meeting, location: "Room A\nX-Injected: evil-header")
+      text = text_body(meeting, :network_error)
+
+      assert text =~ "Calendar Sync Error"
+      assert text =~ "Location: Room A"
+    end
+  end
+
+  defp html_body(meeting, error_reason),
+    do: CalendarSyncError.render(meeting, error_reason).html_body
+
+  defp text_body(meeting, error_reason),
+    do: CalendarSyncError.render(meeting, error_reason).text_body
+end

@@ -1,0 +1,367 @@
+defmodule Tymeslot.Meetings.AttendeeNotifications.ChangeEmailDeliveryTest do
+  @moduledoc """
+  Attendee change notifications carried all the way to a delivered email:
+
+      Worker (or an immediate send) → EmailWorker job → template → Swoosh
+
+  Only the Swoosh test adapter stands in for the outside world; the email
+  service, templates and ICS generator run for real, so what is asserted is
+  what an attendee would read.
+
+  Two classes of event are pinned here that the rest of the suite does not
+  reach: all-day events, which have dates and no instants, and events that
+  are notified for the first time, whose previous state was never recorded.
+  """
+
+  use Tymeslot.DataCase, async: false
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  @moduletag :integration
+  @moduletag :meetings
+  @moduletag :notifications
+  @moduletag :emails
+
+  import Tymeslot.Factory
+  import Tymeslot.Test.AttendeeEmailDelivery
+
+  alias Tymeslot.Meetings.AttendeeNotifications
+  alias Tymeslot.Repo
+  alias Tymeslot.Workers.EmailWorker
+
+  setup do
+    Application.put_env(:tymeslot, :email_service_module, Tymeslot.Emails.EmailService)
+    Application.put_env(:swoosh, :shared_test_process, self())
+
+    on_exit(fn ->
+      Application.put_env(:tymeslot, :email_service_module, Tymeslot.EmailServiceMock)
+      Application.delete_env(:swoosh, :shared_test_process)
+    end)
+
+    user = insert(:user, name: "Olive Organiser")
+    integration = insert(:calendar_integration, user: user)
+
+    %{user: user, integration: integration}
+  end
+
+  describe "an all-day event" do
+    test "renaming it delivers an update that shows its days, not a clock time", %{
+      integration: integration
+    } do
+      event =
+        insert_all_day_event(integration,
+          summary: "Team offsite",
+          last_notified_state: all_day_baseline("Offsite", ~D[2026-10-12], ~D[2026-10-15])
+        )
+
+      email = run_update_to_delivery(event)
+
+      assert email.to == [{"", "guest@example.com"}]
+      assert email.text_body =~ "Time: All day, until 14 October 2026"
+      assert email.text_body =~ "Title: Offsite → Team offsite"
+      assert email.html_body =~ "All day, until 14 October 2026"
+      assert email.html_body =~ "3 days"
+      refute email.html_body =~ "TBD"
+
+      ics = calendar_attachment(email)
+      assert ics.data =~ "DTSTART;VALUE=DATE:20261012"
+      assert ics.data =~ "DTEND;VALUE=DATE:20261015"
+    end
+
+    test "moving it to other days announces the date range it moved from and to", %{
+      integration: integration
+    } do
+      event =
+        insert_all_day_event(integration,
+          summary: "Team offsite",
+          last_notified_state: all_day_baseline("Team offsite", ~D[2026-10-05], ~D[2026-10-08])
+        )
+
+      email = run_update_to_delivery(event)
+
+      assert email.text_body =~ "Time: 5–7 October 2026 → 12–14 October 2026"
+      refute email.text_body =~ "Title:"
+    end
+
+    test "adding an attendee delivers an invitation that shows its days", %{
+      user: user,
+      integration: integration
+    } do
+      event = insert_all_day_event(integration, summary: "Team offsite")
+
+      assert {:ok, :sent} =
+               AttendeeNotifications.attendees_added(
+                 event,
+                 [%{email: "new@example.com"}],
+                 user.id
+               )
+
+      assert [job] = enqueued_jobs("send_calendar_invitation")
+      assert :ok = perform_job(EmailWorker, job.args)
+
+      assert_received {:email, email}
+      assert email.to == [{"", "new@example.com"}]
+      assert email.text_body =~ "Time: All day, until 14 October 2026"
+      assert email.html_body =~ "3 days"
+
+      ics = calendar_attachment(email)
+      assert ics.data =~ "DTSTART;VALUE=DATE:20261012"
+      assert ics.data =~ "DTEND;VALUE=DATE:20261015"
+    end
+  end
+
+  describe "an event notified for the first time" do
+    test "moving it announces its current time, not a title changed from nothing", %{
+      integration: integration
+    } do
+      event =
+        insert_timed_event(integration,
+          summary: "Standup",
+          start_at: ~U[2026-11-03 09:30:00.000000Z],
+          end_at: ~U[2026-11-03 09:45:00.000000Z]
+        )
+
+      email = run_update_to_delivery(event, fn job -> assert job.args["first_notification"] end)
+
+      assert email.text_body =~ "Current Details"
+      # Stated in the organiser's timezone: with no profile, the platform
+      # default (Europe/Tallinn).
+      assert email.text_body =~ "Time: 03 Nov 2026, 11:30 – 11:45 EET"
+      assert email.text_body =~ "Title: Standup"
+      refute email.text_body =~ "What Changed"
+      refute email.text_body =~ "→"
+
+      assert email.html_body =~ "Current details"
+      refute email.html_body =~ "What changed"
+      refute email.html_body =~ "(none)"
+    end
+
+    test "is still delivered when its title, location and description are blank", %{
+      integration: integration
+    } do
+      event =
+        insert_timed_event(integration,
+          summary: "",
+          location: "",
+          description: "",
+          start_at: ~U[2026-11-04 14:00:00.000000Z],
+          end_at: ~U[2026-11-04 15:00:00.000000Z]
+        )
+
+      email = run_update_to_delivery(event)
+
+      assert email.text_body =~ "Time: 04 Nov 2026, 16:00 – 17:00 EET"
+      refute email.text_body =~ "Title:"
+    end
+
+    test "of an all-day event states its days", %{integration: integration} do
+      event = insert_all_day_event(integration, summary: "Offsite")
+
+      email = run_update_to_delivery(event)
+
+      assert email.text_body =~ "Current Details"
+      assert email.text_body =~ "Time: 12–14 October 2026"
+    end
+  end
+
+  describe "a job enqueued before the first-notification flag existed" do
+    setup %{user: user, integration: integration} do
+      event =
+        insert_timed_event(integration,
+          summary: "Standup",
+          start_at: ~U[2026-11-03 09:30:00.000000Z],
+          end_at: ~U[2026-11-03 09:45:00.000000Z]
+        )
+
+      args = %{
+        "action" => "send_event_update_notification",
+        "user_id" => user.id,
+        "event_uid" => event.uid,
+        "integration_id" => integration.id,
+        "attendee_emails" => ["guest@example.com"],
+        "before_title" => "Daily sync",
+        "before_location" => "",
+        "before_description" => "",
+        "before_start_at" => "2026-11-03T09:30:00Z",
+        "before_end_at" => "2026-11-03T09:45:00Z",
+        "method" => "request",
+        "sequence" => 1
+      }
+
+      %{args: args}
+    end
+
+    test "still diffs its before values into a change list", %{args: args} do
+      assert :ok = perform_job(EmailWorker, args)
+
+      assert_received {:email, email}
+      assert email.text_body =~ "What Changed"
+      assert email.text_body =~ "Title: Daily sync → Standup"
+      refute email.text_body =~ "Current Details"
+    end
+
+    test "still sends nothing when its before values match the event", %{args: args} do
+      assert :ok = perform_job(EmailWorker, Map.put(args, "before_title", "Standup"))
+
+      refute_received {:email, _email}
+    end
+  end
+
+  describe "a deleted event" do
+    setup %{user: user, integration: integration} do
+      event =
+        insert_timed_event(integration,
+          summary: "Standup",
+          ical_sequence: 2,
+          start_at: ~U[2026-11-03 09:30:00.000000Z],
+          end_at: ~U[2026-11-03 09:45:00.000000Z],
+          attendees: [
+            %{"email" => "ana@example.com"},
+            %{"email" => "ben@example.com", "response_status" => "accepted"},
+            %{"email" => "cat@example.com", "response_status" => "declined"},
+            %{"email" => String.upcase(user.email)}
+          ]
+        )
+
+      %{event: event}
+    end
+
+    # The cancellation is enqueued as the delete succeeds and the cached row
+    # is removed straight after, so the email jobs must carry everything they
+    # say: nothing is left to read back when they run.
+    test "delivers a cancellation to each attendee after its row is gone", %{
+      user: user,
+      event: event
+    } do
+      assert {:ok, :sent} =
+               AttendeeNotifications.event_deleted_confirm(event, user.id, :occurrence)
+
+      Repo.delete!(event)
+
+      emails = deliver_all("send_calendar_invitation")
+
+      assert emails |> Enum.map(& &1.to) |> Enum.sort() ==
+               [[{"", "ana@example.com"}], [{"", "ben@example.com"}]]
+
+      for email <- emails do
+        assert email.subject == "Cancelled - Standup on 3 Nov"
+        assert email.text_body =~ "Event Cancelled"
+        assert email.text_body =~ "Olive Organiser has cancelled an event you were invited to."
+        assert email.text_body =~ "Date: 3 November 2026\nTime: 11:30 AM EET"
+        refute email.text_body =~ "invited you"
+
+        ics = calendar_attachment(email)
+        assert ics.data =~ "STATUS:CANCELLED"
+        assert ics.data =~ "SEQUENCE:3"
+      end
+    end
+
+    test "says every occurrence is cancelled when the whole series went", %{
+      user: user,
+      event: event
+    } do
+      assert {:ok, :sent} = AttendeeNotifications.event_deleted_confirm(event, user.id, :series)
+      Repo.delete!(event)
+
+      assert [email | _rest] = deliver_all("send_calendar_invitation")
+      assert email.subject == "Cancelled - Standup (every occurrence)"
+
+      assert email.text_body =~
+               "Olive Organiser has cancelled a recurring event you were invited to. Every occurrence is cancelled."
+    end
+
+    test "sends nothing when only the owner and a declined guest are on it", %{
+      user: user,
+      integration: integration
+    } do
+      event =
+        insert_timed_event(integration,
+          attendees: [
+            %{"email" => user.email},
+            %{"email" => "cat@example.com", "response_status" => "declined"}
+          ]
+        )
+
+      assert {:ok, :noop} =
+               AttendeeNotifications.event_deleted_confirm(event, user.id, :occurrence)
+
+      assert enqueued_jobs("send_calendar_invitation") == []
+    end
+  end
+
+  describe "a removed attendee" do
+    test "is told they were removed, not that the event was cancelled", %{
+      user: user,
+      integration: integration
+    } do
+      event =
+        insert_timed_event(integration,
+          summary: "Standup",
+          start_at: ~U[2026-11-03 09:30:00.000000Z],
+          end_at: ~U[2026-11-03 09:45:00.000000Z]
+        )
+
+      assert {:ok, :sent} =
+               AttendeeNotifications.attendees_removed(
+                 event,
+                 [%{email: "gone@example.com"}],
+                 user.id
+               )
+
+      assert [email] = deliver_all("send_calendar_invitation")
+      assert email.to == [{"", "gone@example.com"}]
+      assert email.subject == "Removed from Standup on 3 Nov"
+      assert email.text_body =~ "Olive Organiser has removed you from an event."
+      refute email.text_body =~ "cancelled"
+      refute email.text_body =~ "You're Invited"
+      assert email.text_body =~ "If the event is still in your calendar, you can delete it there."
+      assert calendar_attachment(email).data =~ "STATUS:CANCELLED"
+    end
+  end
+
+  # The grid reads cached events without their integration, so the event
+  # names no organiser: the one the caller passes is all the job has.
+  describe "an event read as the calendar grid lists it" do
+    setup %{integration: integration} do
+      event =
+        integration
+        |> insert_timed_event(
+          summary: "Standup",
+          start_at: ~U[2026-11-03 09:30:00.000000Z],
+          end_at: ~U[2026-11-03 09:45:00.000000Z]
+        )
+        |> Repo.reload!()
+
+      refute Ecto.assoc_loaded?(event.calendar_integration)
+      %{event: event}
+    end
+
+    test "adding an attendee delivers an invitation from the organiser", %{
+      user: user,
+      event: event
+    } do
+      assert {:ok, :sent} =
+               AttendeeNotifications.attendees_added(
+                 event,
+                 [%{email: "new@example.com"}],
+                 user.id
+               )
+
+      assert [email] = deliver_all("send_calendar_invitation")
+      assert email.to == [{"", "new@example.com"}]
+      assert email.text_body =~ "Olive Organiser"
+    end
+
+    test "removing an attendee delivers a cancellation", %{user: user, event: event} do
+      assert {:ok, :sent} =
+               AttendeeNotifications.attendees_removed(
+                 event,
+                 [%{email: "gone@example.com"}],
+                 user.id
+               )
+
+      assert [email] = deliver_all("send_calendar_invitation")
+      assert email.to == [{"", "gone@example.com"}]
+      assert calendar_attachment(email).data =~ "STATUS:CANCELLED"
+    end
+  end
+end

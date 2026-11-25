@@ -1,0 +1,154 @@
+defmodule Tymeslot.Workers.EmailWorkerTimeoutTest do
+  # async: false — the timeout and the send deadline are global application
+  # env, which must not race with other email-worker tests running concurrently.
+  use Tymeslot.DataCase, async: false
+
+  @moduletag :workers
+
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  import Mox
+  import Tymeslot.ConfigTestHelpers
+  import Tymeslot.Factory
+
+  alias ExUnit.CaptureLog
+  alias Tymeslot.Emails.EmailScheduler.LinkArg
+  alias Tymeslot.EmailServiceMock
+  alias Tymeslot.Meetings.Guests
+  alias Tymeslot.Polls.PollSchema
+  alias Tymeslot.Workers.EmailWorker
+  alias Tymeslot.Workers.EmailWorker.AdminAlertScheduler
+
+  setup :verify_on_exit!
+
+  describe "perform/1 — delivery timeout" do
+    setup do
+      setup_config(:tymeslot, :email_timeout_ms, 50)
+    end
+
+    test "discards instead of retrying when a send outlives the timeout" do
+      user = insert(:unverified_user)
+
+      # Simulate an SMTP send that never returns within the timeout window. Such a
+      # send may well have been delivered, so the job must discard rather than let
+      # Oban re-send it (which is what produces duplicate emails). Blocking on a
+      # message that never arrives keeps this deterministic — no sleep timing.
+      stub(EmailServiceMock, :send_email_verification, fn _user, _url ->
+        receive do
+          :never -> {:ok, :sent}
+        end
+      end)
+
+      assert {:discard, "Email sending timed out"} =
+               perform_job(EmailWorker, verification_args(user))
+    end
+
+    # An admin alert is the one email where a duplicate costs nothing and a
+    # loss costs the operator the incident, and an SMTP outage often shows as
+    # a hang rather than a refusal. Discarding it on a timeout would defeat
+    # the long retry schedule `AdminAlertScheduler` gives it.
+    test "retries an admin alert whose send outlives the timeout" do
+      stub(EmailServiceMock, :send_admin_alert, fn _recipient, _category, _sev, _msg, _meta ->
+        receive do
+          :never -> {:ok, :sent}
+        end
+      end)
+
+      args =
+        AdminAlertScheduler.build_args("ops@example.com", "System", :error, "boom", %{},
+          dedup_key: "timeout-test"
+        )
+
+      assert {:error, "Email sending timed out"} = perform_job(EmailWorker, args)
+    end
+  end
+
+  describe "perform/1 — a crashed send" do
+    # The crash reaches Oban as the job's error and the log as the operator's
+    # only account of it; neither may carry the SMTP credentials.
+    test "retries, and logs the crash with credentials redacted" do
+      user = insert(:unverified_user)
+
+      stub(EmailServiceMock, :send_email_verification, fn _user, _url ->
+        exit({:smtp_failed, %{"authorization" => "Basic c2VjcmV0LXNtdHA="}})
+      end)
+
+      log =
+        CaptureLog.capture_log(fn ->
+          assert {:error, message} =
+                   perform_job(EmailWorker, verification_args(user))
+
+          assert message =~ "Email job crashed"
+          refute message =~ "c2VjcmV0LXNtdHA"
+        end)
+
+      # The worker's own line; Oban's job-exception warning repeats the message.
+      assert log =~ ~r/\[error\] Email job crashed .*smtp_failed/
+      refute log =~ "c2VjcmV0LXNtdHA"
+    end
+  end
+
+  describe "perform/1 — default timeout" do
+    @send_deadline_ms 100
+
+    setup do
+      setup_config(:tymeslot, email_timeout_ms: nil, email_send_deadline_ms: @send_deadline_ms)
+    end
+
+    # A fixed 30 seconds let two stalled sends exhaust the job, which was then
+    # discarded before the remaining recipients were emailed. The job's budget
+    # must therefore give every recipient of the largest confirmation (the
+    # organiser, the attendee and every guest) a full send deadline.
+    #
+    # That is checked from the side a busy machine cannot break: a send that
+    # never returns holds the job open until its budget runs out, and the job
+    # must not give up sooner. Timing the opposite, that slow sends still
+    # finish inside the budget, cannot be made reliable at test scale: with
+    # instant sends the job's own work already takes 130-170ms, and on a
+    # contended machine over a second, more than the whole budget.
+    test "allows a send deadline for every participant of the fullest poll, and the other sends" do
+      assert PollSchema.max_participants() > Guests.max_guests()
+
+      assert EmailWorker.email_timeout_ms() ==
+               (PollSchema.max_participants() + 2 + 1) * @send_deadline_ms
+    end
+
+    test "gives every recipient of the largest confirmation a full send deadline before giving up" do
+      meeting = insert(:meeting, organizer_email_sent: false, attendee_email_sent: false)
+      guest_emails = for n <- 1..Guests.max_guests(), do: "guest#{n}@example.com"
+      {:ok, _guests} = Guests.create_for_meeting(meeting.id, guest_emails)
+
+      stalled_send = fn _email, _details ->
+        receive do
+          :never -> :unreachable
+        end
+      end
+
+      stub(EmailServiceMock, :send_appointment_confirmation_to_organizer, stalled_send)
+      stub(EmailServiceMock, :send_appointment_confirmation_to_attendee, stalled_send)
+      stub(EmailServiceMock, :send_guest_confirmation, stalled_send)
+
+      started = System.monotonic_time(:millisecond)
+
+      assert {:discard, "Email sending timed out"} =
+               perform_job(EmailWorker, %{
+                 "action" => "send_confirmation_emails",
+                 "meeting_id" => meeting.id
+               })
+
+      waited_ms = System.monotonic_time(:millisecond) - started
+      recipients = Guests.max_guests() + 2
+
+      assert waited_ms >= recipients * @send_deadline_ms,
+             "gave up after #{waited_ms}ms, before #{recipients} sends of #{@send_deadline_ms}ms"
+    end
+  end
+
+  defp verification_args(user) do
+    LinkArg.put(
+      %{"action" => "send_email_verification", "user_id" => user.id},
+      "verification_url",
+      "https://example.com/verify"
+    )
+  end
+end

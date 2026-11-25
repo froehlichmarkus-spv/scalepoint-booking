@@ -1,0 +1,555 @@
+defmodule TymeslotWeb.Dashboard.Availability.ListComponent do
+  @moduledoc """
+  LiveView component for the list-based availability management interface.
+  Handles the traditional day-by-day list view with detailed settings.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.Availability.{AvailabilityActions, Breaks, Window}
+  alias Tymeslot.Availability.InputValidation, as: AvailabilityInputValidation
+  alias Tymeslot.Security.RateLimiter
+  alias TymeslotWeb.Components.Dashboard.Availability.{ClearDayModal, DeleteBreakModal}
+  alias TymeslotWeb.Dashboard.Availability.DayCardComponent
+  alias TymeslotWeb.Dashboard.Availability.Helpers
+  alias TymeslotWeb.Dashboard.Availability.ListComponent.BreakHelpers
+  alias TymeslotWeb.Helpers.LocaleFormat
+
+  # UI Helper Functions
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     socket
+     |> ModalHook.mount_modal(delete_break: false, clear_day: false)
+     |> assign(show_add_break_form: nil, open_menu_day: nil)}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(assigns, socket) do
+    profile = assigns.profile
+    timezone_info = Helpers.get_timezone_info(profile)
+
+    socket =
+      socket
+      |> assign(assigns)
+      |> assign(timezone_info)
+      |> assign(break_duration_presets: Breaks.get_break_duration_presets())
+      |> assign(form_errors: %{})
+      |> assign(hours_errors: %{}, refused_hours: %{})
+      |> assign_new(:show_add_break_form, fn -> nil end)
+      |> assign_new(:open_menu_day, fn -> nil end)
+
+    {:ok, socket}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_day_available", %{"day" => day_str}, socket) do
+    with {:ok, day} <- BreakHelpers.parse_day(day_str),
+         %{} = current_availability <-
+           AvailabilityActions.get_day_from_schedule(socket.assigns.weekly_schedule, day),
+         {:ok, updated_day} <-
+           AvailabilityActions.toggle_day_availability(
+             profile_id(socket),
+             schedule_id(socket),
+             day,
+             current_availability.is_available
+           ) do
+      send(
+        self(),
+        {:flash,
+         {:info,
+          dgettext("dashboard_availability", "%{day} availability updated", day: day_name(day))}}
+      )
+
+      updated_schedule =
+        BreakHelpers.update_day_in_schedule(socket.assigns.weekly_schedule, updated_day)
+
+      send(self(), {:reload_schedule})
+
+      {:noreply, assign(socket, :weekly_schedule, updated_schedule)}
+    else
+      {:error, _changeset} ->
+        Flash.error(dgettext("dashboard_availability", "Failed to update availability"))
+        {:noreply, socket}
+
+      _other ->
+        {:noreply, socket}
+    end
+  end
+
+  # Validation event handlers
+  def handle_event("validate_day_hours", params, socket) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+
+    case AvailabilityInputValidation.validate_day_hours(params, metadata: metadata) do
+      {:ok, _sanitized_params} ->
+        {:noreply, assign(socket, :form_errors, %{})}
+
+      {:error, errors} ->
+        {:noreply, assign(socket, :form_errors, errors)}
+    end
+  end
+
+  def handle_event("validate_break", params, socket) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+
+    # Since we're using dropdowns with pre-validated time options,
+    # we'll skip showing validation errors during phx-change events.
+    # The validation still runs for security logging purposes.
+    case AvailabilityInputValidation.validate_break_input(params, metadata: metadata) do
+      {:ok, _sanitized_params} ->
+        {:noreply, assign(socket, :form_errors, %{})}
+
+      {:error, _errors} ->
+        # Validation runs again on submit.
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event(
+        "update_day_hours",
+        params,
+        socket
+      ) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+    do_update_day_hours(params, socket, metadata)
+  end
+
+  def handle_event(
+        "add_break",
+        %{"day" => day_str, "start" => start_str, "end" => end_str, "label" => label},
+        socket
+      ) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+
+    with {:ok, day} <- BreakHelpers.parse_day(day_str),
+         :ok <- check_rate_limit(socket, :availability_add_break),
+         %{} = day_availability <-
+           AvailabilityActions.get_day_from_schedule(socket.assigns.weekly_schedule, day),
+         {:ok, sanitized_params} <-
+           AvailabilityInputValidation.validate_break_input(
+             %{"start" => start_str, "end" => end_str, "label" => label},
+             metadata: metadata
+           ) do
+      profile_id(socket)
+      |> AvailabilityActions.add_break(
+        day_availability.id,
+        sanitized_params["start"],
+        sanitized_params["end"],
+        sanitized_params["label"]
+      )
+      |> handle_break_result(socket, dgettext("dashboard_availability", "Break added"))
+    else
+      nil ->
+        {:noreply, socket}
+
+      {:error, validation_errors} ->
+        socket = assign(socket, :form_errors, validation_errors)
+        {:noreply, socket}
+
+      _other ->
+        {:noreply, socket}
+    end
+  catch
+    :throw, :halt -> {:noreply, socket}
+  end
+
+  def handle_event("show_delete_break_modal", %{"break_id" => break_id}, socket) do
+    break_id = String.to_integer(break_id)
+    break_info = BreakHelpers.find_break_info(socket.assigns.weekly_schedule, break_id)
+
+    {:noreply, ModalHook.show_modal(socket, :delete_break, %{id: break_id, info: break_info})}
+  end
+
+  def handle_event("hide_delete_break_modal", _params, socket) do
+    {:noreply, ModalHook.hide_modal(socket, :delete_break)}
+  end
+
+  def handle_event("toggle_day_menu", %{"day" => day_str}, socket) do
+    case BreakHelpers.parse_day(day_str) do
+      # Toggling the open day's own menu closes it; any other day replaces it,
+      # so at most one row's menu is ever open.
+      {:ok, day} when day == socket.assigns.open_menu_day ->
+        {:noreply, assign(socket, :open_menu_day, nil)}
+
+      {:ok, day} ->
+        {:noreply, assign(socket, :open_menu_day, day)}
+
+      _other ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("close_day_menu", _params, socket) do
+    {:noreply, assign(socket, :open_menu_day, nil)}
+  end
+
+  def handle_event("show_add_break_form", %{"day" => day_str}, socket) do
+    case BreakHelpers.parse_day(day_str) do
+      {:ok, day} ->
+        {:noreply, assign(socket, :show_add_break_form, day)}
+
+      _other ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("hide_add_break_form", _params, socket) do
+    {:noreply, assign(socket, :show_add_break_form, nil)}
+  end
+
+  def handle_event("confirm_delete_break", _params, socket) do
+    ModalHook.with_modal_data(socket, :delete_break, fn break_data ->
+      case AvailabilityActions.delete_break(
+             profile_id(socket),
+             break_data.id,
+             schedule_id(socket)
+           ) do
+        {:ok, _break} ->
+          Flash.info(dgettext("dashboard_availability", "Break deleted"))
+          send(self(), {:reload_schedule})
+
+          {:noreply, ModalHook.hide_modal(socket, :delete_break)}
+
+        {:error, _reason} ->
+          Flash.error(dgettext("dashboard_availability", "Failed to delete break"))
+          {:noreply, socket}
+      end
+    end)
+  end
+
+  def handle_event(
+        "quick_break",
+        %{"day" => day_str, "start" => start_str, "duration" => duration_str},
+        socket
+      ) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+
+    with {:ok, day} <- BreakHelpers.parse_day(day_str),
+         :ok <- check_rate_limit(socket, :availability_quick_break),
+         %{} = day_availability <-
+           AvailabilityActions.get_day_from_schedule(socket.assigns.weekly_schedule, day),
+         {:ok, sanitized_params} <-
+           AvailabilityInputValidation.validate_quick_break_input(
+             %{"start" => start_str, "duration" => duration_str},
+             metadata: metadata
+           ) do
+      duration = String.to_integer(sanitized_params["duration"])
+
+      profile_id(socket)
+      |> AvailabilityActions.add_quick_break(
+        day_availability.id,
+        sanitized_params["start"],
+        duration
+      )
+      |> handle_break_result(socket, dgettext("dashboard_availability", "Quick break added"))
+    else
+      nil ->
+        {:noreply, socket}
+
+      {:error, validation_errors} ->
+        socket = assign(socket, :form_errors, validation_errors)
+        {:noreply, socket}
+
+      _other ->
+        {:noreply, socket}
+    end
+  catch
+    :throw, :halt -> {:noreply, socket}
+  end
+
+  def handle_event(
+        "copy_to_days",
+        %{"from_day" => from_day_str, "to_days" => to_days_str},
+        socket
+      ) do
+    metadata = DashboardHelpers.get_security_metadata(socket)
+    socket = assign(socket, :open_menu_day, nil)
+
+    with {:ok, from_day} <- BreakHelpers.parse_day(from_day_str),
+         {:ok, to_days} <-
+           AvailabilityInputValidation.validate_day_selections(to_days_str, metadata: metadata),
+         {:ok, _result} <-
+           AvailabilityActions.copy_day_settings(
+             profile_id(socket),
+             schedule_id(socket),
+             from_day,
+             to_days
+           ) do
+      day_names = Enum.map_join(to_days, ", ", &day_name/1)
+
+      Flash.info(
+        dgettext("dashboard_availability", "Settings copied to %{day_names}",
+          day_names: day_names
+        )
+      )
+
+      send(self(), {:reload_schedule})
+
+      {:noreply, socket}
+    else
+      {:error, validation_error} when is_binary(validation_error) ->
+        Flash.error(validation_error)
+        {:noreply, socket}
+
+      # The refusal names the source day: the break lives there.
+      {:error, {:break_outside_hours, source_day, break}} ->
+        Flash.error(
+          BreakHelpers.stale_break_message(source_day, break, socket.assigns.time_format)
+        )
+
+        {:noreply, socket}
+
+      {:error, _reason} ->
+        Flash.error(dgettext("dashboard_availability", "Failed to copy settings"))
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("show_clear_day_modal", %{"day" => day_str}, socket) do
+    case BreakHelpers.parse_day(day_str) do
+      {:ok, day} ->
+        day_name = day_name(day)
+
+        {:noreply,
+         socket
+         |> assign(:open_menu_day, nil)
+         |> ModalHook.show_modal(:clear_day, %{day: day, day_name: day_name})}
+    end
+  end
+
+  def handle_event("hide_clear_day_modal", _params, socket) do
+    {:noreply, ModalHook.hide_modal(socket, :clear_day)}
+  end
+
+  def handle_event("confirm_clear_day", _params, socket) do
+    ModalHook.with_modal_data(socket, :clear_day, fn day_data ->
+      case AvailabilityActions.clear_day_settings(
+             profile_id(socket),
+             schedule_id(socket),
+             day_data.day
+           ) do
+        {:ok, _result} ->
+          Flash.info(
+            dgettext("dashboard_availability", "%{day_name} settings cleared",
+              day_name: day_data.day_name
+            )
+          )
+
+          send(self(), {:reload_schedule})
+
+          {:noreply, ModalHook.hide_modal(socket, :clear_day)}
+
+        {:error, _reason} ->
+          Flash.error(dgettext("dashboard_availability", "Failed to clear day settings"))
+          {:noreply, socket}
+      end
+    end)
+  end
+
+  # Helper Functions
+
+  defp do_update_day_hours(params, socket, metadata) do
+    with {:ok, day} <- BreakHelpers.parse_day(params),
+         :ok <- check_rate_limit(socket, :availability_update_hours),
+         %{} = day_availability <-
+           AvailabilityActions.get_day_from_schedule(socket.assigns.weekly_schedule, day),
+         strings <- resolve_day_strings(params, day_availability),
+         {:ok, sanitized_params} <-
+           AvailabilityInputValidation.validate_day_hours(strings, metadata: metadata),
+         result <-
+           AvailabilityActions.update_day_hours(
+             profile_id(socket),
+             schedule_id(socket),
+             day,
+             sanitized_params["start"],
+             sanitized_params["end"]
+           ) do
+      handle_update_day_hours_result(day, result, socket, params)
+    else
+      nil ->
+        {:noreply, socket}
+
+      {:error, validation_errors} ->
+        {:noreply, assign_refused_hours(socket, params, validation_errors)}
+    end
+  catch
+    :throw, :halt -> {:noreply, socket}
+  end
+
+  # Day-hours errors belong under that day's hours row, apart from the
+  # add-break form's own `form_errors`. The refused times are kept beside
+  # them, so the row goes on showing the start that was picked, with end
+  # options built from it, rather than snapping back to the saved hours under
+  # an error that no longer describes them.
+  defp assign_refused_hours(socket, params, validation_errors) do
+    case BreakHelpers.parse_day(params) do
+      {:ok, day} ->
+        assign(socket,
+          hours_errors: Map.put(socket.assigns.hours_errors, day, validation_errors),
+          refused_hours:
+            Map.put(socket.assigns.refused_hours, day, Map.take(params, ["start", "end"]))
+        )
+
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  # A missing or blank time keeps the saved one: a change event may carry only
+  # the start, and the end select is blank while a refused end does not fit
+  # the picked start.
+  defp resolve_day_strings(params, day_availability) do
+    %{
+      "start" =>
+        present(params["start"]) || BreakHelpers.format_time(day_availability.start_time),
+      "end" =>
+        present(params["end"]) ||
+          Window.format_end(day_availability.end_time, day_availability.ends_next_day)
+    }
+  end
+
+  defp present(value) when value in [nil, ""], do: nil
+  defp present(value), do: value
+
+  defp handle_update_day_hours_result(day, result, socket, params) do
+    case result do
+      {:ok, _updated} ->
+        Flash.info(dgettext("dashboard_availability", "%{day} hours updated", day: day_name(day)))
+
+        send(self(), {:reload_schedule})
+
+        {:noreply, assign(socket, form_errors: %{}, hours_errors: %{}, refused_hours: %{})}
+
+      {:error, :invalid_time_format} ->
+        Flash.error(dgettext("dashboard_availability", "Invalid time format"))
+        {:noreply, socket}
+
+      # Shown under the day's hours with the refused times kept, like any
+      # other refused hours, so the selects do not look saved.
+      {:error, {:breaks_outside_hours, [break | _others]}} ->
+        day_availability =
+          AvailabilityActions.get_day_from_schedule(socket.assigns.weekly_schedule, day)
+
+        message =
+          dgettext(
+            "dashboard_availability",
+            "The %{break} break no longer fits these hours. Move or delete it first.",
+            break:
+              BreakHelpers.break_time_label(day_availability, break, socket.assigns.time_format)
+          )
+
+        {:noreply, assign_refused_hours(socket, params, %{breaks: message})}
+
+      {:error, _reason} ->
+        Flash.error(dgettext("dashboard_availability", "Failed to update availability"))
+        {:noreply, socket}
+    end
+  end
+
+  # Every break write funnels through here so a rejected changeset reaches the
+  # organiser as a form error rather than crashing the LiveView.
+  defp handle_break_result({:ok, _break}, socket, success_message) do
+    Flash.info(success_message)
+    send(self(), {:reload_schedule})
+
+    socket =
+      socket
+      |> assign(:form_errors, %{})
+      |> assign(:show_add_break_form, nil)
+
+    {:noreply, socket}
+  end
+
+  defp handle_break_result({:error, :invalid_time_format}, socket, _success_message) do
+    Flash.error(dgettext("dashboard_availability", "Invalid time format"))
+    {:noreply, socket}
+  end
+
+  defp handle_break_result({:error, %Ecto.Changeset{} = changeset}, socket, _success_message) do
+    {field_errors, general_messages} = BreakHelpers.break_error_messages(changeset)
+
+    Enum.each(general_messages, &Flash.error/1)
+
+    {:noreply, assign(socket, :form_errors, field_errors)}
+  end
+
+  defp handle_break_result({:error, _reason}, socket, _success_message) do
+    Flash.error(dgettext("dashboard_availability", "Break could not be saved"))
+    {:noreply, socket}
+  end
+
+  # Small helpers to reduce duplication
+  defp schedule_id(socket), do: socket.assigns.selected_schedule.id
+  defp profile_id(socket), do: socket.assigns.profile.id
+
+  defp day_name(day),
+    do: LocaleFormat.format_weekday_name(day, Gettext.get_locale(TymeslotWeb.Gettext), :full)
+
+  defp check_rate_limit(socket, limit) do
+    case RateLimiter.check(limit, schedule_id(socket)) do
+      :ok ->
+        :ok
+
+      {:error, :rate_limited, _message} ->
+        Flash.error(
+          dgettext(
+            "dashboard_availability",
+            "You're adding breaks too quickly. Please wait a bit."
+          )
+        )
+
+        throw(:halt)
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    ~H"""
+    <div id={@id}>
+      <%!-- Timezone Display Header --%>
+      <.section_header title={dgettext("dashboard_availability", "Weekly Schedule")} class="mb-6">
+        <:actions>
+          <Helpers.timezone_display timezone_display={@timezone_display} country_code={@country_code} />
+        </:actions>
+      </.section_header>
+
+      <%!-- Weekly Schedule --%>
+      <div class="space-y-2">
+        <%= for day_availability <- @weekly_schedule do %>
+          <DayCardComponent.day_card
+            day_availability={day_availability}
+            day_name={day_name(day_availability.day_of_week)}
+            break_duration_presets={@break_duration_presets}
+            form_errors={@form_errors}
+            hours_errors={@hours_errors}
+            refused_hours={@refused_hours}
+            show_add_break_form={@show_add_break_form}
+            open_menu_day={@open_menu_day}
+            time_format={@time_format}
+            myself={@myself}
+          />
+        <% end %>
+      </div>
+
+      <DeleteBreakModal.delete_break_modal
+        id="delete-break-modal"
+        show={@show_delete_break_modal}
+        break_data={@delete_break_modal_data}
+        on_cancel={JS.push("hide_delete_break_modal", target: @myself)}
+        on_confirm={JS.push("confirm_delete_break", target: @myself)}
+      />
+
+      <ClearDayModal.clear_day_modal
+        id="clear-day-modal"
+        show={@show_clear_day_modal}
+        day_data={@clear_day_modal_data}
+        on_cancel={JS.push("hide_clear_day_modal", target: @myself)}
+        on_confirm={JS.push("confirm_clear_day", target: @myself)}
+      />
+    </div>
+    """
+  end
+end

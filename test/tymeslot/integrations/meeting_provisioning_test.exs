@@ -1,0 +1,564 @@
+defmodule Tymeslot.Integrations.MeetingProvisioningTest do
+  use Tymeslot.DataCase, async: false
+  @moduletag :integrations
+
+  import Mox
+  import Tymeslot.Factory
+
+  alias Tymeslot.Integrations.MeetingProvisioning
+  alias Tymeslot.Integrations.Shared.MicrosoftConfig
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Security.Encryption
+  alias Tymeslot.Test.ClockHelpers
+  alias Tymeslot.Workers.CalendarEventWorker
+
+  setup :verify_on_exit!
+
+  describe "MeetingProvisioning.plan/3 — Google account overlap detection" do
+    test "returns {:inline, vid_id} when both integrations are Google for the same account" do
+      user = insert(:user)
+      account_id = "11223344"
+
+      cal =
+        insert(:calendar_integration,
+          user: user,
+          provider: "google",
+          provider_account_id: account_id
+        )
+
+      vid =
+        insert(:video_integration,
+          user: user,
+          provider: "google_meet",
+          provider_account_id: account_id
+        )
+
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:inline, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when the Google accounts differ" do
+      user = insert(:user)
+
+      cal =
+        insert(:calendar_integration,
+          user: user,
+          provider: "google",
+          provider_account_id: "cal-account"
+        )
+
+      vid =
+        insert(:video_integration,
+          user: user,
+          provider: "google_meet",
+          provider_account_id: "different-account"
+        )
+
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when the calendar integration is non-Google" do
+      user = insert(:user)
+      account_id = "shared-account"
+
+      cal =
+        insert(:calendar_integration,
+          user: user,
+          provider: "caldav",
+          provider_account_id: account_id
+        )
+
+      vid =
+        insert(:video_integration,
+          user: user,
+          provider: "google_meet",
+          provider_account_id: account_id
+        )
+
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when the video integration is not Google Meet" do
+      user = insert(:user)
+      account_id = "shared-account"
+
+      cal =
+        insert(:calendar_integration,
+          user: user,
+          provider: "google",
+          provider_account_id: account_id
+        )
+
+      vid =
+        insert(:video_integration,
+          user: user,
+          provider: "mirotalk",
+          provider_account_id: account_id
+        )
+
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when provider_account_id is missing on either side" do
+      user = insert(:user)
+
+      cal =
+        insert(:calendar_integration,
+          user: user,
+          provider: "google",
+          provider_account_id: nil
+        )
+
+      vid =
+        insert(:video_integration,
+          user: user,
+          provider: "google_meet",
+          provider_account_id: "some-account"
+        )
+
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+
+    # A video integration the user cannot use plans no room at all, rather
+    # than a separate one the provider call would then refuse.
+    test "returns :none for another user's video integration" do
+      user = insert(:user)
+      cal = insert(:calendar_integration, user: user, provider: "google")
+      someone_elses = insert(:video_integration, provider: "google_meet")
+
+      assert MeetingProvisioning.plan(cal.id, someone_elses.id, user.id) == :none
+    end
+
+    test "returns :none for a switched-off or disconnected video integration" do
+      user = insert(:user)
+      cal = insert(:calendar_integration, user: user, provider: "google")
+      off = insert(:video_integration, user: user, is_active: false)
+      gone = insert(:video_integration, user: user, deleted_at: DateTime.utc_now(:second))
+
+      assert MeetingProvisioning.plan(cal.id, off.id, user.id) == :none
+      assert MeetingProvisioning.plan(cal.id, gone.id, user.id) == :none
+    end
+
+    test "returns {:separate, vid_id} when the calendar is not the user's" do
+      user = insert(:user)
+      someone_elses_calendar = insert(:calendar_integration, provider: "google")
+      vid = insert(:video_integration, user: user, provider: "google_meet")
+
+      assert MeetingProvisioning.plan(someone_elses_calendar.id, vid.id, user.id) ==
+               {:separate, vid.id}
+    end
+
+    test "returns :none when video_integration_id is nil" do
+      user = insert(:user)
+      assert MeetingProvisioning.plan(1, nil, user.id) == :none
+    end
+  end
+
+  describe "MeetingProvisioning.plan/3 with Outlook and Teams" do
+    defp outlook_and_teams(calendar_provider, calendar_account, teams_account) do
+      user = insert(:user)
+
+      cal =
+        insert(:calendar_integration,
+          user: user,
+          provider: calendar_provider,
+          provider_account_id: calendar_account
+        )
+
+      vid =
+        insert(:video_integration,
+          user: user,
+          provider: "teams",
+          provider_account_id: teams_account
+        )
+
+      {user, cal, vid}
+    end
+
+    test "returns {:attach, vid_id} when both belong to the same Microsoft account" do
+      {user, cal, vid} = outlook_and_teams("outlook", "entra-oid-1", "entra-oid-1")
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:attach, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when the Microsoft accounts differ" do
+      {user, cal, vid} = outlook_and_teams("outlook", "entra-oid-1", "entra-oid-2")
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when the calendar is not Outlook" do
+      {user, cal, vid} = outlook_and_teams("google", "entra-oid-1", "entra-oid-1")
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+
+    test "returns {:separate, vid_id} when neither records an account" do
+      {user, cal, vid} = outlook_and_teams("outlook", nil, nil)
+      assert MeetingProvisioning.plan(cal.id, vid.id, user.id) == {:separate, vid.id}
+    end
+  end
+
+  describe "MeetingProvisioning.attach_conference_data/2" do
+    test "{:inline, _} plan attaches :conference_data key with a createRequest map" do
+      event_data = %{summary: "Planning", description: "Q4 plan"}
+      result = MeetingProvisioning.attach_conference_data(event_data, {:inline, 42})
+
+      assert %{createRequest: %{requestId: request_id, conferenceSolutionKey: _solution_key}} =
+               result[:conference_data]
+
+      assert is_binary(request_id) and request_id != ""
+    end
+
+    test "{:separate, _} plan returns event_data unchanged" do
+      event_data = %{summary: "Planning", description: "Q4 plan"}
+      result = MeetingProvisioning.attach_conference_data(event_data, {:separate, 42})
+
+      assert result == event_data
+    end
+
+    # Only Google understands the payload: a Teams plan must never carry it
+    # to an Outlook write.
+    test "{:attach, _} plan returns event_data unchanged" do
+      event_data = %{summary: "Planning", description: "Q4 plan"}
+      assert MeetingProvisioning.attach_conference_data(event_data, {:attach, 42}) == event_data
+    end
+
+    test ":none plan returns event_data unchanged" do
+      event_data = %{summary: "Planning", description: "Q4 plan"}
+      result = MeetingProvisioning.attach_conference_data(event_data, :none)
+
+      assert result == event_data
+    end
+  end
+
+  describe "MeetingProvisioning.booking_room_placement/1 with Teams" do
+    # The booking's calendar is the one the resolver names for this very
+    # meeting; answering for any other meeting would hide a caller that asks
+    # about the wrong one.
+    defp stub_booking_calendar(%MeetingSchema{id: meeting_id}, calendar_id) do
+      stub(Tymeslot.CalendarMock, :get_booking_integration_info, fn
+        %MeetingSchema{id: ^meeting_id} ->
+          {:ok, %{integration_id: calendar_id, calendar_path: "primary"}}
+      end)
+    end
+
+    defp teams_booking(opts) do
+      user = insert(:user)
+      account_id = Keyword.get(opts, :video_account, "entra-oid-1")
+
+      calendar =
+        insert(:calendar_integration,
+          user: user,
+          provider: Keyword.get(opts, :calendar_provider, "outlook"),
+          provider_account_id: Keyword.get(opts, :calendar_account, "entra-oid-1")
+        )
+
+      video =
+        insert(:video_integration,
+          user: user,
+          provider: Keyword.get(opts, :video_provider, "teams"),
+          provider_account_id: account_id,
+          tenant_id_encrypted: opts |> Keyword.get(:tenant_id) |> encrypt_present()
+        )
+
+      meeting =
+        insert(:meeting,
+          organizer_user_id: user.id,
+          video_integration_id: video.id,
+          calendar_integration_id: Keyword.get(opts, :mapped_calendar, calendar.id),
+          provider_event_id: Keyword.get(opts, :provider_event_id),
+          inserted_at: Keyword.get(opts, :inserted_at, DateTime.utc_now(:second)),
+          email_verified_at: Keyword.get(opts, :email_verified_at)
+        )
+
+      %{user: user, calendar: calendar, video: video, meeting: meeting}
+    end
+
+    # Walks the wait second by second and returns the seconds at which the
+    # create adds the meeting, after checking that at each of them the Teams
+    # job is still waiting `deadline_ms` later.
+    defp assert_meeting_added_only_while_outwaited(deadline_ms) do
+      booked_at = ~U[2026-03-01 10:00:00Z]
+
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: nil, inserted_at: booked_at)
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      at = fn seconds, fun ->
+        ClockHelpers.with_frozen_clock(DateTime.add(booked_at, seconds, :second), fun)
+      end
+
+      adding_seconds =
+        Enum.filter(0..180, fn seconds ->
+          at.(seconds, fn -> MeetingProvisioning.booking_event_video_fields(meeting) != %{} end)
+        end)
+
+      assert adding_seconds != []
+
+      deadline_seconds = div(deadline_ms + 999, 1_000)
+
+      outrun =
+        Enum.reject(adding_seconds, fn seconds ->
+          at.(seconds + deadline_seconds, fn ->
+            MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+          end)
+        end)
+
+      assert outrun == []
+      adding_seconds
+    end
+
+    defp with_calendar_deadline(ms, fun) do
+      Application.put_env(:tymeslot, :calendar_timeout_ms, ms)
+
+      try do
+        fun.()
+      after
+        Application.delete_env(:tymeslot, :calendar_timeout_ms)
+      end
+    end
+
+    defp encrypt_present(nil), do: nil
+    defp encrypt_present(value), do: Encryption.encrypt(value)
+
+    test "attaches to the booking's event when it is already in the same account's Outlook calendar" do
+      %{calendar: calendar, meeting: meeting} = teams_booking(provider_event_id: "AAMk-event-1")
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) ==
+               {:calendar_event, "AAMk-event-1"}
+    end
+
+    test "waits for the booking's event when the same account's calendar has not written it yet" do
+      %{calendar: calendar, meeting: meeting} = teams_booking(provider_event_id: nil)
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+    end
+
+    test "stops waiting and creates its own event once the booking's event is overdue" do
+      booked_at = DateTime.add(DateTime.utc_now(:second), -121, :second)
+
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: nil, inserted_at: booked_at)
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+    end
+
+    # The grace period is measured on Tymeslot.Clock, so it can be pinned.
+    test "measures the grace period on the application clock" do
+      booked_at = ~U[2026-03-01 10:00:00Z]
+
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: nil, inserted_at: booked_at)
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      ClockHelpers.with_frozen_clock(DateTime.add(booked_at, 119, :second), fn ->
+        assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+      end)
+
+      ClockHelpers.with_frozen_clock(DateTime.add(booked_at, 121, :second), fn ->
+        assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+      end)
+    end
+
+    test "waits when the stored event belongs to a different calendar integration" do
+      user_calendar = insert(:calendar_integration, provider: "outlook")
+
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: "AAMk-stale", mapped_calendar: user_calendar.id)
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+    end
+
+    test "creates its own event when the Outlook calendar is another Microsoft account" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(calendar_account: "entra-oid-other", provider_event_id: "AAMk-event-1")
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+    end
+
+    test "creates its own event when the booking calendar is not Outlook" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(calendar_provider: "google", provider_event_id: "google-event-1")
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+    end
+
+    test "creates its own event when the booking has no calendar" do
+      %{meeting: meeting} = teams_booking(provider_event_id: nil)
+
+      stub(Tymeslot.CalendarMock, :get_booking_integration_info, fn _meeting ->
+        {:error, :no_integration}
+      end)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+    end
+
+    test "never consults the calendar for a provider no calendar can carry" do
+      %{meeting: meeting} =
+        teams_booking(video_provider: "mirotalk", provider_event_id: "AAMk-event-1")
+
+      expect(Tymeslot.CalendarMock, :get_booking_integration_info, 0, fn _meeting ->
+        flunk("the booking calendar is irrelevant to a room of its own")
+      end)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+    end
+  end
+
+  # Graph mails the attendees of an organiser's event on every write to it, so
+  # the booking's event is created with its Teams meeting rather than given it
+  # by a second write (issue #191).
+  # A booking held until its attendee verifies their email, or pays, sets
+  # off its jobs only then, however long after it was made.
+  describe "MeetingProvisioning with Teams, for a booking released after it was made" do
+    test "has the event of a booking verified just now created with the meeting" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(
+          provider_event_id: nil,
+          inserted_at: DateTime.add(DateTime.utc_now(:second), -3600, :second),
+          email_verified_at: DateTime.utc_now(:second)
+        )
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert %{online_meeting: %{isOnlineMeeting: true}} =
+               MeetingProvisioning.booking_event_video_fields(meeting)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+    end
+
+    test "waits for the event of a booking paid for just now" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(
+          provider_event_id: nil,
+          inserted_at: DateTime.add(DateTime.utc_now(:second), -3600, :second)
+        )
+
+      insert(:booking_payment,
+        meeting_id: meeting.id,
+        status: :paid,
+        paid_at: DateTime.utc_now(:second)
+      )
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+    end
+
+    test "gives up on the event of a booking verified long ago" do
+      an_hour_ago = DateTime.add(DateTime.utc_now(:second), -3600, :second)
+
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(
+          provider_event_id: nil,
+          inserted_at: an_hour_ago,
+          email_verified_at: an_hour_ago
+        )
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_event_video_fields(meeting) == %{}
+      assert MeetingProvisioning.booking_room_placement(meeting) == :own_event
+    end
+  end
+
+  describe "MeetingProvisioning.booking_event_video_fields/1 with Teams" do
+    test "has the event created with the meeting while the meeting waits for it" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: nil, tenant_id: "11111111-2222-3333-4444-555555555555")
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_event_video_fields(meeting) ==
+               %{
+                 online_meeting: %{
+                   isOnlineMeeting: true,
+                   onlineMeetingProvider: "teamsForBusiness"
+                 }
+               }
+    end
+
+    test "names no provider for a personal Microsoft account" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: nil, tenant_id: MicrosoftConfig.consumer_tenant_id())
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_event_video_fields(meeting) ==
+               %{online_meeting: %{isOnlineMeeting: true}}
+    end
+
+    # The Teams job may give up waiting while a create late in the wait is
+    # still in flight, and make a meeting of its own beside it.
+    test "creates the event without the meeting late in the wait" do
+      booked_at = DateTime.add(DateTime.utc_now(:second), -91, :second)
+
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(provider_event_id: nil, inserted_at: booked_at)
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+      assert MeetingProvisioning.booking_event_video_fields(meeting) == %{}
+    end
+
+    # The race behind a second Teams meeting: a create that adds the meeting
+    # late in the wait is still running when the Teams job gives up and makes
+    # its own. A run is stopped at the calendar job's deadline, so every
+    # second at which the create adds the meeting must leave the Teams job
+    # still waiting that deadline later.
+    test "the Teams job outwaits every create that adds the meeting" do
+      assert_meeting_added_only_while_outwaited(CalendarEventWorker.attempt_timeout_ms())
+    end
+
+    test "the margin follows the calendar job's configured deadline" do
+      with_calendar_deadline(30_000, fn ->
+        seconds = assert_meeting_added_only_while_outwaited(30_000)
+
+        # Under the 90-second default this second is already too late.
+        assert 60 in seconds
+      end)
+    end
+
+    test "a calendar deadline as long as the wait never adds the meeting" do
+      with_calendar_deadline(120_000, fn ->
+        booked_at = ~U[2026-03-01 10:00:00Z]
+
+        %{calendar: calendar, meeting: meeting} =
+          teams_booking(provider_event_id: nil, inserted_at: booked_at)
+
+        stub_booking_calendar(meeting, calendar.id)
+
+        ClockHelpers.with_frozen_clock(booked_at, fn ->
+          assert MeetingProvisioning.booking_room_placement(meeting) == :awaiting_calendar_event
+          assert MeetingProvisioning.booking_event_video_fields(meeting) == %{}
+        end)
+      end)
+    end
+
+    test "adds nothing to an event the booking already has" do
+      %{calendar: calendar, meeting: meeting} = teams_booking(provider_event_id: "AAMk-event-1")
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_event_video_fields(meeting) == %{}
+    end
+
+    test "adds nothing when the Outlook calendar is another Microsoft account" do
+      %{calendar: calendar, meeting: meeting} =
+        teams_booking(calendar_account: "entra-oid-other", provider_event_id: nil)
+
+      stub_booking_calendar(meeting, calendar.id)
+
+      assert MeetingProvisioning.booking_event_video_fields(meeting) == %{}
+    end
+  end
+end

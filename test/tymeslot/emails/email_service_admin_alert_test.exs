@@ -1,0 +1,100 @@
+defmodule Tymeslot.Emails.EmailServiceAdminAlertTest do
+  use Tymeslot.DataCase, async: false
+  @moduletag :emails
+
+  import Tymeslot.Factory
+  import Tymeslot.Test.DirectEmailSends
+
+  alias Tymeslot.Emails.EmailService
+
+  # Exercises sends directly rather than through the job that makes them.
+  setup :allow_direct_sends
+
+  # EmailService.deliver/1 runs inside CircuitBreaker.call/2, which executes the
+  # delivery function inside a GenServer. Swoosh's test adapter delivers to
+  # whichever process calls Mailer.deliver/1 — the circuit breaker, not this
+  # test — so `:shared_test_process` is what makes the message observable here.
+  # It is global state, hence `async: false` for the whole module.
+  setup do
+    Application.put_env(:swoosh, :shared_test_process, self())
+    on_exit(fn -> Application.delete_env(:swoosh, :shared_test_process) end)
+    :ok
+  end
+
+  describe "send_admin_alert/5" do
+    test "addresses the operator and reports category, message and metadata" do
+      assert {:ok, _response} =
+               EmailService.send_admin_alert(
+                 "ops@example.com",
+                 "Webhook",
+                 :warning,
+                 "Unhandled webhook event received",
+                 %{"event_id" => "evt_001", "event_type" => "charge.failed"}
+               )
+
+      assert_received {:email, email}
+      assert email.to == [{"Tymeslot Operator", "ops@example.com"}]
+      assert email.subject == "[WARNING] Tymeslot: Webhook"
+      assert email.text_body =~ "Category: Webhook"
+      assert email.text_body =~ "Unhandled webhook event received"
+      assert email.text_body =~ "event_id: evt_001"
+      assert email.text_body =~ "event_type: charge.failed"
+    end
+
+    test "carries each severity through to the body" do
+      for severity <- [:info, :warning, :error] do
+        assert {:ok, _response} =
+                 EmailService.send_admin_alert(
+                   "ops@example.com",
+                   "Security",
+                   severity,
+                   "Suspicious login attempt detected",
+                   %{"user_id" => "42"}
+                 )
+
+        assert_received {:email, email}
+        assert email.text_body =~ "Severity: #{severity}"
+      end
+    end
+
+    # The severity leads the subject so an inbox rule can file or page on it;
+    # only an error keeps the warning sign.
+    test "an error alert's subject starts with its severity and carries the warning sign" do
+      assert {:ok, _response} =
+               EmailService.send_admin_alert(
+                 "ops@example.com",
+                 "Payment",
+                 :error,
+                 "Dispute lost",
+                 %{}
+               )
+
+      assert_received {:email, email}
+      assert email.subject == "[ERROR] ⚠️ Tymeslot: Payment"
+    end
+
+    test "an info alert's subject names its severity without the warning sign" do
+      assert {:ok, _response} =
+               EmailService.send_admin_alert("ops@example.com", "Payment", :info, "Refund", %{})
+
+      assert_received {:email, email}
+      assert email.subject == "[INFO] Tymeslot: Payment"
+    end
+
+    test "marks the context section as empty when there is no metadata" do
+      assert {:ok, _response} =
+               EmailService.send_admin_alert(
+                 "ops@example.com",
+                 "General",
+                 :warning,
+                 "Alert with no metadata",
+                 %{}
+               )
+
+      assert_received {:email, email}
+      assert email.subject == "[WARNING] Tymeslot: General"
+      assert email.text_body =~ "Alert with no metadata"
+      assert email.text_body =~ "(none)"
+    end
+  end
+end

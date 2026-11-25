@@ -1,0 +1,549 @@
+defmodule TymeslotWeb.Helpers.LocaleFormat do
+  @moduledoc """
+  Provides locale-aware formatting for dates, times, and durations.
+  Handles different formatting conventions for different languages.
+
+  English is British English: the day comes before the month ("5 February
+  2026"), as in every other supported language.
+  """
+
+  alias Tymeslot.Utils.DateTimeUtils.TimeFormat
+
+  @doc """
+  Formats a date according to locale conventions.
+  - en: 15 January 2026
+  - de: 15. Januar 2026
+  - uk: 15 січня 2026
+  - pt: 15 de janeiro de 2026
+  - es: 15 de enero de 2026
+  """
+  @spec format_date(Calendar.date(), String.t()) :: String.t()
+  def format_date(date, locale) do
+    month_name = format_month_name(date.month, locale)
+    order_date_parts(date.day, month_name, date.year, locale)
+  end
+
+  @doc """
+  Orders a day, month name, and year according to locale word-order
+  conventions, given a bare (unpadded) day number. Shared by `format_date/2`
+  and callers that build their own day/month/year pieces (e.g. date ranges).
+  - de/cs: 5. April 2026 / 5. dubna 2026
+  - en/uk/fr/it/pl: 5 April 2026 / 5 квітня 2026 (day before month, no period)
+  - pt/es: 5 de abril de 2026 (the linking "de" is not optional)
+  """
+  @spec order_date_parts(String.t() | integer(), String.t(), integer(), String.t()) :: String.t()
+  def order_date_parts(day, month_name, year, locale) when locale in ["de", "cs"],
+    do: "#{day}. #{month_name} #{year}"
+
+  def order_date_parts(day, month_name, year, locale) when locale in ["pt", "es"],
+    do: "#{day} de #{month_name} de #{year}"
+
+  def order_date_parts(day, month_name, year, _other_locale),
+    do: "#{day} #{month_name} #{year}"
+
+  @doc """
+  Formats a start/end date range according to locale word-order conventions.
+  - de/cs: 10.–12. April 2026 / 30. April – 2. Mai 2026
+  - en/uk/fr/it/pl: 10–12 April 2026 / 30 April – 2 May 2026 (day before month, no period)
+  - pt: 10–12 de abril de 2026 / 30 de abril – 2 de maio de 2026
+  - es: 10–12 de abril de 2026 / 30 de abril – 2 de mayo de 2026
+  """
+  @spec format_date_range(Calendar.date(), Calendar.date(), String.t()) :: String.t()
+  def format_date_range(start_date, end_date, locale) do
+    start_month = format_month_name(start_date.month, locale)
+    end_month = format_month_name(end_date.month, locale)
+
+    case locale do
+      loc when loc in ["pt", "es"] ->
+        linked_range(start_date, start_month, end_date, end_month)
+
+      _other_locale ->
+        day_suffix = if locale in ["de", "cs"], do: ".", else: ""
+        day_first_range(start_date, start_month, end_date, end_month, day_suffix)
+    end
+  end
+
+  defp day_first_range(start_date, start_month, end_date, end_month, day_suffix) do
+    if start_date.month == end_date.month do
+      "#{start_date.day}#{day_suffix}–#{end_date.day}#{day_suffix} #{end_month} #{end_date.year}"
+    else
+      "#{start_date.day}#{day_suffix} #{start_month} – #{end_date.day}#{day_suffix} #{end_month} #{end_date.year}"
+    end
+  end
+
+  # Portuguese and Spanish link day, month and year with "de", so they cannot
+  # share `day_first_range/5`: "10–12 abril 2026" is ungrammatical in both.
+  defp linked_range(start_date, start_month, end_date, end_month) do
+    if start_date.month == end_date.month do
+      "#{start_date.day}–#{end_date.day} de #{end_month} de #{end_date.year}"
+    else
+      "#{start_date.day} de #{start_month} – #{end_date.day} de #{end_month} de #{end_date.year}"
+    end
+  end
+
+  @doc """
+  Formats time according to locale conventions.
+  - en: 02:30 PM (12-hour)
+  - de: 14:30 (24-hour)
+  - uk: 14:30 (24-hour)
+
+  Which languages use which clock is `TimeFormat.for_locale/1`, shared with the
+  organiser's clock preference so the two can't drift apart. The hour padding
+  differs on purpose: this renders "02:30 PM" for a reader who never chose a
+  format, while a chosen 12-hour clock renders the more conversational "2:30 PM".
+  """
+  @spec format_time(Calendar.time(), String.t()) :: String.t()
+  def format_time(time, locale) do
+    case TimeFormat.for_locale(locale) do
+      "12h" -> Calendar.strftime(time, "%I:%M %p")
+      "24h" -> Calendar.strftime(time, "%H:%M")
+    end
+  end
+
+  @month_names %{
+    "de" => %{
+      full:
+        ~w(Januar Februar März April Mai Juni Juli August September Oktober November Dezember),
+      short: ~w(Jan Feb März Apr Mai Jun Jul Aug Sep Okt Nov Dez)
+    },
+    "uk" => %{
+      full:
+        ~w(січня лютого березня квітня травня червня липня серпня вересня жовтня листопада грудня),
+      short: ~w(січ лют бер кві тра чер лип сер вер жов лис гру)
+    },
+    "fr" => %{
+      full:
+        ~w(janvier février mars avril mai juin juillet août septembre octobre novembre décembre),
+      short: ~w(janv. févr. mars avr. mai juin juil. août sept. oct. nov. déc.)
+    },
+    "it" => %{
+      full:
+        ~w(gennaio febbraio marzo aprile maggio giugno luglio agosto settembre ottobre novembre dicembre),
+      short: ~w(gen feb mar apr mag giu lug ago set ott nov dic)
+    },
+    # Czech names a month inside a date in the genitive ("5. dubna 2026"), which
+    # is the only place these are used, so the genitive is what is stored here.
+    "cs" => %{
+      full:
+        ~w(ledna února března dubna května června července srpna září října listopadu prosince),
+      short: ~w(led úno bře dub kvě čvn čvc srp zář říj lis pro)
+    },
+    # Polish, like Czech, names a month inside a date in the genitive
+    # ("5 kwietnia 2026"), which is the only place these are used.
+    "pl" => %{
+      full:
+        ~w(stycznia lutego marca kwietnia maja czerwca lipca sierpnia września października listopada grudnia),
+      short: ~w(sty lut mar kwi maj cze lip sie wrz paź lis gru)
+    },
+    # Lowercase: Portuguese does not capitalise month names mid-sentence.
+    "pt" => %{
+      full:
+        ~w(janeiro fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro),
+      short: ~w(jan fev mar abr mai jun jul ago set out nov dez)
+    },
+    # Lowercase, as in Portuguese. The abbreviations are CLDR's, without a period.
+    "es" => %{
+      full:
+        ~w(enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre),
+      short: ~w(ene feb mar abr may jun jul ago sept oct nov dic)
+    }
+  }
+
+  @default_month_names %{
+    full:
+      ~w(January February March April May June July August September October November December),
+    short: ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+  }
+
+  @doc """
+  Returns localized month names. Format can be `:full` (default) or `:short`.
+  """
+  @spec get_month_names(String.t(), :full | :short) :: [String.t()]
+  def get_month_names(locale, format \\ :full) do
+    @month_names
+    |> Map.get(locale, @default_month_names)
+    |> Map.fetch!(format)
+  end
+
+  @weekday_names %{
+    "de" => %{
+      full: ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
+      short: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
+      narrow: ["S", "M", "D", "M", "D", "F", "S"]
+    },
+    "uk" => %{
+      full: ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"],
+      short: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+      narrow: ["Н", "П", "В", "С", "Ч", "П", "С"]
+    },
+    "fr" => %{
+      full: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
+      short: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
+      narrow: ["D", "L", "M", "M", "J", "V", "S"]
+    },
+    "it" => %{
+      full: ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"],
+      short: ["dom", "lun", "mar", "mer", "gio", "ven", "sab"],
+      narrow: ["D", "L", "M", "M", "G", "V", "S"]
+    },
+    "cs" => %{
+      full: ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"],
+      short: ["ne", "po", "út", "st", "čt", "pá", "so"],
+      narrow: ["N", "P", "Ú", "S", "Č", "P", "S"]
+    },
+    "pl" => %{
+      full: ["niedziela", "poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota"],
+      short: ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."],
+      narrow: ["N", "P", "W", "Ś", "C", "P", "S"]
+    },
+    "pt" => %{
+      full: [
+        "domingo",
+        "segunda-feira",
+        "terça-feira",
+        "quarta-feira",
+        "quinta-feira",
+        "sexta-feira",
+        "sábado"
+      ],
+      short: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"],
+      narrow: ["D", "S", "T", "Q", "Q", "S", "S"]
+    },
+    # Spanish writes Wednesday's initial as "X", keeping "M" for martes.
+    "es" => %{
+      full: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+      short: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"],
+      narrow: ["D", "L", "M", "X", "J", "V", "S"]
+    }
+  }
+
+  @default_weekday_names %{
+    full: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    short: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    narrow: ["S", "M", "T", "W", "T", "F", "S"]
+  }
+
+  @doc """
+  Returns localized weekday names.
+  Format can be :full, :short, or :narrow.
+  """
+  @spec get_weekday_names(String.t(), :full | :short | :narrow) :: [String.t()]
+  def get_weekday_names(locale, format \\ :short) do
+    @weekday_names
+    |> Map.get(locale, @default_weekday_names)
+    |> Map.fetch!(format)
+  end
+
+  @doc """
+  Formats a month name based on month number (1-12), locale, and format.
+  Format can be `:full` (default) or `:short`.
+  """
+  @spec format_month_name(1..12, String.t(), :full | :short) :: String.t()
+  def format_month_name(month_num, locale, format \\ :full)
+
+  def format_month_name(month_num, locale, format) when month_num in 1..12 do
+    month_names = get_month_names(locale, format)
+    Enum.at(month_names, month_num - 1)
+  end
+
+  @spec format_month_name(integer(), String.t(), :full | :short) :: String.t()
+  def format_month_name(_invalid_month, _locale, _format), do: ""
+
+  # The standalone (nominative) month, for a heading that names a month without
+  # a day. Only the locales whose standalone form differs from the in-date one
+  # in `@month_names` are listed; the rest share it (fr, it, de, pt, es) or are English.
+  # Stored lowercase except where the language capitalises the noun itself
+  # (en, de); `format_month_year/3` capitalises the start of the heading.
+  @standalone_month_names %{
+    "uk" =>
+      ~w(січень лютий березень квітень травень червень липень серпень вересень жовтень листопад грудень),
+    "cs" => ~w(leden únor březen duben květen červen červenec srpen září říjen listopad prosinec),
+    "pl" =>
+      ~w(styczeń luty marzec kwiecień maj czerwiec lipiec sierpień wrzesień październik listopad grudzień)
+  }
+
+  @doc """
+  The standalone month name for a heading without a day, as it reads mid-sentence:
+  lowercase in the languages that do not capitalise month names ("září",
+  "octobre"). Unlike `format_month_name/3`, never the genitive a date uses.
+
+  Headings starting with it go through `capitalize_first/1`, which
+  `format_month_year/3` already does.
+  """
+  @spec format_standalone_month_name(1..12, String.t()) :: String.t()
+  def format_standalone_month_name(month_num, locale) when month_num in 1..12 do
+    case Map.fetch(@standalone_month_names, locale) do
+      {:ok, names} -> Enum.at(names, month_num - 1)
+      :error -> format_month_name(month_num, locale, :full)
+    end
+  end
+
+  @doc """
+  A month-and-year heading, capitalised as a heading in the locale:
+  - en: September 2026
+  - fr: Septembre 2026
+  - cs: Leden 2026 (nominative, never the in-date "ledna")
+  - pt: Setembro de 2026
+  - es: Septiembre de 2026
+  """
+  @spec format_month_year(1..12, integer(), String.t()) :: String.t()
+  def format_month_year(month_num, year, locale) do
+    month_num
+    |> format_standalone_month_name(locale)
+    |> month_with_year(year, locale)
+    |> capitalize_first()
+  end
+
+  # Portuguese and Spanish link month and year with "de" ("setembro de 2026").
+  defp month_with_year(month, year, locale) when locale in ["pt", "es"],
+    do: "#{month} de #{year}"
+
+  defp month_with_year(month, year, _locale), do: "#{month} #{year}"
+
+  @doc """
+  Upper-cases the first grapheme only, leaving the rest as it is.
+
+  `String.capitalize/1` is wrong for headings: it lowercases everything after
+  the first letter, turning German "Januar – Februar" into "Januar – februar".
+  """
+  @spec capitalize_first(String.t()) :: String.t()
+  def capitalize_first(string) do
+    case String.next_grapheme(string) do
+      {first, rest} -> String.upcase(first) <> rest
+      nil -> string
+    end
+  end
+
+  @doc """
+  Formats a weekday name based on weekday number (1=Monday, 7=Sunday) and locale.
+  """
+  @spec format_weekday_name(1..7, String.t(), :full | :short | :narrow) :: String.t()
+  def format_weekday_name(weekday_num, locale, format)
+      when weekday_num in 1..7 do
+    weekday_names = get_weekday_names(locale, format)
+    # Convert ISO weekday (1=Monday) to index (0=Sunday)
+    index = if weekday_num == 7, do: 0, else: weekday_num
+    Enum.at(weekday_names, index)
+  end
+
+  @spec format_weekday_name(integer(), String.t(), :full | :short | :narrow) :: String.t()
+  def format_weekday_name(_invalid_weekday, _locale, _format), do: ""
+
+  # French, Italian and Portuguese write the first of a month as an ordinal.
+  @first_of_month %{"fr" => "1er", "it" => "1°", "pt" => "1º"}
+
+  @doc """
+  The day of the month as it is written in a date, without the month:
+  French, Italian and Portuguese write the first as an ordinal ("le 1er
+  octobre", "il 1° ottobre", "1º de outubro"), and every other day, and
+  every day in the other languages, is a plain number.
+  - en: 1, 2
+  - fr: 1er, 2
+  - it: 1°, 2
+  - pt: 1º, 2
+  """
+  @spec format_day_of_month(1..31, String.t()) :: String.t()
+  def format_day_of_month(1, locale), do: Map.get(@first_of_month, locale, "1")
+  def format_day_of_month(day, _locale) when day in 2..31, do: Integer.to_string(day)
+
+  @doc """
+  Formats a date led by its full weekday name, in the locale's order and
+  punctuation. The weekday keeps the case the locale gives it, so French and
+  Italian start lowercase.
+  - en: Monday, 5 February 2026
+  - de: Montag, 5. Februar 2026
+  - cs: pondělí 5. února 2026
+  - fr: lundi 5 février 2026
+  - pl: poniedziałek, 5 lutego 2026
+  - pt: segunda-feira, 5 de fevereiro de 2026
+  - es: lunes, 5 de febrero de 2026
+  """
+  @spec format_weekday_date(Calendar.date(), String.t()) :: String.t()
+  def format_weekday_date(date, locale) do
+    weekday_prefix(date, locale) <>
+      with_year(day_month(date, format_month_name(date.month, locale), locale), date.year, locale)
+  end
+
+  @doc """
+  Formats a date led by its full weekday name, without the year.
+  - en: Monday, 5 February
+  - de: Montag, 5. Februar
+  - cs: pondělí 5. února
+  - fr: lundi 5 février
+  - pt: segunda-feira, 5 de fevereiro
+  - es: lunes, 5 de febrero
+  """
+  @spec format_weekday_day_month(Calendar.date(), String.t()) :: String.t()
+  def format_weekday_day_month(date, locale) do
+    weekday_prefix(date, locale) <>
+      day_month(date, format_month_name(date.month, locale), locale)
+  end
+
+  @doc """
+  Formats a compact day and abbreviated month, without the year.
+  - en: 5 Feb
+  - de: 5. Feb
+  - cs: 5. úno
+  - fr: 5 févr.
+  - pt: 5 de fev
+  - es: 5 de feb
+  """
+  @spec format_short_date(Calendar.date(), String.t()) :: String.t()
+  def format_short_date(date, locale) do
+    day_month(date, format_month_name(date.month, locale, :short), locale)
+  end
+
+  @doc """
+  `format_short_date/2` with the year, for compact table cells.
+  - en: 5 Feb 2026
+  - de: 5. Feb 2026
+  - fr: 5 févr. 2026
+  - pt: 5 de fev de 2026
+  """
+  @spec format_short_date_with_year(Calendar.date(), String.t()) :: String.t()
+  def format_short_date_with_year(date, locale) do
+    with_year(format_short_date(date, locale), date.year, locale)
+  end
+
+  @doc """
+  `format_short_date/2` led by the abbreviated weekday.
+  - en: Mon 5 Feb
+  - de: Mo 5. Feb
+  - fr: lun. 5 févr.
+  """
+  @spec format_short_weekday_date(Calendar.date(), String.t()) :: String.t()
+  def format_short_weekday_date(date, locale) do
+    "#{format_weekday_name(Date.day_of_week(date), locale, :short)} " <>
+      format_short_date(date, locale)
+  end
+
+  # Day-and-month order, unpadded, shared by the weekday and short shapes.
+  # Mirrors `order_date_parts/4`'s locale groups.
+  defp day_month(date, month_name, locale) when locale in ["de", "cs"],
+    do: "#{date.day}. #{month_name}"
+
+  # Portuguese and Spanish link day and month with "de" ("5 de fevereiro").
+  defp day_month(date, month_name, locale) when locale in ["pt", "es"],
+    do: "#{date.day} de #{month_name}"
+
+  defp day_month(date, month_name, _other_locale), do: "#{date.day} #{month_name}"
+
+  defp with_year(day_month, year, locale) when locale in ["pt", "es"],
+    do: "#{day_month} de #{year}"
+
+  defp with_year(day_month, year, _other_locale), do: "#{day_month} #{year}"
+
+  # French, Italian and Czech run the weekday straight into the date; the
+  # others set it off with a comma.
+  defp weekday_prefix(date, locale) do
+    weekday = format_weekday_name(Date.day_of_week(date), locale, :full)
+
+    if locale in ["fr", "it", "cs"], do: "#{weekday} ", else: "#{weekday}, "
+  end
+
+  @doc """
+  Formats a datetime as `format_weekday_date/2` beside its clock time:
+  "Monday, 5 April 2026 · 02:30 PM", "Montag, 5. April 2026 · 14:30".
+
+  Shared by the attendee-facing surfaces that show a single meeting's slot (the
+  guest RSVP page and the host's request review page). A guest is an attendee,
+  so the weekday and month follow their language and the clock beside them does
+  too, rather than staying 24-hour.
+  """
+  @spec format_weekday_datetime(Calendar.datetime(), String.t()) :: String.t()
+  def format_weekday_datetime(datetime, locale) do
+    "#{format_weekday_date(datetime, locale)} · #{format_time(datetime, locale)}"
+  end
+
+  @doc """
+  Formats a number according to locale conventions, to `decimals` decimal
+  places.
+  - en: 1,234.56
+  - de/pt: 1.234,56
+  - uk/es: 1 234,56
+  """
+  @spec format_number(number(), String.t(), non_neg_integer()) :: String.t()
+  # `float_to_binary/2` emits no decimal point at all for `decimals: 0`, so
+  # there is no fractional part to separate.
+  def format_number(number, locale, 0) do
+    (number / 1.0) |> :erlang.float_to_binary([{:decimals, 0}]) |> group_digits(locale)
+  end
+
+  def format_number(number, locale, decimals) do
+    formatted = :erlang.float_to_binary(number / 1.0, [{:decimals, decimals}])
+    [integer_part, fractional_part] = String.split(formatted, ".")
+
+    group_digits(integer_part, locale) <> decimal_separator(locale) <> fractional_part
+  end
+
+  @doc """
+  Formats a whole number according to locale grouping conventions, with no
+  decimal part. Use this rather than `format_number/3` for quantities that are
+  meaningless below the unit — whole-currency amounts, counts, durations.
+  - en: 1,500
+  - de: 1.500
+  - uk/cs/es: 1 500
+  """
+  @spec format_integer(integer(), String.t()) :: String.t()
+  def format_integer(number, locale) when is_integer(number) do
+    number |> Integer.to_string() |> group_digits(locale)
+  end
+
+  @doc """
+  The thousands separator for a locale, exposed so callers that must group
+  digits somewhere this module cannot reach — client-side JS, a template
+  building its own string — stay consistent with `format_integer/2` instead of
+  hardcoding a second copy of the table.
+
+  Note that the space-grouping locales return a *non-breaking* space, so a
+  caller splitting or measuring on `" "` will not find it.
+  """
+  @spec group_separator(String.t()) :: String.t()
+  def group_separator(locale), do: thousand_separator(locale)
+
+  # Inserts the locale's thousands separator into a run of digits, every three
+  # places from the right. The sign is split off first: left in place it would
+  # be chunked like a digit, misplacing the separator whenever the digit count
+  # is a multiple of three ("-123456" grouping to "-,123,456").
+  defp group_digits("-" <> digits, locale), do: "-" <> group_digits(digits, locale)
+
+  defp group_digits(digits, locale) do
+    digits
+    |> String.to_charlist()
+    |> Enum.reverse()
+    |> Enum.chunk_every(3)
+    |> Enum.join(thousand_separator(locale))
+    |> String.reverse()
+  end
+
+  # U+00A0. The locales that group with a space need a non-breaking one: a plain
+  # space is a line-break opportunity, so "1 500 Kč" can wrap after the "1" and
+  # read as two separate figures. Written as an escape rather than the literal
+  # character so these clauses cannot be mistaken for `" "` at a glance.
+  @group_space "\u00A0"
+
+  defp thousand_separator("de"), do: "."
+  defp thousand_separator("it"), do: "."
+  defp thousand_separator("pt"), do: "."
+  defp thousand_separator("uk"), do: @group_space
+  defp thousand_separator("fr"), do: @group_space
+  defp thousand_separator("cs"), do: @group_space
+  defp thousand_separator("pl"), do: @group_space
+  # The RAE recommends a space: Spain groups with "." and Mexico with ",".
+  defp thousand_separator("es"), do: @group_space
+  defp thousand_separator(_other_locale), do: ","
+
+  @doc """
+  The decimal separator for a locale: a comma everywhere but English.
+  """
+  @spec decimal_separator(String.t()) :: String.t()
+  def decimal_separator("de"), do: ","
+  def decimal_separator("it"), do: ","
+  def decimal_separator("pt"), do: ","
+  def decimal_separator("uk"), do: ","
+  def decimal_separator("fr"), do: ","
+  def decimal_separator("cs"), do: ","
+  def decimal_separator("pl"), do: ","
+  def decimal_separator("es"), do: ","
+  def decimal_separator(_other_locale), do: "."
+end

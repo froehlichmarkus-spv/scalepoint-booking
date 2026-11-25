@@ -1,0 +1,54 @@
+/* Language Switcher - Quill Theme */
+
+/* The shared structure and the --lang-switcher-* colours are in
+   shared/components/language-switcher.css; this file adds Quill's glass
+   treatment and responsive placement. */
+
+.lang-switcher__button {
+  backdrop-filter: blur(var(--glass-blur-md));
+  -webkit-backdrop-filter: blur(var(--glass-blur-md));
+  border: var(--border-width-thin) solid var(--border-medium);
+  color: var(--lang-switcher-ink);
+}
+
+.lang-switcher__button:hover {
+  border-color: var(--border-intense);
+}
+
+.lang-switcher__panel {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* ===== Responsive ===== */
+
+/* From 641px, while the language switcher floats in the corner (the
+   overview), a demo page's theme switcher starts below it, so a wide
+   switcher on a tablet never runs under the button. */
+@media (min-width: 641px) {
+  .main-gradient.theme-grid .content-area > .language-switcher-wrapper.visible ~ .demo-theme-switcher {
+    margin-top: var(--quill-language-clearance);
+  }
+}
+
+/* From 641px the switcher floats in the page's top-right corner (the
+   wrapper's absolute top-6 right-6), level with the step navigation, and
+   scrolls away with the page. At 640px and below the step navigation is
+   hidden and the card reaches the corner, so a heading (a long locale's
+   above all) would run underneath the switcher. There it takes a row of its
+   own at the top of the page, right-aligned, and the step container's auto
+   margins centre the card in the space below. Embeds follow the same rule. */
+@media (max-width: 640px) {
+  .quill-theme-wrapper .language-switcher-wrapper {
+    position: relative;
+    top: auto;
+    right: auto;
+    align-self: flex-end;
+    margin: var(--space-lg) var(--space-lg) 0;
+  }
+
+  /* A demo page's theme switcher follows the language row. */
+  .main-gradient.theme-grid .content-area > .language-switcher-wrapper.visible ~ .demo-theme-switcher {
+    margin-top: var(--space-sm);
+  }
+}

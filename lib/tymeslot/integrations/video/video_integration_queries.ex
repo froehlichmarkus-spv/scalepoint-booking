@@ -1,0 +1,608 @@
+defmodule Tymeslot.Integrations.Video.VideoIntegrationQueries do
+  @moduledoc """
+  Database queries for video integrations.
+  """
+
+  import Ecto.Query
+  alias Ecto.Changeset
+  alias Tymeslot.Clock
+  alias Tymeslot.Integrations.Video.VideoIntegrationSchema
+  alias Tymeslot.Repo
+
+  @doc """
+  Gets all active video integrations for a user, credentials left encrypted:
+  its callers only need the id, name and provider.
+  """
+  @spec list_active_for_user(integer()) :: [VideoIntegrationSchema.t()]
+  def list_active_for_user(user_id) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.user_id == ^user_id and v.is_active == true)
+    |> order_by([v], asc: v.name)
+    |> Repo.all()
+  end
+
+  @doc "Whether the user has an active video integration."
+  @spec active_exists_for_user?(integer()) :: boolean()
+  def active_exists_for_user?(user_id) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.user_id == ^user_id and v.is_active == true)
+    |> Repo.exists?()
+  end
+
+  # Soft-deleted rows exist only so background cleanup can still authenticate
+  # against the provider. They are never part of the user's integration surface,
+  # so every listing and every by-provider or by-account lookup excludes them.
+  # `get/1` and `get_for_user/2` deliberately do not: they take an explicit id,
+  # and the cleanup worker reaches its dying integration through them.
+  defp exclude_deleted(query), do: where(query, [v], is_nil(v.deleted_at))
+
+  @doc """
+  Gets all active video integrations across all users.
+  Used for health checks and monitoring.
+
+  Credentials are deliberately left encrypted: the sweep only needs the id,
+  user, provider and base URL, and decrypting every row would let a single
+  row that no longer decrypts abort the whole listing.
+  """
+  @spec list_all_active() :: list(VideoIntegrationSchema.t())
+  def list_all_active do
+    active_query()
+    |> order_by([v], asc: v.name)
+    |> Repo.all()
+  end
+
+  @doc """
+  The query for every active integration across all users: switched on and
+  not disconnected. For other queries modules to join against.
+  """
+  @spec active_query() :: Ecto.Query.t()
+  def active_query do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.is_active == true)
+  end
+
+  @doc """
+  Gets every active integration for `provider`, across all users.
+
+  Credentials are deliberately left encrypted: callers auditing plaintext
+  columns such as `oauth_scope` have no use for them, and decrypting a whole
+  table's tokens to read one plaintext field is work nobody asked for.
+  """
+  @spec list_active_by_provider(String.t()) :: [VideoIntegrationSchema.t()]
+  def list_active_by_provider(provider) when is_binary(provider) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.provider == ^provider and v.is_active == true)
+    |> order_by([v], asc: v.id)
+    |> Repo.all()
+  end
+
+  @doc """
+  Every video integration of a user, disconnected (soft-deleted) ones
+  included: a disconnected row keeps its grant until its room cleanup has
+  drained, so deleting the account must still revoke it.
+  """
+  @spec list_all_for_user_including_disconnected(integer()) :: [VideoIntegrationSchema.t()]
+  def list_all_for_user_including_disconnected(user_id) do
+    VideoIntegrationSchema
+    |> where([v], v.user_id == ^user_id)
+    |> order_by([v], asc: v.id)
+    |> Repo.all()
+    |> Enum.map(&VideoIntegrationSchema.decrypt_credentials/1)
+  end
+
+  @doc """
+  Gets all video integrations for a user (including inactive).
+  """
+  @spec list_all_for_user(integer()) :: [VideoIntegrationSchema.t()]
+  def list_all_for_user(user_id) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.user_id == ^user_id)
+    |> order_by([v], desc: v.is_active, asc: v.name)
+    |> Repo.all()
+    |> Enum.map(&VideoIntegrationSchema.decrypt_credentials/1)
+  end
+
+  @doc """
+  Gets a single video integration by ID.
+  WARNING: This function does not check user authorization.
+  Use get_for_user/2 instead for secure access.
+
+  Returns the same results as `get_for_user/2`, which describes the
+  `{:error, :requires_reencryption, integration}` case callers must handle,
+  except that `{:error, :not_found}` means no row with that ID.
+  """
+  @spec get(integer()) ::
+          {:ok, VideoIntegrationSchema.t()}
+          | {:error, :not_found}
+          | {:error, :requires_reencryption, VideoIntegrationSchema.t()}
+  def get(id) do
+    VideoIntegrationSchema
+    |> Repo.get(id)
+    |> fetch_decrypted()
+  end
+
+  @doc """
+  Gets a video integration by ID for a specific user.
+  This is the secure version that checks user authorization.
+
+  Returns:
+
+    * `{:ok, integration}` — found and credentials readable
+    * `{:error, :not_found}` — no row with that ID for this user
+    * `{:error, :requires_reencryption, integration}` — found but one or more
+      encrypted credentials cannot be decrypted with the current keyring (e.g.
+      after SECRET_KEY_BASE rotation). The raw integration (without decrypted
+      virtual fields) is included so callers can flag `needs_reauth` without
+      needing to re-query.
+
+  Callers must handle the `{:error, :requires_reencryption, integration}`
+  clause as well as `{:ok, _}` and `{:error, :not_found}`, and route it to
+  `Tymeslot.Integrations.Video.handle_reauth_required/1` (for background
+  workers) or surface a reconnect prompt (for the web layer).
+  """
+  @spec get_for_user(integer(), integer()) ::
+          {:ok, VideoIntegrationSchema.t()}
+          | {:error, :not_found}
+          | {:error, :requires_reencryption, VideoIntegrationSchema.t()}
+  def get_for_user(id, user_id) do
+    VideoIntegrationSchema
+    |> where([v], v.id == ^id and v.user_id == ^user_id)
+    |> Repo.one()
+    |> fetch_decrypted()
+  end
+
+  @doc "As `get_for_user/2`, but a disconnected (soft-deleted) integration is not found."
+  @spec get_live_for_user(integer(), integer()) ::
+          {:ok, VideoIntegrationSchema.t()}
+          | {:error, :not_found}
+          | {:error, :requires_reencryption, VideoIntegrationSchema.t()}
+  def get_live_for_user(id, user_id) do
+    VideoIntegrationSchema
+    |> where([v], v.id == ^id and v.user_id == ^user_id)
+    |> exclude_deleted()
+    |> Repo.one()
+    |> fetch_decrypted()
+  end
+
+  # The three-outcome lookup shape of `get/1`, `get_for_user/2` and
+  # `get_live_for_user/2`.
+  defp fetch_decrypted(nil), do: {:error, :not_found}
+
+  defp fetch_decrypted(integration) do
+    case VideoIntegrationSchema.decryption_status(integration) do
+      :ok -> {:ok, VideoIntegrationSchema.decrypt_credentials(integration)}
+      :requires_reencryption -> {:error, :requires_reencryption, integration}
+    end
+  end
+
+  # The two-outcome lookup shape of the provider and account lookups.
+  defp fetch_found(nil), do: {:error, :not_found}
+
+  defp fetch_found(integration),
+    do: {:ok, VideoIntegrationSchema.decrypt_credentials(integration)}
+
+  @doc """
+  Gets an active video integration by provider for a specific user.
+  Returns {:ok, integration} if found, {:error, :not_found} otherwise.
+  """
+  @spec get_by_provider_for_user(integer(), String.t()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, :not_found}
+  def get_by_provider_for_user(user_id, provider) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.user_id == ^user_id and v.provider == ^provider and v.is_active == true)
+    |> limit(1)
+    |> Repo.one()
+    |> fetch_found()
+  end
+
+  @doc """
+  Finds an active video integration by provider and account ID for a user.
+  """
+  @spec get_by_account_for_user(integer(), String.t(), String.t()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, :not_found}
+  def get_by_account_for_user(user_id, provider, provider_account_id)
+      when is_integer(user_id) and is_binary(provider) and is_binary(provider_account_id) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where(
+      [v],
+      v.user_id == ^user_id and
+        v.provider == ^provider and
+        v.provider_account_id == ^provider_account_id and
+        v.is_active == true
+    )
+    |> limit(1)
+    |> Repo.one()
+    |> fetch_found()
+  end
+
+  # Finds an active video integration for a user and provider whose
+  # `provider_account_id` is NULL. This is the set the
+  # `unique_active_video_null_account_per_user` index covers, so it is what a
+  # reactivation of a legacy row has to be checked against.
+  defp get_active_null_account_for_user(user_id, provider)
+       when is_integer(user_id) and is_binary(provider) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where(
+      [v],
+      v.user_id == ^user_id and v.provider == ^provider and
+        is_nil(v.provider_account_id) and v.is_active == true
+    )
+    |> limit(1)
+    |> Repo.one()
+    |> fetch_found()
+  end
+
+  @doc """
+  Finds any video integration (active or inactive) by provider and account ID for a user.
+  Used to detect inactive duplicates before creating a new row.
+  """
+  @spec get_any_by_account_for_user(integer(), String.t(), String.t()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, :not_found}
+  def get_any_by_account_for_user(user_id, provider, provider_account_id)
+      when is_integer(user_id) and is_binary(provider) and is_binary(provider_account_id) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where(
+      [v],
+      v.user_id == ^user_id and
+        v.provider == ^provider and
+        v.provider_account_id == ^provider_account_id
+    )
+    |> order_by([v], desc: v.is_active)
+    |> limit(1)
+    |> Repo.one()
+    |> fetch_found()
+  end
+
+  @doc """
+  Lists the account keys of the user's integrations for `provider`, active or
+  not, leaving out the integration `except_id` (`nil` leaves out none).
+  """
+  @spec list_account_keys_for_user(integer(), String.t(), integer() | nil) :: [String.t()]
+  def list_account_keys_for_user(user_id, provider, except_id)
+      when is_integer(user_id) and is_binary(provider) do
+    VideoIntegrationSchema
+    |> exclude_deleted()
+    |> where([v], v.user_id == ^user_id and v.provider == ^provider)
+    |> where([v], not is_nil(v.provider_account_id))
+    |> except_integration(except_id)
+    |> select([v], v.provider_account_id)
+    |> Repo.all()
+  end
+
+  defp except_integration(query, nil), do: query
+  defp except_integration(query, id), do: where(query, [v], v.id != ^id)
+
+  @doc """
+  Creates a new video integration.
+  """
+  @spec create(map()) :: {:ok, VideoIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
+  def create(attrs) do
+    %VideoIntegrationSchema{}
+    |> VideoIntegrationSchema.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a video integration, leaving any outstanding `needs_reauth` flag in
+  place.
+
+  Background writers (token refresh, sync bookkeeping) must use this. To clear
+  the flag, the caller must say so explicitly via `update_credentials/2`.
+  """
+  @spec update(VideoIntegrationSchema.t(), map()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update(%VideoIntegrationSchema{} = integration, attrs) do
+    integration
+    |> VideoIntegrationSchema.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates a video integration and removes the named stored credentials in the
+  same write, clearing `needs_reauth` and what goes with it as
+  `update_credentials/2` does.
+
+  The flag says the stored credentials were refused; with them removed there
+  is nothing left to refuse (a Jitsi server that dropped token
+  authentication), and keeping it would have room creation refuse the
+  integration for good.
+
+  `fields` are virtual credential names (`:client_id`), as in
+  `VideoIntegrationSchema.remove_credentials/2`.
+  """
+  @spec update_removing_credentials(VideoIntegrationSchema.t(), map(), [atom()]) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update_removing_credentials(%VideoIntegrationSchema{} = integration, attrs, fields) do
+    integration
+    |> VideoIntegrationSchema.changeset(attrs)
+    |> VideoIntegrationSchema.remove_credentials(fields)
+    |> clear_reauth()
+    |> Repo.update()
+  end
+
+  defp clear_reauth(changeset) do
+    changeset
+    |> Changeset.force_change(:needs_reauth, false)
+    |> Changeset.force_change(:sync_error, nil)
+    |> Changeset.force_change(:room_creation_error, nil)
+    |> Changeset.force_change(:room_creation_error_since, nil)
+    |> Changeset.force_change(:room_creation_error_notices, %{})
+  end
+
+  @doc """
+  Updates a video integration with credentials its owner has just supplied,
+  clearing `needs_reauth`, the message explaining it, and any recorded room
+  creation error.
+
+  `sync_error` is written alongside `needs_reauth` by `flag_needs_reauth/2` and
+  describes why the integration stopped working. Leaving it behind outlives the
+  flag it belongs to, and the row then carries an explanation of a problem it no
+  longer has: the dashboard reads it for the reconnect prompt's reason, and the
+  reauth email for the reason it quotes.
+
+  Only reconnect paths may use this: an OAuth callback, or a credential form.
+  See `Tymeslot.Integrations.Calendar.CalendarIntegrationQueries.update_credentials/2`
+  for why this cannot be inferred from the changeset. A Nextcloud Talk edit
+  reaches it only once the new connection is proven against the server, which
+  also checked the account's right to create conversations, so the refusal
+  recorded against the old connection no longer describes it. What the owner
+  was emailed about is forgotten with it: a refusal by the new connection is
+  news, whoever the old one belonged to.
+  """
+  @spec update_credentials(VideoIntegrationSchema.t(), map()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update_credentials(%VideoIntegrationSchema{} = integration, attrs) do
+    with {:ok, updated, _was_flagged?} <- reconnect(integration, attrs), do: {:ok, updated}
+  end
+
+  @doc """
+  Updates a video integration with credentials proven to work, as
+  `update_credentials/2` does, and also says whether the row was flagged for
+  reconnection when it was written.
+
+  The flag is read from the row under a lock in the same transaction as the
+  write, not from `integration`: a proof can take a network round trip, during
+  which a refusal elsewhere may flag the row. For the same reason the cleared
+  fields are always written, even when `integration` already shows them clear.
+  """
+  @spec reconnect(VideoIntegrationSchema.t(), map()) ::
+          {:ok, VideoIntegrationSchema.t(), boolean()} | {:error, Ecto.Changeset.t()}
+  def reconnect(%VideoIntegrationSchema{id: id} = integration, attrs) do
+    result =
+      Repo.transaction(fn ->
+        was_flagged? =
+          VideoIntegrationSchema
+          |> where([v], v.id == ^id)
+          |> lock("FOR UPDATE")
+          |> select([v], v.needs_reauth)
+          |> Repo.one()
+
+        changeset =
+          integration
+          |> VideoIntegrationSchema.changeset(attrs)
+          |> clear_reauth()
+
+        case Repo.update(changeset) do
+          {:ok, updated} -> {updated, was_flagged? == true}
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end)
+
+    case result do
+      {:ok, {updated, was_flagged?}} -> {:ok, updated, was_flagged?}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  @doc """
+  Flags an integration as needing reauthentication and records `message` as
+  its sync error, so the dashboard banner stays consistent.
+
+  Whether this is a new flag is decided by the row, not by `integration`,
+  which may be stale: of two concurrent flaggers, exactly one sees
+  `newly_flagged?` true. `{:error, :not_found}` when the row is gone.
+  """
+  @spec flag_needs_reauth(VideoIntegrationSchema.t(), String.t()) ::
+          {:ok, VideoIntegrationSchema.t(), newly_flagged? :: boolean()}
+          | {:error, :not_found}
+  def flag_needs_reauth(%VideoIntegrationSchema{id: id} = integration, message) do
+    row = where(VideoIntegrationSchema, id: ^id)
+
+    flag = [
+      needs_reauth: true,
+      sync_error: message,
+      updated_at: DateTime.truncate(Clock.utc_now(), :second)
+    ]
+
+    case Repo.update_all(where(row, needs_reauth: false), set: flag) do
+      {1, _rows} ->
+        {:ok, struct(integration, flag), true}
+
+      {0, _rows} ->
+        case Repo.update_all(row, set: flag) do
+          {1, _rows} -> {:ok, struct(integration, flag), false}
+          {0, _rows} -> {:error, :not_found}
+        end
+    end
+  end
+
+  @doc """
+  Deletes a video integration.
+  """
+  @spec delete(VideoIntegrationSchema.t()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
+  def delete(%VideoIntegrationSchema{} = integration) do
+    Repo.delete(integration)
+  end
+
+  @doc """
+  Deletes an integration by id, but only while it is still soft-deleted.
+
+  Used by `Tymeslot.Workers.VideoIntegrationDisconnectWorker` to purge a row
+  once its provider-side rooms have been cleaned up. The `deleted_at`
+  predicate lives in the `WHERE` clause rather than in an application-level
+  read-then-delete, so a reconnect (which nulls `deleted_at`) that commits
+  after the worker last read the row cannot race the delete: either the row
+  is still soft-deleted when this statement runs and it is removed, or it
+  isn't and this is a no-op.
+
+  Returns the number of rows deleted: `1` on a genuine purge, `0` when the
+  row was reconnected (or already gone) before this ran.
+  """
+  @spec delete_if_still_deleted(integer()) :: non_neg_integer()
+  def delete_if_still_deleted(id) do
+    {count, _rows} =
+      VideoIntegrationSchema
+      |> where([v], v.id == ^id and not is_nil(v.deleted_at))
+      |> Repo.delete_all()
+
+    count
+  end
+
+  @doc """
+  Marks an integration as disconnected without removing it.
+
+  The row has to outlive the user's click: deleting provider-side rooms needs the
+  OAuth credentials this row holds, and that work runs in a background job.
+  Setting `is_active: false` at the same time is what keeps a soft-deleted row
+  out of every unique index (they are all partial on `is_active = true`), so
+  reconnecting the same account immediately afterwards cannot collide.
+
+  `Tymeslot.Workers.VideoIntegrationDisconnectWorker` hard-deletes the row once
+  the cleanup has drained.
+  """
+  @spec soft_delete(VideoIntegrationSchema.t()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
+  def soft_delete(%VideoIntegrationSchema{} = integration) do
+    integration
+    |> Changeset.change(%{
+      deleted_at: DateTime.utc_now(:second),
+      is_active: false
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Whether a user other than `user_id` has an integration of `provider` on the
+  external account `provider_account_id` that still holds a token, whatever
+  its state: a disconnected row keeps its grant until its room cleanup drains.
+  """
+  @spec account_held_by_other_user?(String.t(), String.t(), integer()) :: boolean()
+  def account_held_by_other_user?(provider, provider_account_id, user_id)
+      when is_binary(provider) and is_binary(provider_account_id) and is_integer(user_id) do
+    VideoIntegrationSchema
+    |> where([v], v.provider == ^provider and v.provider_account_id == ^provider_account_id)
+    |> where([v], v.user_id != ^user_id)
+    |> where([v], not is_nil(v.refresh_token_encrypted) or not is_nil(v.access_token_encrypted))
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Deletes every integration matching `(provider, provider_account_id)` regardless
+  of the owning user. Used by provider-initiated revocation flows (e.g. the Zoom
+  deauthorization webhook) where the only identifier we receive is the provider's
+  account ID. Returns the number of rows deleted.
+  """
+  @spec delete_by_provider_account(String.t(), String.t()) :: {:ok, non_neg_integer()}
+  def delete_by_provider_account(provider, provider_account_id)
+      when is_binary(provider) and is_binary(provider_account_id) and provider_account_id != "" do
+    # The rows are locked in ascending id order before any is deleted: a
+    # calendar sync key-shares its owner's video integrations in that order
+    # (`Calendar.IntegrationCacheQueries.lock/1`), and a delete that reached
+    # two of them the other way round could deadlock against it.
+    Repo.transaction(fn ->
+      ids =
+        Repo.all(
+          from(v in VideoIntegrationSchema,
+            where: v.provider == ^provider and v.provider_account_id == ^provider_account_id,
+            order_by: v.id,
+            lock: "FOR UPDATE",
+            select: v.id
+          )
+        )
+
+      {count, _rows} = Repo.delete_all(from(v in VideoIntegrationSchema, where: v.id in ^ids))
+      count
+    end)
+  end
+
+  @doc """
+  Sets the integration inactive, never the other way round: the write forces
+  `is_active` to false whatever the struct says, so a stale struct cannot turn
+  a pause into a reactivation.
+  """
+  @spec deactivate(VideoIntegrationSchema.t()) ::
+          {:ok, VideoIntegrationSchema.t()} | {:error, Changeset.t()}
+  def deactivate(%VideoIntegrationSchema{} = integration) do
+    integration
+    |> Changeset.change()
+    |> Changeset.force_change(:is_active, false)
+    |> Repo.update()
+  end
+
+  @doc """
+  Toggles the active status of an integration.
+
+  When reactivating, checks that no other active integration exists for the same
+  `(user_id, provider, provider_account_id)` to prevent a unique-constraint violation.
+  """
+  @spec toggle_active(VideoIntegrationSchema.t()) ::
+          {:ok, VideoIntegrationSchema.t()}
+          | {:error, Ecto.Changeset.t() | :duplicate_account | :not_found}
+  # A soft-deleted row is on its way out and its rooms may already be gone;
+  # reactivating it from a stale dashboard render would resurrect an integration
+  # the user has disconnected.
+  def toggle_active(%VideoIntegrationSchema{deleted_at: %DateTime{}}),
+    do: {:error, :not_found}
+
+  def toggle_active(%VideoIntegrationSchema{} = integration) do
+    if integration.is_active do
+      integration
+      |> VideoIntegrationSchema.activation_changeset(false)
+      |> Repo.update()
+    else
+      case check_reactivation_conflict(integration) do
+        :ok ->
+          integration
+          |> VideoIntegrationSchema.activation_changeset(true)
+          |> Repo.update()
+
+        {:error, :duplicate_account} = err ->
+          err
+      end
+    end
+  end
+
+  # Every uniqueness index here is predicated on `is_active = true`, so
+  # reactivating a row moves it *into* the index. A row whose account id is
+  # NULL falls under the legacy-row index on `(user_id, provider)`, and one
+  # whose account id is the empty string falls under the account index, because
+  # `''` is not NULL. Waving both through returned `:ok` for exactly the rows
+  # that contend, with no concurrency involved at all.
+  defp check_reactivation_conflict(%{provider_account_id: nil} = integration) do
+    case get_active_null_account_for_user(integration.user_id, integration.provider) do
+      {:ok, _existing} -> {:error, :duplicate_account}
+      {:error, :not_found} -> :ok
+    end
+  end
+
+  defp check_reactivation_conflict(integration) do
+    case get_by_account_for_user(
+           integration.user_id,
+           integration.provider,
+           integration.provider_account_id
+         ) do
+      {:ok, _existing} -> {:error, :duplicate_account}
+      {:error, :not_found} -> :ok
+    end
+  end
+end

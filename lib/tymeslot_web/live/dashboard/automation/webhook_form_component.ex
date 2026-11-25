@@ -1,0 +1,287 @@
+defmodule TymeslotWeb.Dashboard.Automation.WebhookFormComponent do
+  @moduledoc """
+  Component for creating and editing webhooks.
+  Displays a full-page form similar to theme customization.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.Webhooks
+  alias TymeslotWeb.Dashboard.Automation.EventSubscriptions
+  alias TymeslotWeb.Dashboard.Automation.Helpers, as: AutomationHelpers
+  alias TymeslotWeb.Live.Shared.FormValidationHelpers
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     socket
+     |> assign(:form_errors, %{})
+     |> assign(:form_values, %{})
+     |> assign(:available_events, Webhooks.available_events())}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(assigns, socket) do
+    mode = assigns[:mode] || :create
+    webhook = assigns[:webhook]
+
+    # Use form_values from assigns if provided (from parent),
+    # otherwise initialize from webhook or defaults
+    form_values =
+      cond do
+        Map.has_key?(assigns, :form_values) ->
+          assigns.form_values
+
+        mode == :edit && webhook ->
+          %{
+            "name" => webhook.name,
+            "url" => webhook.url,
+            "events" => webhook.events
+          }
+
+        true ->
+          %{
+            "name" => "",
+            "url" => "",
+            "events" => []
+          }
+      end
+
+    {:ok,
+     socket
+     |> assign(assigns)
+     |> assign(:mode, mode)
+     |> assign(:webhook, webhook)
+     |> assign(:form_values, form_values)
+     |> assign(:form_errors, assigns[:form_errors] || %{})}
+  end
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns = assign(assigns, :can_submit, can_submit?(assigns))
+
+    ~H"""
+    <div class="space-y-8">
+      <%!-- Toolbar --%>
+      <.section_header
+        icon="hero-link"
+        title={
+          if @mode == :create,
+            do: dgettext("dashboard_automation", "Create Webhook"),
+            else: dgettext("dashboard_automation", "Edit Webhook")
+        }
+        class="mb-10"
+      >
+        <:actions>
+          <.icon_button
+            icon="hero-x-mark"
+            variant={:neutral}
+            label={dgettext("dashboard_automation", "Close")}
+            phx-click="close_webhook_form"
+            phx-target={@parent_component}
+          />
+        </:actions>
+      </.section_header>
+
+      <%!-- Form --%>
+      <form
+        id="webhook-form"
+        novalidate
+        phx-submit={
+          if @mode == :create do
+            JS.push("create_webhook", target: @parent_component)
+          else
+            JS.push("update_webhook", target: @parent_component)
+          end
+        }
+        phx-target={@parent_component}
+        class="space-y-8"
+      >
+        <%!-- Name Field --%>
+        <.card
+          title={dgettext("dashboard_automation", "Webhook Details")}
+          description={
+            dgettext("dashboard_automation", "Configure the basic information for your webhook.")
+          }
+        >
+          <div class="space-y-6">
+            <.input
+              name="webhook[name]"
+              label={dgettext("dashboard_automation", "Webhook Name")}
+              value={Map.get(@form_values, "name", "")}
+              phx-blur={
+                JS.push("validate_field", value: %{"field" => "name"}, target: @parent_component)
+              }
+              placeholder={dgettext("dashboard_automation", "My n8n Automation")}
+              required
+              errors={FormValidationHelpers.field_errors(@form_errors, :name)}
+              icon="hero-tag"
+            />
+
+            <.input
+              name="webhook[url]"
+              type="url"
+              label={dgettext("dashboard_automation", "Webhook URL")}
+              value={Map.get(@form_values, "url", "")}
+              phx-blur={
+                JS.push("validate_field", value: %{"field" => "url"}, target: @parent_component)
+              }
+              placeholder="https://your-n8n-instance.com/webhook/..."
+              required
+              errors={FormValidationHelpers.field_errors(@form_errors, :url)}
+              icon="hero-link"
+            />
+
+            <div
+              :if={@mode == :create}
+              class="p-4 rounded-token-xl bg-turquoise-50/50 border-2 border-turquoise-100"
+            >
+              <div class="flex gap-3">
+                <div class="mt-0.5">
+                  <.icon name="hero-information-circle" class="w-5 h-5 text-turquoise-600" />
+                </div>
+                <div>
+                  <p class="text-token-sm font-black text-turquoise-900">
+                    {dgettext("dashboard_automation", "Security Token")}
+                  </p>
+                  <p class="text-token-xs text-turquoise-700 font-medium mt-0.5">
+                    {dgettext(
+                      "dashboard_automation",
+                      "A unique security token will be automatically generated for this webhook once created. You'll use it to verify requests in your automation tool."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div :if={@mode == :edit} class="space-y-2">
+              <label class="block text-token-sm font-black text-tymeslot-900">
+                {dgettext("dashboard_automation", "Security Token")}
+                <span class="text-tymeslot-500 font-medium">
+                  - {dgettext(
+                    "dashboard_automation",
+                    "Use this in your n8n/Zapier header verification"
+                  )}
+                </span>
+              </label>
+              <div class="flex gap-2">
+                <.input
+                  type="text"
+                  id="webhook_token_display"
+                  value={@webhook.webhook_token}
+                  readonly
+                  class="font-mono flex-1"
+                />
+                <.action_button
+                  variant={:secondary}
+                  id="copy-webhook-token"
+                  phx-hook="CopyOnClick"
+                  data-copy-text={@webhook.webhook_token}
+                  data-copy-feedback={
+                    dgettext("dashboard_automation", "Security token copied to clipboard!")
+                  }
+                  class="shrink-0"
+                >
+                  {dgettext("dashboard_automation", "Copy")}
+                </.action_button>
+                <.action_button
+                  variant={:danger_soft}
+                  phx-click="show_regenerate_token_modal"
+                  phx-value-id={@webhook.id}
+                  phx-target={@parent_component}
+                  class="shrink-0"
+                >
+                  {dgettext("dashboard_automation", "Regenerate")}
+                </.action_button>
+              </div>
+              <p class="text-token-xs text-tymeslot-500 font-medium">
+                {raw(
+                  dgettext(
+                    "dashboard_automation",
+                    "This token is automatically sent in the %{header} header.",
+                    header: ~s(<code class="bg-tymeslot-100 px-1 rounded">X-the scheduler-Token</code>)
+                  )
+                )}
+              </p>
+            </div>
+          </div>
+        </.card>
+
+        <%!-- Events Selection --%>
+        <EventSubscriptions.event_subscriptions
+          name="webhook[events][]"
+          events={@available_events}
+          selected={Map.get(@form_values, "events", [])}
+          toggle_event="toggle_event"
+          target={@parent_component}
+          errors={FormValidationHelpers.field_errors(@form_errors, :events)}
+          description={
+            dgettext("dashboard_automation", "Select which events should trigger this webhook.")
+          }
+        />
+
+        <%!-- Form Actions --%>
+        <p
+          :if={!@can_submit}
+          id="webhook-submit-hint"
+          class="pt-4 text-right text-token-xs text-tymeslot-500"
+        >
+          {get_disabled_reason(assigns)}
+        </p>
+        <div class="flex justify-end gap-3 pt-4">
+          <.action_button
+            variant={:secondary}
+            phx-click="close_webhook_form"
+            phx-target={@parent_component}
+          >
+            {dgettext("dashboard_automation", "Cancel")}
+          </.action_button>
+          <.loading_button
+            type="submit"
+            variant={:primary}
+            disabled={!@can_submit}
+            aria-describedby={if(!@can_submit, do: "webhook-submit-hint")}
+          >
+            {if @mode == :create,
+              do: dgettext("dashboard_automation", "Create Webhook"),
+              else: dgettext("dashboard_automation", "Update Webhook")}
+          </.loading_button>
+        </div>
+      </form>
+    </div>
+    """
+  end
+
+  defp can_submit?(assigns) do
+    values = assigns.form_values
+    errors = assigns.form_errors
+
+    AutomationHelpers.field_present?(values, "name") &&
+      AutomationHelpers.field_present?(values, "url") &&
+      AutomationHelpers.any_events_selected?(values) &&
+      Enum.empty?(errors)
+  end
+
+  defp get_disabled_reason(assigns) do
+    values = assigns.form_values
+    errors = assigns.form_errors
+
+    cond do
+      !Enum.empty?(errors) ->
+        dgettext("dashboard_automation", "Please fix the validation errors above.")
+
+      String.trim(Map.get(values, "name", "")) == "" ->
+        dgettext("dashboard_automation", "Webhook name is required.")
+
+      String.trim(Map.get(values, "url", "")) == "" ->
+        dgettext("dashboard_automation", "Webhook URL is required.")
+
+      !Enum.any?(Map.get(values, "events", [])) ->
+        dgettext("dashboard_automation", "At least one event subscription is required.")
+
+      true ->
+        ""
+    end
+  end
+end

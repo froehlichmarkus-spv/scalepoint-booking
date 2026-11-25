@@ -1,0 +1,476 @@
+defmodule Tymeslot.Slack.MessageBuilder do
+  @moduledoc """
+  Builds Slack Block Kit JSON payloads for each notification event.
+
+  All user-provided strings are escaped for Slack mrkdwn (`&`, `<`, `>`).
+  Cancellation and decline reasons are truncated to a safe length to stay
+  within Slack's 3000-char-per-text-block limit.
+
+  Times are rendered in the timezone the caller passes, which is the
+  organiser's: these messages go to the organiser's own channel, so the
+  attendee's timezone would leave them converting every booking by hand.
+
+  Block Kit reference: https://api.slack.com/block-kit
+  """
+
+  alias Tymeslot.Bookings.MeetingLinks
+  alias Tymeslot.Meetings.AttendeeName
+  alias Tymeslot.Meetings.HostManaged
+  alias Tymeslot.Notifications.BookingDetails
+  alias Tymeslot.Notifications.EventTypes
+  alias Tymeslot.Utils.DateTimeUtils
+
+  @max_reason_length 500
+
+  # Matched by name rather than wire literal; any other name (a job queued
+  # before an event was renamed) falls through to the generic clause.
+  @created EventTypes.to_event_type(:meeting_created)
+  @cancelled EventTypes.to_event_type(:meeting_cancelled)
+  @rescheduled EventTypes.to_event_type(:meeting_rescheduled)
+  @requested EventTypes.to_event_type(:meeting_requested)
+  @declined EventTypes.to_event_type(:meeting_declined)
+  @request_expired EventTypes.to_event_type(:meeting_request_expired)
+  @series_created EventTypes.to_event_type(:meeting_series_created)
+  @series_cancelled EventTypes.to_event_type(:meeting_series_cancelled)
+  @series_requested EventTypes.to_event_type(:meeting_series_requested)
+  @series_declined EventTypes.to_event_type(:meeting_series_declined)
+  @series_request_expired EventTypes.to_event_type(:meeting_series_request_expired)
+
+  @doc """
+  Builds the blocks list for a given event and meeting.
+
+  `series` is the event's `series` object
+  (`Tymeslot.BookingSeries.Automation`); a series event counts its
+  sessions from it, and names the first of them, which `meeting` is.
+  """
+  @spec build_blocks(String.t(), map(), String.t(), map() | nil) :: [map()]
+  def build_blocks(event_type, meeting, timezone, series \\ nil)
+
+  def build_blocks(@series_created, meeting, timezone, series) do
+    base = [
+      header("New series booked"),
+      section_text(
+        "*#{escape(attendee_name(meeting))}* booked #{session_count(series)} sessions of " <>
+          "*#{escape(type_name(meeting))}*, starting #{format_single_time(meeting.start_time, timezone)}"
+      ),
+      divider(),
+      section_details(meeting, timezone)
+      | details_sections(meeting)
+    ]
+
+    append_actions(base, meeting)
+  end
+
+  def build_blocks(@series_cancelled, meeting, _timezone, series) do
+    [
+      header("Series cancelled"),
+      section_text(
+        "*#{escape(attendee_name(meeting))}*'s #{session_count(series)} remaining sessions of " <>
+          "*#{escape(type_name(meeting))}* were cancelled"
+      ),
+      divider(),
+      section_cancellation(meeting)
+    ]
+  end
+
+  def build_blocks(@series_requested, meeting, timezone, series) do
+    base = [
+      header("New series request"),
+      section_text(
+        "*#{escape(attendee_name(meeting))}* asked for #{session_count(series)} sessions of " <>
+          "*#{escape(type_name(meeting))}*, starting #{format_single_time(meeting.start_time, timezone)}"
+      ),
+      divider(),
+      section_request_details(meeting, timezone)
+      | details_sections(meeting)
+    ]
+
+    append_actions(base, meeting)
+  end
+
+  def build_blocks(@series_declined, meeting, _timezone, series) do
+    [
+      header("Series request declined"),
+      section_text(
+        "*#{escape(attendee_name(meeting))}*'s request for #{session_count(series)} sessions of " <>
+          "*#{escape(type_name(meeting))}* was declined"
+      ),
+      divider(),
+      section_decline(meeting)
+    ]
+  end
+
+  def build_blocks(@series_request_expired, meeting, _timezone, series) do
+    [
+      header("Series request expired"),
+      section_text(
+        "*#{escape(attendee_name(meeting))}*'s request for #{session_count(series)} sessions of " <>
+          "*#{escape(type_name(meeting))}* expired"
+      ),
+      divider(),
+      section_expired()
+    ]
+  end
+
+  def build_blocks(@created, meeting, timezone, _series) do
+    base = [
+      header(created_header(meeting)),
+      section_summary(meeting),
+      divider(),
+      section_details(meeting, timezone)
+      | details_sections(meeting)
+    ]
+
+    append_actions(base, meeting)
+  end
+
+  def build_blocks(@cancelled, meeting, _timezone, _series) do
+    [
+      header("Booking cancelled"),
+      section_summary(meeting),
+      divider(),
+      section_cancellation(meeting)
+    ]
+  end
+
+  def build_blocks(@rescheduled, meeting, timezone, _series) do
+    base = [
+      header("Booking rescheduled"),
+      section_summary(meeting),
+      divider(),
+      section_reschedule(meeting, timezone)
+      | details_sections(meeting)
+    ]
+
+    append_actions(base, meeting)
+  end
+
+  def build_blocks(@requested, meeting, timezone, _series) do
+    base = [
+      header("New booking request"),
+      section_summary(meeting),
+      divider(),
+      section_request_details(meeting, timezone)
+      | details_sections(meeting)
+    ]
+
+    append_actions(base, meeting)
+  end
+
+  def build_blocks(@declined, meeting, _timezone, _series) do
+    [
+      header("Booking request declined"),
+      section_summary(meeting),
+      divider(),
+      section_decline(meeting)
+    ]
+  end
+
+  def build_blocks(@request_expired, meeting, _timezone, _series) do
+    [
+      header("Booking request expired"),
+      section_summary(meeting),
+      divider(),
+      section_expired()
+    ]
+  end
+
+  def build_blocks(event_type, meeting, _timezone, _series) do
+    base = [
+      header("Meeting update"),
+      section_summary(meeting),
+      section_text("Event: `#{escape(to_string(event_type))}`")
+    ]
+
+    append_actions(base, meeting)
+  end
+
+  @doc "Builds the blocks list used by the 'Send test message' button."
+  @spec build_test_blocks() :: [map()]
+  def build_test_blocks do
+    [
+      header("the scheduler test message"),
+      section_text(
+        "If you can see this, your Slack integration is configured correctly. " <>
+          "You'll start receiving notifications when meetings are booked, " <>
+          "cancelled, or rescheduled."
+      )
+    ]
+  end
+
+  # ============================================================================
+  # Block helpers
+  # ============================================================================
+
+  defp header(text) do
+    %{
+      "type" => "header",
+      "text" => %{"type" => "plain_text", "text" => text, "emoji" => true}
+    }
+  end
+
+  defp divider, do: %{"type" => "divider"}
+
+  defp section_text(text) do
+    %{"type" => "section", "text" => %{"type" => "mrkdwn", "text" => text}}
+  end
+
+  defp section_summary(meeting) do
+    text = "*#{escape(meeting_title(meeting))}*\n" <> with_line(meeting)
+
+    section_text(text)
+  end
+
+  # A meeting the host manages was arranged by the host, not booked by the
+  # guest in its attendee fields.
+  defp created_header(meeting) do
+    if HostManaged.managed?(meeting), do: "New meeting", else: "New booking"
+  end
+
+  # The address alone where there is no name beside it, rather than twice.
+  defp with_line(meeting) do
+    case {AttendeeName.display_name(meeting), meeting.attendee_email} do
+      {nil, email} when is_binary(email) and email != "" ->
+        "With #{escape(email)}"
+
+      {name, email} ->
+        "With #{escape(name || "guest")} (#{escape(email || "no email")})"
+    end
+  end
+
+  defp section_details(meeting, timezone) do
+    fields = [
+      mrkdwn_field("*When*", format_time(meeting, timezone)),
+      mrkdwn_field("*Duration*", "#{duration_minutes(meeting)} min")
+    ]
+
+    %{"type" => "section", "fields" => fields}
+  end
+
+  # What the booker told the organiser: where to meet and how to reach them,
+  # their notes, and their answers. `BookingDetails` bounds every value, so
+  # no field or section can pass Slack's limits once escaped.
+  defp details_sections(meeting) do
+    details = BookingDetails.from_meeting(meeting)
+
+    Enum.reject(
+      [contact_section(details), note_section(details), answers_section(details)],
+      &is_nil/1
+    ) ++ more_answers_context(details)
+  end
+
+  defp contact_section(details) do
+    fields =
+      for {key, label} <- [location: "*Where*", phone: "*Phone*", company: "*Company*"],
+          value = details[key],
+          do: mrkdwn_field(label, escape(value))
+
+    if fields != [], do: %{"type" => "section", "fields" => fields}
+  end
+
+  defp note_section(%{note: nil}), do: nil
+
+  defp note_section(%{note: note}) do
+    quoted = note |> escape() |> String.split("\n") |> Enum.map_join("\n", &(">" <> &1))
+    section_text("*Notes*\n" <> quoted)
+  end
+
+  defp answers_section(%{answers: []}), do: nil
+
+  defp answers_section(%{answers: answers}) do
+    fields =
+      Enum.map(answers, fn {label, value} ->
+        mrkdwn_field("*#{escape(label)}*", escape(value))
+      end)
+
+    %{"type" => "section", "fields" => fields}
+  end
+
+  defp more_answers_context(%{more_answers: 0}), do: []
+
+  defp more_answers_context(%{more_answers: more}) do
+    noun = if more == 1, do: "answer", else: "answers"
+
+    [
+      %{
+        "type" => "context",
+        "elements" => [%{"type" => "mrkdwn", "text" => "#{more} more #{noun} in the scheduler"}]
+      }
+    ]
+  end
+
+  defp section_cancellation(meeting) do
+    reason = cancellation_reason(meeting)
+    section_text("Cancelled.\n>#{escape(reason)}")
+  end
+
+  defp cancellation_reason(meeting) do
+    case Map.get(meeting, :cancellation_reason) do
+      nil -> "No reason given"
+      "" -> "No reason given"
+      text -> truncate(text, @max_reason_length)
+    end
+  end
+
+  defp section_reschedule(meeting, timezone) do
+    section_text("New time: *#{format_time(meeting, timezone)}*")
+  end
+
+  defp section_request_details(meeting, timezone) do
+    base_fields = [
+      mrkdwn_field("*When*", format_time(meeting, timezone)),
+      mrkdwn_field("*Duration*", "#{duration_minutes(meeting)} min")
+    ]
+
+    fields =
+      case deadline_text(meeting, timezone) do
+        nil -> base_fields
+        text -> base_fields ++ [mrkdwn_field("*Respond by*", text)]
+      end
+
+    %{"type" => "section", "fields" => fields}
+  end
+
+  defp section_decline(meeting) do
+    reason = decline_reason(meeting)
+    section_text("Declined.\n>#{escape(reason)}")
+  end
+
+  defp decline_reason(meeting) do
+    case Map.get(meeting, :decline_reason) do
+      nil -> "No reason given"
+      "" -> "No reason given"
+      text -> truncate(text, @max_reason_length)
+    end
+  end
+
+  defp section_expired do
+    section_text("Nobody responded before the deadline, so the slot was released.")
+  end
+
+  defp deadline_text(meeting, timezone) do
+    case Map.get(meeting, :approval_deadline_at) do
+      nil -> nil
+      %DateTime{} = deadline -> format_single_time(deadline, timezone)
+    end
+  end
+
+  defp append_actions(blocks, meeting) do
+    case meeting_url(meeting) do
+      nil ->
+        blocks
+
+      url ->
+        blocks ++
+          [
+            %{
+              "type" => "actions",
+              "elements" => [
+                %{
+                  "type" => "button",
+                  "text" => %{
+                    "type" => "plain_text",
+                    "text" => "Open in the scheduler",
+                    "emoji" => true
+                  },
+                  "url" => url,
+                  "style" => "primary"
+                }
+              ]
+            }
+          ]
+    end
+  end
+
+  defp mrkdwn_field(label, value) do
+    %{"type" => "mrkdwn", "text" => "#{label}\n#{value}"}
+  end
+
+  # ============================================================================
+  # Formatters — kept consistent with Tymeslot.Telegram.MessageBuilder so the
+  # date/time wording matches across channels.
+  # ============================================================================
+
+  # The sessions a series event is about: those it lists, else the count
+  # the series has.
+  defp session_count(%{"sessions" => [_first | _rest] = sessions}), do: length(sessions)
+  defp session_count(%{"count" => count}) when is_integer(count), do: count
+  defp session_count(_series), do: "several"
+
+  # A series is of a meeting type; the meeting's own title names the
+  # attendee as well.
+  defp type_name(meeting), do: Map.get(meeting, :meeting_type) || meeting_title(meeting)
+
+  defp attendee_name(meeting) do
+    AttendeeName.display_name(meeting) || meeting.attendee_email || "guest"
+  end
+
+  defp meeting_title(meeting) do
+    cond do
+      Map.has_key?(meeting, :event_type) and
+        is_struct(meeting.event_type) and
+          not is_struct(meeting.event_type, Ecto.Association.NotLoaded) ->
+        Map.get(meeting.event_type, :name, "Meeting")
+
+      Map.has_key?(meeting, :event_type_name) ->
+        meeting.event_type_name || "Meeting"
+
+      true ->
+        Map.get(meeting, :title) || "Meeting"
+    end
+  end
+
+  defp format_time(meeting, timezone) do
+    {start_time, zone} = DateTimeUtils.shift_or_utc(meeting.start_time, timezone)
+    {end_time, _zone} = DateTimeUtils.shift_or_utc(meeting.end_time, timezone)
+
+    date = Calendar.strftime(start_time, "%a %d %b %Y")
+    start_str = Calendar.strftime(start_time, "%H:%M")
+
+    if DateTime.to_date(end_time) == DateTime.to_date(start_time) do
+      "#{date}, #{start_str}–#{Calendar.strftime(end_time, "%H:%M")} (#{zone})"
+    else
+      "#{date}, #{start_str} – #{Calendar.strftime(end_time, "%a %d %b %H:%M")} (#{zone})"
+    end
+  end
+
+  defp format_single_time(datetime, timezone) do
+    {shifted, zone} = DateTimeUtils.shift_or_utc(datetime, timezone)
+
+    date = Calendar.strftime(shifted, "%a %d %b %Y")
+    time = Calendar.strftime(shifted, "%H:%M")
+
+    "#{date}, #{time} (#{zone})"
+  end
+
+  defp duration_minutes(%{start_time: s, end_time: e}) do
+    div(DateTime.diff(e, s, :second), 60)
+  end
+
+  defp meeting_url(meeting) do
+    case Map.get(meeting, :id) do
+      id when is_binary(id) -> MeetingLinks.host_view_url(id)
+      _none -> nil
+    end
+  end
+
+  # Slack mrkdwn escape: &, <, > must be escaped.
+  defp escape(nil), do: ""
+
+  defp escape(text) when is_binary(text) do
+    text
+    |> String.replace("&", "&amp;")
+    |> String.replace("<", "&lt;")
+    |> String.replace(">", "&gt;")
+  end
+
+  defp escape(other), do: other |> to_string() |> escape()
+
+  defp truncate(text, max) when is_binary(text) do
+    if String.length(text) > max do
+      String.slice(text, 0, max) <> "..."
+    else
+      text
+    end
+  end
+end

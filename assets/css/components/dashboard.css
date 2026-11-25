@@ -1,0 +1,485 @@
+/* ===================================
+   DASHBOARD COMPONENTS
+   =================================== */
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+/* Status switch: backs the StatusSwitch component, which sets each size's
+   track and slider dimensions, border width and slider travel as utilities.
+   These rules sit in the components layer, below Tailwind's utilities, so
+   those size classes apply instead of losing to an unlayered rule. */
+@layer components {
+  .status-toggle {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+    transition: all 0.2s ease-in-out;
+    /* Deliberate non-palette black alpha: a neutral shadow, not a brand colour. */
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  }
+
+  /* A ring for keyboard focus only, so a click does not leave one behind. */
+  .status-toggle:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  .status-toggle:not(:disabled):hover {
+    transform: scale(1.05);
+    /* Deliberate non-palette black alpha: a neutral shadow, not a brand colour. */
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+  }
+
+  .status-toggle--active {
+    background: var(--color-primary-500);
+    border-color: var(--color-primary-500);
+    box-shadow: 0 2px 8px color-mix(in oklab, var(--color-primary-500) 30%, transparent);
+  }
+
+  .status-toggle--active:not(:disabled):hover {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    box-shadow: 0 4px 12px color-mix(in oklab, var(--color-primary-500) 40%, transparent);
+  }
+
+  .status-toggle--inactive {
+    background: var(--color-glass-bg-overlay);
+    border-color: var(--color-border-glass-dark);
+  }
+
+  .status-toggle--inactive:not(:disabled):hover {
+    border-color: var(--color-primary-300);
+    background: color-mix(in oklab, var(--color-primary-500) 5%, transparent);
+  }
+
+  /* The travel (a translate utility) is the component's, per size: the track
+     width less its borders and the slider. */
+  .status-toggle-slider {
+    pointer-events: none;
+    position: relative;
+    display: inline-block;
+    border-radius: var(--radius-full);
+    background: white;
+    box-shadow: var(--shadow-glass-sm);
+    transition: translate 0.2s ease-in-out;
+  }
+
+  .status-toggle-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .status-toggle-icon--visible {
+    opacity: 1;
+  }
+
+  .status-toggle-icon--hidden {
+    opacity: 0;
+  }
+
+  .status-icon {
+    color: var(--color-text-glass-secondary);
+  }
+
+  .status-icon--white {
+    color: white;
+  }
+}
+
+/* Dashboard Sidebar */
+.dashboard-sidebar {
+  @apply bg-white border-r-2 border-tymeslot-50 transition-glass;
+  position: relative;
+}
+
+.dashboard-nav-section-title {
+  @apply px-4 text-token-xs font-black text-tymeslot-500 uppercase tracking-widest mb-1 flex items-center;
+}
+
+.dashboard-nav-section-title::after {
+  content: '';
+  @apply flex-1 h-[1px] bg-tymeslot-100 ml-3 opacity-50;
+}
+
+/* Dashboard navigation links. These rules sit in the components layer,
+   below Tailwind's utilities, as the buttons and cards do, so a link's own
+   utilities apply instead of losing to an unlayered rule. A link that relies
+   on the responsive padding below must not set its own padding utilities. */
+@layer components {
+  /* Dashboard Navigation Links */
+  .dashboard-nav-link {
+    @apply text-tymeslot-600 font-bold transition-glass flex items-center space-x-3 px-4 py-2 text-sm rounded-token-xl;
+    @apply hover:text-turquoise-600 hover:bg-turquoise-50/50 hover:translate-x-1;
+    /* The anchor for the notification badge and the active shimmer. */
+    position: relative;
+  }
+
+  .dashboard-nav-link--active {
+    @apply text-white bg-linear-to-r from-turquoise-600 to-cyan-600 shadow-lg shadow-turquoise-500/20 font-black;
+    @apply hover:text-white hover:from-turquoise-700 hover:to-cyan-700 hover:translate-x-0;
+  }
+
+  /* Icons inside nav links. A hovered icon takes the link's own hover colour
+     through currentColor, so it never turns teal on the active link's teal
+     gradient. */
+  .dashboard-nav-link svg {
+    @apply w-5 h-5;
+    transition: var(--transition-glass-fast);
+    flex-shrink: 0;
+  }
+
+  .dashboard-nav-link:hover svg {
+    @apply scale-110;
+  }
+
+  .dashboard-nav-link--active svg {
+    @apply text-white/90;
+  }
+
+  /* Subtle shimmer effect for active links */
+  .dashboard-nav-link--active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    /* Deliberate non-palette white alpha: a neutral highlight, not a brand colour. */
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.1), 
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .dashboard-nav-link--active:hover::before {
+    left: 100%;
+  }
+
+  /* Focus states for accessibility: a ring for keyboard focus only, so a
+     mouse click does not leave one behind. */
+  .dashboard-nav-link:focus {
+    outline: none;
+  }
+
+  .dashboard-nav-link:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+
+  /* Desktop: a slightly tighter row so the full navigation, extensions
+     included, fits a typical laptop viewport without scrolling. */
+  @media (width >= 64rem) {
+    .dashboard-sidebar nav .dashboard-nav-link {
+      padding-block: 0.375rem;
+    }
+  }
+
+  /* Below lg the sidebar is an overlay: touch-sized rows and no hover nudge.
+     The nudge cancelled here is `hover:translate-x-1`, which Tailwind v4 emits
+     through the standalone `translate` property; resetting `transform` leaves
+     it untouched. */
+  @media (width < 64rem) {
+    .dashboard-nav-link {
+      min-height: 48px;
+      padding: 12px 16px;
+      font-size: 16px;
+    }
+
+    .dashboard-nav-link:hover {
+      backdrop-filter: var(--glass-blur-light);
+      -webkit-backdrop-filter: var(--glass-blur-light);
+      translate: none;
+    }
+
+    .dashboard-nav-link--active {
+      backdrop-filter: var(--glass-blur-medium);
+      -webkit-backdrop-filter: var(--glass-blur-medium);
+    }
+  }
+
+  @media (width < 48rem) {
+    .dashboard-nav-link {
+      padding: 14px 20px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dashboard-nav-link,
+    .dashboard-nav-link::before,
+    .dashboard-nav-link svg {
+      transition: none;
+    }
+
+    .dashboard-nav-link:hover {
+      translate: none;
+    }
+
+    .dashboard-nav-link--active::before {
+      display: none;
+    }
+  }
+
+  @media (prefers-contrast: high) {
+    .dashboard-nav-link {
+      border: 2px solid transparent;
+    }
+
+    .dashboard-nav-link:hover {
+      border-color: var(--color-primary-500);
+    }
+
+    .dashboard-nav-link--active {
+      border-color: var(--color-primary-700);
+      border-width: 2px;
+    }
+  }
+}
+
+/* Off-canvas sidebar (below Tailwind's lg breakpoint, where the sidebar is
+   toggled rather than always shown): while closed it is hidden from focus and
+   from assistive technology, not just slid off screen. Visibility switches
+   only after the slide-out has finished, and at once when opening. */
+@media (width < 64rem) {
+  .dashboard-sidebar:not(.dashboard-sidebar-open) {
+    visibility: hidden;
+    transition:
+      translate 300ms ease-in-out,
+      visibility 0s linear 300ms;
+  }
+
+  .dashboard-sidebar.dashboard-sidebar-open {
+    visibility: visible;
+    transition:
+      translate 300ms ease-in-out,
+      visibility 0s linear 0s;
+  }
+}
+
+/* Sortable drag state */
+.dragging {
+  @apply ring-2 ring-turquoise-500 shadow-xl scale-[1.02] rotate-1;
+  z-index: 50;
+}
+
+/* Mobile/Tablet optimization - Sidebar as overlay */
+@media (width < 64rem) {
+  .dashboard-sidebar {
+    backdrop-filter: var(--glass-blur-light);
+    -webkit-backdrop-filter: var(--glass-blur-light);
+    height: 100vh;
+    height: 100dvh;
+    /* Ensure sidebar doesn't take up layout space */
+    position: fixed !important;
+    width: 320px;
+    max-width: 85vw;
+    /* Fixed, so the root's safe-area padding does not reach it. */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  
+  .dashboard-sidebar.dashboard-sidebar-open {
+    translate: 0 0;
+  }
+  
+  /* Ensure sidebar overlay is properly positioned */
+  .dashboard-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    /* Deliberate non-palette black alpha: a neutral scrim, not a brand colour. */
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .dashboard-sidebar {
+    z-index: 70;
+  }
+  
+  /* Improved mobile menu buttons */
+  .dashboard-mobile-menu-toggle,
+  .dashboard-sidebar-close {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Mobile phone specific adjustments */
+@media (width < 48rem) {
+  .dashboard-sidebar {
+    width: 280px;
+    max-width: 80vw;
+  }
+}
+
+/* Dashboard navigation setup dot: positions the small dot at the row's end.
+   The dot itself is drawn in the sidebar component. */
+.dashboard-nav-notification {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+}
+
+/* Selector Buttons - Used for mode selection in forms */
+.glass-selector {
+  @apply flex-1 p-4 rounded-token-2xl border-2 transition-glass box-border h-16
+         hover:scale-[1.02] hover:shadow-md flex items-center justify-center cursor-pointer;
+  @apply bg-tymeslot-50 border-tymeslot-200 text-tymeslot-600;
+}
+
+.glass-selector:hover {
+  @apply border-turquoise-200 bg-turquoise-50/30;
+  color: var(--color-primary-700);
+}
+
+.glass-selector--active {
+  background: var(--glass-gradient-primary) !important;
+  border-color: var(--color-primary-400) !important;
+  color: var(--color-text-on-glass) !important;
+  @apply shadow-lg shadow-turquoise-500/20;
+}
+
+/* ===================================
+   OVERVIEW SHEEN
+   =================================== */
+
+/* A soft light in the corner of the overview's gradient panels (the welcome
+   banner and the focus cockpit). The panel is the positioning parent. */
+.dashboard-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 20%, var(--color-glass-bg-overlay), transparent 50%);
+}
+
+.dashboard-sheen--wide {
+  background: radial-gradient(circle at 20% 20%, var(--color-glass-bg-overlay), transparent 55%);
+}
+
+/* ===================================
+   AVAILABILITY WEEKDAY ROWS
+   =================================== */
+
+/* Seven weekdays share one panel, so each is a single row. The hour selects
+   drop to a compact height there: at their default size they, not the content,
+   would set the row height. Scoped to the row rather than added as a modifier
+   on .input, so the shared component keeps one shape everywhere else. */
+.day-hours-inline .input {
+  @apply w-auto rounded-token-xl py-1 text-sm;
+  /* The shared select reserves pr-10 for its background-image chevron:
+     tighter padding must move the chevron too, or the time runs under it. */
+  padding-left: 0.5rem;
+  padding-right: 1.625rem;
+}
+
+.day-hours-inline .select-chevron {
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* The menu as an icon rail (DashboardSidebar `rail`), from lg up where the
+   menu is a column: labels leave the screen but stay the links' accessible
+   names, and their tooltips show them; section titles become dividers. */
+@media (width >= 64rem) {
+  .dashboard-sidebar--rail > div {
+    padding-inline: 0.75rem;
+  }
+
+  .dashboard-sidebar--rail .dashboard-nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* `flex-basis` stacks the View Page and copy buttons, which share a
+     wrapping row; the nav rows are already one per line. */
+  .dashboard-sidebar--rail .dashboard-nav-link {
+    justify-content: center;
+    padding-inline: 0;
+    flex-basis: 100%;
+  }
+
+  .dashboard-sidebar--rail .dashboard-nav-link,
+  .dashboard-sidebar--rail .dashboard-nav-link:hover {
+    translate: none;
+  }
+
+  .dashboard-sidebar--rail .dashboard-nav-link > * {
+    margin-inline: 0;
+  }
+
+  .dashboard-sidebar--rail .dashboard-nav-notification {
+    top: 0.25rem;
+    right: 0.25rem;
+    transform: none;
+  }
+
+  .dashboard-sidebar--rail .dashboard-nav-section-title {
+    font-size: 0;
+    padding-inline: 0.5rem;
+    margin-block: 0.5rem;
+  }
+
+  .dashboard-sidebar--rail .dashboard-nav-section-title::after {
+    margin-inline-start: 0;
+    opacity: 1;
+  }
+
+  .dashboard-sidebar--rail nav {
+    margin-top: 0.5rem;
+  }
+}
+
+/* Focus mode on the calendar (CalendarFocus), from lg up where the menu
+   is a column: the menu, the row's gutter and the strips go. */
+@media (width >= 64rem) {
+  #dashboard-root[data-calendar-focus] #dashboard-sidebar {
+    display: none;
+  }
+
+  #dashboard-root[data-calendar-focus] .dashboard-main-row {
+    gap: 0;
+  }
+
+  #dashboard-root[data-calendar-focus] #calendar-strips > * {
+    display: none;
+  }
+}
+
+/* A time in the poll form's week (AvailabilityWeek) where a meeting would
+   clash with the host's calendar or time off: hatched, still clickable. */
+.poll-availability-busy {
+  background-color: var(--color-neutral-100);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-neutral-300) 0 2px,
+    transparent 2px 7px
+  );
+}

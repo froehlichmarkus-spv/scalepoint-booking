@@ -1,0 +1,567 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n>1);\n"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "A Talk conversation on your own Nextcloud for every booking"
+msgstr "Une conversation Talk sur votre propre Nextcloud pour chaque réservation"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "A video integration with this configuration already exists"
+msgstr "Une intégration vidéo avec cette configuration existe déjà"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/shared_form_components.ex
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "API Key"
+msgstr "Clé API"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Active Video Integrations"
+msgstr "Intégrations vidéo actives"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Add a video link to online meetings automatically when they're booked."
+msgstr "Ajoutez automatiquement un lien vidéo aux réunions en ligne lors de leur réservation."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "All meetings will use the same room URL"
+msgstr "Toutes les réunions utiliseront la même URL de salle"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "App ID (optional)"
+msgstr "App ID (facultatif)"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "App password"
+msgstr "Mot de passe d’application"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "App secret (optional)"
+msgstr "App secret (facultatif)"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Base URL"
+msgstr "URL de base"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Cancel"
+msgstr "Annuler"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Cannot reactivate - another active integration already uses this account"
+msgstr "Réactivation impossible - une autre intégration active utilise déjà ce compte"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a video provider"
+msgstr "Connecter un fournisseur de visioconférence"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#, elixir-autogen, elixir-format
+msgid "Connect any video platform"
+msgstr "Connectez n’importe quelle plateforme vidéo"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Connect one so online meetings get a video link added automatically when they're booked."
+msgstr "Connectez-en un pour que les réunions en ligne reçoivent automatiquement un lien vidéo lors de leur réservation."
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Connection issues"
+msgstr "Problèmes de connexion"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Connection test failed unexpectedly: %{reason}"
+msgstr "Le test de connexion a échoué de manière inattendue : %{reason}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Copy from %{name}"
+msgstr "Copier depuis %{name}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Create one in Nextcloud under Personal settings, Security. Your login password stops working here once two-factor authentication is on."
+msgstr "Créez-en un dans Nextcloud, sous « Paramètres personnels », « Sécurité ». Votre mot de passe de connexion ne fonctionne plus ici dès que l’authentification à deux facteurs est activée."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#, elixir-autogen, elixir-format
+msgid "Custom Video Link"
+msgstr "Lien vidéo personnalisé"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "Deletes the stored App ID and App secret. Links then open the room without a token, which only works on a server that lets anyone in."
+msgstr "Supprime l’App ID et l’App secret enregistrés. Les liens ouvrent alors la salle sans jeton, ce qui ne fonctionne que sur un serveur qui laisse entrer tout le monde."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Each booking gets its own public Talk conversation, and guests join from its link without a Nextcloud account. To skip the lobby and moderate, sign in to Nextcloud in your browser as this login name first, with your usual password and any second factor; the app password works only for Tymeslot. Anyone else, other Nextcloud users included, waits in the lobby until the meeting starts. A conversation is deleted when its booking is cancelled, and about a week after the meeting ends."
+msgstr "Chaque réservation obtient sa propre conversation Talk publique, et les invités la rejoignent depuis son lien sans compte Nextcloud. Pour passer la salle d’attente et modérer, connectez-vous d’abord à Nextcloud dans votre navigateur avec cet identifiant de connexion, à l’aide de votre mot de passe habituel et de votre éventuel deuxième facteur ; le mot de passe d’application ne fonctionne que pour Tymeslot. Toute autre personne, y compris les autres utilisateurs Nextcloud, patiente dans la salle d’attente jusqu’au début de la réunion. Une conversation est supprimée lorsque sa réservation est annulée, et environ une semaine après la fin de la réunion."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Edit Integration"
+msgstr "Modifier l’intégration"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Edit integration"
+msgstr "Modifier l’intégration"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Enter a custom video link to configure meeting rooms"
+msgstr "Saisissez un lien vidéo personnalisé pour configurer les salles de réunion"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Enter new API key"
+msgstr "Saisissez une nouvelle clé API"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your video meeting URL. Use {{meeting_id}} for unique rooms per meeting"
+msgstr "Saisissez l’URL de votre réunion vidéo. Utilisez {{meeting_id}} pour des salles uniques par réunion"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/kmeet_config.ex
+#, elixir-autogen, elixir-format
+msgid "Every booking gets its own room, generated automatically."
+msgstr "Chaque réservation obtient sa propre salle, générée automatiquement."
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to reconnect. Please try again."
+msgstr "Échec de la reconnexion. Veuillez réessayer."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to update integration"
+msgstr "Échec de la mise à jour de l’intégration"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to update integration status"
+msgstr "Échec de la mise à jour du statut de l’intégration"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Fills in the server and login name, and uses the same app password unless you enter a different one."
+msgstr "Renseigne le serveur et l’identifiant de connexion, et utilise le même mot de passe d’application, sauf si vous en saisissez un autre."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Get your API key from your MiroTalk instance configuration"
+msgstr "Récupérez votre clé API dans la configuration de votre instance MiroTalk"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Healthy"
+msgstr "Opérationnel"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Hosted services"
+msgstr "Services hébergés"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Inactive Video Integrations"
+msgstr "Intégrations vidéo inactives"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/kmeet_config.ex
+#, elixir-autogen, elixir-format
+msgid "Infomaniak's hosted video meetings"
+msgstr "Réunions vidéo hébergées par Infomaniak"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Integration Name"
+msgstr "Nom de l’intégration"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Integration status updated"
+msgstr "Statut de l’intégration mis à jour"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Integration updated successfully"
+msgstr "Intégration mise à jour avec succès"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Invalid meeting link"
+msgstr "Lien de réunion invalide"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Jitsi"
+msgstr "Jitsi"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "Jitsi Meet"
+msgstr "Jitsi Meet"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Leave blank to keep the current app password."
+msgstr "Laissez vide pour conserver le mot de passe d’application actuel."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "Leave blank to keep the current secret."
+msgstr "Laissez vide pour conserver l’App secret actuel."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Leave blank to use the app password of your calendar connection."
+msgstr "Laissez vide pour utiliser le mot de passe d’application de votre connexion de calendrier."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Login name"
+msgstr "Identifiant de connexion"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Meeting URL"
+msgstr "URL de la réunion"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Custom Video"
+msgstr "Mon lien vidéo personnalisé"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Jitsi"
+msgstr "Mon Jitsi"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#, elixir-autogen, elixir-format
+msgid "My MiroTalk"
+msgstr "Mon MiroTalk"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Nextcloud Talk"
+msgstr "Mon Nextcloud Talk"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "My Video Integration"
+msgstr "Mon intégration vidéo"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/kmeet_config.ex
+#, elixir-autogen, elixir-format
+msgid "My kMeet"
+msgstr "Mon kMeet"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "New bookings get no video link. %{reason}"
+msgstr "Les nouvelles réservations n’obtiennent pas de lien vidéo. %{reason}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Nextcloud Talk"
+msgstr "Nextcloud Talk"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "No URL Configured"
+msgstr "Aucune URL configurée"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "No video links"
+msgstr "Aucun lien vidéo"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "No video providers connected yet"
+msgstr "Aucun fournisseur de visioconférence connecté pour le moment"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "OAuth"
+msgstr "OAuth"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Other"
+msgstr "Autres"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Paused"
+msgstr "En pause"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Please select a provider"
+msgstr "Veuillez sélectionner un fournisseur"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Reconnect"
+msgstr "Reconnecter"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Reconnect integration"
+msgstr "Reconnecter l’intégration"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "Remove token authentication"
+msgstr "Supprimer l’authentification par jeton"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Save Changes"
+msgstr "Enregistrer les modifications"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Saved, but the server did not answer as expected. Check the URL, or use Test connection once it is reachable."
+msgstr "Enregistré, mais le serveur n’a pas répondu comme prévu. Vérifiez l’URL ou utilisez « Tester la connexion » dès qu’il est joignable."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Saving..."
+msgstr "Enregistrement en cours..."
+
+#: lib/tymeslot_web/live/dashboard/video_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Self-hosted"
+msgstr "Auto-hébergés"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Self-hosted video conferencing"
+msgstr "Visioconférence auto-hébergée"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/shared_form_components.ex
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Server URL"
+msgstr "URL du serveur"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "Set both if your server requires token authentication; the secret must be at least 32 characters. Each person then gets a link to this meeting's room only, and only yours is marked as moderator. Jitsi honours that marking only when the server has the token_affiliation module enabled and automatic moderator assignment switched off; otherwise a standard install makes whoever joins first the moderator, and a Docker install makes everyone with a link a moderator. Leave both blank for a server that lets anyone in."
+msgstr "Renseignez les deux si votre serveur exige une authentification par jeton ; l’App secret doit comporter au moins 32 caractères. Chaque personne reçoit alors un lien vers la salle de cette réunion uniquement, et seul le vôtre est marqué comme modérateur. Jitsi ne respecte ce marquage que si le module token_affiliation est activé sur le serveur et l’attribution automatique du rôle de modérateur désactivée ; sinon, une installation standard fait de la première personne arrivée le modérateur, et une installation Docker fait de toute personne disposant d’un lien un modérateur. Laissez les deux vides pour un serveur qui laisse entrer tout le monde."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Static Meeting Room"
+msgstr "Salle de réunion statique"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Template variable detected: {{meeting_id}}"
+msgstr "Variable de modèle détectée : {{meeting_id}}"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Test connection"
+msgstr "Tester la connexion"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Testing connection…"
+msgstr "Test de la connexion en cours…"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "That calendar connection is no longer available."
+msgstr "Cette connexion de calendrier n’est plus disponible."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "The address of your Jitsi server. The public meet.jit.si requires whoever hosts the meeting to sign in before it starts, so a server you run works better for scheduled bookings."
+msgstr "L’adresse de votre serveur Jitsi. Le service public meet.jit.si exige que l’organisateur de la réunion se connecte avant son début ; un serveur que vous gérez convient donc mieux aux réservations planifiées."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "The address you open Nextcloud at, including any subfolder, such as https://example.com/nextcloud."
+msgstr "L’adresse à laquelle vous ouvrez Nextcloud, y compris un éventuel sous-dossier, p. ex. https://example.com/nextcloud."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#, elixir-autogen, elixir-format
+msgid "The full URL where your MiroTalk P2P instance is hosted"
+msgstr "L’URL complète où votre instance MiroTalk P2P est hébergée"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting link placeholder is invalid, so all bookings currently share one room. Edit the integration to fix it."
+msgstr "L'espace réservé du lien de réunion est invalide : toutes les réservations partagent donc actuellement la même salle. Modifiez l'intégration pour corriger cela."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "The name you sign in to Nextcloud with."
+msgstr "Le nom avec lequel vous vous connectez à Nextcloud."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This Nextcloud account is already connected. Edit or remove the existing integration instead."
+msgstr "Ce compte Nextcloud est déjà connecté. Modifiez ou supprimez plutôt l’intégration existante."
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This provider is already connected. Deactivate or remove the existing integration before adding another."
+msgstr "Ce fournisseur est déjà connecté. Désactivez ou supprimez l’intégration existante avant d’en ajouter une autre."
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This server is already connected. Edit or remove the existing integration instead."
+msgstr "Ce serveur est déjà connecté. Modifiez ou supprimez plutôt l’intégration existante."
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "Use your Nextcloud calendar connection"
+msgstr "Utiliser votre connexion de calendrier Nextcloud"
+
+#: lib/tymeslot_web/live/dashboard/video_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Video integration added successfully"
+msgstr "Intégration vidéo ajoutée avec succès"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Your API key"
+msgstr "Votre clé API"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Your MiroTalk instance base URL"
+msgstr "L’URL de base de votre instance MiroTalk"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "Your own Jitsi Meet server"
+msgstr "Votre propre serveur Jitsi Meet"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "custom"
+msgstr "personnalisé"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "custom link"
+msgstr "lien personnalisé"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "hosted"
+msgstr "hébergé"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/nextcloud_talk_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://cloud.example.com"
+msgstr "https://cloud.example.com"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "https://jitsi.example.org/{{meeting_id}}"
+msgstr "https://jitsi.example.org/{{meeting_id}}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/jitsi_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://meet.example.com"
+msgstr "https://meet.example.com"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://mirotalk.yourdomain.com"
+msgstr "https://mirotalk.yourdomain.com"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/kmeet_config.ex
+#, elixir-autogen, elixir-format
+msgid "kMeet"
+msgstr "kMeet"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/kmeet_config.ex
+#, elixir-autogen, elixir-format
+msgid "kMeet is Infomaniak's hosted service and always uses this address, which cannot be changed."
+msgstr "kMeet est le service hébergé d’Infomaniak et utilise toujours cette adresse, qui ne peut pas être modifiée."
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "rooms created automatically"
+msgstr "salles créées automatiquement"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "self-hosted"
+msgstr "auto-hébergé"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/mirotalk_config.ex
+#, elixir-autogen, elixir-format
+msgid "your-api-key-here"
+msgstr "votre-cle-api-ici"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "⚠ Invalid Syntax"
+msgstr "⚠ Syntaxe invalide"
+
+#: lib/tymeslot_web/components/dashboard/integrations/video/custom_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/video/edit_video_integration_modal.ex
+#, elixir-autogen, elixir-format
+msgid "✓ Valid Template"
+msgstr "✓ Modèle valide"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Delete"
+msgstr "Supprimer"
+
+#: lib/tymeslot_web/live/dashboard/video_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Delete %{name}"
+msgstr "Supprimer %{name}"

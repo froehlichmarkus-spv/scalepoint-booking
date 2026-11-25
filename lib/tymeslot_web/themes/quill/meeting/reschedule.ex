@@ -1,0 +1,105 @@
+defmodule TymeslotWeb.Themes.Quill.Meeting.Reschedule do
+  @moduledoc """
+  Quill theme reschedule component with glassmorphism styling.
+  """
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.ContentTranslations.AttendeeTexts
+  alias TymeslotWeb.Themes.Quill.Scheduling.Wrapper
+  alias TymeslotWeb.Themes.Shared.PathHandlers
+
+  use TymeslotWeb.Components.CoreComponents
+  import TymeslotWeb.Themes.Shared.Components.MeetingDetails, only: [meeting_detail_rows: 1]
+
+  attr :theme_tokens, :any, required: true
+  attr :locale, :string, required: true
+  attr :language_dropdown_open, :boolean, required: true
+  attr :offered_locales, :list, default: nil
+  attr :legal_links, :map, required: true
+  attr :meeting, :map, required: true
+  attr :organizer_profile, :map, default: nil
+
+  @doc """
+  Renders the reschedule page in Quill theme style.
+  """
+  @spec render(map()) :: Phoenix.LiveView.Rendered.t()
+  def render(assigns) do
+    ~H"""
+    <Wrapper.quill_wrapper
+      theme_tokens={@theme_tokens}
+      locale={@locale}
+      language_dropdown_open={@language_dropdown_open}
+      offered_locales={assigns[:offered_locales]}
+      legal_links={@legal_links}
+      show_language_switcher={true}
+    >
+      <div
+        class="min-h-screen flex items-center justify-center px-4 py-8"
+        data-testid="quill-reschedule"
+      >
+        <div class="w-full max-w-2xl">
+          <.glass_morphism_card class="booker-card">
+            <div class="p-8">
+              <div class="text-center mb-8">
+                <div class="mx-auto mb-4 w-12 h-12">
+                  <.icon name="hero-arrow-path" class="w-12 h-12 meeting-page-icon--primary" />
+                </div>
+
+                <h1 class="text-3xl font-bold mb-2 meeting-page-title">
+                  {dgettext("booking_manage", "Reschedule Appointment")}
+                </h1>
+                <p class="text-lg meeting-page-lead">
+                  {dgettext("booking_manage", "Select a new time for your meeting")}
+                </p>
+              </div>
+
+              <div class="glass-morphism-card booker-card meeting-page-panel mb-8">
+                <div class="p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold meeting-page-panel-title">
+                      {dgettext("booking_manage", "Current Meeting")}
+                    </h3>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium meeting-page-duration">
+                      {dgettext("booking_manage", "%{minutes} min", minutes: @meeting.duration)}
+                    </span>
+                  </div>
+
+                  <.meeting_detail_rows
+                    start_time={@meeting.start_time}
+                    timezone={@meeting.attendee_timezone}
+                    organizer_profile={@organizer_profile}
+                    locale={@locale}
+                    organizer_name={@meeting.organizer_name}
+                    meeting_type={AttendeeTexts.text(@meeting, :meeting_type, assigns[:locale])}
+                  />
+                </div>
+              </div>
+
+              <div class="text-center">
+                <p class="mb-6 meeting-page-muted">
+                  {dgettext(
+                    "booking_manage",
+                    "Ready to pick a new time? Let's find one that works better for you."
+                  )}
+                </p>
+
+                <.action_button
+                  type="button"
+                  data-testid="reschedule-continue"
+                  phx-click={JS.navigate(PathHandlers.organizer_scheduling_path(assigns))}
+                  variant={:primary}
+                >
+                  <span>{dgettext("booking_manage", "Choose New Time")}</span>
+                  <.icon name="hero-calendar" class="ml-2 h-5 w-5 shrink-0" />
+                </.action_button>
+              </div>
+            </div>
+          </.glass_morphism_card>
+        </div>
+      </div>
+    </Wrapper.quill_wrapper>
+    """
+  end
+end

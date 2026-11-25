@@ -1,0 +1,455 @@
+defmodule Tymeslot.Integrations.Calendar.Outlook.Provider do
+  @moduledoc """
+  Outlook/Microsoft Calendar provider implementation.
+
+  This provider integrates with Microsoft Graph API using OAuth 2.0
+  to fetch calendar events for availability calculation.
+  """
+
+  use Tymeslot.Integrations.Calendar.Providers.OAuthBase,
+    provider_name: "outlook",
+    display_name: "Outlook Calendar",
+    base_url: "https://graph.microsoft.com/v1.0"
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Infrastructure.Config
+  alias Tymeslot.Integrations.Calendar.CalendarEntry
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationSchema
+  alias Tymeslot.Integrations.Calendar.Outlook.CalendarAPI
+  alias Tymeslot.Integrations.Calendar.Outlook.EventNormaliser
+  alias Tymeslot.Integrations.Calendar.Outlook.SeriesExceptions
+  alias Tymeslot.Integrations.Calendar.Outlook.SeriesPatch
+  alias Tymeslot.Integrations.Calendar.Outlook.SeriesSplit
+  alias Tymeslot.Integrations.Calendar.Providers.OAuthProvider
+  alias Tymeslot.Integrations.Calendar.Recurrence.SeriesSplit, as: RecurrenceSplit
+  alias Tymeslot.Integrations.Calendar.Shared.{ErrorHandler, MultiCalendarFetch, ProviderCommon}
+  alias Tymeslot.Integrations.Calendar.Shared.FetchAggregate.Outcome
+
+  require Logger
+
+  @typep converted_event :: %{
+           required(:uid) => String.t() | nil,
+           required(:ical_uid) => String.t() | nil,
+           required(:summary) => String.t() | nil,
+           required(:description) => String.t() | nil,
+           required(:location) => String.t() | nil,
+           required(:all_day) => boolean(),
+           required(:start_time) => DateTime.t() | Date.t() | nil,
+           required(:end_time) => DateTime.t() | Date.t() | nil,
+           required(:status) => String.t() | nil,
+           required(:show_as) => String.t() | nil,
+           required(:response_status) => String.t() | nil,
+           required(:transparency) => String.t()
+         }
+
+  # Required callbacks for OAuth base
+
+  @impl OAuthProvider
+  @spec validate_oauth_scope(map()) :: :ok | {:error, String.t()}
+  def validate_oauth_scope(config) do
+    required_scopes = [
+      "https://graph.microsoft.com/Calendars.ReadWrite",
+      "https://graph.microsoft.com/Calendars.ReadWrite.Shared"
+    ]
+
+    case Map.get(config, :oauth_scope) do
+      scope when is_binary(scope) ->
+        if Enum.any?(required_scopes, &String.contains?(scope, &1)) or
+             (String.contains?(scope, "Calendars.ReadWrite") or
+                String.contains?(scope, "Calendars.Read")) do
+          :ok
+        else
+          {:error,
+           "OAuth scope must include Calendars.ReadWrite permission for read/write access"}
+        end
+
+      _invalid ->
+        {:error, "Invalid oauth_scope format"}
+    end
+  end
+
+  # --- Provider behaviour ---
+
+  @impl Tymeslot.Integrations.Calendar.Provider
+  def normalise_events(raw_events, context) do
+    EventNormaliser.normalise_events(raw_events, context)
+  end
+
+  # --- Legacy conversion (used by OAuthBase get_events / create_event / update_event) ---
+
+  @impl Tymeslot.Integrations.Calendar.Provider
+  @spec convert_events(list(map())) :: list(converted_event())
+  def convert_events(raw_events) do
+    raw_events
+    |> CalendarAPI.convert_to_common_format()
+    |> Enum.filter(&busy_event?/1)
+    |> Enum.map(&convert_event/1)
+  end
+
+  defp busy_event?(event) do
+    status = Map.get(event, :status)
+    response_status = Map.get(event, :response_status)
+
+    status != "cancelled" and response_status != "declined"
+  end
+
+  @impl OAuthProvider
+  @spec convert_event(map()) :: converted_event()
+  def convert_event(outlook_event) do
+    start_time = event_time(outlook_event, :start)
+    end_time = event_time(outlook_event, :end)
+
+    %{
+      uid: outlook_event[:id] || outlook_event[:uid],
+      # The key sync caches the event under (`EventNormaliser`).
+      ical_uid: outlook_event[:ical_uid],
+      summary: outlook_event[:summary],
+      description: outlook_event[:description],
+      location: outlook_event[:location],
+      all_day: outlook_event[:is_all_day] || false,
+      start_time: start_time,
+      end_time: end_time,
+      status: outlook_event[:status],
+      show_as: outlook_event[:show_as],
+      response_status: outlook_event[:response_status],
+      transparency: if(outlook_event[:show_as] == "free", do: "transparent", else: "opaque")
+    }
+  end
+
+  @impl OAuthProvider
+  @spec get_calendar_api_module() :: module()
+  def get_calendar_api_module, do: api_module()
+
+  @impl OAuthProvider
+  @spec call_list_events(CalendarIntegrationSchema.t(), DateTime.t(), DateTime.t()) ::
+          {:ok, list(map())} | {:error, Outcome.t()} | {:error, atom(), String.t()}
+  def call_list_events(integration, start_time, end_time) do
+    MultiCalendarFetch.list_events_with_selection(
+      integration,
+      start_time,
+      end_time,
+      api_module()
+    )
+  end
+
+  @impl OAuthProvider
+  @spec call_create_event(CalendarIntegrationSchema.t(), map()) ::
+          {:ok, map()} | {:error, atom(), String.t()}
+  def call_create_event(integration, event_attrs) do
+    calendar_id = event_attrs[:calendar_id] || integration.default_booking_calendar_id
+
+    if calendar_id do
+      api_module().create_event(integration, calendar_id, event_attrs)
+    else
+      api_module().create_event(integration, event_attrs)
+    end
+  end
+
+  @doc """
+  Writes `event_attrs` to the event.
+
+  An `:occurrence` of scope `:all` in `event_attrs` (see
+  `Recurrence.SeriesMove.edit/0`, naming the series master in `:master_id`)
+  edits every occurrence of a recurring event instead: the master is read,
+  with its body as stored so that a copy keeps an HTML description as HTML,
+  and patched with only what the edit changes (`Outlook.SeriesPatch`). One
+  of scope `:following`, with the occurrence's original start in `:slot`,
+  splits the series there (`Outlook.SeriesSplit`): the following
+  occurrences are created as a new series in the calendar Graph says holds
+  the master, which takes the edit, then the master's range is ended
+  before them, and if that fails the new series is deleted again. The
+  occurrences from the split on that were edited or cancelled on their own
+  are read before anything is written, and carried to the new series once
+  the split is (`Outlook.SeriesExceptions`); one that cannot be carried is
+  logged, and does not fail the split. The answer is then
+  `{:ok, %{tail: %{uid: uid, id: id}}}`, the new series' `iCalUId` and id;
+  an edit of the first occurrence is written as one of every occurrence. A
+  refusal of the edit is answered before anything is written. A series the
+  account was only invited to is refused with `{:error, :not_organiser}`
+  before the split is written: the new tail would carry its attendees from
+  this account, inviting them all afresh to a series this account now
+  organises.
+  """
+  @impl OAuthProvider
+  @spec call_update_event(CalendarIntegrationSchema.t(), String.t(), map()) ::
+          {:ok, map()} | {:error, atom(), String.t()} | {:error, term()}
+  def call_update_event(integration, _event_id, %{occurrence: %{scope: scope} = edit})
+      when scope in [:all, :following] do
+    with {:ok, master} <- api_module().get_event(integration, edit.master_id, body: :stored) do
+      if scope == :all,
+        do: patch_series(integration, master, edit),
+        else: split_series(integration, master, edit)
+    end
+  end
+
+  def call_update_event(integration, event_id, event_attrs) do
+    calendar_id = event_attrs[:calendar_id] || integration.default_booking_calendar_id
+    # Prefer the provider-native event ID when available (avoids iCalUID→ID conversion)
+    effective_id = event_attrs[:provider_event_id] || event_id
+
+    if calendar_id do
+      api_module().update_event(integration, calendar_id, effective_id, event_attrs)
+    else
+      api_module().update_event(integration, effective_id, event_attrs)
+    end
+  end
+
+  defp patch_series(integration, master, edit) do
+    with {:ok, body} <- SeriesPatch.build(master, edit) do
+      if body == %{},
+        do: {:ok, master},
+        else: api_module().patch_event(integration, edit.master_id, body)
+    end
+  end
+
+  # A series the account was only invited to is refused before anything is
+  # written: the tail would carry its attendees from this account, so Graph
+  # would invite them all afresh to a series this account now organises,
+  # leaving the real organiser off it.
+  defp split_series(_integration, %{"isOrganizer" => false}, _edit), do: {:error, :not_organiser}
+
+  # The tail goes into the calendar Graph says holds the master: the cached
+  # row's calendar can read "primary" for a series in another calendar, and
+  # a tail created there would move the following occurrences with it. A
+  # calendar that cannot be read refuses the split before anything is
+  # written.
+  defp split_series(integration, master, edit) do
+    case SeriesSplit.build(master, edit) do
+      {:ok, %{tail: tail, head: head}} ->
+        api = api_module()
+
+        with {:ok, calendar_id} <- api.get_event_calendar_id(integration, edit.master_id),
+             {:ok, carries} <- SeriesExceptions.plan(api, integration, master, edit),
+             {:ok, created} <-
+               RecurrenceSplit.write(
+                 fn -> api.insert_event(integration, calendar_id, tail) end,
+                 fn -> api.patch_event(integration, edit.master_id, head) end,
+                 &api.delete_event(integration, &1["id"])
+               ) do
+          SeriesExceptions.carry(api, integration, master, created["id"], carries)
+          {:ok, %{tail: %{uid: created["iCalUId"], id: created["id"]}}}
+        end
+
+      :first_occurrence ->
+        patch_series(integration, master, edit)
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Fetches one event by the Graph event id in `provider_event_id`, whichever
+  calendar holds it.
+
+  Graph gives an event a new id when it moves to another calendar, so a 404
+  alone cannot tell a moved event from a deleted one. The event is then looked
+  up by the iCalendar UID in `ical_uid`, which a move keeps, and it is
+  `{:error, :not_found}` only when no calendar holds it. Without an
+  `ical_uid` the absence is unconfirmed.
+  """
+  @impl Tymeslot.Integrations.Calendar.Provider
+  def fetch_event(integration, %{provider_event_id: event_id} = ref)
+      when is_binary(event_id) and event_id != "" do
+    fetched =
+      case get_live_event(integration, event_id) do
+        {:error, :not_found} -> find_by_ical_uid(integration, Map.get(ref, :ical_uid))
+        other -> other
+      end
+
+    normalise_fetched(fetched, ref)
+  end
+
+  def fetch_event(_integration, _ref), do: {:error, :unaddressable}
+
+  defp get_live_event(integration, event_id) do
+    case api_module().get_event(integration, event_id) do
+      {:ok, %{"isCancelled" => true}} -> {:error, :not_found}
+      {:ok, raw} -> {:ok, raw}
+      {:error, type, _message} when type in [:not_found, :gone] -> {:error, :not_found}
+      {:error, type, _message} -> {:error, type}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp find_by_ical_uid(integration, ical_uid) when is_binary(ical_uid) and ical_uid != "" do
+    case api_module().find_events_by_ical_uid(integration, ical_uid) do
+      {:ok, found} ->
+        case Enum.reject(found, &(&1["isCancelled"] == true)) do
+          [] -> {:error, :not_found}
+          [%{"id" => moved_id} | _rest] -> get_live_event(integration, moved_id)
+        end
+
+      {:error, type, _message} ->
+        {:error, type}
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  defp find_by_ical_uid(_integration, _ical_uid), do: {:error, :unconfirmed}
+
+  defp normalise_fetched({:ok, raw}, ref),
+    do:
+      EventNormaliser.normalise_events([raw], %{
+        calendar_integration_id: Map.get(ref, :calendar_integration_id),
+        # Graph addresses the event without its calendar: this only labels it.
+        provider_calendar_id: Map.get(ref, :calendar_id) || "primary",
+        synced_at: DateTime.utc_now()
+      })
+
+  defp normalise_fetched(error, _ref), do: error
+
+  @impl OAuthProvider
+  @spec call_delete_event(CalendarIntegrationSchema.t(), String.t(), keyword()) ::
+          :ok | {:error, atom(), String.t()}
+  def call_delete_event(integration, event_id, opts) do
+    # The calendar the event is on, exactly as create and update already read
+    # it; the integration's default booking calendar is only the fallback for
+    # a caller that names none.
+    calendar_id = opts[:calendar_id] || integration.default_booking_calendar_id
+
+    if calendar_id do
+      api_module().delete_event(integration, calendar_id, event_id)
+    else
+      # Fallback to default API method for backward compatibility
+      api_module().delete_event(integration, event_id)
+    end
+  end
+
+  @doc """
+  Discovers all available calendars for the authenticated Outlook account.
+  """
+  @impl Tymeslot.Integrations.Calendar.Provider
+  @spec discover_calendars(CalendarIntegrationSchema.t()) ::
+          {:ok, [CalendarEntry.t()]} | {:error, term()}
+  def discover_calendars(integration) do
+    ProviderCommon.discover_calendars(
+      integration,
+      fn int -> api_module().list_calendars(int) end,
+      &format_calendar/1
+    )
+  end
+
+  @impl Tymeslot.Integrations.Calendar.Provider
+  def discover_calendars_for_integration(integration), do: discover_calendars(integration)
+
+  @impl Tymeslot.Integrations.Calendar.Provider
+  def build_client_configs(integration), do: [integration]
+
+  @impl Tymeslot.Integrations.Calendar.Provider
+  def build_booking_client_config(integration), do: integration
+
+  @doc """
+  Tests the connection to Microsoft Graph API.
+  Makes a simple API call to verify OAuth token validity and API accessibility.
+  """
+  @impl Tymeslot.Integrations.Calendar.Provider
+  @spec perform_connection_test(CalendarIntegrationSchema.t()) ::
+          {:ok, String.t()} | {:error, term()}
+  def perform_connection_test(integration) do
+    case api_module().list_primary_events(
+           integration,
+           DateTime.utc_now(),
+           DateTime.add(DateTime.utc_now(), 1, :day)
+         ) do
+      {:ok, _events} ->
+        {:ok, dgettext("integrations_calendar", "Outlook Calendar connected successfully!")}
+
+      {:error, :unauthorized, message} ->
+        {:error, ProviderCommon.unauthorized_reason(message)}
+
+      {:error, :rate_limited, _message} ->
+        {:error, dgettext("integrations_calendar", "Rate limited - please try again later")}
+
+      {:error, _error_type, reason} ->
+        message = ErrorHandler.sanitize_error_message(reason, :outlook)
+
+        {:error, message}
+    end
+  end
+
+  # Private helper functions
+
+  defp api_module, do: Config.outlook_calendar_api_module()
+
+  defp get_calendar_owner(%{"owner" => owner}) when is_map(owner) do
+    owner["name"] || owner["address"] || "Unknown"
+  end
+
+  defp get_calendar_owner(_calendar), do: "Unknown"
+
+  # A time Outlook sent but that does not parse is read as missing, like an
+  # absent one, and logged: the id and field only, never the event's content.
+  defp event_time(outlook_event, field) do
+    case parse_datetime(outlook_event[field], outlook_event[:is_all_day]) do
+      {:error, reason} ->
+        Logger.warning("Could not parse a calendar event time",
+          provider: :outlook,
+          event_id: outlook_event[:id] || outlook_event[:uid],
+          field: Atom.to_string(field),
+          reason: reason
+        )
+
+        nil
+
+      time ->
+        time
+    end
+  end
+
+  defp parse_datetime(time_map, is_all_day)
+
+  defp parse_datetime(%{"dateTime" => datetime_str}, true) do
+    # For all-day events, Outlook returns the date part + 00:00:00
+    # We strip the time part and return just the Date
+    case Date.from_iso8601(String.slice(datetime_str, 0, 10)) do
+      {:ok, date} -> date
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp parse_datetime(%{"dateTime" => datetime_str, "timeZone" => _tz}, _is_all_day) do
+    parse_iso8601_lenient(datetime_str)
+  end
+
+  defp parse_datetime(%{"dateTime" => datetime_str}, _is_all_day) do
+    parse_iso8601_lenient(datetime_str)
+  end
+
+  defp parse_datetime(_other, _is_all_day), do: nil
+
+  defp parse_iso8601_lenient(datetime_str) do
+    case DateTime.from_iso8601(datetime_str) do
+      {:ok, datetime, _offset} ->
+        datetime
+
+      {:error, :missing_offset} ->
+        # Try appending Z if it's missing (often the case with some providers)
+        case DateTime.from_iso8601(datetime_str <> "Z") do
+          {:ok, datetime, _offset} -> datetime
+          {:error, reason} -> {:error, reason}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp format_calendar(cal) do
+    %{
+      id: cal["id"],
+      name: cal["name"],
+      color: cal["color"],
+      primary: cal["isDefaultCalendar"] || false,
+      selected: cal["isDefaultCalendar"] || false,
+      can_edit: cal["canEdit"],
+      read_only: cal["canEdit"] == false,
+      owner: get_calendar_owner(cal)
+    }
+    |> CalendarEntry.normalize()
+    |> CalendarEntry.with_defaults()
+  end
+end

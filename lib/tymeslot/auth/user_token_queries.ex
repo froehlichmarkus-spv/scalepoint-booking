@@ -1,0 +1,323 @@
+defmodule Tymeslot.Auth.UserTokenQueries do
+  @moduledoc """
+  Query interface for user token lifecycle operations: verification tokens,
+  password reset tokens, email change tokens and invitation tokens.
+  """
+  import Ecto.Query, warn: false
+  require Logger
+
+  alias Ecto.Changeset
+  alias Tymeslot.Auth.{AccountTokens, UserSchema}
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.IPNormaliser
+  alias Tymeslot.Security.Token
+
+  @doc """
+  Sets verification token for a user.
+  """
+  @spec set_verification_token(UserSchema.t(), String.t(), String.t() | nil) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def set_verification_token(%UserSchema{} = user, token, ip_address \\ nil) do
+    normalized_ip = IPNormaliser.normalize_for_storage(ip_address)
+    token_hash = Token.hash_token(token)
+
+    changes = %{
+      verification_token: token_hash,
+      verification_sent_at: DateTime.utc_now(:second)
+    }
+
+    changes =
+      if normalized_ip in [nil, "", "unknown"],
+        do: changes,
+        else: IPNormaliser.maybe_set_signup_ip(changes, user.signup_ip, normalized_ip)
+
+    user
+    |> Changeset.change(changes)
+    |> Repo.update()
+  end
+
+  @doc """
+  Sets password reset token for a user.
+  """
+  @spec set_reset_token(UserSchema.t(), String.t()) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  # Issuing a new link clears any previous used_at marker.
+  def set_reset_token(%UserSchema{} = user, token) when is_binary(token) do
+    token_hash = Token.hash_token(token)
+
+    result =
+      user
+      |> Changeset.change(
+        reset_token_hash: token_hash,
+        reset_sent_at: DateTime.utc_now(:second),
+        reset_token_used_at: nil
+      )
+      |> Repo.update()
+
+    case result do
+      {:ok, updated} ->
+        # Do not log token material; only log user_id
+        Logger.info("Stored reset token", user_id: updated.id)
+        {:ok, updated}
+
+      {:error, reason} ->
+        Logger.error("Failed to store reset token",
+          user_id: user.id,
+          reason: LogFormat.reason(reason)
+        )
+
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Sets an invitation token for an invited user, replacing any earlier one.
+  """
+  @spec set_invitation_token(UserSchema.t(), String.t()) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def set_invitation_token(%UserSchema{} = user, token) when is_binary(token) do
+    user
+    |> Changeset.change(
+      invitation_token_hash: Token.hash_token(token),
+      invitation_sent_at: DateTime.utc_now(:second)
+    )
+    |> Repo.update()
+  end
+
+  @doc """
+  Clears a pending invitation's token hash, so its link stops working.
+  """
+  @spec clear_invitation_token(UserSchema.t()) :: {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def clear_invitation_token(%UserSchema{} = user) do
+    user
+    |> Changeset.change(invitation_token_hash: nil)
+    |> Repo.update()
+  end
+
+  @doc """
+  Gets the user holding a live token of the given purpose.
+
+  A token is live while its hash is stored and it has not been consumed:
+  reset and verification tokens are stamped `*_used_at` when used, and an
+  email change token only means something while a `pending_email` waits for
+  it. Expiry is not checked here; that is a business rule owned by
+  `Tymeslot.Auth.AccountTokens`.
+
+  Pass `lock: true` to take a row lock (`FOR UPDATE`) so concurrent consumers
+  of the same token serialise; the call must then run inside a transaction.
+  """
+  @spec get_user_by_token(AccountTokens.purpose(), String.t(), keyword()) ::
+          {:ok, UserSchema.t()} | {:error, :not_found}
+  def get_user_by_token(purpose, token, opts \\ []) when is_binary(token) do
+    token_hash = Token.hash_token(token)
+
+    query =
+      purpose
+      |> live_token_query(token_hash)
+      |> maybe_lock(Keyword.get(opts, :lock, false))
+
+    case Repo.one(query) do
+      nil -> {:error, :not_found}
+      user -> {:ok, user}
+    end
+  end
+
+  defp live_token_query(:reset, hash) do
+    where(UserSchema, [u], u.reset_token_hash == ^hash and is_nil(u.reset_token_used_at))
+  end
+
+  defp live_token_query(:verification, hash) do
+    where(
+      UserSchema,
+      [u],
+      u.verification_token == ^hash and is_nil(u.verification_token_used_at)
+    )
+  end
+
+  defp live_token_query(:email_change, hash) do
+    where(UserSchema, [u], u.email_change_token_hash == ^hash and not is_nil(u.pending_email))
+  end
+
+  # An accepted invitation clears its hash (see `accept_invitation/2`), so a
+  # stored hash is a live one.
+  defp live_token_query(:invitation, hash) do
+    where(UserSchema, [u], u.invitation_token_hash == ^hash)
+  end
+
+  defp maybe_lock(query, true), do: lock(query, "FOR UPDATE")
+  defp maybe_lock(query, false), do: query
+
+  @doc """
+  Consumes a password reset token: sets the new password, marks the token used
+  and, through `UserSchema.password_reset_changeset/2`, revokes every other
+  outstanding credential token.
+  """
+  @spec consume_reset_token(UserSchema.t(), map()) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def consume_reset_token(%UserSchema{} = user, attrs) do
+    now = DateTime.utc_now(:second)
+
+    user
+    |> UserSchema.password_reset_changeset(attrs)
+    |> Changeset.put_change(:reset_token_used_at, now)
+    |> verify_through_reset(user, now)
+    |> Repo.update()
+    |> UserSchema.drop_plaintext_password()
+  end
+
+  @doc """
+  Accepts an invitation: sets the invitee's first password and marks the
+  account verified, since the link was delivered to its address. The
+  password changeset revokes every outstanding credential token, the
+  invitation's own included, which is what marks it accepted.
+  """
+  @spec accept_invitation(UserSchema.t(), map()) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def accept_invitation(%UserSchema{} = user, attrs) do
+    now = DateTime.utc_now(:second)
+
+    user
+    |> UserSchema.password_reset_changeset(attrs)
+    |> verify_through_reset(user, now)
+    |> Repo.update()
+    |> UserSchema.drop_plaintext_password()
+  end
+
+  @doc """
+  Accepts an invitation with a social sign-in: links the provider identity
+  in `attrs` to the invitee's account and marks it verified, clearing every
+  outstanding credential token, the invitation's own included.
+  """
+  @spec accept_invitation_with_identity(UserSchema.t(), map()) ::
+          {:ok, UserSchema.t()} | {:error, Ecto.Changeset.t()}
+  def accept_invitation_with_identity(%UserSchema{} = user, attrs) do
+    user
+    |> UserSchema.invitation_identity_changeset(attrs)
+    |> verify_through_reset(user, DateTime.utc_now(:second))
+    |> Repo.update()
+  end
+
+  # The reset link was delivered to the account's address, so following it
+  # proves the mailbox just as the verification link would. Verifying here is
+  # what lets an address's owner reclaim an account someone else signed up
+  # with it: the reset replaces the stranger's password and makes it theirs.
+  defp verify_through_reset(changeset, %UserSchema{verified_at: nil}, now) do
+    Changeset.change(changeset,
+      verified_at: now,
+      verification_token: nil,
+      verification_token_used_at: now,
+      signup_ip: nil
+    )
+  end
+
+  defp verify_through_reset(changeset, _verified_user, _now), do: changeset
+
+  @doc """
+  Consumes a verification token: marks the user verified and the token used,
+  and clears `signup_ip`.
+
+  The sign-up address exists only for the same-device check when the
+  verification link is followed, and that check is spent once the account
+  is verified. `Tymeslot.Auth.Verification` compares it against the user as
+  the token found them, before this runs, so clearing it here never turns a
+  same-device verification into a cross-device one.
+  """
+  @spec consume_verification_token(UserSchema.t()) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def consume_verification_token(%UserSchema{} = user) do
+    now = DateTime.utc_now(:second)
+
+    user
+    |> Changeset.change(
+      verified_at: now,
+      verification_token_used_at: now,
+      verification_token: nil,
+      signup_ip: nil
+    )
+    |> Repo.update()
+  end
+
+  @doc """
+  Initiates an email change request for a user.
+  Returns {:ok, user} on success, {:error, changeset} on failure.
+  """
+  @spec request_email_change(UserSchema.t(), String.t(), String.t()) ::
+          {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def request_email_change(%UserSchema{} = user, new_email, token_raw) do
+    token_hash = Token.hash_token(token_raw)
+
+    user
+    |> UserSchema.email_change_request_changeset(%{
+      pending_email: new_email,
+      email_change_token_hash: token_hash
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Confirms an email change for a user.
+  Returns {:ok, user} on success, {:error, changeset} on failure.
+  """
+  @spec confirm_email_change(UserSchema.t()) :: {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def confirm_email_change(%UserSchema{} = user) do
+    user
+    |> UserSchema.email_change_confirm_changeset()
+    |> Repo.update()
+  end
+
+  @doc """
+  Cancels a pending email change for a user.
+  Returns {:ok, user} on success, {:error, changeset} on failure.
+  """
+  @spec cancel_email_change(UserSchema.t()) :: {:ok, UserSchema.t()} | {:error, Changeset.t()}
+  def cancel_email_change(%UserSchema{} = user) do
+    user
+    |> Changeset.change(%{
+      pending_email: nil,
+      email_change_token_hash: nil,
+      email_change_sent_at: nil
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Clears every pending email change issued at or before `issued_before`, or
+  never stamped, so its address stops holding the unique `pending_email`
+  slot. Whether that moment means expired is decided by
+  `Tymeslot.Auth.AccountTokens`.
+
+  `filter` narrows the sweep to one address (`pending_email: address`) or one
+  account (`user_id: id`). Returns how many accounts were cleared.
+  """
+  @spec clear_email_changes_issued_before(DateTime.t(), keyword()) :: non_neg_integer()
+  def clear_email_changes_issued_before(%DateTime{} = issued_before, filter \\ []) do
+    {count, _rows} =
+      UserSchema
+      |> where([u], not is_nil(u.pending_email))
+      |> where(
+        [u],
+        is_nil(u.email_change_sent_at) or u.email_change_sent_at <= ^issued_before
+      )
+      |> filter_email_changes(filter)
+      |> Repo.update_all(
+        set: [pending_email: nil, email_change_token_hash: nil, email_change_sent_at: nil]
+      )
+
+    count
+  end
+
+  defp filter_email_changes(query, []), do: query
+
+  defp filter_email_changes(query, [{:pending_email, email} | rest]) do
+    query
+    |> where([u], u.pending_email == ^String.downcase(email))
+    |> filter_email_changes(rest)
+  end
+
+  defp filter_email_changes(query, [{:user_id, user_id} | rest]) do
+    query
+    |> where([u], u.id == ^user_id)
+    |> filter_email_changes(rest)
+  end
+end

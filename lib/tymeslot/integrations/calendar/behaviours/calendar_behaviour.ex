@@ -1,0 +1,56 @@
+defmodule Tymeslot.Integrations.Calendar.CalendarBehaviour do
+  @moduledoc """
+  Behaviour for calendar operations to enable testing with mocks.
+  """
+
+  alias Tymeslot.Integrations.Calendar.CreatedEvent
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.MeetingTypes.MeetingTypeSchema
+
+  @callback get_events_for_range_fresh(pos_integer(), Date.t(), Date.t()) ::
+              {:ok, list()} | {:error, any()}
+  @callback create_event(
+              map(),
+              pos_integer()
+              | MeetingSchema.t()
+              | MeetingTypeSchema.t()
+              | {pos_integer(), pos_integer()}
+              | nil
+            ) ::
+              {:ok, CreatedEvent.t()} | {:error, any()}
+  @callback update_event(
+              binary(),
+              map(),
+              pos_integer()
+              | MeetingSchema.t()
+              | MeetingTypeSchema.t()
+              | {pos_integer(), pos_integer()}
+              | nil
+            ) ::
+              :ok
+              | {:ok, %{optional(:document) => String.t(), optional(:tail) => map()}}
+              | {:error, any()}
+  @callback delete_event(
+              binary(),
+              pos_integer()
+              | MeetingSchema.t()
+              | MeetingTypeSchema.t()
+              | {pos_integer(), pos_integer()}
+              | nil,
+              keyword()
+            ) ::
+              :ok | {:ok, %{document: String.t() | nil}} | {:error, any()}
+  @callback fetch_event(map(), {pos_integer(), pos_integer()}) ::
+              {:ok, list()} | {:error, :not_found} | {:error, any()}
+  @callback get_booking_integration_info(
+              pos_integer()
+              | MeetingTypeSchema.t()
+              | MeetingSchema.t()
+            ) ::
+              {:ok,
+               %{
+                 required(:integration_id) => pos_integer(),
+                 required(:calendar_path) => String.t() | nil
+               }}
+              | {:error, any()}
+end

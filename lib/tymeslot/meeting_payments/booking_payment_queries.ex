@@ -1,0 +1,476 @@
+defmodule Tymeslot.MeetingPayments.BookingPaymentQueries do
+  @moduledoc """
+  All Repo.* calls for booking_payments.
+  """
+
+  import Ecto.Query
+
+  alias Ecto.UUID
+  alias Tymeslot.MeetingPayments.BookingPaymentSchema
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.MeetingState
+  alias Tymeslot.Repo
+
+  @outstanding_refunds_limit 50
+
+  @doc """
+  Fetches a `booking_payment` by id and acquires a `SELECT … FOR UPDATE` row
+  lock for the duration of the current transaction.
+
+  Must be called inside a `Repo.transaction/1`. Returns
+  `{:ok, schema}` or `{:error, :not_found}`.
+  """
+  @spec get_for_update(Ecto.UUID.t()) ::
+          {:ok, BookingPaymentSchema.t()} | {:error, :not_found}
+  def get_for_update(id) do
+    query = from(b in BookingPaymentSchema, where: b.id == ^id, lock: "FOR UPDATE")
+
+    case Repo.one(query) do
+      nil -> {:error, :not_found}
+      schema -> {:ok, schema}
+    end
+  end
+
+  @doc """
+  Like `get_for_update/1`, but only matches a payment taken by `host_user_id`.
+
+  Ownership is part of the locked query, so it is decided under the same row
+  lock as everything the caller validates afterwards. A malformed id, an
+  unknown id and another host's payment all return `{:error, :not_found}`.
+  """
+  @spec get_for_update(term(), integer()) ::
+          {:ok, BookingPaymentSchema.t()} | {:error, :not_found}
+  def get_for_update(id, host_user_id) when is_integer(host_user_id) do
+    with {:ok, uuid} <- cast_id(id) do
+      query =
+        from(b in BookingPaymentSchema,
+          where: b.id == ^uuid and b.host_user_id == ^host_user_id,
+          lock: "FOR UPDATE"
+        )
+
+      case Repo.one(query) do
+        nil -> {:error, :not_found}
+        schema -> {:ok, schema}
+      end
+    end
+  end
+
+  @spec get(Ecto.UUID.t()) :: BookingPaymentSchema.t() | nil
+  def get(id), do: Repo.get(BookingPaymentSchema, id)
+
+  @doc """
+  Fetches a payment by id only if `host_user_id` took it, or `nil`.
+
+  A malformed id returns `nil` rather than raising, since the id usually comes
+  from the client.
+  """
+  @spec get_for_host(term(), integer()) :: BookingPaymentSchema.t() | nil
+  def get_for_host(id, host_user_id) when is_integer(host_user_id) do
+    case cast_id(id) do
+      {:ok, uuid} -> Repo.get_by(BookingPaymentSchema, id: uuid, host_user_id: host_user_id)
+      {:error, :not_found} -> nil
+    end
+  end
+
+  @doc """
+  The payment the meeting `meeting_id` owns itself, or `nil`. A session of a
+  paid series owns none: see `for_meeting/1`.
+  """
+  @spec by_meeting_id(Ecto.UUID.t()) :: BookingPaymentSchema.t() | nil
+  def by_meeting_id(meeting_id),
+    do: Repo.get_by(BookingPaymentSchema, meeting_id: meeting_id)
+
+  @doc "The payment the series `series_id` owns, or `nil`."
+  @spec by_series_id(term()) :: BookingPaymentSchema.t() | nil
+  def by_series_id(series_id) do
+    case cast_id(series_id) do
+      {:ok, uuid} -> Repo.get_by(BookingPaymentSchema, series_id: uuid)
+      {:error, :not_found} -> nil
+    end
+  end
+
+  @doc """
+  The payment that paid for the meeting `meeting_id`, or `nil`: its own, or,
+  for a session of a paid series, the series' one payment, returned with its
+  `series` preloaded. A malformed id returns `nil`.
+  """
+  @spec for_meeting(term()) :: BookingPaymentSchema.t() | nil
+  def for_meeting(meeting_id) do
+    case cast_id(meeting_id) do
+      {:ok, uuid} -> by_meeting_id(uuid) || series_payment(uuid, dynamic(true))
+      {:error, :not_found} -> nil
+    end
+  end
+
+  @doc """
+  As `for_meeting/1`, but only a payment `host_user_id` took, or `nil`.
+  """
+  @spec for_meeting_for_host(term(), integer()) :: BookingPaymentSchema.t() | nil
+  def for_meeting_for_host(meeting_id, host_user_id) when is_integer(host_user_id) do
+    case cast_id(meeting_id) do
+      {:ok, uuid} ->
+        Repo.get_by(BookingPaymentSchema, meeting_id: uuid, host_user_id: host_user_id) ||
+          series_payment(uuid, dynamic([bp], bp.host_user_id == ^host_user_id))
+
+      {:error, :not_found} ->
+        nil
+    end
+  end
+
+  defp series_payment(meeting_id, scope) do
+    BookingPaymentSchema
+    |> join(:inner, [bp], m in MeetingSchema, on: m.series_id == bp.series_id)
+    |> where([_bp, m], m.id == ^meeting_id)
+    |> where(^scope)
+    |> preload(:series)
+    |> Repo.one()
+  end
+
+  @spec by_checkout_session(String.t()) :: BookingPaymentSchema.t() | nil
+  def by_checkout_session(session_id),
+    do: Repo.get_by(BookingPaymentSchema, stripe_checkout_session_id: session_id)
+
+  @spec by_charge_id(String.t()) :: BookingPaymentSchema.t() | nil
+  def by_charge_id(charge_id),
+    do: Repo.get_by(BookingPaymentSchema, stripe_charge_id: charge_id)
+
+  @spec by_payment_intent_id(String.t()) :: BookingPaymentSchema.t() | nil
+  def by_payment_intent_id(payment_intent_id),
+    do: Repo.get_by(BookingPaymentSchema, stripe_payment_intent_id: payment_intent_id)
+
+  @doc """
+  Lists all `pending` booking payments for a host that still carry a
+  `stripe_checkout_session_id`.
+
+  Used by `Tymeslot.MeetingPayments.ConnectAccountRetirement.disconnect/1` to
+  collect open checkout sessions that must be expired before disconnecting.
+  """
+  @spec list_pending_for_host(integer()) :: [BookingPaymentSchema.t()]
+  def list_pending_for_host(host_user_id) do
+    query =
+      from b in BookingPaymentSchema,
+        where:
+          b.host_user_id == ^host_user_id and
+            b.status == :pending and
+            not is_nil(b.stripe_checkout_session_id)
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Lists `pending` booking payments that were created on or before `cutoff`
+  and still carry a `stripe_checkout_session_id`.
+
+  Used by `Tymeslot.MeetingPayments.Workers.ReconcileAwaitingPayments` to
+  identify rows whose webhook never arrived so that they can be reconciled
+  by polling Stripe directly.
+  """
+  @spec list_stale_pending(DateTime.t(), keyword()) :: [BookingPaymentSchema.t()]
+  def list_stale_pending(%DateTime{} = cutoff, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 200)
+
+    query =
+      from b in BookingPaymentSchema,
+        where:
+          b.status == :pending and
+            b.inserted_at <= ^cutoff and
+            not is_nil(b.stripe_checkout_session_id),
+        order_by: [asc: b.inserted_at],
+        limit: ^limit
+
+    Repo.all(query)
+  end
+
+  @doc """
+  The host's recent payments, newest first: every charge that moved money,
+  and none that never did. A checkout still `:pending`, or `:failed` with
+  nothing captured (`paid_at` nil), is left out. Keyed on the payment row
+  alone, never on the meeting: a late payment refused on an `:expired`
+  meeting moved money and stays listed.
+  """
+  @spec for_host(integer(), keyword()) :: [BookingPaymentSchema.t()]
+  def for_host(host_user_id, opts) do
+    limit = Keyword.get(opts, :limit, 25)
+
+    query =
+      from b in BookingPaymentSchema,
+        where:
+          b.host_user_id == ^host_user_id and b.status != :pending and
+            not (b.status == :failed and is_nil(b.paid_at)),
+        order_by: [desc: b.inserted_at],
+        limit: ^limit
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Lists the host's payments whose meeting has been cancelled while the host
+  still holds the attendee's money, and those whose meeting expired before
+  it was settled: a payment that completed after its slot was taken, or a
+  paid request that lapsed unapproved, whose automatic refund has not gone
+  through (yet).
+
+  Derived from the meeting's status and the payment's own balance rather than
+  from a stored "refund owed" flag, so it cannot drift out of step with either
+  side. Oldest first, the longer an attendee has been out of pocket the more
+  urgent the row: a cancelled booking dated by its cancellation, an expired
+  one, which has no cancellation date, by its payment. Ties go by id, so the
+  bounded window below is the same rows on every read.
+
+  Deliberately not bounded by `for_host/2`'s recent-payments window, which is
+  what let an older unrefunded cancellation drop off the dashboard entirely.
+  It is still bounded, at `#{@outstanding_refunds_limit}` rows, so pair it with
+  `outstanding_refunds_summary_for_host/1` and say how many rows the window is
+  hiding rather than truncating in silence.
+  """
+  @spec outstanding_refunds_for_host(integer(), keyword()) :: [BookingPaymentSchema.t()]
+  def outstanding_refunds_for_host(host_user_id, opts \\ []) do
+    limit = Keyword.get(opts, :limit, @outstanding_refunds_limit)
+
+    query =
+      from [b, m] in outstanding_refunds_query(host_user_id),
+        order_by: [asc: coalesce(m.cancelled_at, b.paid_at), asc: b.id],
+        limit: ^limit,
+        preload: [meeting: m]
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Summarises every outstanding refund a host owes: how many rows there are,
+  and how much is still owed in each currency.
+
+  Unbounded on purpose, and sharing its `where` with
+  `outstanding_refunds_for_host/2` so the two cannot drift: the card needs the
+  true count to report its own truncation, and the disconnect confirmation
+  needs the total before the host walks away from it.
+
+  Totals are per currency rather than one sum, because a host who changed
+  their default currency can be holding money in more than one.
+  """
+  @spec outstanding_refunds_summary_for_host(integer()) :: %{
+          count: non_neg_integer(),
+          totals: [%{currency: String.t(), amount_cents: non_neg_integer()}]
+        }
+  def outstanding_refunds_summary_for_host(host_user_id) do
+    # `amount_cents - refunded_amount_cents` is the SQL twin of
+    # `Refunds.refundable_remaining_cents/1`; the `where` above guarantees it
+    # is positive, so the `max(_, 0)` clamp has nothing to do here. The sum is
+    # typed because Ecto cannot infer a type through the subtraction and would
+    # otherwise hand back a `Decimal` where every other amount in the codebase
+    # is an integer count of cents.
+    query =
+      from b in outstanding_refunds_query(host_user_id),
+        group_by: b.currency,
+        order_by: [asc: b.currency],
+        select: %{
+          currency: b.currency,
+          count: count(b.id),
+          amount_cents: type(sum(b.amount_cents - b.refunded_amount_cents), :integer)
+        }
+
+    rows = Repo.all(query)
+
+    %{
+      count: Enum.sum(Enum.map(rows, & &1.count)),
+      totals: Enum.map(rows, &Map.take(&1, [:currency, :amount_cents]))
+    }
+  end
+
+  # Cancelled or expired bookings whose money the host still holds. A paid
+  # booking ends expired when its payment completed after the slot was taken
+  # (`CheckoutSessionCompleted`), or when a paid request lapsed unapproved
+  # (`Meetings.Approval`); both owe a full refund and refund it on their own,
+  # so a row here is one whose refund has not gone through yet. Derived
+  # from the meeting's status and the payment's own balance rather than from
+  # a stored "refund owed" flag, so it cannot drift out of step with either
+  # side.
+  defp outstanding_refunds_query(host_user_id) do
+    query =
+      from b in BookingPaymentSchema,
+        as: :payment,
+        join: m in MeetingSchema,
+        as: :meeting,
+        # The payment's meeting, or its series' first session still there:
+        # one equality on the meeting id, so the join stays a primary-key
+        # lookup per payment.
+        on:
+          m.id ==
+            fragment(
+              "COALESCE(?, (SELECT sm.id FROM meetings AS sm WHERE sm.series_id = ? ORDER BY sm.series_position LIMIT 1))",
+              b.meeting_id,
+              b.series_id
+            ),
+        where:
+          b.host_user_id == ^host_user_id and
+            b.status in ^BookingPaymentSchema.refundable_statuses() and
+            b.refunded_amount_cents < b.amount_cents,
+        where: is_nil(b.series_id) or not exists(series_sessions_going_ahead())
+
+    MeetingState.where_released(query, :meeting)
+  end
+
+  # A paid series' one payment is owed back once none of its sessions goes
+  # ahead (a late payment refused, say); it is listed by its first session
+  # still there, whichever position that is.
+  # One session cancelled alone is refunded its share when the host cancels
+  # it, and the rest still pays for the sessions going ahead.
+  defp series_sessions_going_ahead do
+    MeetingState.where_not_released(
+      from(m in MeetingSchema, where: m.series_id == parent_as(:payment).series_id)
+    )
+  end
+
+  @doc """
+  Returns the count of `pending` booking payments for a host.
+
+  Used by the payments dashboard to display an accurate pending count
+  regardless of the paginated window returned by `for_host/2`.
+  """
+  @spec count_pending_for_host(integer()) :: non_neg_integer()
+  def count_pending_for_host(host_user_id) do
+    query =
+      from b in BookingPaymentSchema,
+        where: b.host_user_id == ^host_user_id and b.status == :pending,
+        select: count(b.id)
+
+    Repo.one(query)
+  end
+
+  @doc """
+  Lifetime totals for a host, one row per currency, ordered by currency.
+
+  Grouped because a host who changed their default currency holds money in
+  more than one, and amounts in different currencies cannot be added up.
+  """
+  @spec lifetime_stats(integer()) :: [
+          %{
+            currency: String.t(),
+            received: integer(),
+            refunded: integer(),
+            platform_fee: integer()
+          }
+        ]
+  def lifetime_stats(host_user_id) do
+    query =
+      from b in BookingPaymentSchema,
+        where:
+          b.host_user_id == ^host_user_id and
+            b.status in [:paid, :partially_refunded, :refunded],
+        group_by: b.currency,
+        order_by: [asc: b.currency],
+        select: %{
+          currency: b.currency,
+          received: type(coalesce(sum(b.amount_cents), 0), :integer),
+          refunded: type(coalesce(sum(b.refunded_amount_cents), 0), :integer),
+          platform_fee: type(coalesce(sum(b.application_fee_cents), 0), :integer)
+        }
+
+    Repo.all(query)
+  end
+
+  @spec insert(map()) :: {:ok, BookingPaymentSchema.t()} | {:error, Ecto.Changeset.t()}
+  def insert(attrs) do
+    attrs
+    |> BookingPaymentSchema.create_changeset()
+    |> Repo.insert()
+  end
+
+  @spec update(BookingPaymentSchema.t(), map()) ::
+          {:ok, BookingPaymentSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update(schema, attrs) do
+    schema
+    |> BookingPaymentSchema.update_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Atomically marks a booking payment as `failed` only when its current status is
+  `pending`.
+
+  Uses a conditional `UPDATE … WHERE id = ? AND status = 'pending'` so a
+  concurrent `checkout.session.completed` webhook that has already flipped the
+  row to `paid` will not be overwritten. Must be called inside a
+  `Repo.transaction/1`.
+
+  Returns `{:ok, :cancelled}` when the row was updated, `{:ok, :skipped}` when
+  the row was not in `pending` status (or was not found), and `{:error, reason}`
+  on unexpected failures.
+  """
+  @spec cancel_if_pending(Ecto.UUID.t(), DateTime.t()) ::
+          {:ok, :cancelled | :skipped} | {:error, term()}
+  def cancel_if_pending(id, now) do
+    query =
+      from b in BookingPaymentSchema,
+        where: b.id == ^id and b.status == :pending
+
+    case Repo.update_all(query, set: [status: :failed, updated_at: now]) do
+      {1, _rows} -> {:ok, :cancelled}
+      {0, _rows} -> {:ok, :skipped}
+    end
+  rescue
+    exception -> {:error, exception}
+  end
+
+  @spec anonymise_for_host(integer(), DateTime.t()) :: {non_neg_integer(), nil}
+  def anonymise_for_host(host_user_id, now) do
+    query =
+      from b in BookingPaymentSchema,
+        where: b.host_user_id == ^host_user_id and is_nil(b.host_deleted_at)
+
+    Repo.update_all(query,
+      set: [
+        attendee_email: nil,
+        attendee_name: nil,
+        meeting_type_name: "[deleted]",
+        booking_theme_id: nil,
+        host_deleted_at: now,
+        updated_at: now
+      ]
+    )
+  end
+
+  @doc """
+  Deletes the booking payments of deleted hosts whose statutory retention
+  period has ended: every row anonymised by `anonymise_for_host/2` and dated
+  before `cutoff`. A row is dated by when it was paid, or by when it was
+  created if it never was.
+  """
+  @spec delete_retained_before(DateTime.t()) :: {non_neg_integer(), nil}
+  def delete_retained_before(%DateTime{} = cutoff) do
+    BookingPaymentSchema
+    |> where([b], not is_nil(b.host_deleted_at))
+    |> dated_before(cutoff)
+    |> Repo.delete_all()
+  end
+
+  @doc """
+  Scrubs the attendee's name and email from the booking payments of hosts who
+  still exist, once the row's statutory retention period has ended (dated
+  before `cutoff`, as for `delete_retained_before/1`). The row stays, so the
+  host's own payment history keeps its amounts and dates.
+  """
+  @spec scrub_attendees_before(DateTime.t(), DateTime.t()) :: {non_neg_integer(), nil}
+  def scrub_attendees_before(%DateTime{} = cutoff, now) do
+    BookingPaymentSchema
+    |> where([b], is_nil(b.host_deleted_at))
+    |> where([b], not is_nil(b.attendee_email) or not is_nil(b.attendee_name))
+    |> dated_before(cutoff)
+    |> Repo.update_all(set: [attendee_email: nil, attendee_name: nil, updated_at: now])
+  end
+
+  defp dated_before(query, cutoff) do
+    where(
+      query,
+      [b],
+      coalesce(b.paid_at, b.inserted_at) < type(^cutoff, :utc_datetime)
+    )
+  end
+
+  defp cast_id(id) do
+    case UUID.cast(id) do
+      {:ok, uuid} -> {:ok, uuid}
+      :error -> {:error, :not_found}
+    end
+  end
+end

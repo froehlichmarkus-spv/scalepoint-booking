@@ -1,0 +1,124 @@
+defmodule Tymeslot.Emails.Shared.Stage do
+  @moduledoc """
+  The **stage band** — the scheduler's 2026 signature opening for every email.
+
+  A stage band is a full-width section coloured by an intent gradient. It carries
+  three typographic elements:
+
+  1. A tiny **eyebrow** label (e.g. "Confirmed", "Heads up", "Cancelled")
+  2. A bold **title** (the headline of the email)
+  3. An optional **subtitle** (context or personalisation)
+
+  The intent (`:confirmed`, `:alert`, `:cancelled`) drives the band colour
+  and the ink contrast — picked from `Tymeslot.Emails.Shared.Styles.intent/1`.
+
+  Stage bands are used by both the transactional layout (as the very first
+  element, above the organiser strip) and the system layout (as the header,
+  replacing the centred logo).
+  """
+
+  alias Tymeslot.Emails.Shared.{Sanitise, Styles}
+
+  # Decorative divider overlay — a translucent white line at the top of
+  # coloured stage bands. Keeps visual separation on any intent background.
+  @band_border_overlay "rgba(255, 255, 255, 0.14)"
+
+  @doc """
+  The stage option `key` (`:intent` or `:eyebrow`) from `opts`, a keyword
+  list or a map. Raises `ArgumentError` naming the key when it is missing:
+  every email declares its stage at the call site, and nothing infers it from
+  a title or falls back to a default. The one check every layout and helper
+  that renders a stage band uses.
+  """
+  @spec fetch_required!(keyword() | map(), atom()) :: term()
+  def fetch_required!(opts, key) do
+    case Access.fetch(opts, key) do
+      {:ok, value} ->
+        value
+
+      :error ->
+        raise ArgumentError,
+              "missing required stage option `#{inspect(key)}`: every email must declare " <>
+                "`:intent` and `:eyebrow` at the call site."
+    end
+  end
+
+  @doc """
+  Renders a stage band section.
+
+  `intent` is an atom — see `Styles.intent/1`.
+
+  String arguments (eyebrow, title, subtitle) are sanitised inside this
+  function — callers do not need to pre-sanitise them.
+  """
+  @spec stage_band(atom(), String.t(), String.t(), String.t() | nil) :: String.t()
+  def stage_band(intent, eyebrow, title, subtitle \\ nil) do
+    tokens = Styles.intent(intent)
+    safe_eyebrow = Sanitise.sanitize_for_email(eyebrow)
+    safe_title = Sanitise.sanitize_for_email(title)
+
+    subtitle_block =
+      case subtitle do
+        nil ->
+          ""
+
+        s ->
+          safe_subtitle = Sanitise.sanitize_for_email(s)
+
+          """
+          <mj-text
+            padding="12px 0 0 0"
+            color="#{tokens.band_text}"
+            font-size="15px"
+            line-height="1.55"
+            align="left"
+            css-class="mobile-text"
+          >
+            #{safe_subtitle}
+          </mj-text>
+          """
+      end
+
+    """
+    <mj-section
+      background-color="#{tokens.band_color}"
+      padding="32px 32px 28px 32px"
+      border-radius="20px 20px 0 0"
+      border-top="1px solid #{@band_border_overlay}"
+      css-class="stage-band"
+    >
+      <mj-column>
+        <mj-text
+          padding="0 0 14px 0"
+          color="#{tokens.band_text}"
+          font-size="11px"
+          font-weight="700"
+          align="left"
+          letter-spacing="0.18em"
+          text-transform="uppercase"
+          css-class="stage-band-eyebrow mobile-eyebrow"
+        >
+          #{dot()} #{safe_eyebrow}
+        </mj-text>
+        <mj-text
+          padding="0"
+          color="#{tokens.band_text}"
+          font-size="#{Styles.font_size(:display)}"
+          font-weight="800"
+          align="left"
+          line-height="1.08"
+          letter-spacing="-0.025em"
+          css-class="stage-band-title mobile-heading"
+        >
+          #{safe_title}
+        </mj-text>
+        #{subtitle_block}
+      </mj-column>
+    </mj-section>
+    """
+  end
+
+  defp dot do
+    ~s(<span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; vertical-align: middle; margin-right: 8px; opacity: 0.6;"></span>)
+  end
+end

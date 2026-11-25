@@ -1,0 +1,189 @@
+defmodule Tymeslot.Security.FieldValidators.EmailValidatorTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :security
+
+  alias Tymeslot.Security.FieldValidators.EmailValidator
+
+  describe "validate/2" do
+    test "returns :ok for valid email addresses" do
+      assert :ok = EmailValidator.validate("user@example.com")
+      assert :ok = EmailValidator.validate("first.last@domain.co.uk")
+      assert :ok = EmailValidator.validate("user+tag@gmail.com")
+    end
+
+    test "returns error for nil or empty string" do
+      assert {:error, "Email is required"} = EmailValidator.validate(nil)
+      assert {:error, "Email is required"} = EmailValidator.validate("")
+    end
+
+    test "returns error for long emails" do
+      long_email = String.duplicate("a", 244) <> "@example.com"
+
+      assert {:error, "Email exceeds maximum length (254 characters)"} =
+               EmailValidator.validate(long_email)
+    end
+
+    test "returns error for missing @ symbol" do
+      assert {:error, "Email format is invalid (missing @ symbol)"} =
+               EmailValidator.validate("userexample.com")
+    end
+
+    test "returns error for missing domain" do
+      assert {:error, "Email domain is missing"} = EmailValidator.validate("user@")
+    end
+
+    test "returns error for missing username" do
+      assert {:error, "Email username is missing"} = EmailValidator.validate("@example.com")
+    end
+
+    test "returns error for consecutive dots" do
+      assert {:error, "Email format is invalid (consecutive dots not allowed)"} =
+               EmailValidator.validate("user..name@example.com")
+    end
+
+    test "returns error for spaces" do
+      assert {:error, "Email format is invalid (spaces not allowed)"} =
+               EmailValidator.validate("user name@example.com")
+    end
+
+    test "returns error for multiple @ symbols" do
+      assert {:error, "Email format is invalid (multiple @ symbols)"} =
+               EmailValidator.validate("user@name@example.com")
+    end
+
+    test "returns error for invalid domain format" do
+      assert {:error, "Email domain format is invalid"} = EmailValidator.validate("user@.com")
+      assert {:error, "Email domain format is invalid"} = EmailValidator.validate("user@com.")
+      assert {:error, "Email domain format is invalid"} = EmailValidator.validate("user@com")
+      assert {:error, "Email domain format is invalid"} = EmailValidator.validate("user@c.")
+    end
+
+    test "returns error for general invalid format" do
+      # This triggers the consecutive dots check in validate_basic_format
+      assert {:error, "Email format is invalid (consecutive dots not allowed)"} =
+               EmailValidator.validate("user@domain..com")
+
+      # This should trigger the general regex check (newline is whitespace)
+      assert {:error, "Email format is invalid"} = EmailValidator.validate("user@domain\n.com")
+    end
+
+    test "returns error for non-binary values" do
+      assert {:error, "Email must be a text value"} = EmailValidator.validate(123)
+    end
+  end
+
+  describe "validate/2 address grammar" do
+    test "accepts every RFC 5322 atext character in the local part" do
+      for address <- [
+            "o'brien@example.com",
+            "first.last+tag@example.com",
+            "a!#$%&*/=?^_`{|}~-z@example.com",
+            "crypto0xabc@example.com",
+            "jean--paul@example.com"
+          ] do
+        assert {address, :ok} == {address, EmailValidator.validate(address)}
+      end
+    end
+
+    test "accepts internationalised local parts and domains" do
+      assert :ok = EmailValidator.validate("jürgen@müller.de")
+      assert :ok = EmailValidator.validate("user@xn--mller-kva.de")
+    end
+
+    test "rejects specials and quoting in the local part" do
+      for address <- [
+            "attacker<victim@example.com",
+            "victim>@example.com",
+            "\"quoted\"@example.com",
+            "a(comment)@example.com",
+            "a,b@example.com",
+            "a;b@example.com",
+            "a:b@example.com",
+            "a[b]@example.com",
+            "a\\b@example.com",
+            "a\u200Bb@example.com"
+          ] do
+        assert {address, {:error, "Email format is invalid"}} ==
+                 {address, EmailValidator.validate(address)}
+      end
+    end
+
+    test "rejects a local part starting or ending with a dot" do
+      assert {:error, "Email format is invalid"} = EmailValidator.validate(".user@example.com")
+      assert {:error, "Email format is invalid"} = EmailValidator.validate("user.@example.com")
+    end
+
+    test "rejects characters a hostname cannot hold in the domain" do
+      for address <- [
+            "user@exa<mple.com",
+            "user@exa(mple).com",
+            "user@[192.0.2.1]",
+            "user@exa_mple.com",
+            "user@exa,mple.com"
+          ] do
+        assert {address, {:error, "Email domain format is invalid"}} ==
+                 {address, EmailValidator.validate(address)}
+      end
+    end
+  end
+
+  describe "validate/2 TLD validation" do
+    test "accepts emails with valid TLDs" do
+      assert :ok = EmailValidator.validate("user@example.com")
+      assert :ok = EmailValidator.validate("user@example.org")
+      assert :ok = EmailValidator.validate("user@example.co.uk")
+      assert :ok = EmailValidator.validate("user@example.de")
+      assert :ok = EmailValidator.validate("user@example.io")
+    end
+
+    test "accepts addresses on TLDs delegated since the list was first written" do
+      assert :ok = EmailValidator.validate("owner@eastvalleyliving.homes")
+      assert :ok = EmailValidator.validate("user@example.web")
+    end
+
+    test "rejects emails whose ending cannot be a TLD, and shows the ending" do
+      {:error, msg} = EmailValidator.validate("user@example.c0m")
+      assert msg =~ "invalid domain ending"
+      assert msg =~ ".c0m"
+    end
+
+    test "includes suggestion when confident" do
+      {:error, msg} = EmailValidator.validate("user@example.ocm")
+      assert msg =~ "unrecognised domain ending"
+      assert msg =~ ".ocm"
+      assert msg =~ "Did you mean .com?"
+    end
+
+    test "omits suggestion when there is no confident correction" do
+      {:error, msg} = EmailValidator.validate("user@example.1")
+      refute msg =~ "Did you mean"
+    end
+
+    test "handles case-insensitive TLDs" do
+      assert :ok = EmailValidator.validate("user@example.COM")
+      assert :ok = EmailValidator.validate("user@example.Co.Uk")
+    end
+
+    test "extracts multi-part TLD correctly" do
+      assert :ok = EmailValidator.validate("user@company.co.uk")
+      assert :ok = EmailValidator.validate("user@uni.ac.jp")
+    end
+  end
+
+  describe "validate/2 with existing: true" do
+    test "accepts a stored address the format rules would refuse" do
+      assert {:error, _message} = EmailValidator.validate(~s("legacy"@example.com))
+      assert :ok = EmailValidator.validate(~s("legacy"@example.com), existing: true)
+    end
+
+    test "still refuses a missing or overlong address" do
+      assert {:error, "Email is required"} = EmailValidator.validate("", existing: true)
+      assert {:error, "Email is required"} = EmailValidator.validate(nil, existing: true)
+
+      overlong = String.duplicate("a", 250) <> "@example.com"
+      assert {:error, message} = EmailValidator.validate(overlong, existing: true)
+      assert message =~ "maximum length"
+    end
+  end
+end

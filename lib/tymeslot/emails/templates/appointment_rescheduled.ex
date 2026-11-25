@@ -1,0 +1,561 @@
+defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
+  @moduledoc """
+  Email template for a meeting that has moved to a new time. Role-dispatched
+  via `render/3`.
+
+  A reschedule is a change to a booking both sides already have on file, so the
+  email leads with the new slot and states the one it replaces, and its ICS
+  attachment carries the revision `Tymeslot.Bookings.Reschedule` advanced the
+  meeting to, so calendar clients supersede the entry they already hold rather
+  than adding a second one.
+
+  Guests get their own variant: it states the new time and asks them again
+  whether they can attend, with the RSVP links from their invitation, and it
+  carries none of the booker's links to reschedule or cancel the booking.
+
+  A group participant who moved their own spot gets the attendee variant
+  worded for that (`:seat_move`, set by
+  `Tymeslot.Emails.EmailService.AppointmentEmails.send_seat_reschedule_to_participant/3`):
+  their spot moved, the meeting goes on at the old time for everyone else.
+
+  The reschedule context (`:original_start_time` and friends) is supplied by
+  `Tymeslot.Emails.AppointmentBuilder.for_reschedule/2`. Every key
+  it adds is read defensively here: a payload without it still renders, minus
+  the "previously" line or the note on whether the join link changed.
+  """
+
+  import Swoosh.Email
+
+  alias Tymeslot.Emails.RecipientLocale
+  alias Tymeslot.Integrations.Calendar.IcsGenerator
+
+  alias Tymeslot.Emails.Shared.{
+    Callouts,
+    Formatting,
+    GroupSession,
+    JoinUrl,
+    MeetingComponents,
+    MjmlEmail,
+    TemplateHelper,
+    Text,
+    TextBodyHelper
+  }
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  # A reschedule asks for attention: the time both sides had is no longer the
+  # time that stands.
+  @intent :alert
+
+  @spec render(
+          :attendee | :organizer | :guest,
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) :: Swoosh.Email.t()
+  def render(:attendee, attendee_email, appointment_details) do
+    locale = RecipientLocale.attendee_locale(appointment_details)
+
+    Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
+      attendee_video_url = JoinUrl.for(:attendee, appointment_details)
+
+      meeting_details = TemplateHelper.attendee_meeting_details(appointment_details, :attendee)
+
+      intro_copy = attendee_intro(appointment_details, locale)
+
+      mjml_content = """
+      #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
+
+      #{if line = GroupSession.line(appointment_details), do: Text.centered_text(line, font_size: "14px", padding: "0 0 16px 0")}
+
+      #{previous_time_callout(appointment_details, :attendee, locale)}
+
+      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
+
+      #{MeetingComponents.custom_answers_section(appointment_details)}
+
+      #{if attendee_video_url do
+        MeetingComponents.video_meeting_section(@intent, attendee_video_url,
+        title: attendee_video_title(appointment_details),
+        button_text: dgettext("emails_booking", "Join Video Meeting"))
+      end}
+
+      #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Does the new time not work?"), [%{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel Appointment"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
+
+      #{reminders_callout(appointment_details)}
+      """
+
+      organizer_details =
+        TemplateHelper.build_organizer_details(appointment_details,
+          intent: @intent,
+          eyebrow: dgettext("emails_booking", "Rescheduled"),
+          stage_title: attendee_stage_title(appointment_details),
+          stage_subtitle:
+            dgettext("emails_booking", "Meeting with %{name}",
+              name: appointment_details.organizer_name
+            )
+        )
+
+      html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
+
+      MjmlEmail.base_email()
+      |> to({appointment_details.attendee_name, attendee_email})
+      |> MjmlEmail.put_reply_to(
+        appointment_details.organizer_name,
+        appointment_details.organizer_email
+      )
+      |> subject(attendee_subject(appointment_details, meeting_details.date, locale))
+      |> html_body(html_body)
+      |> text_body(build_attendee_text_body(appointment_details, meeting_details, locale))
+      |> attachment(update_ics_attachment(appointment_details, locale))
+    end)
+  end
+
+  def render(:guest, guest_email, appointment_details) do
+    # Guests inherit the booker's locale, as their invitation does.
+    locale = RecipientLocale.attendee_locale(appointment_details)
+
+    Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
+      guest_name = Map.get(appointment_details, :guest_name) || guest_email
+      guest_video_url = JoinUrl.for(:guest, appointment_details)
+
+      meeting_details = TemplateHelper.attendee_meeting_details(appointment_details, :guest)
+
+      intro_copy = guest_intro(appointment_details, guest_name)
+
+      mjml_content = """
+      #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
+
+      #{previous_time_callout(appointment_details, :attendee, locale)}
+
+      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
+
+      #{if guest_video_url do
+        MeetingComponents.video_meeting_section(@intent, guest_video_url,
+        title: dgettext("emails_booking", "Same link, new time"),
+        button_text: dgettext("emails_booking", "Join Meeting"))
+      end}
+
+      #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Will you be there at the new time?"), TemplateHelper.guest_answer_actions(appointment_details), footer: dgettext("emails_booking", "Your earlier response applied to the previous time, so please let us know again."))}
+      """
+
+      organizer_details =
+        TemplateHelper.build_organizer_details(appointment_details,
+          intent: @intent,
+          eyebrow: dgettext("emails_booking", "Rescheduled"),
+          stage_title: dgettext("emails_booking", "The meeting has moved."),
+          stage_subtitle:
+            dgettext("emails_booking", "Meeting with %{name}",
+              name: appointment_details.organizer_name
+            )
+        )
+
+      html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
+      date_short = Formatting.format_date_short(meeting_details.date, locale)
+
+      MjmlEmail.base_email()
+      |> to({guest_name, guest_email})
+      |> MjmlEmail.put_reply_to(
+        appointment_details.organizer_name,
+        appointment_details.organizer_email
+      )
+      |> subject(
+        dgettext("emails_booking", "Meeting Rescheduled - %{date} with %{name}",
+          date: date_short,
+          name: appointment_details.organizer_name
+        )
+      )
+      |> html_body(html_body)
+      |> text_body(
+        build_guest_text_body(appointment_details, meeting_details, guest_name, locale)
+      )
+      # The calendar entry is where a guest is most likely to click from, so
+      # it advertises the same link the email body does rather than the bare
+      # room URL. Where there is no guests' link the value is the room URL
+      # already, so this never changes a non-video booking.
+      |> attachment(
+        update_ics_attachment(
+          Map.put(appointment_details, :meeting_url, guest_video_url),
+          locale
+        )
+      )
+    end)
+  end
+
+  def render(:organizer, organizer_email, appointment_details) do
+    locale = organizer_locale(appointment_details)
+
+    Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
+      organizer_video_url = JoinUrl.for(:organizer, appointment_details)
+      meeting_details = TemplateHelper.organizer_meeting_details(appointment_details)
+
+      mjml_content = """
+      #{MeetingComponents.counterpart_section(@intent, appointment_details)}
+
+      #{previous_time_callout(appointment_details, :organizer, locale)}
+
+      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
+
+      #{MeetingComponents.custom_answers_section(appointment_details)}
+
+      #{if organizer_video_url do
+        MeetingComponents.video_meeting_section(@intent, organizer_video_url,
+        title: dgettext("emails_booking", "Host video call"),
+        button_text: dgettext("emails_booking", "Start Meeting"))
+      end}
+
+      #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Need to make changes?"), [%{text: dgettext("emails_booking", "Open in dashboard"), url: Map.get(appointment_details, :dashboard_url), style: :primary}, %{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel Appointment"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
+
+      #{Text.system_footer_note(organizer_notified_line(appointment_details))}
+      """
+
+      organizer_details =
+        TemplateHelper.build_organizer_details(appointment_details,
+          intent: @intent,
+          eyebrow: dgettext("emails_booking", "Rescheduled"),
+          stage_title: dgettext("emails_booking", "Meeting rescheduled"),
+          stage_subtitle: organizer_moved_line(appointment_details)
+        )
+
+      html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
+
+      # No ICS attachment for the organiser, for the same reason confirmations
+      # omit it: the scheduler writes the new time straight to the organiser's own
+      # calendar, and an iMIP-aware mail server would import the attachment on
+      # top of that as a second event.
+      MjmlEmail.base_email()
+      |> to({appointment_details.organizer_name, organizer_email})
+      |> MjmlEmail.put_reply_to(
+        appointment_details.attendee_name,
+        appointment_details.attendee_email
+      )
+      |> subject(
+        dgettext("emails_booking", "Rescheduled: %{name} - %{date}",
+          name: appointment_details.attendee_name,
+          date: Formatting.format_date_short(meeting_details.date, locale)
+        )
+      )
+      |> html_body(html_body)
+      |> text_body(build_organizer_text_body(appointment_details, meeting_details))
+    end)
+  end
+
+  # A group participant moving their own spot (`:seat_move`) gets the move
+  # told as theirs: the spot moved, the meeting itself did not. Everyone else
+  # on the old time is still meeting there.
+  defp attendee_intro(%{seat_move: true} = appointment_details, locale) do
+    {from, to} = seat_move_times(appointment_details, locale)
+    name = appointment_details.attendee_name
+
+    if from,
+      do:
+        dgettext("emails_booking", "Hi %{name} - your spot has moved from %{from} to %{to}.",
+          name: name,
+          from: from,
+          to: to
+        ),
+      else:
+        dgettext("emails_booking", "Hi %{name} - your spot has moved to %{to}.",
+          name: name,
+          to: to
+        )
+  end
+
+  defp attendee_intro(appointment_details, _locale) do
+    dgettext(
+      "emails_booking",
+      "Hi %{name} - our appointment has been moved. Here's the new time, and my calendar is already updated.",
+      name: appointment_details.attendee_name
+    )
+  end
+
+  defp attendee_text_intro(%{seat_move: true} = appointment_details, locale) do
+    case seat_move_times(appointment_details, locale) do
+      {nil, to} ->
+        dgettext("emails_booking", "Your spot has moved to %{to}.", to: to)
+
+      {from, to} ->
+        dgettext("emails_booking", "Your spot has moved from %{from} to %{to}.",
+          from: from,
+          to: to
+        )
+    end
+  end
+
+  defp attendee_text_intro(_appointment_details, _locale) do
+    dgettext(
+      "emails_booking",
+      "Our appointment has been moved. Here's the new time, and my calendar is already updated."
+    )
+  end
+
+  # The time the spot left is unknown only when its seat row has since gone
+  # (see `Tymeslot.Notifications.Email.SeatEmails`).
+  defp seat_move_times(appointment_details, locale) do
+    to =
+      moment(appointment_details.start_time_attendee_tz, appointment_details, :attendee, locale)
+
+    {previous_moment(appointment_details, :attendee, locale), to}
+  end
+
+  defp attendee_stage_title(%{seat_move: true}),
+    do: dgettext("emails_booking", "Your spot has moved.")
+
+  defp attendee_stage_title(_appointment_details),
+    do: dgettext("emails_booking", "Your meeting has moved.")
+
+  defp attendee_subject(%{seat_move: true} = appointment_details, date, locale) do
+    dgettext("emails_booking", "Spot moved - %{date} with %{name}",
+      date: Formatting.format_date_short(date, locale),
+      name: appointment_details.organizer_name
+    )
+  end
+
+  defp attendee_subject(appointment_details, date, locale) do
+    dgettext("emails_booking", "Meeting Rescheduled - %{date} with %{name}",
+      date: Formatting.format_date_short(date, locale),
+      name: appointment_details.organizer_name
+    )
+  end
+
+  # The slot this booking used to occupy, rendered in the recipient's own
+  # timezone. Returns "" when the payload carries no reschedule context, so the
+  # template degrades to a plain "new details" email instead of raising.
+  defp previous_time_callout(appointment_details, recipient, locale) do
+    case previous_moment(appointment_details, recipient, locale) do
+      nil ->
+        ""
+
+      previously ->
+        Callouts.alert_box(@intent, previously,
+          title: dgettext("emails_booking", "Previously scheduled for")
+        )
+    end
+  end
+
+  defp previous_time_line(appointment_details, recipient, locale) do
+    case previous_moment(appointment_details, recipient, locale) do
+      nil -> ""
+      previously -> "\n#{dgettext("emails_booking", "Previously scheduled for")}: #{previously}\n"
+    end
+  end
+
+  # The previous start, stated as the new one is: on the recipient's clock,
+  # with the zone it is in named.
+  defp previous_moment(appointment_details, recipient, locale) do
+    case previous_start_time(appointment_details, recipient) do
+      %DateTime{} = previous -> moment(previous, appointment_details, recipient, locale)
+      _unknown -> nil
+    end
+  end
+
+  defp moment(start_time, appointment_details, recipient, locale) do
+    Formatting.format_meeting_datetime(
+      %{start_time: start_time, time_format: recipient_clock(appointment_details, recipient)},
+      locale
+    )
+  end
+
+  defp recipient_clock(appointment_details, :organizer),
+    do: Map.get(appointment_details, :organizer_time_format)
+
+  defp recipient_clock(_appointment_details, :attendee), do: nil
+
+  defp previous_start_time(appointment_details, :attendee) do
+    Map.get(appointment_details, :original_start_time_attendee_tz) ||
+      Map.get(appointment_details, :original_start_time)
+  end
+
+  defp previous_start_time(appointment_details, :organizer) do
+    Map.get(appointment_details, :original_start_time_owner_tz) ||
+      Map.get(appointment_details, :original_start_time)
+  end
+
+  # A reschedule does not always keep the join link: providers that sign links
+  # for the meeting's time (Jitsi with token authentication) issue new ones for
+  # the new time, so "same link" is only said when the payload shows it. A
+  # payload without the previous link makes no claim either way.
+  defp attendee_video_title(%{attendee_video_url: url, original_attendee_video_url: url}),
+    do: dgettext("emails_booking", "Same link, new time")
+
+  defp attendee_video_title(%{original_attendee_video_url: _previous}),
+    do: dgettext("emails_booking", "New link for the new time")
+
+  defp attendee_video_title(_appointment_details),
+    do: dgettext("emails_booking", "Join when you're ready")
+
+  # Read defensively: a payload built without reminder details must still
+  # render. See the module doc.
+  defp reminders_callout(appointment_details) do
+    case Map.get(appointment_details, :reminders_summary) do
+      nil ->
+        ""
+
+      summary ->
+        Callouts.alert_box(@intent, summary,
+          title: dgettext("emails_booking", "Reminders Scheduled")
+        )
+    end
+  end
+
+  # A reschedule supersedes an invitation the attendee's calendar already
+  # holds, so its SEQUENCE must be higher than any sent before. The reschedule
+  # itself advances the meeting's `ical_sequence` to the revision this email
+  # announces (`Bookings.Reschedule`), so the value is sent as it is; the
+  # floor of 1 keeps a payload without one past the original invitation.
+  # Same METHOD:PUBLISH-not-REQUEST caution as the cancellation ICS.
+  #
+  # A moved spot is the exception: its new seat is a new calendar entry under
+  # a UID of its own, invited at its own revision exactly as a fresh seat's
+  # confirmation is. Floored to 1 it would sit level with the revision the
+  # seat's later cancellation is stamped at, which a calendar client may then
+  # ignore as no newer than the entry it holds.
+  defp update_ics_attachment(appointment_details, locale) do
+    sequence = ics_sequence(appointment_details)
+
+    IcsGenerator.generate_ics_update_attachment(
+      appointment_details,
+      sequence,
+      locale,
+      "appointment-#{appointment_details.uid}.ics"
+    )
+  end
+
+  defp ics_sequence(%{seat_move: true} = appointment_details),
+    do: Map.get(appointment_details, :ical_sequence) || 0
+
+  defp ics_sequence(appointment_details),
+    do: max(Map.get(appointment_details, :ical_sequence) || 0, 1)
+
+  defp build_attendee_text_body(appointment_details, meeting_details, locale) do
+    meeting_details = TextBodyHelper.format_meeting_details(meeting_details, locale)
+
+    video_section =
+      TextBodyHelper.format_video_section(JoinUrl.for(:attendee, appointment_details), locale)
+
+    action_links = TextBodyHelper.format_action_links(appointment_details, locale)
+    custom_answers = TextBodyHelper.format_custom_answers(appointment_details, locale)
+    reminders = Map.get(appointment_details, :reminders_summary)
+
+    """
+    #{dgettext("emails_booking", "Meeting Rescheduled")}
+
+    #{dgettext("emails_booking", "Hi %{name},", name: appointment_details.attendee_name)}
+
+    #{attendee_text_intro(appointment_details, locale)}
+
+    #{GroupSession.text(appointment_details)}#{previous_time_line(appointment_details, :attendee, locale)}
+    #{dgettext("emails_booking", "NEW MEETING DETAILS:")}
+    #{meeting_details}#{video_section}#{custom_answers}
+    #{action_links}
+    #{if reminders, do: "\n#{reminders}\n", else: ""}
+    #{dgettext("emails_booking", "Looking forward to meeting you!")}
+    #{appointment_details.organizer_name}
+    """
+  end
+
+  # Whoever put the guest on the meeting is the one named as inviting them
+  # (see `Tymeslot.Meetings.GuestSchema.inviter/1`).
+  defp guest_intro(%{guest_invited_by: :organizer} = appointment_details, guest_name) do
+    dgettext(
+      "emails_booking",
+      "Hi %{guest} - the meeting %{organizer} invited you to has been moved to a new time.",
+      guest: guest_name,
+      organizer: appointment_details.organizer_name
+    )
+  end
+
+  defp guest_intro(appointment_details, guest_name) do
+    dgettext(
+      "emails_booking",
+      "Hi %{guest} - the meeting with %{organizer} that %{booker} invited you to has been moved to a new time.",
+      guest: guest_name,
+      organizer: appointment_details.organizer_name,
+      booker: appointment_details.attendee_name
+    )
+  end
+
+  defp guest_moved_line(%{guest_invited_by: :organizer} = appointment_details) do
+    dgettext(
+      "emails_booking",
+      "The meeting %{organizer} invited you to has been moved to a new time.",
+      organizer: appointment_details.organizer_name
+    )
+  end
+
+  defp guest_moved_line(appointment_details) do
+    dgettext(
+      "emails_booking",
+      "The meeting with %{organizer} that %{booker} invited you to has been moved to a new time.",
+      organizer: appointment_details.organizer_name,
+      booker: appointment_details.attendee_name
+    )
+  end
+
+  defp build_guest_text_body(appointment_details, meeting_details, guest_name, locale) do
+    meeting_details = TextBodyHelper.format_meeting_details(meeting_details, locale)
+
+    video_section =
+      TextBodyHelper.format_video_section(JoinUrl.for(:guest, appointment_details), locale)
+
+    """
+    #{dgettext("emails_booking", "Meeting Rescheduled")}
+
+    #{dgettext("emails_booking", "Hi %{guest},", guest: guest_name)}
+
+    #{guest_moved_line(appointment_details)}
+    #{previous_time_line(appointment_details, :attendee, locale)}
+    #{dgettext("emails_booking", "NEW MEETING DETAILS:")}
+    #{meeting_details}#{video_section}#{TextBodyHelper.format_guest_answers(appointment_details, dgettext("emails_booking", "WILL YOU BE THERE AT THE NEW TIME?"), dgettext("emails_booking", "Your earlier response applied to the previous time, so please let us know again."))}
+    """
+  end
+
+  # Who moved the meeting, as the organiser is told. A move the host made in
+  # their own calendar (`moved_by: :host`, set by
+  # `Tymeslot.Bookings.FollowCalendar.execute/4`) is not the attendee's.
+  defp organizer_moved_line(%{moved_by: :host}),
+    do: dgettext("emails_booking", "You moved this meeting in your calendar.")
+
+  # A meeting the host manages is only ever moved by the host
+  # (`Tymeslot.Bookings.HostMove`), and nobody booked it to be told.
+  defp organizer_moved_line(%{host_managed: true}),
+    do: dgettext("emails_booking", "You moved this meeting.")
+
+  defp organizer_moved_line(appointment_details) do
+    dgettext("emails_booking", "%{name} has moved your meeting.",
+      name: appointment_details.attendee_name
+    )
+  end
+
+  defp organizer_notified_line(%{host_managed: true}),
+    do: dgettext("emails_booking", "Your guests have been notified of the new time.")
+
+  defp organizer_notified_line(_appointment_details),
+    do: dgettext("emails_booking", "The attendee has been notified of the new time.")
+
+  defp build_organizer_text_body(appointment_details, meeting_details) do
+    locale = organizer_locale(appointment_details)
+
+    meeting_details = TextBodyHelper.format_meeting_details(meeting_details, locale)
+    attendee_info = TextBodyHelper.format_attendee_info(appointment_details, locale)
+
+    video_section =
+      TextBodyHelper.format_video_section(JoinUrl.for(:organizer, appointment_details), locale)
+
+    action_links = TextBodyHelper.format_action_links(appointment_details, locale)
+    custom_answers = TextBodyHelper.format_custom_answers(appointment_details, locale)
+
+    """
+    #{dgettext("emails_booking", "Meeting Rescheduled")}
+
+    #{organizer_moved_line(appointment_details)}#{attendee_info}
+    #{previous_time_line(appointment_details, :organizer, locale)}
+    #{dgettext("emails_booking", "NEW MEETING DETAILS:")}
+    #{meeting_details}#{video_section}#{custom_answers}#{action_links}
+
+    #{organizer_notified_line(appointment_details)}
+    """
+  end
+
+  defp organizer_locale(appointment_details),
+    do: RecipientLocale.organizer_locale(appointment_details)
+end

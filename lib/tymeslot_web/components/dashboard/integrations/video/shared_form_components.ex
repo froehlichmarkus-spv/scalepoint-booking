@@ -1,0 +1,285 @@
+defmodule TymeslotWeb.Components.Dashboard.Integrations.Video.SharedFormComponents do
+  @moduledoc """
+  Shared HEEx components for video integration configuration forms.
+  Provides consistent, reusable form elements across all video providers.
+  """
+
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Phoenix.LiveView.JS
+  alias TymeslotWeb.Components.CoreComponents.Forms
+  alias TymeslotWeb.Components.CoreComponents.Icons
+  alias TymeslotWeb.Components.CoreComponents.Tooltip
+  alias TymeslotWeb.Components.Dashboard.Integrations.Shared.UIComponents
+  alias TymeslotWeb.Live.Shared.FormValidationHelpers
+
+  @doc """
+  Renders a standard integration name field with icon.
+  """
+  attr :form_errors, :map, required: true
+  attr :value, :string, default: ""
+  attr :placeholder, :string, default: nil
+  attr :target, :any, required: true
+
+  @spec integration_name_field(map()) :: Phoenix.LiveView.Rendered.t()
+  def integration_name_field(assigns) do
+    ~H"""
+    <Forms.input
+      type="text"
+      id="integration_name"
+      name="integration[name]"
+      label={dgettext("dashboard_video", "Integration Name")}
+      value={@value}
+      icon="hero-tag"
+      phx-blur={JS.push("validate_field", value: %{"field" => "name"}, target: @target)}
+      required
+      errors={FormValidationHelpers.field_errors(@form_errors, :name)}
+      placeholder={@placeholder || dgettext("dashboard_video", "My Video Integration")}
+    />
+    """
+  end
+
+  @doc """
+  Renders a URL field with globe icon.
+  """
+  attr :id, :string, required: true
+  attr :name, :string, required: true
+  attr :label, :string, required: true
+  attr :value, :string, default: ""
+  attr :placeholder, :string, required: true
+  attr :form_errors, :map, required: true
+  attr :error_key, :atom, required: true
+  attr :target, :any, required: true
+  attr :helper_text, :string, default: nil
+
+  attr :validate_on_blur, :boolean,
+    default: true,
+    doc: "pushes `validate_field` to `target` when the input loses focus"
+
+  @spec url_field(map()) :: Phoenix.LiveView.Rendered.t()
+  def url_field(assigns) do
+    errors = FormValidationHelpers.field_errors(assigns.form_errors, assigns.error_key)
+
+    # Errors replace the helper text, so the input is described by whichever
+    # of the two is on the page.
+    describedby =
+      cond do
+        errors != [] -> "#{assigns.id}-error"
+        assigns.helper_text -> "#{assigns.id}-help"
+        true -> nil
+      end
+
+    assigns = assign(assigns, errors: errors, describedby: describedby)
+
+    ~H"""
+    <div>
+      <Forms.input
+        type="url"
+        id={@id}
+        name={@name}
+        label={@label}
+        value={@value}
+        icon="hero-globe-alt"
+        phx-blur={
+          @validate_on_blur &&
+            JS.push("validate_field",
+              value: %{"field" => Atom.to_string(@error_key)},
+              target: @target
+            )
+        }
+        required
+        aria-describedby={@describedby}
+        errors={@errors}
+        placeholder={@placeholder}
+        {UIComponents.server_url_attrs()}
+      />
+      <p
+        :if={@errors == [] && @helper_text}
+        id={"#{@id}-help"}
+        class="mt-2 text-token-xs text-tymeslot-500"
+      >
+        {@helper_text}
+      </p>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders a read-only server address for a provider whose host is fixed.
+
+  The value is shown but never submitted: the provider supplies its own host
+  server-side. The input stays `readonly` rather than `disabled` so keyboard
+  and screen reader users can still reach it; it points at the tooltip and
+  the helper text through `aria-describedby`, and hovering, focusing or
+  tapping it shows the tooltip.
+  """
+  attr :id, :string, required: true
+  attr :value, :string, required: true
+  attr :tooltip, :string, required: true
+  attr :helper_text, :string, default: nil
+
+  @spec locked_host_field(map()) :: Phoenix.LiveView.Rendered.t()
+  def locked_host_field(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :describedby,
+        Enum.join(
+          ["#{assigns.id}-tooltip" | List.wrap(assigns.helper_text && "#{assigns.id}-help")],
+          " "
+        )
+      )
+
+    ~H"""
+    <div>
+      <label for={@id} class="label mb-2 block">
+        {dgettext("dashboard_video", "Server URL")}
+      </label>
+      <Tooltip.tooltip id={"#{@id}-tooltip"} text={@tooltip}>
+        <%!-- readonly, not disabled, so keyboard and screen reader users reach it and the tooltip shows on focus --%>
+        <Forms.input
+          type="text"
+          id={@id}
+          value={@value}
+          icon="hero-lock-closed"
+          readonly
+          aria-describedby={@describedby}
+        />
+      </Tooltip.tooltip>
+      <p :if={@helper_text} id={"#{@id}-help"} class="mt-2 text-token-xs text-tymeslot-500">
+        {@helper_text}
+      </p>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders an API key field with key icon (password-masked).
+  """
+  attr :id, :string, required: true
+  attr :name, :string, required: true
+  attr :label, :string, default: nil
+  attr :value, :string, default: ""
+  attr :placeholder, :string, default: nil
+  attr :form_errors, :map, required: true
+  attr :error_key, :atom, default: :api_key
+  attr :target, :any, required: true
+  attr :helper_text, :string, default: nil
+
+  @spec api_key_field(map()) :: Phoenix.LiveView.Rendered.t()
+  def api_key_field(assigns) do
+    assigns =
+      assign(
+        assigns,
+        :errors,
+        FormValidationHelpers.field_errors(assigns.form_errors, assigns.error_key)
+      )
+
+    ~H"""
+    <div>
+      <Forms.input
+        type="password"
+        id={@id}
+        name={@name}
+        label={@label || dgettext("dashboard_video", "API Key")}
+        value={@value}
+        icon="hero-key"
+        phx-blur={
+          JS.push("validate_field",
+            value: %{"field" => Atom.to_string(@error_key)},
+            target: @target
+          )
+        }
+        required
+        errors={@errors}
+        placeholder={@placeholder || dgettext("dashboard_video", "Your API key")}
+      />
+      <p :if={@errors == [] && @helper_text} class="mt-2 text-xs text-tymeslot-500">
+        {@helper_text}
+      </p>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders a credential input with an icon: a login or client id, or a secret.
+
+  A secret is rendered without a value, so a typed or stored secret never
+  comes back into the page. Browsers ignore `autocomplete="off"` on a password
+  input and a password manager would fill in the organiser's own the scheduler
+  password, so a secret is marked `new-password`, which password managers do
+  not fill; any other credential stays `off`, so the pair never reads as a
+  sign-in form. Field errors show under the input, followed by the slot, which
+  is where help text goes.
+  """
+  attr :id, :string, required: true
+  attr :name, :string, required: true
+  attr :type, :string, required: true
+  attr :icon, :string, required: true
+  attr :label, :string, required: true
+  attr :value, :string, default: nil, doc: "left unset for a secret, which is never rendered"
+  attr :describedby, :string, required: true
+  attr :disabled, :boolean, default: false
+  attr :placeholder, :string, default: nil
+
+  attr :required, :boolean,
+    default: false,
+    doc: "off where a blank field means 'keep what is stored'"
+
+  attr :errors, :list, default: []
+  slot :inner_block
+
+  @spec credential_input(map()) :: Phoenix.LiveView.Rendered.t()
+  def credential_input(assigns) do
+    ~H"""
+    <div>
+      <Forms.input
+        type={@type}
+        id={@id}
+        name={@name}
+        label={@label}
+        value={@value}
+        icon={@icon}
+        autocomplete={if @type == "password", do: "new-password", else: "off"}
+        disabled={@disabled}
+        placeholder={@placeholder}
+        required={@required}
+        aria-describedby={Enum.join([@describedby | error_ids(@id, @errors)], " ")}
+        errors={@errors}
+      />
+      {render_slot(@inner_block)}
+    </div>
+    """
+  end
+
+  # The caller's description and, while there are errors, the error region
+  # `Forms.input/1` renders under the id `<id>-error`.
+  defp error_ids(_id, []), do: []
+  defp error_ids(id, _errors), do: ["#{id}-error"]
+
+  @doc """
+  Renders a standard error banner for base-level errors.
+  """
+  attr :error, :string, required: true
+
+  @spec error_banner(map()) :: Phoenix.LiveView.Rendered.t()
+  def error_banner(assigns) do
+    ~H"""
+    <div role="alert" class="brand-card p-3 bg-red-50/50 border border-red-200/50">
+      <p class="text-sm text-red-600 flex items-center">
+        <Icons.icon name="hero-exclamation-circle-mini" class="w-4 h-4 mr-2" />
+        {@error}
+      </p>
+    </div>
+    """
+  end
+
+  @doc """
+  Returns the form-level error message, if any, for the `:base` key that
+  `TymeslotWeb.Helpers.IntegrationProviders.reason_to_form_errors/1` and
+  `duplicate_integration` handling assign it under. `nil` when there is none.
+  """
+  @spec form_level_error(map()) :: String.t() | nil
+  def form_level_error(form_errors), do: Map.get(form_errors, :base)
+end

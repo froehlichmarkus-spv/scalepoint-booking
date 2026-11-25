@@ -1,0 +1,223 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: uk\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100 != 11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10||n%100>=20) ? 1 : 2);\n"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{current} / %{total}"
+msgstr "%{current} / %{total}"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Account settings and log out are here in the top-right."
+msgstr "Налаштування облікового запису та вихід знаходяться тут, у верхньому правому куті."
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Back"
+msgstr "Назад"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Confirmation"
+msgstr "Підтвердження"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Date & Time"
+msgstr "Дата та час"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Details"
+msgstr "Деталі"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Duration"
+msgstr "Тривалість"
+
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Finish"
+msgstr "Завершити"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#, elixir-autogen, elixir-format
+msgid "Got it"
+msgstr "Зрозуміло"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#, elixir-autogen, elixir-format
+msgid "New feature"
+msgstr "Нова функція"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Next"
+msgstr "Далі"
+
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Skip"
+msgstr "Пропустити"
+
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Step %{n} of %{total}"
+msgstr "Крок %{n} з %{total}"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Take 30 seconds to learn where everything lives."
+msgstr "Витратьте 30 секунд, щоб дізнатися, де що знаходиться."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to your the scheduler dashboard"
+msgstr "Ласкаво просимо до вашої панелі керування the scheduler"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "You're set"
+msgstr "Усе готово"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Your account"
+msgstr "Ваш обліковий запис"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Read the docs"
+msgstr "Читати документацію"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Go create your first event type - and let people book you."
+msgstr "Створіть свій перший тип події - і дайте людям змогу бронювати у вас зустрічі."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Everything lives here"
+msgstr "Тут є все"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
+msgstr ""
+"Ваш календар — це головна сторінка. Зустрічі, доступність, інтеграції та ваш "
+"профіль — за один клік."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
+msgstr ""
+"Відкрийте його, щоб підключити календар, налаштувати сторінку бронювання та "
+"поділитися посиланням. Він зникне, коли всі кроки буде виконано."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Your setup checklist"
+msgstr "Ваш список налаштування"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Add a holiday on the availability page and those days stop being offered, across every schedule and every meeting type, without a blocking event in any calendar you have connected. Give the first and last day a time when you leave mid-afternoon or come back mid-morning. Bookings already in your diary keep their times, and you are shown which ones before you save. Nobody booking you sees why the days are closed."
+msgstr "Додайте відсутність на сторінці «Доступність», і ці дні більше не пропонуватимуться, у кожному розкладі та для кожного типу зустрічі, без блокувальної події в жодному під'єднаному календарі. Задайте час для першого та останнього дня, якщо ви їдете по обіді або повертаєтеся зранку. Наявні бронювання зберігають свій час, і ви побачите їх перелік перед збереженням. Той, хто вас бронює, не бачить, чому ці дні закриті."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Close the days you are away"
+msgstr "Закрийте дні вашої відсутності"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Meet on Jitsi, kMeet or Nextcloud Talk"
+msgstr "Зустрічі в Jitsi, kMeet або Nextcloud Talk"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point the scheduler at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
+msgstr "Ще три відеопровайдери приєдналися до Zoom, Google Meet, Teams і MiroTalk у виборі інтеграцій. Вкажіть the scheduler власний Jitsi чи Nextcloud, і кожне бронювання отримає окрему кімнату: розмова в Talk тримає зал очікування зачиненим до початку зустрічі, переноситься разом із нею та видаляється, коли ви скасовуєте. kMeet не потребує жодного налаштування."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "A meeting type can now offer several places to meet: in person at an address, a video call or a phone call. The person booking picks the one that suits them, and can change it when they reschedule. Offer more than one video service and they choose which one the meeting runs on."
+msgstr "Тип зустрічі тепер може пропонувати кілька місць: особисто за адресою, відеодзвінок або телефонний дзвінок. Людина, яка бронює, обирає зручний варіант і може змінити його під час перенесення. Запропонуйте кілька відеосервісів, і вона обере, на якому пройде зустріч."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Let people choose where you meet"
+msgstr "Дозвольте обирати, де зустрітися"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Host webinars, workshops and classes"
+msgstr "Проводьте вебінари, воркшопи та заняття"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Turn any meeting type into a group session. Set how many people can join and each slot stays open until it's full, so one booking page can run your webinar, workshop, class or office hours. Everyone books themselves in, gets their own confirmation and calendar invite, and can cancel or reschedule without asking you."
+msgstr "Перетворіть будь-який тип зустрічі на групову сесію. Вкажіть, скільки людей може долучитися, і кожен слот залишатиметься відкритим, доки не заповниться, тож одна сторінка бронювання обслужить ваш вебінар, воркшоп, заняття чи консультації. Кожен записується сам, отримує власне підтвердження й запрошення в календар, а скасувати чи перенести бронювання може, не питаючи вас."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Two new booking page themes: Folio and Paper"
+msgstr "Дві нові теми сторінки бронювання: Folio і Paper"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Folio introduces you before anyone picks a time: a cover image, your portrait, headline and bio, in serif type on one continuous page. Paper does the opposite: one calm card in the colour palette you choose, light or dark, and the time and details on a single screen. Open the Theme page to preview either on your own booking page before you switch."
+msgstr "Folio представляє вас ще до того, як хтось вибере час: обкладинка, ваш портрет, заголовок і біографія, шрифтом із засічками на одній суцільній сторінці. Paper робить навпаки: одна спокійна картка в колірній палітрі на ваш вибір, світла чи темна, а час і деталі на одному екрані. Відкрийте сторінку «Тема», щоб переглянути будь-яку з них на власній сторінці бронювання, перш ніж перемикатися."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Polls that invite, confirm and keep you posted"
+msgstr "Опитування, які запрошують, підтверджують і тримають вас у курсі"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "A poll can be open, so anyone with the link asks for a voting link by email, or invite-only. You can be emailed as votes arrive. After sending you can change the deadline, add times, resend an invitation and remove people; reminders go to invited people who haven't voted. The meeting a poll confirms is yours: everyone on it is a guest, and only you can move or cancel it."
+msgstr "Опитування може бути відкритим, і тоді кожен, хто має посилання, просить посилання для голосування електронною поштою, або лише для запрошених. Ви можете отримувати листи, коли надходять голоси. Після надсилання можна змінити кінцевий термін, додати час, надіслати запрошення повторно й видалити людей; нагадування надходять запрошеним, які ще не проголосували. Зустріч, яку підтверджує опитування, належить вам: усі на ній є гостями, і лише ви можете її перенести чи скасувати."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler now speaks Spanish"
+msgstr "the scheduler тепер розмовляє іспанською"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Your dashboard, booking pages and every email are now available in Spanish. the scheduler follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
+msgstr "Ваша панель керування, сторінки бронювання та всі листи тепер доступні іспанською. the scheduler використовує мову вашого браузера, або ви можете обрати мову самостійно в налаштуваннях облікового запису. Люди, які бронюють у вас, теж бачать сторінки бронювання й підтвердження своєю мовою."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Book a whole course of sessions at once"
+msgstr "Забронюйте цілий курс сесій одразу"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Clients can now book a series in one go: the same time every week or month, or a set of sessions at times they choose. Each session is a normal booking with its own reminders and links, and a series can be paid upfront. Turn it on for each meeting type, under Series."
+msgstr "Клієнти тепер можуть забронювати серію за один раз: у той самий час щотижня чи щомісяця або кілька сесій у години, які вони оберуть самі. Кожна сесія є звичайним бронюванням зі своїми нагадуваннями та посиланнями, а серію можна оплатити наперед. Увімкніть її для кожного типу зустрічі в розділі Серія."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Your dashboard calendar, redesigned"
+msgstr "Календар на панелі керування в новому вигляді"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "We've redesigned the calendar from the ground up: a fresh look, a clearer layout with more room for your week, and quicker ways to plan, create and change your meetings. Have a look around, or read the docs for a tour of everything that's new."
+msgstr "Ми повністю переробили календар: новий вигляд, зрозуміліше компонування з більшим простором для вашого тижня та швидші способи планувати, створювати й змінювати зустрічі. Роздивіться або прочитайте документацію, щоб дізнатися про всі нововведення."

@@ -1,0 +1,633 @@
+defmodule Tymeslot.Profiles do
+  @moduledoc """
+  Context module for managing user profiles and settings.
+  Acts as a coordination layer, providing a unified API while delegating
+  specialized tasks to subcomponents.
+  """
+
+  @behaviour Tymeslot.Security.EncryptedStorage
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Availability
+  alias Tymeslot.Availability.Schedules
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Profiles.Avatars
+  alias Tymeslot.Profiles.EmbedDomains
+  alias Tymeslot.Profiles.OrganizerContext
+  alias Tymeslot.Profiles.ProfileQueries
+  alias Tymeslot.Profiles.ProfileSchema
+  alias Tymeslot.Profiles.ReservedPaths
+  alias Tymeslot.Profiles.Scheduling
+  alias Tymeslot.Profiles.Timezone
+  alias Tymeslot.Profiles.Usernames
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.EncryptedString
+  alias Tymeslot.Security.FieldValidators.UsernameValidator
+  alias Tymeslot.Themes.Catalog
+
+  @type user_id :: pos_integer()
+  @type username :: String.t()
+  @type timezone :: String.t()
+  @type profile :: ProfileSchema.t()
+  @type error_reason :: atom() | String.t() | Ecto.Changeset.t()
+  @type result(t) :: {:ok, t} | {:error, error_reason}
+  @type uploaded_entry :: map()
+  @type legal_links :: %{
+          legal_notice_url: String.t() | nil,
+          privacy_policy_url: String.t() | nil
+        }
+  @type profile_settings :: %{
+          timezone: timezone,
+          max_bookings_per_day: pos_integer() | nil,
+          max_bookings_per_week: pos_integer() | nil,
+          max_bookings_per_month: pos_integer() | nil
+        }
+
+  # The free/busy feed token.
+  @impl Tymeslot.Security.EncryptedStorage
+  def encrypted_storage,
+    do: {ProfileSchema.__schema__(:source), EncryptedString.columns(ProfileSchema)}
+
+  # --- Profile Retrieval ---
+
+  @doc """
+  Gets a profile for a user.
+  """
+  @spec get_profile(user_id) :: profile | nil
+  def get_profile(user_id) do
+    case ProfileQueries.get_by_user_id(user_id) do
+      {:ok, profile} -> profile
+      {:error, :not_found} -> nil
+    end
+  end
+
+  @doc """
+  Gets a profile for a user, returning a tagged result tuple.
+  """
+  @spec get_profile_by_user_id(user_id) :: result(profile)
+  defdelegate get_profile_by_user_id(user_id), to: ProfileQueries, as: :get_by_user_id
+
+  @doc """
+  Gets a profile by its database ID.
+  """
+  @spec get_profile_by_id(integer()) :: profile | nil
+  defdelegate get_profile_by_id(profile_id), to: ProfileQueries, as: :get_with_user
+
+  @doc "The currency recorded as the one the user's prices were set in, if any."
+  @spec last_charge_currency(integer()) :: String.t() | nil
+  defdelegate last_charge_currency(user_id), to: ProfileQueries
+
+  @doc "Records the currency the user's prices were set in."
+  @spec record_last_charge_currency(integer(), String.t()) :: :ok
+  defdelegate record_last_charge_currency(user_id, currency), to: ProfileQueries
+
+  @doc """
+  Gets or creates a profile for a user.
+  Creates default weekly schedule for newly created profiles.
+
+  Safe to call concurrently for the same user: whichever call loses the race
+  to insert returns the winner's profile. Returns `{:error, :user_not_found}`
+  when the user no longer exists.
+  """
+  @spec get_or_create_profile(user_id) :: result(profile) | {:error, :user_not_found}
+  def get_or_create_profile(user_id) do
+    case ProfileQueries.get_by_user_id(user_id) do
+      {:ok, profile} ->
+        {:ok, profile}
+
+      {:error, :not_found} ->
+        create_profile(user_id)
+    end
+  end
+
+  @doc """
+  Creates a profile for a user with its default weekly schedule and the
+  default meeting types, which are seeded here, once.
+
+  A profile created concurrently for the same user is returned as if this
+  call had created it; a user deleted meanwhile gives
+  `{:error, :user_not_found}`.
+  """
+  @spec create_profile(user_id) :: result(profile) | {:error, :user_not_found}
+  def create_profile(user_id) do
+    result =
+      Repo.transaction(fn ->
+        with {:ok, profile} <- ProfileQueries.insert_profile(user_id),
+             {:ok, _schedule} <- Schedules.create_default(profile.id) do
+          :ok = MeetingTypes.seed_default_meeting_types(user_id)
+          profile
+        else
+          {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback(changeset)
+          {:error, _reason} -> Repo.rollback(:failed_to_create_schedule)
+        end
+      end)
+
+    settle_insert_race(result, user_id)
+  end
+
+  defp settle_insert_race({:error, %Ecto.Changeset{errors: errors}} = error, user_id) do
+    case errors[:user_id] do
+      {_message, opts} -> user_id_refusal(opts[:constraint], user_id, error)
+      nil -> error
+    end
+  end
+
+  defp settle_insert_race(result, _user_id), do: result
+
+  defp user_id_refusal(:unique, user_id, _error), do: ProfileQueries.get_by_user_id(user_id)
+  defp user_id_refusal(:foreign, _user_id, _error), do: {:error, :user_not_found}
+  defp user_id_refusal(_other, _user_id, error), do: error
+
+  @doc """
+  Gets a profile by username.
+  """
+  @spec get_profile_by_username(username) :: profile | nil
+  def get_profile_by_username(username) do
+    case ProfileQueries.get_by_username(username) do
+      {:ok, profile} -> profile
+      {:error, :not_found} -> nil
+    end
+  end
+
+  @doc """
+  Gets a profile by username with its user preloaded, as the scheduling flow
+  needs its organiser (`organizer_context/1`).
+  """
+  @spec get_organizer_by_username(username) :: profile | nil
+  def get_organizer_by_username(username) do
+    case ProfileQueries.get_by_username_with_user(username) do
+      {:ok, profile} -> profile
+      {:error, :not_found} -> nil
+    end
+  end
+
+  @doc """
+  Marks a host's booking page as published the first time it goes live.
+
+  A page is "published" once the host has a username set. The write is guarded
+  by `booking_page_published_at` so it happens at most once per host:
+
+    * no username (nil or "") → `{:ok, :noop}`
+    * already published → `{:ok, :noop}`
+    * otherwise stamp the timestamp atomically → `{:ok, :published}`
+
+  Returns `{:ok, :published}` only on the transition, so callers can use it to
+  guard once-per-host side effects (e.g. analytics emission).
+  """
+  @spec mark_booking_page_published(profile()) :: {:ok, :published | :noop}
+  def mark_booking_page_published(%ProfileSchema{username: username})
+      when is_nil(username) or username == "",
+      do: {:ok, :noop}
+
+  def mark_booking_page_published(%ProfileSchema{booking_page_published_at: %DateTime{}}),
+    do: {:ok, :noop}
+
+  def mark_booking_page_published(%ProfileSchema{id: profile_id}) do
+    published_at = DateTime.utc_now(:second)
+
+    case ProfileQueries.mark_booking_page_published(profile_id, published_at) do
+      1 -> {:ok, :published}
+      0 -> {:ok, :noop}
+    end
+  end
+
+  @doc """
+  Remembers when a host first copied or shared their booking link.
+
+  The stamp is a lower bound (copying is a client-side action the server only
+  hears about when the page is connected), so it must never gate behaviour.
+  Returns `{:ok, :shared}` only on the first share and `{:ok, :noop}` after.
+  """
+  @spec mark_booking_link_shared(profile()) :: {:ok, :shared | :noop}
+  def mark_booking_link_shared(%ProfileSchema{booking_link_first_shared_at: %DateTime{}}),
+    do: {:ok, :noop}
+
+  def mark_booking_link_shared(%ProfileSchema{id: profile_id}) do
+    case ProfileQueries.mark_booking_link_shared(profile_id, DateTime.utc_now(:second)) do
+      1 -> {:ok, :shared}
+      0 -> {:ok, :noop}
+    end
+  end
+
+  # --- Profile Updates ---
+
+  @doc """
+  Updates the host's name and time zone together, as the onboarding form
+  submits them. The username is written by `change_username/2` alone.
+  """
+  @spec update_basic_details(profile, map()) :: result(profile)
+  def update_basic_details(%ProfileSchema{} = profile, attrs),
+    do: profile |> ProfileQueries.update_basic(attrs) |> changed()
+
+  @doc """
+  Sets the name and avatar of an account provisioned with both at once.
+  """
+  @spec provision_identity(profile, %{full_name: String.t(), avatar: String.t() | nil}) ::
+          result(profile)
+  defdelegate provision_identity(profile, attrs), to: ProfileQueries, as: :update_identity
+
+  @doc """
+  Records whether the profile's booking page carries a theme customisation.
+  """
+  @spec set_custom_theme(profile, boolean()) :: result(profile)
+  def set_custom_theme(%ProfileSchema{} = profile, custom?) when is_boolean(custom?),
+    do: ProfileQueries.update_theme(profile, %{has_custom_theme: custom?})
+
+  # The booking page lays the host's hours out in their time zone and hides a
+  # slot past their booking limits, so either change refreshes what it offers.
+  defp changed({:ok, profile} = result) do
+    Availability.changed(profile)
+    result
+  end
+
+  defp changed(error), do: error
+
+  @doc """
+  Updates the booking page's introductory text and its on/off switch.
+  """
+  @spec update_booking_text(profile, map()) :: result(profile)
+  defdelegate update_booking_text(profile, attrs), to: ProfileQueries
+
+  @doc """
+  Updates the organiser's headline and bio, the introduction a theme may show
+  on the booking page. Callers sanitise the params first
+  (`Tymeslot.Profiles.InputValidation.validate_intro/2`); the changeset owns
+  the caps and the clean-up.
+  """
+  @spec update_intro(profile, map()) :: result(profile)
+  defdelegate update_intro(profile, attrs), to: ProfileQueries
+
+  @doc """
+  Updates the organiser's legal notice and privacy policy links. Callers
+  sanitise the params first
+  (`Tymeslot.Profiles.InputValidation.validate_legal_links/2`); the changeset
+  validates the URLs.
+  """
+  @spec update_legal_links(profile, map()) :: result(profile)
+  defdelegate update_legal_links(profile, attrs), to: ProfileQueries
+
+  @doc """
+  Updates the booking languages: the original language, the translation
+  languages and whether the booking page is offered in every language
+  (`Tymeslot.ContentTranslations.Languages`). Stored translations are never
+  touched, so a removed language's texts come back when it is added again.
+  """
+  @spec update_booking_languages(profile, map()) :: result(profile)
+  defdelegate update_booking_languages(profile, attrs), to: ProfileQueries
+
+  @doc "A changeset for the booking languages form."
+  @spec change_booking_languages(profile, map()) :: Ecto.Changeset.t()
+  def change_booking_languages(%ProfileSchema{} = profile, attrs \\ %{}),
+    do: ProfileSchema.booking_languages_changeset(profile, attrs)
+
+  @doc """
+  The legal links a booking page shows. Each link is the organiser's own, else
+  the instance default (`:booking_legal_notice_url`, `:booking_privacy_policy_url`),
+  else `nil`. Always returns both keys; a `nil` profile yields the defaults.
+
+  The config is read at call time so runtime configuration takes effect.
+  """
+  @spec public_legal_links(profile | nil) :: legal_links()
+  def public_legal_links(profile) do
+    %{
+      legal_notice_url: legal_link(profile, :legal_notice_url, :booking_legal_notice_url),
+      privacy_policy_url: legal_link(profile, :privacy_policy_url, :booking_privacy_policy_url)
+    }
+  end
+
+  defp legal_link(profile, field, config_key),
+    do: (profile && Map.get(profile, field)) || Application.get_env(:tymeslot, config_key)
+
+  @doc """
+  Updates the full name for a profile.
+  """
+  @spec update_full_name(profile, String.t()) :: result(profile)
+  def update_full_name(%ProfileSchema{} = profile, full_name),
+    do: ProfileQueries.update_basic(profile, %{full_name: full_name})
+
+  # --- Timezone Management ---
+
+  @doc """
+  Prefills the timezone for a profile based on a detected timezone; see
+  `Tymeslot.Profiles.Timezone.prefill_profile/2`.
+  """
+  @spec prefill_timezone(profile() | nil, String.t() | nil) :: profile() | nil
+  defdelegate prefill_timezone(profile, detected_timezone), to: Timezone, as: :prefill_profile
+
+  @doc """
+  Gives a profile with no timezone one, persisted: the detected (browser)
+  timezone when it is a real zone, otherwise the business default.
+
+  A timezone the profile already has is never overwritten. Always returns
+  `{:ok, profile}`: if the write fails, the profile comes back exactly as
+  loaded, so a caller never holds a timezone that was not saved.
+  """
+  @spec ensure_timezone(profile(), String.t() | nil) :: {:ok, profile()}
+  defdelegate ensure_timezone(profile, detected_timezone), to: Timezone
+
+  @doc """
+  Gets the timezone for a user, returning the default if no profile exists.
+  """
+  @spec get_user_timezone(user_id) :: timezone
+  defdelegate get_user_timezone(user_id), to: Timezone, as: :for_user
+
+  @doc """
+  A profile's timezone, or the default for a profile that has none set; see
+  `Tymeslot.Profiles.Timezone.of/1`, the one rule for reading an owner's
+  clock.
+  """
+  @spec timezone(map() | nil) :: timezone
+  defdelegate timezone(profile), to: Timezone, as: :of
+
+  @doc """
+  Gets the default timezone.
+  """
+  @spec get_default_timezone() :: timezone
+  defdelegate get_default_timezone, to: Timezone, as: :default
+
+  @doc """
+  Updates the timezone for a profile.
+  """
+  @spec update_timezone(profile, timezone) :: result(profile)
+  def update_timezone(%ProfileSchema{} = profile, timezone),
+    do: profile |> ProfileQueries.update_basic(%{timezone: timezone}) |> changed()
+
+  # --- Username Management ---
+
+  @doc """
+  Generates a unique default username for a user.
+  """
+  @spec generate_default_username(user_id) :: username
+  defdelegate generate_default_username(user_id), to: Usernames
+
+  @doc """
+  Suggests a booking link from a host's full name, or failing that their
+  `:email`, without writing anything; see
+  `Tymeslot.Profiles.Usernames.suggest/3`.
+  """
+  @spec suggest_username(String.t() | nil, user_id, keyword()) :: username
+  defdelegate suggest_username(full_name, user_id, opts \\ []), to: Usernames, as: :suggest
+
+  @doc """
+  Whether a username is no choice of the host's (blank, or the generated
+  default); see `Tymeslot.Profiles.Usernames.system_default?/2`.
+  """
+  @spec default_username?(username | nil, user_id) :: boolean()
+  defdelegate default_username?(username, user_id), to: Usernames, as: :system_default?
+
+  @doc """
+  Checks if a username is available.
+  """
+  @spec username_available?(username) :: boolean()
+  defdelegate username_available?(username), to: ProfileQueries
+
+  @doc """
+  Whether `username` can become `profile`'s username, and if not, why; see
+  `Tymeslot.Profiles.Usernames.status/2`.
+  """
+  @spec username_status(profile() | map() | nil, term()) ::
+          :unchanged | :ok | {:invalid, String.t()} | :reserved | :taken
+  defdelegate username_status(profile, username), to: Usernames, as: :status
+
+  @doc """
+  Brings typed text towards the accepted username shape (lowercase, spaces
+  to hyphens, disallowed characters dropped); see
+  `Tymeslot.Security.FieldValidators.UsernameValidator.normalise/1`.
+  """
+  @spec normalise_username(String.t()) :: username
+  defdelegate normalise_username(text), to: UsernameValidator, as: :normalise
+
+  @doc """
+  Why a username's shape is refused (`:required`, `{:too_short, min}`,
+  `{:too_long, max}`, `:format`), or `nil`; see
+  `Tymeslot.Security.FieldValidators.UsernameValidator.problem/2`.
+  """
+  @spec username_problem(term()) :: UsernameValidator.problem() | nil
+  defdelegate username_problem(username), to: UsernameValidator, as: :problem
+
+  @doc "The shortest and longest username accepted, as `{min, max}`."
+  @spec username_length_range() :: {pos_integer(), pos_integer()}
+  defdelegate username_length_range(), to: UsernameValidator, as: :length_range
+
+  @doc """
+  Why a profile changeset refused its username: `:taken` when another profile
+  holds it, `:reserved` when it is on the reserved list, `nil` for anything
+  else (a malformed username, or an error on another field).
+  """
+  @spec username_error(Ecto.Changeset.t()) :: :reserved | :taken | nil
+  defdelegate username_error(changeset), to: Usernames, as: :error
+
+  @doc """
+  Changes a profile's username: the one path every username write takes, so
+  each is validated (format and the reserved list), rate limited and can
+  publish the booking page (`Tymeslot.BookingPage.Publication`).
+
+  Submitting the profile's current username writes nothing and costs nothing.
+  A username refused by validation does not count towards the change rate
+  limit; only an attempt that reaches the database does.
+  """
+  @spec change_username(profile(), username()) :: result(profile())
+  defdelegate change_username(profile, username), to: Usernames, as: :change
+
+  @doc """
+  Gives a profile without a username the system default
+  (`generate_default_username/1`), as when onboarding moves on without one.
+  A profile that already has a username is returned unchanged.
+
+  A system write: it is validated and can publish the booking page like any
+  other username write, but is not counted against the user's change rate
+  limit, so a user who spent their allowance still gets a resolvable page.
+  `{:error, :not_found}` when the profile has been deleted since it was
+  read.
+  """
+  @spec ensure_default_username(profile()) :: result(profile())
+  defdelegate ensure_default_username(profile), to: Usernames, as: :ensure_default
+
+  @doc """
+  Returns a list of reserved paths.
+  """
+  @spec reserved_paths() :: [String.t()]
+  defdelegate reserved_paths, to: ReservedPaths, as: :list
+
+  # --- Scheduling Preferences ---
+
+  @doc """
+  Gets all profile settings for a user.
+  """
+  @spec get_profile_settings(user_id) :: profile_settings
+  def get_profile_settings(user_id) do
+    case ProfileQueries.get_by_user_id(user_id) do
+      {:error, :not_found} ->
+        %{
+          timezone: get_default_timezone(),
+          max_bookings_per_day: nil,
+          max_bookings_per_week: nil,
+          max_bookings_per_month: nil
+        }
+
+      {:ok, profile} ->
+        %{
+          timezone: timezone(profile),
+          max_bookings_per_day: profile.max_bookings_per_day,
+          max_bookings_per_week: profile.max_bookings_per_week,
+          max_bookings_per_month: profile.max_bookings_per_month
+        }
+    end
+  end
+
+  @spec update_booking_limit(profile, atom(), String.t() | integer() | nil) :: result(profile)
+  defdelegate update_booking_limit(profile, field, value), to: Scheduling
+
+  # --- Avatar Management ---
+
+  @doc """
+  Consumption callback for avatar upload; see
+  `Tymeslot.Profiles.Avatars.consume_upload/4`.
+  """
+  @spec consume_avatar_upload(profile(), map(), map(), map()) ::
+          {:ok, profile() | {:error, any()}}
+  defdelegate consume_avatar_upload(profile, upload, entry, metadata),
+    to: Avatars,
+    as: :consume_upload
+
+  @spec delete_avatar(profile) :: result(profile)
+  defdelegate delete_avatar(profile), to: Avatars
+
+  @doc """
+  Removes every avatar file stored for a deleted profile. See
+  `Avatars.delete_all_files/1`.
+  """
+  @spec delete_avatar_files(pos_integer()) :: :ok | {:error, File.posix(), Path.t()}
+  defdelegate delete_avatar_files(profile_id), to: Avatars, as: :delete_all_files
+
+  @spec avatar_url(profile | nil, atom()) :: String.t()
+  defdelegate avatar_url(profile, version \\ :original), to: Avatars
+
+  @doc """
+  The generated fallback avatar as a data URI, for a profile or profile-shaped
+  map without an uploaded image. See `Avatars.fallback_data_uri/2`.
+  """
+  @spec fallback_avatar_data_uri(map() | nil, non_neg_integer()) :: String.t()
+  defdelegate fallback_avatar_data_uri(profile, size \\ 300),
+    to: Avatars,
+    as: :fallback_data_uri
+
+  @doc """
+  Returns the public path to a profile's uploaded avatar image, or `nil` when
+  none has been uploaded. Never returns a data URI (see `Avatars.uploaded_avatar_path/1`).
+  """
+  @spec uploaded_avatar_path(profile | nil) :: String.t() | nil
+  defdelegate uploaded_avatar_path(profile), to: Avatars
+
+  @doc """
+  Returns the absolute URL of a profile's uploaded avatar image, or `nil` when
+  none has been uploaded (see `Avatars.uploaded_avatar_url/1`).
+  """
+  @spec uploaded_avatar_url(profile | nil) :: String.t() | nil
+  defdelegate uploaded_avatar_url(profile), to: Avatars
+
+  @spec avatar_alt_text(profile | nil) :: String.t()
+  defdelegate avatar_alt_text(profile), to: Avatars
+
+  @doc """
+  Gets a display name for greeting text.
+
+  The canonical precedence for "what do we call this person": the profile's
+  `full_name` first, then the name captured at OAuth signup (only available
+  when `:user` is preloaded), then `nil`. Never falls back to the email
+  address.
+  """
+  @spec display_name(profile | nil) :: String.t() | nil
+  def display_name(nil), do: nil
+
+  def display_name(profile), do: presence(profile.full_name) || presence(user_name(profile))
+
+  @doc """
+  Gets a display name for greeting text, starting from the user side of the
+  association.
+
+  Same precedence as `display_name/1`, for callers that hold a user rather
+  than a profile (the email templates, for instance). `:profile` must be
+  preloaded: raises `ArgumentError` when it is an
+  `Ecto.Association.NotLoaded` struct, since a profile that is not loaded
+  would silently yield no name, which looks like an email/password signup
+  that legitimately has none. Callers must fetch the user via a function that
+  preloads `:profile`, such as `Auth.UserQueries.get_user_with_profile/1`.
+  """
+  @spec user_display_name(map() | nil) :: String.t() | nil
+  def user_display_name(nil), do: nil
+
+  def user_display_name(%{profile: %ProfileSchema{} = profile} = user),
+    do: display_name(%{profile | user: user})
+
+  def user_display_name(%{profile: %Ecto.Association.NotLoaded{}}) do
+    raise ArgumentError, "user.profile must be preloaded; use get_user_with_profile/1"
+  end
+
+  def user_display_name(user), do: presence(user_name(%{user: user}))
+
+  defp user_name(%{user: %{name: name}}) when is_binary(name), do: name
+  defp user_name(_profile), do: nil
+
+  defp presence(value) when is_binary(value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+  end
+
+  defp presence(_value), do: nil
+
+  # --- Theme & Embed Settings ---
+
+  @doc """
+  Updates the booking theme for a profile with validation.
+  """
+  @spec update_booking_theme(profile, term()) :: result(profile)
+  def update_booking_theme(%ProfileSchema{} = profile, theme_id) do
+    if Catalog.valid_id?(to_string(theme_id)),
+      do: ProfileQueries.update_theme(profile, %{booking_theme: theme_id}),
+      else: {:error, "Invalid theme ID"}
+  end
+
+  @doc """
+  Parses a comma-separated domain string, deduplicates against the profile's
+  existing whitelist, and returns the merged list ready for persistence.
+  """
+  @spec add_embed_domains(profile, String.t()) ::
+          {:ok, [String.t()]} | {:error, :empty_input | {:duplicates, [String.t()]}}
+  defdelegate add_embed_domains(profile, domains_str), to: EmbedDomains
+
+  @doc """
+  Updates the allowed embed domains for a profile.
+  """
+  @spec update_allowed_embed_domains(profile, String.t() | [String.t()]) :: result(profile)
+  def update_allowed_embed_domains(%ProfileSchema{} = profile, domains),
+    do: ProfileQueries.update_embed_domains(profile, EmbedDomains.normalize(domains))
+
+  @doc """
+  Whether the host has allowed at least one site to embed their booking page.
+  The default, `["none"]`, and an empty list both block embedding everywhere.
+  """
+  @spec embedding_enabled?(%{allowed_embed_domains: [String.t()] | nil}) :: boolean()
+  def embedding_enabled?(%{allowed_embed_domains: domains}) when domains in [nil, [], ["none"]],
+    do: false
+
+  def embedding_enabled?(%{allowed_embed_domains: _domains}), do: true
+
+  # --- Organizer Context ---
+
+  @doc """
+  Resolves organizer context from username, including profile and meeting types.
+  """
+  @spec resolve_organizer_context(username) :: {:ok, map()} | {:error, :profile_not_found}
+  defdelegate resolve_organizer_context(username), to: OrganizerContext
+
+  @doc """
+  The organiser context for a profile already found (`get_organizer_by_username/1`),
+  wearing its booking page when it presents one.
+  """
+  @spec organizer_context(profile) :: map()
+  defdelegate organizer_context(profile), to: OrganizerContext, as: :for_organizer
+end

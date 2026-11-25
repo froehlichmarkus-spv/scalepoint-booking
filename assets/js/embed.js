@@ -1,0 +1,1013 @@
+/**
+ * Tymeslot Booking Widget
+ * 
+ * Provides multiple embedding modes for Tymeslot booking pages:
+ * - Inline: Embeds directly into a div
+ * - Popup: Opens in a modal overlay
+ * - Floating: Fixed button that opens popup
+ * 
+ * Usage:
+ * 1. Inline: <div id="tymeslot-booking" data-username="sarah"></div>
+ * 2. Popup: <button onclick="TymeslotBooking.open('sarah')">Book</button>
+ * 3. Floating: TymeslotBooking.initFloating('sarah')
+ *
+ * A booking page of an organiser is addressed as `<username>/<page>`, e.g.
+ * data-username="sarah/coaching".
+ */
+
+(function() {
+  'use strict';
+
+
+  /**
+   * The words the script writes into the host's page. A static script cannot
+   * reach the server's catalogues, so each supported locale (the list in
+   * `config :tymeslot, :locales`) carries its few lines here. The locale is
+   * the embed's `data-locale` (or the `locale` option); without one, the
+   * visitor's browser languages (as the booking page itself chooses), then the
+   * host page's `<html lang>`, then English. A regional form like `pt-BR`
+   * resolves to its language.
+   * The iframe's own `title` stays "Booking Widget" in every language: the
+   * resize listener finds its iframes by it.
+   */
+  const STRINGS = {
+    en: {
+      book: 'Book a meeting',
+      unavailable: 'Booking system unavailable.',
+      loading: 'Loading booking page...',
+      slow: 'Booking widget is taking too long to load.',
+      retry: 'Please check your connection or refresh the page.',
+      close: 'Close booking widget',
+      dialog: 'Booking Widget'
+    },
+    cs: {
+      book: 'Zarezervovat schůzku',
+      unavailable: 'Rezervační systém není dostupný.',
+      loading: 'Načítání rezervační stránky...',
+      slow: 'Rezervační widget se načítá příliš dlouho.',
+      retry: 'Zkontrolujte připojení nebo stránku obnovte.',
+      close: 'Zavřít rezervační widget',
+      dialog: 'Rezervační widget'
+    },
+    de: {
+      book: 'Termin buchen',
+      unavailable: 'Buchungssystem nicht verfügbar.',
+      loading: 'Buchungsseite wird geladen...',
+      slow: 'Das Buchungs-Widget lädt zu lange.',
+      retry: 'Bitte prüfen Sie Ihre Verbindung oder laden Sie die Seite neu.',
+      close: 'Buchungs-Widget schließen',
+      dialog: 'Buchungs-Widget'
+    },
+    es: {
+      book: 'Reservar una reunión',
+      unavailable: 'Sistema de reservas no disponible.',
+      loading: 'Cargando la página de reservas...',
+      slow: 'El widget de reservas tarda demasiado en cargarse.',
+      retry: 'Comprueba tu conexión o recarga la página.',
+      close: 'Cerrar el widget de reservas',
+      dialog: 'Widget de reservas'
+    },
+    fr: {
+      book: 'Réserver un rendez-vous',
+      unavailable: 'Système de réservation indisponible.',
+      loading: 'Chargement de la page de réservation...',
+      slow: 'Le widget de réservation met trop de temps à se charger.',
+      retry: 'Vérifiez votre connexion ou actualisez la page.',
+      close: 'Fermer le widget de réservation',
+      dialog: 'Widget de réservation'
+    },
+    it: {
+      book: 'Prenota una riunione',
+      unavailable: 'Sistema di prenotazione non disponibile.',
+      loading: 'Caricamento della pagina di prenotazione...',
+      slow: 'Il widget di prenotazione impiega troppo a caricarsi.',
+      retry: 'Controlla la connessione o ricarica la pagina.',
+      close: 'Chiudi il widget di prenotazione',
+      dialog: 'Widget di prenotazione'
+    },
+    pl: {
+      book: 'Zarezerwuj spotkanie',
+      unavailable: 'System rezerwacji jest niedostępny.',
+      loading: 'Wczytywanie strony rezerwacji...',
+      slow: 'Widżet rezerwacji wczytuje się zbyt długo.',
+      retry: 'Sprawdź połączenie lub odśwież stronę.',
+      close: 'Zamknij widżet rezerwacji',
+      dialog: 'Widżet rezerwacji'
+    },
+    pt: {
+      book: 'Agendar reunião',
+      unavailable: 'Sistema de agendamento indisponível.',
+      loading: 'Carregando a página de agendamento...',
+      slow: 'O widget de agendamento está demorando demais para carregar.',
+      retry: 'Verifique sua conexão ou atualize a página.',
+      close: 'Fechar o widget de agendamento',
+      dialog: 'Widget de agendamento'
+    },
+    uk: {
+      book: 'Забронювати зустріч',
+      unavailable: 'Система бронювання недоступна.',
+      loading: 'Завантаження сторінки бронювання...',
+      slow: 'Віджет бронювання завантажується надто довго.',
+      retry: 'Перевірте з’єднання або оновіть сторінку.',
+      close: 'Закрити віджет бронювання',
+      dialog: 'Віджет бронювання'
+    }
+  };
+
+  function languageCode(locale) {
+    return String(locale || '').toLowerCase().split(/[-_]/)[0];
+  }
+
+  // The language the booking page in the iframe will use when the embed pins
+  // none: its server reads the visitor's Accept-Language, which the browser
+  // mirrors in navigator.languages (highest preference first). The host
+  // page's own <html lang> is the last hint before English.
+  function fallbackLanguages() {
+    const browser = (navigator.languages && navigator.languages.length)
+      ? Array.prototype.slice.call(navigator.languages)
+      : [navigator.language];
+    return browser.concat(document.documentElement.getAttribute('lang'));
+  }
+
+  function text(key, locale) {
+    const candidates = [locale].concat(fallbackLanguages());
+    const code = candidates.map(languageCode).find(function(c) {
+      return Object.prototype.hasOwnProperty.call(STRINGS, c);
+    }) || 'en';
+    return STRINGS[code][key] || STRINGS.en[key];
+  }
+
+  /**
+   * Global Error Handling
+   */
+  const failSafe = (msg) => {
+    console.error('Tymeslot Error:', msg);
+    const containers = document.querySelectorAll('#tymeslot-booking, [data-tymeslot-inline]');
+    containers.forEach(c => {
+      if (typeof TymeslotBooking !== 'undefined' && TymeslotBooking.showError) {
+        TymeslotBooking.showError(c);
+      } else {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'padding:20px;color:#991b1b;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-family:sans-serif;';
+        const strong = document.createElement('strong');
+        strong.textContent = text('unavailable', c.getAttribute('data-locale'));
+        errorDiv.appendChild(strong);
+        c.replaceChildren(errorDiv);
+      }
+    });
+  };
+
+  window.addEventListener('error', function(e) {
+    if (e.filename && /\/embed[^/]*\.js/.test(e.filename)) {
+      failSafe(e.message);
+    }
+  });
+
+  // Configuration
+  const CONFIG = {
+    // Get base URL from script tag or current domain
+    getBaseUrl: function() {
+      // 1. Try modern currentScript API
+      if (document.currentScript) {
+        return new URL(document.currentScript.src).origin;
+      }
+      // 2. Fallback to searching script tags
+      const script = document.querySelector('script[src*="embed.js"]');
+      if (script) {
+        const src = script.getAttribute('src');
+        const url = new URL(src, window.location.href);
+        return url.origin;
+      }
+      return window.location.origin;
+    }
+  };
+
+  const BASE_URL = CONFIG.getBaseUrl();
+
+  // Body scroll-lock state, deliberately at module scope rather than stashed on
+  // the modal element. Reopening the popup tears the old modal down while the
+  // new one is already being built, so element-held state let the new modal
+  // capture the locked 'hidden' as if it were the page's own value — leaving the
+  // embedder's page permanently unscrollable once it finally closed.
+  let bodyOverflowBeforeLock = null;
+  // Handle for the deferred teardown, so a reopen can cancel a fade-out that
+  // would otherwise restore scrolling behind the modal that just opened.
+  let pendingCloseTimeout = null;
+
+  // Only the first lock records the page's own value; nested/repeated locks keep
+  // it, so the page is always restored to what it had before any modal opened.
+  function lockBodyScroll() {
+    if (bodyOverflowBeforeLock === null) {
+      bodyOverflowBeforeLock = document.body.style.overflow;
+    }
+    document.body.style.overflow = 'hidden';
+  }
+
+  function unlockBodyScroll() {
+    if (bodyOverflowBeforeLock === null) return;
+    document.body.style.overflow = bodyOverflowBeforeLock;
+    bodyOverflowBeforeLock = null;
+  }
+
+  // Synchronous half of closing: detach listeners, drop the node, restore focus.
+  // Kept separate from the fade-out so a reopen can run it immediately.
+  function teardownModal(modal) {
+    if (modal.escapeHandler) {
+      document.removeEventListener('keydown', modal.escapeHandler);
+    }
+    if (modal.resizeHandler) {
+      window.removeEventListener('resize', modal.resizeHandler);
+    }
+    const prevFocus = modal._previousFocus;
+    modal.remove();
+    // Restore focus to the element that was active before the modal opened
+    if (prevFocus && typeof prevFocus.focus === 'function') {
+      prevFocus.focus();
+    }
+  }
+
+  // Viewports up to this width show the modal as a full-screen sheet.
+  var MODAL_SHEET_QUERY = '(max-width: 768px)';
+  // Height of the sheet's top bar, which holds the close button.
+  var MODAL_SHEET_BAR = 56;
+
+  function isModalSheet() {
+    return typeof window.matchMedia === 'function' &&
+      window.matchMedia(MODAL_SHEET_QUERY).matches;
+  }
+
+  function modalContentMaxHeight() {
+    // A full-screen sheet gives the booking page everything below its top
+    // bar. Otherwise keep 50px headroom top and bottom (matching cal.com's
+    // getMaxHeightForModal()); the close button sits in the top headroom.
+    if (isModalSheet()) {
+      return Math.max(window.innerHeight - MODAL_SHEET_BAR, 200);
+    }
+    return Math.max(window.innerHeight - 100, 200);
+  }
+
+  /**
+   * Global message listener for iframe resizing.
+   *
+   * The embedded page posts {type: 'tymeslot-resize', height, isFirstTime}
+   * on a 50ms loop (see iframe_embed.js). We apply the posted height to
+   * the iframe's wrapper verbatim so the iframe grows AND shrinks with
+   * content — that's what eliminates dead space at the bottom when the
+   * booking page transitions between long and short steps.
+   *
+   * If the wrapper is constrained (modal, or an inline container with an
+   * explicit max-height set by the embedder), the posted height is
+   * capped at the constraint and the browser scrolls inside the iframe.
+   */
+  window.addEventListener('message', function(e) {
+    if (e.origin !== BASE_URL) return;
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type !== 'tymeslot-resize') return;
+
+    var h = Number(e.data.height);
+    if (!Number.isFinite(h) || h <= 0) return;
+
+    var iframes = document.querySelectorAll('iframe[title="Booking Widget"]');
+    iframes.forEach(function(iframe) {
+      if (iframe.contentWindow !== e.source) return;
+      var wrapper = iframe.parentNode;
+      if (!wrapper) return;
+
+      if (wrapper.dataset.constrained) {
+        var cap = parseInt(wrapper.dataset.constraintHeight, 10);
+        if (!cap || cap <= 0) return;
+        wrapper.style.height = Math.min(h, cap) + 'px';
+      } else {
+        // Unconstrained inline embed. Legacy snippets (no data-layout) keep
+        // their data-min-height as a persistent floor — the wrapper grows with
+        // content but never shrinks below the floor the embedder reserved.
+        // Column snippets opt into shrink-to-content (no floor).
+        var floor = parseInt(wrapper.dataset.minHeightFloor, 10);
+        if (floor > 0) {
+          wrapper.style.height = Math.max(h, floor) + 'px';
+        } else {
+          wrapper.style.height = h + 'px';
+          wrapper.style.minHeight = '0';
+        }
+      }
+    });
+  });
+
+  /**
+   * Create an iframe for embedding
+   */
+  function createBookingIframe(username, options = {}) {
+    const iframe = document.createElement('iframe');
+    const base = BASE_URL.replace(/\/$/, '');
+    // A booking page's address is `<username>/<page>`: each segment is
+    // escaped on its own, so the slash between them stays a path separator.
+    const path = String(username).split('/').map(encodeURIComponent).join('/');
+    const url = new URL(`${base}/${path}`);
+    
+    // Build URL with customization params - STRICT ALLOWLIST
+    const ALLOWED_PARAMS = ['theme', 'primaryColor', 'locale', 'layout', 'previewToken'];
+
+    ALLOWED_PARAMS.forEach(key => {
+      const val = options[key];
+      if (!val) return;
+
+      if (key === 'theme' && /^\d+$/.test(val)) {
+        url.searchParams.append('theme', val);
+      } else if (key === 'primaryColor' && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(val)) {
+        url.searchParams.append('primary-color', val);
+      } else if (key === 'locale' && /^[a-z]{2}(-[a-zA-Z0-9]+)?$/.test(val)) {
+        url.searchParams.append('locale', val);
+      } else if (key === 'layout' && /^(default|column)$/.test(val)) {
+        url.searchParams.append('layout', val);
+      } else if (key === 'previewToken' && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(val)) {
+        // Owner preview. One option in, both halves of the contract out:
+        // `preview` is the forgeable display claim, `preview_token` the signed,
+        // owner-bound authorisation to SIMULATE a booking instead of persisting
+        // it. A URL carrying only the claim is failed closed by the server, so
+        // the two are never appended apart — the same guarantee the server-side
+        // PreviewMode.owner_path/3 gives. Absent or malformed, the iframe is a
+        // normal public booking page and books for real, which is what an
+        // ordinary embedder wants.
+        //
+        // Only the dashboard's own preview passes this; it is not read from any
+        // data-* attribute, so third-party snippets are unaffected. It grants no
+        // capability an attacker lacks — `?preview=true` is forgeable by typing
+        // it, and the token is signed and bound to the page owner.
+        url.searchParams.append('preview', 'true');
+        url.searchParams.append('preview_token', val);
+      }
+    });
+
+    // Signal embedded context to the server for token generation
+    url.searchParams.append('embed', '1');
+
+    // Pass parent origin so iframe_embed.js can post resize messages
+    // even when the embedding page strips the Referrer header.
+    url.searchParams.append('parent-origin', window.location.origin);
+
+    iframe.src = url.toString();
+    // display: block, as an inline iframe sits on a line box whose descender
+    // gap makes the wrapper's content a few pixels taller than the wrapper:
+    // the modal's frame clips with overflow hidden, so that overflow can be
+    // scrolled and cut the top of the booking page off.
+    iframe.style.cssText = `
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      transition: opacity 0.3s ease;
+      opacity: 0;
+    `;
+    iframe.setAttribute('scrolling', 'auto');
+    iframe.setAttribute('title', 'Booking Widget');
+
+    // Column snippets opt into the new wide-canvas behaviour; everything else
+    // (no layout, or an explicit "default") keeps the legacy defaults so that
+    // snippets deployed before the column layout shipped behave exactly as
+    // they did before the upgrade — a 640px max-width and data-min-height as a
+    // persistent floor rather than a one-shot placeholder.
+    const isColumn = options.layout === 'column';
+    const defaultMaxWidth = isColumn ? 1000 : 640;
+
+    // Create wrapper. The wrapper starts at `initialHeight` as a
+    // placeholder shown before iframe_embed.js posts its first
+    // measurement; thereafter the resize handler grows/shrinks the
+    // wrapper to match content. `data-min-height` is still accepted
+    // as a legacy alias for `data-initial-height`.
+    //
+    // For legacy (non-column) embeds, `data-min-height` ALSO acts as a
+    // persistent floor the wrapper never shrinks below (see the resize
+    // handler). For column embeds there is no floor — the wrapper tracks
+    // content height exactly.
+    const rawInitial = options.initialHeight || options.minHeight;
+    const initialHeight = Math.min(Math.max(parseInt(rawInitial, 10) || 400, 200), 2000);
+    const maxWidth = Math.min(Math.max(parseInt(options.maxWidth, 10) || defaultMaxWidth, 200), 2000);
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.width = '100%';
+    wrapper.style.maxWidth = maxWidth + 'px';
+    wrapper.style.marginLeft = 'auto';
+    wrapper.style.marginRight = 'auto';
+    wrapper.style.height = initialHeight + 'px';
+
+    // Persist the min-height floor for legacy embeds so the resize handler can
+    // enforce it. `options.minHeight` is the legacy `data-min-height` value;
+    // for column embeds we never set a floor.
+    if (!isColumn) {
+      const rawFloor = parseInt(options.minHeight, 10);
+      if (rawFloor > 0) {
+        const floor = Math.min(Math.max(rawFloor, 200), 2000);
+        wrapper.dataset.minHeightFloor = String(floor);
+        wrapper.style.minHeight = floor + 'px';
+      }
+    }
+
+    const loader = document.createElement('div');
+    loader.className = 'tymeslot-loader';
+    loader.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: sans-serif;
+      color: #64748b;
+    `;
+    
+    const spinner = document.createElement('div');
+    spinner.style.cssText = 'width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #14B8A6; border-radius: 50%; animation: tymeslot-spin 1s linear infinite;';
+    
+    const loadingText = document.createElement('span');
+    loadingText.style.cssText = 'margin-top: 12px; font-size: 14px;';
+    loadingText.textContent = text('loading', options.locale);
+    
+    const style = document.createElement('style');
+    style.textContent = '@keyframes tymeslot-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+    
+    loader.appendChild(spinner);
+    loader.appendChild(loadingText);
+    loader.appendChild(style);
+    wrapper.appendChild(loader);
+
+    // Add loading timeout
+    let retryCount = 0;
+    const maxRetries = 2;
+    const TIMEOUT_MS = 15000;
+
+    const handleTimeout = () => {
+      if (wrapper.parentNode && !iframe.dataset.loaded) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const currentUrl = new URL(iframe.src);
+          currentUrl.searchParams.set('_retry', retryCount);
+          iframe.src = currentUrl.toString();
+          // Reassign so iframe.onload can cancel this retry's timeout too
+          timeout = setTimeout(handleTimeout, TIMEOUT_MS);
+        } else {
+          showError(wrapper, loader, options.locale);
+          if (iframe.parentNode) iframe.remove();
+        }
+      }
+    };
+
+    let timeout = setTimeout(handleTimeout, TIMEOUT_MS);
+
+    iframe.onload = () => {
+      iframe.dataset.loaded = 'true';
+      iframe.style.opacity = '1';
+      if (loader.parentNode) loader.remove();
+      clearTimeout(timeout);
+    };
+    
+    wrapper.appendChild(iframe);
+    return wrapper;
+  }
+
+  /**
+   * Show error message in container
+   */
+  function showError(container, elementToReplace, locale) {
+    const error = document.createElement('div');
+    error.style.cssText = 'padding: 24px; color: #991b1b; background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; text-align: center; font-family: sans-serif;';
+    
+    const title = document.createElement('strong');
+    title.textContent = text('slow', locale);
+    
+    const subtext = document.createElement('p');
+    subtext.style.cssText = 'margin-top: 8px; font-size: 14px; color: #b91c1c;';
+    subtext.textContent = text('retry', locale);
+    
+    error.appendChild(title);
+    error.appendChild(document.createElement('br'));
+    error.appendChild(subtext);
+    
+    if (elementToReplace && elementToReplace.parentNode === container) {
+      container.replaceChild(error, elementToReplace);
+    } else {
+      container.innerHTML = '';
+      container.appendChild(error);
+    }
+  }
+
+  /**
+   * Inject the one-time stylesheet that gives the modal an edge-to-edge
+   * full-screen layout below 768px. Inline modal styles can't carry
+   * media queries, so we use a small stylesheet keyed on the modal's id.
+   */
+  function ensureModalStyles() {
+    if (document.getElementById('tymeslot-modal-styles')) return;
+    const styleEl = document.createElement('style');
+    styleEl.id = 'tymeslot-modal-styles';
+    // The close button never sits over the booking page, whose own controls
+    // (the language switcher, in every theme) live in its top corners. On a
+    // wide viewport it floats in the headroom above the modal's top-right
+    // corner; on the full-screen sheet it gets a top bar of its own.
+    styleEl.textContent = '@media ' + MODAL_SHEET_QUERY + ' {' +
+      '#tymeslot-modal { padding: 0 !important; }' +
+      '#tymeslot-modal [data-tymeslot-container] {' +
+        'max-width: 100% !important;' +
+        'max-height: 100% !important;' +
+        'height: 100% !important;' +
+        'width: 100% !important;' +
+        'border-radius: 0 !important;' +
+        'box-sizing: border-box !important;' +
+        'padding-top: ' + MODAL_SHEET_BAR + 'px !important;' +
+      '}' +
+      '#tymeslot-modal [data-tymeslot-frame] { border-radius: 0 !important; }' +
+      '#tymeslot-modal [data-tymeslot-close] {' +
+        'top: 6px !important;' +
+        'right: 8px !important;' +
+        'width: 44px !important;' +
+        'height: 44px !important;' +
+      '}' +
+    '}';
+    document.head.appendChild(styleEl);
+  }
+
+  /**
+   * Create modal overlay
+   *
+   * Default content width is 1000px — wide enough to comfortably show
+   * theme hero sections (Rhythm's video background, etc.) instead of
+   * cramming them into a narrow column. On viewports <= 768px the
+   * media-query stylesheet collapses the modal to full-screen.
+   */
+  function createModal(contentMaxWidth = 1000, locale) {
+    ensureModalStyles();
+
+    const modal = document.createElement('div');
+    modal.id = 'tymeslot-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', text('dialog', locale));
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      /* The padding sits inside the full-window box: without this the
+         overlay is 40px wider and taller than the window, which shifts the
+         centred dialog right and down, past the window's edge on a tablet. */
+      box-sizing: border-box;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    `;
+
+    const container = document.createElement('div');
+    container.setAttribute('data-tymeslot-container', '');
+    container.style.cssText = `
+      position: relative;
+      width: 100%;
+      max-width: min(${contentMaxWidth}px, calc(100vw - 32px));
+      max-height: calc(100vh - 100px);
+      background: transparent;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    `;
+    
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '\u00D7';
+    closeButton.style.cssText = `
+      position: absolute;
+      top: -48px;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      font-size: 32px;
+      line-height: 1;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    closeButton.setAttribute('aria-label', text('close', locale));
+    closeButton.setAttribute('data-tymeslot-close', '');
+
+    closeButton.onmouseover = function() {
+      this.style.background = 'rgba(255, 255, 255, 0.25)';
+      this.style.transform = 'scale(1.1)';
+    };
+    closeButton.onmouseout = function() {
+      this.style.background = 'rgba(255, 255, 255, 0.15)';
+      this.style.transform = 'scale(1)';
+    };
+    
+    closeButton.onclick = function() {
+      TymeslotBooking.close();
+    };
+    
+    modal.onclick = function(e) {
+      if (e.target === modal) {
+        TymeslotBooking.close();
+      }
+    };
+    
+    container.appendChild(closeButton);
+    modal.appendChild(container);
+
+    // Animate in
+    setTimeout(() => {
+      modal.style.opacity = '1';
+      container.style.transform = 'scale(1)';
+    }, 10);
+
+    return { modal, container, closeButton };
+  }
+
+  /**
+   * Create floating button
+   */
+  function createFloatingButton(username, options = {}) {
+    const button = document.createElement('button');
+    button.id = 'tymeslot-floating-button';
+    button.setAttribute('aria-label', text('book', options.locale));
+    button.setAttribute('title', text('book', options.locale));
+
+    const buttonColor = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(options.buttonColor)
+      ? options.buttonColor
+      : '#14B8A6'; // turquoise-600
+
+    button.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: ${buttonColor};
+      color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      z-index: 999998;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    
+    button.innerHTML = `
+      <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+    `;
+    
+    button.onmouseover = function() {
+      this.style.transform = 'scale(1.1)';
+      this.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.4)';
+    };
+    
+    button.onmouseout = function() {
+      this.style.transform = 'scale(1)';
+      this.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.3)';
+    };
+    
+    button.onclick = function() {
+      TymeslotBooking.open(username, options);
+    };
+    
+    return button;
+  }
+
+  /**
+   * Initialize inline embeds on page load
+   */
+  function initInlineEmbeds() {
+    const containers = document.querySelectorAll('#tymeslot-booking, [data-tymeslot-inline]');
+    
+    containers.forEach(container => {
+      const username = container.getAttribute('data-username') || 
+                      container.getAttribute('data-tymeslot-inline');
+      
+      if (!validateUsername('initInlineEmbeds', username)) return;
+      
+      const options = {
+        theme: container.getAttribute('data-theme'),
+        primaryColor: container.getAttribute('data-primary-color'),
+        locale: container.getAttribute('data-locale'),
+        layout: container.getAttribute('data-layout'),
+        initialHeight:
+          container.getAttribute('data-initial-height') ||
+          container.getAttribute('data-min-height'),
+        // Preserve the raw data-min-height separately — for legacy (non-column)
+        // embeds it doubles as a persistent height floor, not just the initial
+        // placeholder.
+        minHeight: container.getAttribute('data-min-height'),
+        maxWidth: container.getAttribute('data-max-width')
+      };
+      
+      const wrapper = createBookingIframe(username, options);
+      container.innerHTML = '';
+      container.appendChild(wrapper);
+      ensureScrollable(container, wrapper);
+    });
+  }
+
+  /**
+   * When the container has a constrained height, make the wrapper and
+   * iframe fill it exactly. The iframe's scrolling="auto" attribute
+   * provides a scrollbar for the booking page content inside.
+   *
+   * Constraint detection: checks for an explicit max-height or an inline
+   * height style on the container element. Computed height is intentionally
+   * not used — getComputedStyle always returns a pixel value, so checking it
+   * would incorrectly flag any unconstrained element sized by its content.
+   */
+  function ensureScrollable(container, wrapper) {
+    var style = window.getComputedStyle(container);
+    var maxHeight = style.maxHeight;
+    var hasMaxHeight = maxHeight !== 'none' && maxHeight !== '' && parseInt(maxHeight, 10) > 0;
+    var hasInlineHeight = container.style.height !== '' && container.style.height !== 'auto';
+
+    if (hasMaxHeight || hasInlineHeight) {
+      requestAnimationFrame(function() {
+        // For a max-height-only container, the cap is the *max-height* value —
+        // NOT container.clientHeight, which at this point is just the wrapper's
+        // initial placeholder (e.g. 400px). Capping at the placeholder would
+        // pin the embed there forever, so it could never grow to the
+        // embedder's e.g. 800px max-height. When the container has an explicit
+        // inline height, clientHeight is the right (fixed) value.
+        var cap;
+        if (hasInlineHeight) {
+          cap = container.clientHeight;
+        } else {
+          cap = parseInt(maxHeight, 10) || container.clientHeight;
+        }
+        if (wrapper) {
+          wrapper.style.height = cap + 'px';
+          wrapper.style.minHeight = '0';
+          wrapper.dataset.constrained = 'true';
+          wrapper.dataset.constraintHeight = String(cap);
+        }
+      });
+    }
+  }
+
+  function validateUsername(methodName, username) {
+    if (!username) {
+      console.error('Tymeslot: No username provided to ' + methodName + '()');
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Public API
+   */
+  window.TymeslotBooking = {
+    /**
+     * Display error in a container
+     */
+    showError: function(selectorOrElement) {
+      let container = selectorOrElement;
+      if (typeof selectorOrElement === 'string') {
+        container = document.querySelector(selectorOrElement);
+      }
+      if (container) {
+        showError(container, undefined, container.getAttribute('data-locale'));
+      }
+    },
+
+    /**
+     * Open booking in a modal
+     */
+    open: function(username, options = {}) {
+      // Replace any existing modal synchronously rather than via close(),
+      // which defers teardown by 300ms: that would briefly put two
+      // #tymeslot-modal nodes in the DOM and let the old teardown restore the
+      // page's scroll behind the modal being opened here. The scroll lock is
+      // deliberately left held — this modal is about to re-take it, and
+      // releasing it in between would lose the page's original value.
+      if (pendingCloseTimeout !== null) {
+        clearTimeout(pendingCloseTimeout);
+        pendingCloseTimeout = null;
+      }
+      const existingModal = document.getElementById('tymeslot-modal');
+      if (existingModal) teardownModal(existingModal);
+      // Bailing out here still has to release the lock the torn-down modal
+      // held, or an invalid reopen leaves the page unscrollable for good.
+      if (!validateUsername('open', username)) {
+        unlockBodyScroll();
+        return;
+      }
+
+      // If the page has an inline container with data-max-width, treat it as
+      // the default for the popup too — so embedders who configure a single
+      // div get matching popup sizing without repeating the value in JS.
+      if (!options.maxWidth) {
+        const inlineDiv = document.querySelector(
+          '#tymeslot-booking[data-max-width], [data-tymeslot-inline][data-max-width]'
+        );
+        if (inlineDiv) {
+          options = Object.assign({}, options, {
+            maxWidth: inlineDiv.getAttribute('data-max-width')
+          });
+        }
+      }
+
+      // Column popups opt into the wider 1000px canvas; legacy popups (no
+      // layout) keep the original 640px default for back-compat.
+      const modalDefaultMaxWidth = options.layout === 'column' ? 1000 : 640;
+      const contentMaxWidth = Math.min(
+        Math.max(parseInt(options.maxWidth, 10) || modalDefaultMaxWidth, 200),
+        2000
+      );
+      const { modal, container, closeButton } = createModal(contentMaxWidth, options.locale);
+      const wrapper = createBookingIframe(username, Object.assign({}, options, { _mode: 'modal' }));
+      const iframe = wrapper.querySelector('iframe');
+
+      if (iframe) {
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.minHeight = '0';
+
+        // Cap at viewport height so the iframe scrolls if content exceeds it.
+        // Don't pre-set the wrapper height — let it shrink-wrap to actual
+        // content once the iframe reports its size via postMessage.
+        var maxH = modalContentMaxHeight();
+        wrapper.style.minHeight = '0';
+        // The container no longer clips (the close button sits outside it),
+        // so the frame rounds and clips the iframe itself.
+        wrapper.setAttribute('data-tymeslot-frame', '');
+        wrapper.style.borderRadius = '16px';
+        wrapper.style.overflow = 'hidden';
+        wrapper.dataset.constrained = 'true';
+        wrapper.dataset.constraintHeight = String(maxH);
+
+        container.appendChild(wrapper);
+      }
+
+      modal._previousFocus = document.activeElement;
+      document.body.appendChild(modal);
+      lockBodyScroll();
+      // Move focus into the dialog for keyboard/screen reader users
+      closeButton.focus();
+
+      // Update constraint on window resize / orientation change
+      let resizeRafPending = false;
+      const resizeHandler = () => {
+        if (!resizeRafPending) {
+          resizeRafPending = true;
+          requestAnimationFrame(() => {
+            resizeRafPending = false;
+            var newMax = modalContentMaxHeight();
+            if (wrapper.dataset.constrained) {
+              wrapper.dataset.constraintHeight = String(newMax);
+              // Re-apply the new cap immediately. iframe_embed.js skips posting
+              // an unchanged height, so on a window *shrink* no fresh resize
+              // message arrives — without this the wrapper stays at its old
+              // (too-tall) height and the modal's overflow:hidden clips the
+              // bottom. Clamp the current height down to the new max; a later
+              // grow is handled by the next posted resize message.
+              var currentHeight = parseInt(wrapper.style.height, 10);
+              if (currentHeight > 0) {
+                wrapper.style.height = Math.min(currentHeight, newMax) + 'px';
+              }
+            }
+          });
+        }
+      };
+      window.addEventListener('resize', resizeHandler);
+      modal.resizeHandler = resizeHandler;
+      
+      // Handle keyboard interactions: Escape closes, Tab cycles within modal
+      const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"]), iframe';
+      const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+          this.close();
+          return;
+        }
+        if (e.key === 'Tab') {
+          const focusable = Array.from(modal.querySelectorAll(FOCUSABLE)).filter(el => !el.hidden && el.getAttribute('aria-hidden') !== 'true');
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+      document.addEventListener('keydown', escapeHandler);
+      modal.escapeHandler = escapeHandler;
+    },
+    
+    /**
+     * Close the modal
+     */
+    close: function() {
+      // A fade-out already in flight is superseded by this call. Cancelled
+      // before the modal lookup so a teardown can never outlive the node it
+      // was scheduled for.
+      if (pendingCloseTimeout !== null) {
+        clearTimeout(pendingCloseTimeout);
+        pendingCloseTimeout = null;
+      }
+
+      const modal = document.getElementById('tymeslot-modal');
+      if (!modal) return;
+
+      const container = modal.querySelector('[data-tymeslot-container]');
+      modal.style.opacity = '0';
+      if (container) {
+        container.style.transform = 'scale(0.95)';
+      }
+
+      pendingCloseTimeout = setTimeout(() => {
+        pendingCloseTimeout = null;
+        teardownModal(modal);
+        unlockBodyScroll();
+      }, 300);
+    },
+    
+    /**
+     * Initialize floating button
+     */
+    initFloating: function(username, options = {}) {
+      if (!validateUsername('initFloating', username)) return;
+
+      // Remove existing button if any
+      const existing = document.getElementById('tymeslot-floating-button');
+      if (existing) existing.remove();
+
+      const button = createFloatingButton(username, options);
+      document.body.appendChild(button);
+    },
+
+    /**
+     * Programmatically embed inline
+     */
+    embed: function(selector, username, options = {}) {
+      if (!validateUsername('embed', username)) return;
+
+      const container = document.querySelector(selector);
+      if (!container) {
+        console.error('Tymeslot: Container not found:', selector);
+        return;
+      }
+
+      // Inherit initial-height and max-width from container data attributes
+      // if not already passed in options. `data-min-height` is still accepted
+      // as a legacy alias for `data-initial-height`.
+      if (!options.initialHeight) {
+        const attr =
+          container.getAttribute('data-initial-height') ||
+          container.getAttribute('data-min-height');
+        if (attr) options.initialHeight = attr;
+      }
+      // Preserve the raw data-min-height separately — for legacy (non-column)
+      // embeds it doubles as a persistent height floor.
+      if (!options.minHeight && container.getAttribute('data-min-height')) {
+        options.minHeight = container.getAttribute('data-min-height');
+      }
+      if (!options.maxWidth && container.getAttribute('data-max-width')) {
+        options.maxWidth = container.getAttribute('data-max-width');
+      }
+
+      const wrapper = createBookingIframe(username, options);
+      container.innerHTML = '';
+      container.appendChild(wrapper);
+      ensureScrollable(container, wrapper);
+    }
+  };
+
+  /**
+   * Initialize when DOM is ready
+   */
+  const init = () => {
+    try {
+      initInlineEmbeds();
+    } catch (e) {
+      failSafe(e.message);
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();

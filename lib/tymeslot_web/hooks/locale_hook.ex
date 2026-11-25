@@ -1,0 +1,66 @@
+defmodule TymeslotWeb.Hooks.LocaleHook do
+  @moduledoc """
+  LiveView hook that sets the locale for public pages: booking, meeting
+  management, polls, payment return, and the auth pages.
+
+  The connected mount has no conn and no request headers, so it reuses what
+  `TymeslotWeb.Plugs.LocalePlug` resolved on the dead render, which the
+  live_session carries in as `"resolved_locale"` (see
+  `LocalePlug.live_session_data/1`). A `?locale=` param on the mount URL still
+  wins, so a locale switch applied by patching the URL is honoured.
+
+  It also assigns what a booking page that offers only some languages picks
+  its own from (`Tymeslot.ContentTranslations.Languages.visitor_locale/2`):
+  `:locale_choice`, the language the visitor picked (the mount URL's
+  `?locale=`, also assigned alone as `:locale_param`, else the dead render's
+  `"locale_choice"`), and
+  `:browser_locales`, the browser's (the dead render's `"browser_locales"`).
+
+  And it assigns `:visitor_week_start` (`:monday`, `:sunday` or `nil`), the
+  week start the dead render read from `Accept-Language`, for the booking
+  calendar.
+  """
+
+  import Phoenix.Component
+  alias Tymeslot.Locales
+
+  @spec on_mount(atom(), map(), map(), Phoenix.LiveView.Socket.t()) ::
+          {:cont, Phoenix.LiveView.Socket.t()}
+  def on_mount(:default, params, session, socket) do
+    locale =
+      Locales.resolve(
+        [params["locale"], dead_render_locale(session)],
+        Locales.booking_default_locale()
+      )
+
+    # Global: reaches every Gettext backend in this process, not just Core's.
+    Gettext.put_locale(locale)
+
+    {:cont,
+     assign(socket,
+       locale: locale,
+       locale_param: Locales.acceptable(params["locale"]),
+       locale_choice: Locales.acceptable(params["locale"]) || session["locale_choice"],
+       browser_locales: browser_locales(session),
+       visitor_week_start: visitor_week_start(session["visitor_week_start"])
+     )}
+  end
+
+  # A session signed before the browser's languages were carried has only
+  # the resolved locale to go on.
+  defp browser_locales(%{"browser_locales" => locales}) when is_list(locales), do: locales
+
+  defp browser_locales(session),
+    do: session |> dead_render_locale() |> List.wrap() |> Enum.filter(&Locales.acceptable?/1)
+
+  defp visitor_week_start("monday"), do: :monday
+  defp visitor_week_start("sunday"), do: :sunday
+  defp visitor_week_start(_absent), do: nil
+
+  # A page rendered before `live_session_data/1` existed reconnects after a
+  # deploy with a signed session that has no "resolved_locale". Reading the
+  # retired "locale" key for those alone keeps an open page in the language
+  # it was rendered in, instead of switching it to the default mid-visit.
+  defp dead_render_locale(%{"resolved_locale" => locale}), do: locale
+  defp dead_render_locale(session), do: session["locale"]
+end

@@ -1,0 +1,139 @@
+defmodule Tymeslot.Availability.WeeklySchedule do
+  @moduledoc """
+  Context for managing weekly availability schedules.
+  """
+
+  alias Tymeslot.Availability.Breaks
+  alias Tymeslot.Availability.WeeklyAvailabilityQueries
+  alias Tymeslot.Availability.WeeklyAvailabilitySchema
+  alias Tymeslot.Repo
+
+  @doc """
+  Gets the complete weekly schedule for a schedule including breaks.
+  """
+  @spec get_weekly_schedule(integer()) :: list(WeeklyAvailabilitySchema.t())
+  def get_weekly_schedule(schedule_id) do
+    WeeklyAvailabilityQueries.get_weekly_schedule_with_breaks(schedule_id)
+  end
+
+  @doc """
+  Gets availability for a specific day of the week.
+  """
+  @spec get_day_availability(integer(), integer()) :: WeeklyAvailabilitySchema.t() | nil
+  def get_day_availability(schedule_id, day_of_week) do
+    WeeklyAvailabilityQueries.get_day_availability_with_breaks(schedule_id, day_of_week)
+  end
+
+  @doc """
+  As `get_day_availability/2`, locking the day's row until the caller's
+  transaction ends. Call it inside a transaction.
+  """
+  @spec lock_day_availability(integer(), integer()) :: WeeklyAvailabilitySchema.t() | nil
+  def lock_day_availability(schedule_id, day_of_week) do
+    WeeklyAvailabilityQueries.lock_day_availability_with_breaks(schedule_id, day_of_week)
+  end
+
+  @doc """
+  Creates or updates availability for a specific day.
+  """
+  @spec upsert_day_availability(integer(), integer(), map()) ::
+          {:ok, WeeklyAvailabilitySchema.t()} | {:error, Ecto.Changeset.t() | String.t()}
+  def upsert_day_availability(schedule_id, day_of_week, attrs) do
+    case get_day_availability(schedule_id, day_of_week) do
+      nil ->
+        create_day_availability(schedule_id, day_of_week, attrs)
+
+      existing ->
+        update_day_availability(existing, attrs)
+    end
+  end
+
+  @doc """
+  Creates availability for a specific day.
+  """
+  @spec create_day_availability(integer(), integer(), map()) ::
+          {:ok, WeeklyAvailabilitySchema.t()} | {:error, Ecto.Changeset.t()}
+  def create_day_availability(schedule_id, day_of_week, attrs) do
+    attrs = Map.merge(attrs, %{schedule_id: schedule_id, day_of_week: day_of_week})
+    WeeklyAvailabilityQueries.create_weekly_availability(attrs)
+  end
+
+  # Updates availability for a specific day.
+  @spec update_day_availability(WeeklyAvailabilitySchema.t(), map()) ::
+          {:ok, WeeklyAvailabilitySchema.t()} | {:error, Ecto.Changeset.t()}
+  defp update_day_availability(%WeeklyAvailabilitySchema{} = weekly_availability, attrs) do
+    WeeklyAvailabilityQueries.update_weekly_availability(weekly_availability, attrs)
+  end
+
+  @doc """
+  Copies settings from one day to multiple other days.
+  """
+  @spec copy_day_settings(integer(), integer(), list(integer())) ::
+          {:ok, term()}
+          | {:error, String.t() | {:break_outside_hours, map(), map()} | Ecto.Changeset.t()}
+  def copy_day_settings(schedule_id, from_day, to_days) when is_list(to_days) do
+    case get_day_availability(schedule_id, from_day) do
+      nil ->
+        {:error, "Source day not found"}
+
+      source ->
+        Repo.transaction(fn ->
+          to_days
+          |> Enum.reject(&(&1 == from_day))
+          |> Enum.each(&copy_single_day_settings(source, schedule_id, &1))
+        end)
+    end
+  end
+
+  # Private functions
+
+  defp copy_single_day_settings(source, schedule_id, to_day) do
+    # Create or update the target day
+    attrs = %{
+      is_available: source.is_available,
+      start_time: source.start_time,
+      end_time: source.end_time,
+      ends_next_day: source.ends_next_day
+    }
+
+    with {:ok, target_availability} <- upsert_day_availability(schedule_id, to_day, attrs),
+         :ok <- Breaks.replace_breaks(target_availability, source.breaks) do
+      :ok
+    else
+      # The copy carries the source day's hours, so a break that does not fit
+      # them is the source day's to fix: name that day.
+      {:error, {:break_outside_hours, _target, break}} ->
+        Repo.rollback({:break_outside_hours, source, break})
+
+      {:error, reason} ->
+        Repo.rollback(reason)
+    end
+  end
+
+  @doc """
+  Clears all settings for a specific day (sets to unavailable and removes all breaks).
+  """
+  @spec clear_day_settings(integer(), integer()) ::
+          {:ok, WeeklyAvailabilitySchema.t()} | {:error, Ecto.Changeset.t()}
+  def clear_day_settings(schedule_id, day_of_week) do
+    case get_day_availability(schedule_id, day_of_week) do
+      nil ->
+        create_day_availability(schedule_id, day_of_week, %{is_available: false})
+
+      existing ->
+        # Update to unavailable and clear times
+        attrs = %{
+          is_available: false,
+          start_time: nil,
+          end_time: nil,
+          ends_next_day: false
+        }
+
+        with {:ok, updated_availability} <- update_day_availability(existing, attrs) do
+          # Clear all breaks for this day
+          WeeklyAvailabilityQueries.clear_breaks_for_day(updated_availability.id)
+          {:ok, updated_availability}
+        end
+    end
+  end
+end

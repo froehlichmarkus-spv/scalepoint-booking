@@ -1,0 +1,648 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: uk\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100 != 11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10||n%100>=20) ? 1 : 2);\n"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Change booking link"
+msgstr "Змінити посилання для бронювання"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Changing this link will stop any links you have already shared for this meeting type from working."
+msgstr "Якщо ви зміните це посилання, усі раніше надіслані посилання для цього типу зустрічі перестануть працювати."
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Link address"
+msgstr "Адреса посилання"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Randomise"
+msgstr "Згенерувати"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Save link"
+msgstr "Зберегти посилання"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Unlisted"
+msgstr "Прихований"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Use lowercase letters, numbers and hyphens. Randomise creates an unguessable link."
+msgstr "Використовуйте малі літери, цифри та дефіси. Функція «Згенерувати» створює посилання, яке неможливо вгадати."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{minutes} min"
+msgstr "%{minutes} хв"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "+%{count} custom question"
+msgid_plural "+%{count} custom questions"
+msgstr[0] "+%{count} власне запитання"
+msgstr[1] "+%{count} власні запитання"
+msgstr[2] "+%{count} власних запитань"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_types_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Add Meeting Type"
+msgstr "Додати тип зустрічі"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar"
+msgstr "Календар"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_types_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Create meeting types to offer different appointment options"
+msgstr "Створюйте типи зустрічей, щоб пропонувати різні варіанти запису"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Delete"
+msgstr "Видалити"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Delete Meeting Type"
+msgstr "Видалити тип зустрічі"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Edit"
+msgstr "Редагувати"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_types_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "No meeting types configured yet"
+msgstr "Ще не налаштовано жодного типу зустрічі"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
+#, elixir-autogen, elixir-format
+msgid "This action cannot be undone and will permanently remove this meeting type from your account."
+msgstr "Цю дію неможливо скасувати. Тип зустрічі буде назавжди видалено з вашого облікового запису."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Toggle %{name} availability"
+msgstr "Змінити доступність для %{name}"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Are you sure you want to delete the meeting type \"%{name}\"?"
+msgstr "Ви впевнені, що хочете видалити тип зустрічі «%{name}»?"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booking Limits"
+msgstr "Ліміти бронювань"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booking limit must be between 1 and 500"
+msgstr "Ліміт бронювань має становити від 1 до 500"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booking limit removed"
+msgstr "Ліміт бронювань скасовано"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booking limit updated to %{limit} bookings"
+msgstr "Ліміт бронювань оновлено: %{limit}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Maximum number of bookings you accept across all meeting types. Days at their cap disappear from your booking page. Leave a field empty for no limit."
+msgstr "Максимальна кількість бронювань, які ви приймаєте за всіма типами зустрічей. Дні, що досягли ліміту, зникають з вашої сторінки бронювання. Залиште поле порожнім, щоб не встановлювати ліміт."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar gone"
+msgstr "Календар відсутній"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Read-only"
+msgstr "Лише для перегляду"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar this meeting type books into is no longer on the connected account. Edit it and choose another calendar."
+msgstr "Календаря, у який цей тип зустрічі додає записи, більше немає в підключеному обліковому записі. Відредагуйте цей тип зустрічі та виберіть інший календар."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "This meeting type books into a calendar you can no longer write to. Edit it and choose another calendar."
+msgstr "Цей тип зустрічі додає записи в календар, до якого ви більше не маєте доступу на запис. Відредагуйте його та виберіть інший календар."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen
+msgid "%{min}–%{max} min"
+msgstr "%{min}–%{max} хв"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} location"
+msgid_plural "%{count} locations"
+msgstr[0] "%{count} місце"
+msgstr[1] "%{count} місця"
+msgstr[2] "%{count} місць"
+
+#: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
+#, elixir-autogen, elixir-format
+msgid "%{name} is offered by these meeting types. Deleting it removes it from them:"
+msgstr "%{name} пропонують ці типи зустрічей. Видалення прибере його з них:"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Add an office, a studio or any other place you meet people. In-person meeting types can then offer it to bookers."
+msgstr "Додайте офіс, студію чи будь-яке інше місце, де ви зустрічаєтеся з людьми. Тоді типи особистих зустрічей зможуть пропонувати його тим, хто бронює."
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Add location"
+msgstr "Додати місце"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Address and directions (optional)"
+msgstr "Адреса та як дістатися (необов’язково)"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Could not delete the location"
+msgstr "Не вдалося видалити місце"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Could not reorder the locations"
+msgstr "Не вдалося змінити порядок місць"
+
+#: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Delete %{name}? This cannot be undone."
+msgstr "Видалити %{name}? Цю дію не можна скасувати."
+
+#: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Delete location"
+msgstr "Видалити місце"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Edit location"
+msgstr "Редагувати місце"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Location deleted"
+msgstr "Місце видалено"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Location saved"
+msgstr "Місце збережено"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Locations reordered"
+msgstr "Порядок місць збережено"
+
+#: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Meetings already booked there keep their address. This cannot be undone."
+msgstr "Уже заброньовані там зустрічі збережуть свою адресу. Цю дію не можна скасувати."
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Name"
+msgstr "Назва"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "No saved locations yet"
+msgstr "Ще немає збережених місць"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_card.ex
+#, elixir-autogen, elixir-format
+msgid "Not used by any meeting type yet"
+msgstr "Ще не використовується в жодному типі зустрічі"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Save location"
+msgstr "Зберегти місце"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Save the places you meet people once, then offer them on any in-person meeting type."
+msgstr "Збережіть місця, де ви зустрічаєтеся з людьми, один раз, а потім пропонуйте їх у будь-якому типі особистої зустрічі."
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Street, postcode and city, plus anything that helps bookers find you: 3rd floor, ring the bell."
+msgstr "Вулиця, поштовий індекс і місто, а також усе, що допоможе вас знайти: 3-й поверх, подзвоніть у дзвінок."
+
+#: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
+#, elixir-autogen, elixir-format
+msgid "These are then left with an in-person option that has no address, so their bookers will be told the address is arranged after booking:"
+msgstr "У цих типів залишиться варіант особистої зустрічі без адреси, тож тим, хто бронює, повідомлять, що адресу погодять після бронювання:"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_card.ex
+#, elixir-autogen, elixir-format
+msgid "Used by %{count} meeting type"
+msgid_plural "Used by %{count} meeting types"
+msgstr[0] "Використовується в %{count} типі зустрічі"
+msgstr[1] "Використовується в %{count} типах зустрічей"
+msgstr[2] "Використовується в %{count} типах зустрічей"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "e.g., Berlin office"
+msgstr "напр., Офіс у Києві"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "This location no longer exists"
+msgstr "Цього місця більше не існує"
+
+#: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
+#, elixir-autogen, elixir-format
+msgid "A place you meet people, such as an office or a studio. Offer it on any in-person meeting type, and bookers see its name and address when they book."
+msgstr "Місце, де ви зустрічаєтеся з людьми, наприклад офіс чи студія. Пропонуйте його в будь-якому типі особистої зустрічі, і ті, хто бронює, побачать його назву та адресу під час бронювання."
+
+#: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
+#, elixir-autogen, elixir-format
+msgid "%{name} is the only location of these group meeting types, whose address must be fixed in advance. Give them another location before deleting it:"
+msgstr "%{name} є єдиним місцем цих типів групових зустрічей, адреса яких має бути визначена заздалегідь. Перш ніж видалити його, призначте їм інше місце:"
+
+#: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
+#, elixir-autogen, elixir-format
+msgid "This location is the only one of a group meeting type, so it cannot be deleted"
+msgstr "Це місце є єдиним для типу групової зустрічі, тому його не можна видалити"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Group · up to %{count}"
+msgstr "Група · до %{count}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Group bookings are not included in your current plan, so this meeting type is taking no new bookings. Existing bookings are unaffected. Upgrade, or set the participant limit to 1, to take bookings again."
+msgstr "Групові бронювання не входять до вашого поточного тарифу, тому цей тип зустрічі не приймає нових бронювань. Наявні бронювання залишаються без змін. Оновіть тариф або встановіть ліміт учасників 1, щоб знову приймати бронювання."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Paused"
+msgstr "Призупинено"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Delete %{name}"
+msgstr "Видалити %{name}"
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Delete meeting type"
+msgstr "Видалити тип зустрічі"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Edit %{name}"
+msgstr "Редагувати %{name}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booking link copied!"
+msgstr "Посилання для бронювання скопійовано!"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Cancelled"
+msgstr "Скасовано"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Copy link"
+msgstr "Копіювати посилання"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Events"
+msgstr "Події"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "One-off events created from Quick Add. Each has its own booking link and ends on its own once it is over."
+msgstr "Одноразові події, створені через швидке додавання. Кожна має власне посилання для бронювання і завершується сама, щойно мине."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Over"
+msgstr "Минула"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Registration closed"
+msgstr "Реєстрацію закрито"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "Registration open"
+msgstr "Реєстрація відкрита"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{count}/%{capacity} seats taken"
+msgstr "%{count}/%{capacity} місць зайнято"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Next date: %{date}"
+msgstr "Наступна дата: %{date}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen
+msgid "Not offered"
+msgstr "Не пропонується"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "No open dates"
+msgstr "Немає відкритих дат"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Not on your booking page until one of its dates is open for registration. Plan a date, or move a registration close."
+msgstr "Не з’явиться на сторінці бронювання, доки жодна з дат не буде відкрита для реєстрації. Заплануйте дату або перенесіть закриття реєстрації."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen
+msgid "Not offered to guests until payments are reconnected. Existing bookings are unaffected."
+msgstr "Цей тип зустрічі не пропонується гостям, доки ви знову не підключите прийом оплати. Наявні бронювання залишаються без змін."
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Its upcoming date is cancelled."
+msgid_plural "Its %{count} upcoming dates are cancelled."
+msgstr[0] "Буде скасовано %{count} майбутню дату цього типу."
+msgstr[1] "Буде скасовано %{count} майбутні дати цього типу."
+msgstr[2] "Буде скасовано %{count} майбутніх дат цього типу."
+
+#: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
+#, elixir-autogen, elixir-format
+msgid "The %{count} person who signed up is told by email."
+msgid_plural "The %{count} people who signed up are told by email."
+msgstr[0] "%{count} зареєстрована особа отримає сповіщення електронною поштою."
+msgstr[1] "%{count} зареєстровані особи отримають сповіщення електронною поштою."
+msgstr[2] "%{count} зареєстрованих осіб отримають сповіщення електронною поштою."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Not on your booking page until it offers a time a booker can pick: one past the minimum notice and within the booking window. Add a time to offer."
+msgstr "Не з’явиться на сторінці бронювання, доки в ньому не з’явиться слот, який можна обрати: пізніший за мінімальний час до бронювання й у межах вікна завчасного бронювання. Додайте слот для пропозиції."
+
+#: lib/tymeslot/meeting_types/duplication.ex
+#, elixir-autogen, elixir-format
+msgid "(copy)"
+msgstr "(копія)"
+
+#: lib/tymeslot/meeting_types/duplication.ex
+#, elixir-autogen, elixir-format
+msgid "(copy) %{number}"
+msgstr "(копія) %{number}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Duplicate"
+msgstr "Дублювати"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Duplicate %{name}"
+msgstr "Дублювати %{name}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "On no booking page; reachable only by its direct link"
+msgstr "На жодній сторінці бронювання; доступно лише за прямим посиланням"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Booking link"
+msgstr "Посилання для бронювання"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Available"
+msgstr "Доступне"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booked as %{email}"
+msgstr "Заброньовано як %{email}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Booked for %{time}"
+msgstr "Заброньовано на %{time}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Create invitation link"
+msgstr "Створити посилання із запрошенням"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Email (optional)"
+msgstr "Електронна пошта (необов’язково)"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Expired"
+msgstr "Термін минув"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Expires %{date}"
+msgstr "Діє до %{date}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Invitation link copied!"
+msgstr "Посилання із запрошенням скопійовано!"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Invitation links"
+msgstr "Посилання із запрошенням"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Invitation links are off for this type."
+msgstr "Посилання із запрошенням вимкнено для цього типу зустрічі."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "Invitation only"
+msgstr "Лише за запрошенням"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/revoke_invitation_modal.ex
+#, elixir-autogen, elixir-format
+msgid "It will stop working. Any appointment already booked stays booked."
+msgstr "Воно перестане працювати. Уже заброньовані зустрічі залишаться заброньованими."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Link expires on (optional)"
+msgstr "Посилання діє до (необов’язково)"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Name (optional)"
+msgstr "Ім’я (необов’язково)"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "No invitations yet. Create one link per person you want to invite."
+msgstr "Запрошень ще немає. Створіть одне посилання для кожної людини, яку хочете запросити."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
+#, elixir-autogen, elixir-format
+msgid "On no booking page; booked only through the invitation links you send"
+msgstr "На жодній сторінці бронювання; бронювання лише за посиланнями із запрошенням, які ви надсилаєте"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Reopen"
+msgstr "Відкрити знову"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Revoke"
+msgstr "Відкликати"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#: lib/tymeslot_web/live/dashboard/meeting_settings/revoke_invitation_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Revoke link"
+msgstr "Відкликати посилання"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/revoke_invitation_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Revoke this link?"
+msgstr "Відкликати це посилання?"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Revoked"
+msgstr "Відкликано"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "That invitation can't be changed."
+msgstr "Це запрошення не можна змінити."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Unnamed invitation"
+msgstr "Запрошення без імені"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Used"
+msgstr "Використано"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
+msgstr "Кожне посилання бронює одну зустріч. the scheduler не надсилає листів: скопіюйте посилання й надішліть його самі."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Appointment cancelled"
+msgstr "Зустріч скасовано"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Copy link for %{name}"
+msgstr "Копіювати посилання для %{name}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Could not create the invitation link."
+msgstr "Не вдалося створити посилання із запрошенням."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "If the appointment is cancelled, the link can be used again."
+msgstr "Якщо зустріч скасовано, посилання можна використати знову."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Reopen link"
+msgstr "Відкрити посилання знову"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Reopen link for %{name}"
+msgstr "Відкрити посилання знову для %{name}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Reusable after cancellation"
+msgstr "Можна використати знову після скасування"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Revoke link for %{name}"
+msgstr "Відкликати посилання для %{name}"
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "This link can't be shown. Revoke it and create a new one."
+msgstr "Це посилання неможливо показати. Відкличте його та створіть нове."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Showing the latest 100 invitations."
+msgstr "Показано 100 найновіших запрошень."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "This link has expired, so it can't be reopened. Create a new one instead."
+msgstr "Термін дії цього посилання минув, тому його неможливо відкрити знову. Натомість створіть нове."

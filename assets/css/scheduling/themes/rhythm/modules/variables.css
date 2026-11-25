@@ -1,0 +1,295 @@
+/* Rhythm Theme Variables */
+
+/* Responsive height ladder (convention — NOT tokenisable: @media feature values
+   can't use var()). Every `@media (max-height: …)` query in this theme snaps to
+   one of these tiers; add new height rules to an existing tier rather than
+   introducing a new threshold:
+     600px  short    — compact section padding, drop calendar aspect ratio
+     500px  shorter  — shrink badges, tighten component spacing
+     400px  minimal  — strip remaining chrome to fit the booking flow
+     350px  bare     — last-resort trims for the tiniest landscape viewports */
+:root {
+  /* Typography - Comprehensive scale */
+  --theme-font-family: var(--font-stack-inter);
+
+  /* Font size scale - fluid responsive using clamp() */
+  --theme-font-size-3xs: clamp(0.688rem, 1.1vw, 0.75rem);     /* ~11-12px - tiny labels */
+  --theme-font-size-2xs: clamp(0.75rem, 1.2vw, 0.813rem);     /* ~12-13px - smallest interactive */
+  --theme-font-size-xs: clamp(0.813rem, 1.3vw, 0.938rem);     /* ~13-15px - small labels */
+  --theme-font-size-sm: clamp(0.875rem, 1.4vw, 0.938rem);     /* ~14-15px - small text */
+  --theme-font-size-base: clamp(0.938rem, 1.6vw, 1.063rem);   /* ~15-17px - body text */
+  --theme-font-size-md: clamp(1rem, 1.7vw, 1.125rem);         /* ~16-18px - emphasized body */
+  --theme-font-size-lg: clamp(1.188rem, 2.1vw, 1.313rem);     /* ~19-21px - subheadings */
+  --theme-font-size-xl: clamp(1.438rem, 2.6vw, 1.563rem);     /* ~23-25px - headings */
+  --theme-font-size-2xl: clamp(1.625rem, 3.2vw, 2.125rem);    /* ~26-34px - large headings */
+  --theme-font-size-3xl: clamp(1.875rem, 3.7vw, 2.625rem);    /* ~30-42px - hero text */
+
+  /* Line heights */
+  --theme-line-height-tight: 1.1;
+  --theme-line-height-normal: 1.4;
+
+  /* Font weights */
+  --font-weight-normal: 400;
+
+  /* Letter spacing */
+  --letter-spacing-tight: 0.025em;
+  --letter-spacing-normal: 0.05em;
+  --letter-spacing-wide: 0.075em;
+
+  /* Theme Colors */
+  --theme-primary: #06b6d4;
+  --theme-primary-hover: #0891b2;
+  --theme-secondary: #14b8a6;
+  --theme-accent: #10b981;
+  --theme-accent-dark: #059669;
+
+  /* Filled-control ink and surface (WCAG 1.4.3 / 1.4.11).
+     A palette colour used as a *surface* needs a foreground that passes on top
+     of it, which white does not: white on the default primary above is 2.43:1.
+     `Tymeslot.ThemeCustomizations.ContrastTokens` derives these per palette and
+     the generated :root block overrides them; the values here are that
+     derivation applied to the defaults above, and are what self-hosted Core
+     uses when the organiser has saved no customisation.
+     Only filled surfaces read *-solid — --theme-primary itself stays as chosen,
+     because borders, focus rings and bright text on the dark card need it
+     bright. */
+  --theme-on-primary: #0f172a;
+  --theme-on-accent: #0f172a;
+
+  --theme-warning: #fbbf24;
+  --theme-success: #10b981;
+  --theme-info: #6366f1;
+  --theme-info-dark: #4f46e5;
+  --theme-error: rgba(239, 68, 68, 0.95);
+  --theme-error-bg: rgba(239, 68, 68, 0.1);
+  --theme-error-border: rgba(239, 68, 68, 0.6);
+  --theme-error-light: #fca5a5;
+  --theme-danger: #ef4444;
+  --theme-danger-dark: #dc2626;
+  --theme-surface: rgba(30, 41, 59, 0.5);
+  --theme-text: #e2e8f0;
+  --theme-text-secondary: #94a3b8;
+  --theme-text-muted: #64748b;
+  /* Secondary text that sits on the box over a moving video, where the
+     frame can darken the glass's backdrop only so far: the secondary ink
+     pulled a quarter towards the text, which keeps 4.5:1 on the lightest
+     frames of the shipped videos (#94a3b8 alone dips to about 4.4:1). */
+  --rhythm-ink-quiet: color-mix(in srgb, var(--theme-text-secondary) 75%, var(--theme-text));
+  /* The palette's page colour. The server overrides it per organiser; it is
+     what shows behind an image or video background (--theme-background falls
+     back to it). */
+  --theme-canvas: #0f172a;
+
+  /* Background gradients */
+  --theme-background: linear-gradient(135deg, #1a1f2e 0%, #2d3561 50%, #1a1f2e 100%);
+
+  /* Glassmorphism surface opacity levels */
+  --surface-subtle: rgba(255, 255, 255, 0.06);
+  --surface-light: rgba(255, 255, 255, 0.10);
+  --surface-medium: rgba(255, 255, 255, 0.12);
+  --surface-strong: rgba(255, 255, 255, 0.15);
+  --surface-intense: rgba(255, 255, 255, 0.18);
+
+  /* Border opacity levels */
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-light: rgba(255, 255, 255, 0.15);
+  --border-medium: rgba(255, 255, 255, 0.20);
+  --border-strong: rgba(255, 255, 255, 0.30);
+
+  /* Answer tiles and option cards (shared/components/custom-questions.css) */
+  --option-tile-border: var(--border-strong);
+  --option-tile-bg-hover: var(--surface-strong);
+
+  /* Border radius scale */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* Spacing scale - fluid responsive */
+  --space-hairline: 2px; /* sub-grid gap, compact calendar cells only */
+  --space-3xs: 4px;
+  --space-2xs: 6px;
+  --space-xs: clamp(8px, 1.2vw, 12px);
+  --space-sm: clamp(12px, 1.8vw, 16px);
+  --space-md: clamp(16px, 2.5vw, 20px);
+  --space-lg: clamp(20px, 3vw, 28px);
+  --space-xl: clamp(28px, 3.5vw, 32px);
+  --space-2xl: clamp(32px, 4.5vw, 40px);
+
+  /* Transition speeds */
+  --transition-smooth: 0.3s ease;
+  --transition-slow: 0.4s ease-in-out;
+
+  /* Sliding box effects */
+  --box-blur: 36px;
+  --box-opacity: 0.55;
+  --box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--border-subtle);
+  /* The box's backdrop floor (base.css). Over the theme's own video it is a
+     no-op, so the video's colour still glows through the glass. Over a
+     colour, image or gradient the organiser chose, whose brightness the
+     stylesheet cannot know, the backdrop is dimmed to a fifth before the
+     glass tints it: a white page then shows through the box as about
+     rgb(29 29 37), dark enough for the slate secondary ink on the box's
+     lighter tiles to clear 4.5:1. The dimming is multiplicative, so the
+     background's hue still tints the glass. */
+  --box-backdrop-floor: brightness(1);
+  --box-backdrop-floor-static: brightness(0.2);
+  --slide-transition: opacity var(--transition-slow), transform var(--transition-slow);
+
+  /* How far a step's slide travels as it enters (base.css, rhythm-slide-in). */
+  --slide-enter-offset: 2rem;
+
+  /* Component-specific sizing (fluid, scales with container) */
+  --avatar-size-sm: clamp(32px, 4cqi, 36px);
+  --avatar-size-md: clamp(36px, 5cqi, 40px);
+  --avatar-size-lg: clamp(44px, 7cqi, 52px);
+  --avatar-size-xl: clamp(52px, 8cqi, 68px);
+  --min-touch-target: 48px;
+
+  /* Container widths */
+  --container-xs: 280px;
+  --container-sm: 360px;
+  --container-md: 520px;
+  --container-xl: 820px;
+
+  /* Dropdown/Popover specific */
+  --dropdown-width: var(--container-xs);
+
+  /* Calendar specific */
+  --calendar-gap: clamp(8px, 1.2vw, 12px);
+  --calendar-gap-tablet: clamp(6px, 1.1vw, 10px);
+  --calendar-gap-mobile: 5px;
+  --calendar-day-min-height: 52px;
+  --calendar-day-min-height-tablet: 54px;
+
+  /* Time slots specific */
+  --time-slots-max-height: clamp(280px, 50vh, 420px);
+
+  /* Seat availability (group bookings) */
+  --seat-green: var(--theme-accent);
+  --seat-amber: var(--theme-warning);
+  --seat-red: var(--theme-danger);
+  --seat-green-bg: rgba(16, 185, 129, 0.15);
+  --seat-amber-bg: rgba(251, 191, 36, 0.15);
+  --seat-red-bg: rgba(239, 68, 68, 0.15);
+  /* The exact count without the traffic light: a fact, not a warning, so it
+     takes the slot's own text colour on a faint wash of it. */
+  --seat-neutral: currentColor;
+  --seat-neutral-bg: color-mix(in srgb, currentColor 12%, transparent);
+  /* A selected slot is marked by its primary border; the badge becomes a
+     solid primary pill in the palette's own contrast pair to match it. */
+  --seat-selected: var(--theme-on-primary);
+  --seat-selected-bg: var(--theme-primary-solid);
+
+  /* Icon sizes */
+  --icon-xs: 16px;
+  --icon-sm: 20px;
+  --icon-md: 24px;
+  --icon-lg: 32px;
+  --icon-xl: 40px;
+
+  /* Elevation shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.25);
+
+  /* Coloured-shadow geometry (offset and blur). The colour is mixed from the
+     palette in shared/tokens.css. */
+  --shadow-geometry-sm: 0 4px 16px;
+  --shadow-geometry-md: 0 6px 20px;
+  --shadow-geometry-lg: 0 8px 24px;
+
+  /* Scrollbar styling */
+  --scrollbar-width: 6px;
+  --scrollbar-track: rgba(255, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+
+  /* Button sizing */
+  --button-padding-y: 14px;
+  --button-padding-x: 28px;
+  --button-padding-y-sm: 12px;
+  --button-padding-x-sm: 24px;
+
+  /* Roles (shared/tokens.css, section 2), as aliases of Rhythm's own names */
+  --surface-2: var(--surface-light);
+  --surface-3: var(--surface-strong);
+  --ink-1: var(--theme-text);
+  --ink-2: var(--theme-text-secondary);
+  --ink-3: var(--theme-text-muted);
+  --notice-warning-surface: rgba(251, 191, 36, 0.12);
+  --notice-warning-border: rgba(251, 191, 36, 0.4);
+  --radius-control: var(--radius-md);
+  --radius-card: var(--radius-2xl);
+
+  /* Shared status screens (shared/layout.css: awaiting payment, readiness) */
+  --status-surface: rgba(255, 255, 255, 0.08);
+  --status-surface-opaque: linear-gradient(135deg, rgba(20, 20, 35, 0.86) 0%, rgba(15, 15, 25, 0.78) 100%);
+  --status-shadow: 0 1.25rem 2.5rem rgba(0, 0, 0, 0.35);
+  --status-ink-heading: #ffffff;
+  --status-ink: rgba(255, 255, 255, 0.92);
+  --status-ink-soft: rgba(255, 255, 255, 0.85);
+  --status-ink-hint: rgba(255, 255, 255, 0.7);
+
+  /* Approval notice (shared/components/approval-notice.css) */
+  --approval-pill-surface: rgba(251, 191, 36, 0.14);
+  --approval-icon-surface: rgba(251, 191, 36, 0.2);
+  --approval-notice-gap: var(--space-xs);
+  --approval-notice-font-size: var(--theme-font-size-xs);
+  --approval-notice-ink: var(--theme-text-secondary);
+  --approval-notice-max-width: 30rem;
+
+  /* Embedded confirmation ticket (modules/confirmation.css) */
+  --ticket-note-row-basis: 16rem;
+
+  /* Poll voting page (shared/components/polls.css) */
+  --poll-voting-padding: var(--space-lg);
+  --poll-panel-surface: rgba(255, 255, 255, 0.08);
+  --poll-input-surface: rgba(255, 255, 255, 0.1);
+  --poll-input-line: rgba(255, 255, 255, 0.2);
+  --poll-input-focus-ring: var(--focus-ring);
+  --poll-row-surface: rgba(255, 255, 255, 0.08);
+  --poll-row-line: rgba(255, 255, 255, 0.16);
+  --poll-option-line: rgba(255, 255, 255, 0.22);
+  --poll-option-selected-surface: var(--theme-primary-tint);
+
+  /* Payment return pages (shared/components/payment-pages.css). The card is
+     the scheduling box, which sizes itself. */
+  --payment-page-max-width: 36rem;
+  --payment-heading-ink: #ffffff;
+  --payment-body-ink: rgba(255, 255, 255, 0.9);
+  --payment-link-radius: var(--radius-md);
+  --payment-link-weight: var(--font-weight-bold);
+  --payment-link-transition: background var(--transition-smooth);
+
+  /* Booking fields (shared/components/booking-fields.css) */
+  --guest-remove-ink-hover: #ffffff;
+
+  /* Language switcher (shared/components/language-switcher.css) */
+  --lang-switcher-surface: rgba(0, 0, 0, 0.6);
+  --lang-switcher-surface-hover: rgba(0, 0, 0, 0.7);
+  --lang-switcher-panel-surface: rgba(0, 0, 0, 0.97);
+  --lang-switcher-panel-line: var(--border-light);
+  --lang-switcher-item-line: var(--border-subtle);
+  --lang-switcher-item-hover: var(--surface-light);
+  --lang-switcher-item-active: var(--surface-medium);
+  --lang-switcher-item-ink-active: #ffffff;
+
+  /* Slot list (shared/components/slot-list.css) */
+  --slot-list-grid-gap: var(--space-3xs);
+
+  /* Timezone picker (shared/components/timezone-picker.css) */
+  --dropdown-surface: linear-gradient(135deg, rgba(20, 20, 35, 0.98) 0%, rgba(15, 15, 25, 0.96) 100%);
+
+  /* Surfaces and lines used by individual modules */
+  --box-surface: linear-gradient(135deg, rgba(20, 20, 35, var(--box-opacity)) 0%, rgba(15, 15, 25, 0.6) 100%);
+  --surface-dark-light: rgba(0, 0, 0, 0.3);
+  --surface-dark-medium: rgba(0, 0, 0, 0.4);
+  --surface-faint: rgba(255, 255, 255, 0.05);
+  --surface-ghost: rgba(255, 255, 255, 0.03);
+  --border-hover: rgba(255, 255, 255, 0.45);
+  --avatar-ring: rgba(255, 255, 255, 0.8);
+}

@@ -1,0 +1,85 @@
+name: spv-booking
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: spv-booking-postgres
+    mem_limit: 256m
+    cpus: 0.25
+    memswap_limit: 256m
+    pids_limit: 128
+    environment:
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: booking
+    volumes:
+      - spv-booking_pg:/var/lib/postgresql/data
+    networks:
+      - spv-booking_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d booking"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    image: ${SPV_BOOKING_IMAGE:?set SPV_BOOKING_IMAGE}
+    container_name: spv-booking-app
+    mem_limit: 720m
+    cpus: 0.6
+    memswap_limit: 720m
+    pids_limit: 256
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:4473:4000"
+    environment:
+      MIX_ENV: prod
+      PHX_SERVER: "true"
+      PHX_HOST: book.scalepoint-ventures.com
+      PORT: "4000"
+      URL_SCHEME: https
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?set SECRET_KEY_BASE}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?set DATA_ENCRYPTION_KEY}
+      DATABASE_URL: ecto://booking:${POSTGRES_PASSWORD}@postgres:5432/booking
+      TYMESLOT_EMBEDDED_DB: "false"
+      EMAIL_ADAPTER: smtp
+      EMAIL_FROM_ADDRESS: ${SPV_SENDER_EMAIL:-booking@scalepoint-ventures.com}
+      EMAIL_FROM_NAME: ${SPV_SENDER_NAME:-ScalePoint Ventures}
+      DEFAULT_BRAND_KEY: scalepoint
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SSL: ${SMTP_SSL:-false}
+      SPV_SENDER_EMAIL: ${SPV_SENDER_EMAIL:-booking@scalepoint-ventures.com}
+      SPV_SENDER_NAME: ${SPV_SENDER_NAME:-ScalePoint Ventures}
+      NEUTRAL_SENDER_EMAIL: ${NEUTRAL_SENDER_EMAIL:-booking@meetdesk24.com}
+      NEUTRAL_SENDER_NAME: ${NEUTRAL_SENDER_NAME:-MeetDesk24}
+      NEUTRAL_BRAND_NAME: ${NEUTRAL_BRAND_NAME:-}
+      BRAND_CONFIG_DIR: /etc/booking-brands
+      BRAND_SEED: "true"
+      SEED_NEUTRAL_TENANT: "false"
+      SOURCE_OFFER_URL: ${SOURCE_OFFER_URL:-}
+      OUTREACH_WEBHOOK_URL: ${OUTREACH_WEBHOOK_URL:-}
+      SPV_OWNER_PASSWORD: ${SPV_OWNER_PASSWORD:?set SPV_OWNER_PASSWORD}
+      NEUTRAL_OWNER_PASSWORD: ${NEUTRAL_OWNER_PASSWORD:-}
+      ELIXIR_ERL_OPTIONS: "+S 1:1 +MBas aobf"
+    volumes:
+      - ./brands:/etc/booking-brands:ro
+      - spv-booking_uploads:/app/data
+    networks:
+      - spv-booking_net
+    restart: unless-stopped
+
+networks:
+  spv-booking_net:
+    name: spv-booking_net
+
+volumes:
+  spv-booking_pg:
+    name: spv-booking_pg
+  spv-booking_uploads:
+    name: spv-booking_uploads

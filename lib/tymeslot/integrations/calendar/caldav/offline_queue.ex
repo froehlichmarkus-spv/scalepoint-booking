@@ -1,0 +1,552 @@
+defmodule Tymeslot.Integrations.Calendar.CalDAV.OfflineQueue do
+  @moduledoc """
+  Replays locally-modified cache rows to the remote CalDAV server.
+
+  Called at the start of every CalDAV sync cycle, **before** fetching
+  remote changes. This ordering ensures local edits reach the server
+  first so a subsequent pull cannot clobber them.
+
+  ## Queue model
+
+  Each row in `provider_calendar_events` carries a `sync_state` column
+  set by the code that writes the row:
+
+    * `"synced"`           — no pending work, skipped by the flush
+    * `"locally_created"`  — PUT with `If-None-Match: *`
+    * `"locally_modified"` — PUT with `If-Match: <cached etag>`
+    * `"locally_deleted"`  — DELETE
+
+  ## Success / failure
+
+  On success the row is marked `"synced"` (or the cache row is deleted
+  for a successful `locally_deleted`). On failure the row stays in the
+  queue with a human-readable description of the failure in
+  `sync_last_error`, and, when the server answered about the change, an
+  incremented `sync_attempts`. The next sync cycle retries automatically — there is
+  no backoff beyond the sync cadence itself — but within bounds, so one
+  stuck server or one change the server will never accept cannot hold a
+  sync job for long:
+
+    * a failure that says the server cannot be reached right now (a
+      timeout, a 5xx, a rate limit) ends the flush; the rows after it wait
+      for the next cycle rather than each waiting out the same timeout;
+    * a failure that never got an answer about the change (the network, a
+      timeout, a rate limit, or a 502, 503 or 504, the shapes of a server
+      that is down or in maintenance) does not count towards the row's
+      attempts: an outage says nothing about whether the server would
+      accept the change, and counting it would strand the oldest queued
+      change after a few hours of downtime. Any other 5xx does count: the
+      server answered, and some servers answer a change they cannot parse
+      with a 500 every time, which would otherwise hold that row at the
+      head of the queue, and every later change behind it, for good;
+    * a row that has gone unanswered without a break for longer than
+      `@deferral_grace_hours` hours counts each further failure whatever
+      its reason, since no outage lasts that long while the rest of the
+      sync carries on (a stale lock on one resource times out the same
+      way every time);
+    * at most `@rows_per_flush` rows are replayed per cycle, oldest first;
+    * a row that has failed `@max_replay_attempts` counted times is no
+      longer replayed. It keeps its pending state and the last failure in
+      `sync_last_error`, and is replayed again once a new local change to
+      it resets the count, or the owner retries it from the calendar's
+      card (`stuck_changes/1`, `release_stuck/1`).
+
+  A `412 Precondition Failed` response to a `locally_modified` flush
+  follows the usual conflict-resolution policy (`:keep_local` for
+  the scheduler-owned events, `:fail` otherwise — the default is configured
+  per row via `conflict_policy_for/1`).
+
+  A `locally_modified` flush that finds no resource at all is the one case
+  the policies cannot express, since none of them has a server copy to
+  reconcile against. When a meeting that still expects its calendar event
+  claims the row, the queue creates the event instead; see
+  `recreate_missing/5`.
+
+  ## Rows that belong to a repeating series
+
+  An update or delete of a row that belongs to a series is never sent. A
+  CalDAV series lives in one resource, so the write for any one occurrence
+  lands on all of them: an update is patched onto the master VEVENT and a
+  delete removes the resource. The grid queues neither: it never queues a
+  failed edit or delete of a series member
+  (`Tymeslot.CalendarGrid.SeriesEdit`,
+  `Tymeslot.CalendarGrid.EventDeletion.delete_event/3`). A row queued before
+  those guards existed still reaches the queue, though, and replaying it would
+  change or remove a series nobody asked to touch.
+
+  Such a row is skipped like any other that no retry can make sendable: it
+  stays queued with a sentence in `sync_last_error`, and every cycle logs its
+  uid, so the local change stays inspectable and nothing reaches the server.
+  A `locally_created` row is not checked: a new series is written as one
+  resource, which is what the create means.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  require Logger
+
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Integrations.Calendar.CalDAV.Base, as: CalDAVBase
+  alias Tymeslot.Integrations.Calendar.CalDAV.Errors, as: CalDAVErrors
+  alias Tymeslot.Integrations.Calendar.CalDAV.Events
+  alias Tymeslot.Integrations.Calendar.CalDAV.QueueQueries
+  alias Tymeslot.Integrations.Calendar.ICalNormaliser
+  alias Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries
+  alias Tymeslot.Integrations.Calendar.ProviderCalendarEventSchema
+  alias Tymeslot.Integrations.Calendar.Recurrence.Series
+  alias Tymeslot.Integrations.Calendar.Runtime.CalendarPathResolver
+  alias Tymeslot.Meetings.ExternalCalendar
+  alias Tymeslot.Meetings.MeetingState
+
+  # `sync_last_error` is meant for the account owner, so every value written to
+  # it is a sentence. Transport failures get theirs from
+  # `CalDAVErrors.describe_error/1`; the four below cover the local-state
+  # failures that never reach the wire. They live as functions at the bottom of
+  # this module rather than as module attributes: a `dgettext/2` call in an
+  # attribute would freeze the locale at compile time.
+
+  @rows_per_flush 50
+  @max_replay_attempts 10
+
+  # The server is not answering, or not answering properly, right now: every
+  # other row would meet the same wait, so the flush stops at the first one.
+  @unreachable_reasons [
+    :network_error,
+    :server_error,
+    :service_unavailable,
+    :server_unresponsive,
+    :timeout,
+    :rate_limited
+  ]
+
+  # Of those, the ones that never got an answer about this change, so do not
+  # count towards its attempts until it has gone unanswered for
+  # `@deferral_grace_hours`. A `:server_error` (a 5xx other than 502, 503
+  # and 504) is the server answering about this change, and counts.
+  @unanswered_reasons @unreachable_reasons -- [:server_error]
+  @deferral_grace_hours 24
+
+  @doc """
+  The changes of `user_id`'s calendars that are no longer replayed, by
+  integration id: how many, and the last failure recorded on one.
+  """
+  @spec stuck_changes(pos_integer()) :: %{
+          pos_integer() => %{count: pos_integer(), last_error: String.t() | nil}
+        }
+  def stuck_changes(user_id), do: QueueQueries.stuck_by_integration(user_id, @max_replay_attempts)
+
+  @doc """
+  Puts `integration_id`'s stuck changes back in the queue with a fresh count,
+  for the next flush to replay. Answers how many there were.
+  """
+  @spec release_stuck(pos_integer()) :: non_neg_integer()
+  def release_stuck(integration_id),
+    do: QueueQueries.release_stuck(integration_id, @max_replay_attempts)
+
+  @spec flush(map(), CalDAVBase.client()) :: :ok
+  def flush(integration, client) do
+    integration.id
+    |> QueueQueries.list_pending(@rows_per_flush, @max_replay_attempts)
+    |> Enum.reduce_while(:ok, fn row, :ok ->
+      case flush_row(row, integration, client) do
+        :unreachable -> {:halt, :ok}
+        _replayed_or_recorded -> {:cont, :ok}
+      end
+    end)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Per-row replay
+  # ---------------------------------------------------------------------------
+
+  defp flush_row(
+         %ProviderCalendarEventSchema{sync_state: "locally_created"} = row,
+         integration,
+         client
+       ) do
+    with {:ok, path} <- collection_path(row, integration),
+         {:ok, event_data} <- sendable_event_data(row) do
+      case Events.create_calendar_event(client, path, event_data, events_opts()) do
+        {:ok, created} ->
+          QueueQueries.mark_synced(integration.id, row.uid, created.etag)
+          log_success(row, :created)
+
+        {:error, reason} ->
+          record_failure(integration, row, :created, reason)
+      end
+    else
+      {:error, reason} -> record_skip(integration, row, reason)
+    end
+  end
+
+  defp flush_row(
+         %ProviderCalendarEventSchema{sync_state: "locally_modified"} = row,
+         integration,
+         client
+       ) do
+    with :ok <- ensure_single_event(row),
+         {:ok, path} <- collection_path(row, integration),
+         {:ok, event_data} <- sendable_event_data(row) do
+      opts =
+        events_opts() ++
+          [
+            etag: row.etag,
+            conflict_resolution: conflict_policy_for(row)
+          ]
+
+      case Events.update_calendar_event(client, path, row.uid, event_data, opts) do
+        :ok ->
+          QueueQueries.mark_synced(integration.id, row.uid, nil)
+          log_success(row, :modified)
+
+        {:error, :not_found} ->
+          recreate_missing(row, integration, client, path, event_data)
+
+        {:error, reason} ->
+          record_failure(integration, row, :modified, reason)
+      end
+    else
+      {:error, reason} -> record_skip(integration, row, reason)
+    end
+  end
+
+  defp flush_row(
+         %ProviderCalendarEventSchema{sync_state: "locally_deleted"} = row,
+         integration,
+         client
+       ) do
+    with :ok <- ensure_single_event(row),
+         {:ok, path} <- collection_path(row, integration) do
+      case Events.delete_calendar_event(client, path, row.uid, delete_opts(row)) do
+        :ok ->
+          ProviderCalendarEventQueries.delete_by_uid(integration.id, row.uid)
+          log_success(row, :deleted)
+
+        {:error, :not_found} ->
+          handle_missing_on_delete(row, integration)
+
+        {:error, reason} ->
+          record_failure(integration, row, :deleted, reason)
+      end
+    else
+      {:error, reason} -> record_skip(integration, row, reason)
+    end
+  end
+
+  defp flush_row(%ProviderCalendarEventSchema{sync_state: other} = row, integration, _client) do
+    # Defensive: an unknown sync_state string should never reach the queue.
+    # The state itself is a developer detail, so it goes to the log; the row
+    # records the attempt with a message the account owner can read.
+    Logger.error("CalDAV offline queue row carries an unknown sync_state",
+      calendar_integration_id: integration.id,
+      uid: row.uid,
+      sync_state: LogFormat.reason(other)
+    )
+
+    QueueQueries.mark_sync_failed(
+      integration.id,
+      row.uid,
+      unsendable_change_message()
+    )
+  end
+
+  # The event's own href addresses it wherever it lives; without one the URL is
+  # reconstructed from the uid against the first configured collection, which
+  # is the wrong address for an event on any other calendar.
+  defp delete_opts(%ProviderCalendarEventSchema{provider_event_id: nil}), do: events_opts()
+
+  defp delete_opts(%ProviderCalendarEventSchema{provider_event_id: href}),
+    do: events_opts() ++ [provider_event_id: href]
+
+  # Already gone on the server — finish the local delete regardless. This is
+  # only a safe reading because `collection_path/2` addresses the collection
+  # the event was actually written to and an href, when the row has one,
+  # overrides it: the same 404 against a URL guessed from the wrong collection
+  # would report a delete that never happened.
+  defp handle_missing_on_delete(row, integration) do
+    ProviderCalendarEventQueries.delete_by_uid(integration.id, row.uid)
+    log_success(row, :deleted)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Helpers
+  # ---------------------------------------------------------------------------
+
+  # Asked of the stored row, which is all the queue holds and the only copy
+  # that carries the series markers: an override's recurrence id lives in
+  # `provider_metadata`, not in a column. See the moduledoc.
+  defp ensure_single_event(%ProviderCalendarEventSchema{} = row) do
+    if Series.member?(row), do: {:error, :recurring_event}, else: :ok
+  end
+
+  # The server has no resource to update: the event never landed, or the
+  # organiser deleted it from their own client. No conflict policy can repair
+  # that — each one reconciles a local copy against a server copy, and there is
+  # no server copy — so the only repair is a create, which is what
+  # `CalendarEventSync` does on the worker path.
+  #
+  # Two guards decide whether that repair is right.
+  #
+  # An elapsed event is not recreated: the slot has been and gone, so writing
+  # it now would only plant a stale entry in the organiser's calendar. The
+  # server is the truth for the past, and the reconciler already drops a
+  # cached row whose event has vanished from the fetch window, so the row is
+  # dropped the same way here. This is also what clears rows queued before a
+  # missing resource was handled at all: those had retried every cycle and
+  # were, by construction, the ones outside the window.
+  #
+  # A live event is recreated only when a meeting that still expects its
+  # calendar event claims the row. The `created_by_tymeslot` flag cannot gate
+  # this: it is also set on an event the organiser created from the grid, and
+  # on one a sync once read as the scheduler's, so recreating on the flag would
+  # resurrect a deletion nobody here asked to undo. Resolving against the
+  # meeting itself is the rule the grid and the reconciler already use. A
+  # create racing another writer comes back `:precondition_failed`, which
+  # records a failure and leaves the row queued — the next cycle then finds
+  # the resource present and the ordinary update succeeds.
+  defp recreate_missing(row, integration, client, path, event_data) do
+    cond do
+      elapsed?(event_data.end_time) ->
+        ProviderCalendarEventQueries.delete_by_uid(integration.id, row.uid)
+        log_success(row, :dropped_elapsed)
+
+      expects_calendar_event?(row, integration) ->
+        case Events.create_calendar_event(client, path, event_data, events_opts()) do
+          {:ok, created} ->
+            QueueQueries.mark_synced(integration.id, row.uid, created.etag)
+            log_success(row, :recreated)
+
+          {:error, reason} ->
+            record_failure(integration, row, :recreated, reason)
+        end
+
+      true ->
+        record_failure(integration, row, :modified, :not_found)
+    end
+  end
+
+  defp elapsed?(%DateTime{} = end_time), do: DateTime.before?(end_time, DateTime.utc_now())
+  defp elapsed?(%Date{} = end_date), do: Date.before?(end_date, Date.utc_today())
+
+  defp expects_calendar_event?(row, integration) do
+    integration.id
+    |> ExternalCalendar.list_meetings_by_calendar_identifiers(
+      ExternalCalendar.calendar_event_identifiers(row)
+    )
+    |> Map.values()
+    |> Enum.any?(&MeetingState.expects_calendar_event?/1)
+  end
+
+  defp row_to_event_data(%ProviderCalendarEventSchema{} = row) do
+    event = ProviderCalendarEventSchema.to_calendar_event(row)
+
+    Map.merge(
+      %{
+        uid: event.uid,
+        summary: event.summary,
+        description: event.description,
+        location: event.location,
+        start_time: start_time(event),
+        end_time: end_time(event),
+        all_day: event.all_day,
+        timezone: event.timezone,
+        # The zone a queued series is written in: the CalDAV builder reads it
+        # from here and only for a timed series, so a replayed series is not
+        # written in UTC (`ICalBuilder.TimeZoneComponent.series_zone/1`).
+        series_timezone: event.timezone,
+        provider_event_id: event.provider_event_id,
+        # A held request is queued as tentative, and a replay has to say so:
+        # without the status the VEVENT goes out with no STATUS line and the
+        # host's calendar shows a confirmed booking for a request nobody has
+        # answered.
+        status: event.status,
+        transparency: event.transparency,
+        # The row holds the whole event, so the replay sends the whole event. A
+        # rebuild from a narrower set would replace a recurring series on the
+        # server with a single VEVENT carrying no attendees and no alarms, which
+        # is destructive on the organiser's real calendar for what began as a
+        # transient write failure.
+        attendees: event.attendees,
+        recurrence_rule: event.recurrence_rule,
+        recurrence_exceptions: event.recurrence_exceptions,
+        visibility: event.visibility,
+        colour: event.colour,
+        # `Events.update_calendar_event/5` patches the stored document when it
+        # has one, so unmodelled properties (PARTSTAT, CATEGORIES, X-) survive
+        # the replay instead of being serialised away.
+        raw_ical: event.raw_ical,
+        etag: event.etag
+      },
+      replayed_reminders(event, row.sync_reminders_changed)
+    )
+  end
+
+  # The patcher removes every alarm of the master VEVENT that a reminder can
+  # express and `:reminders` leaves out, while keeping the others verbatim.
+  # So a row holding the server's document replays its reminders only when
+  # the queued change edited them, which the tag records on the row
+  # (`sync_reminders_changed`): a removal of every reminder replays as `[]`
+  # and takes the alarms off the server, while a rename of a row cached
+  # before the sync read alarms, whose reminders are `[]` whatever the
+  # document says, leaves them alone.
+  #
+  # An unmarked change leaves the reminders alone, unless the row was queued
+  # before the mark existed and so is unmarked whatever it changed. For that row
+  # an unmarked replay compares the row's reminders with the ones the document's
+  # master holds (a series' document holds a VEVENT per edited occurrence beside
+  # the master, the VEVENT the patcher edits) and sends them when they differ.
+  # That comparison cannot tell a removal of every reminder from a row cached
+  # before the sync read alarms, so it never replays `[]`, and a document
+  # without exactly one master keeps the server's alarms too. A row with no
+  # document is rebuilt from the row, reminders and all.
+  defp replayed_reminders(%{reminders: reminders}, true = _changed), do: %{reminders: reminders}
+
+  defp replayed_reminders(%{raw_ical: raw_ical, reminders: reminders}, _unmarked)
+       when is_binary(raw_ical) and raw_ical != "" do
+    case ICalNormaliser.document_reminders(raw_ical) do
+      {:ok, document_reminders} when reminders != [] and document_reminders != reminders ->
+        %{reminders: reminders}
+
+      _unchanged_or_unreadable ->
+        %{}
+    end
+  end
+
+  defp replayed_reminders(event, _unmarked), do: %{reminders: event.reminders}
+
+  # All-day events are modelled with `start_date`/`end_date` only, leaving
+  # `start_at`/`end_at` NULL — the 20260408110831 migration dropped those
+  # columns' NOT NULL constraints for exactly that reason. Reading `start_at`
+  # unconditionally therefore yields `nil` for every all-day row, which
+  # `ICalBuilder.Properties.build_dtstart/1` has no clause for. The `Date` is
+  # what it wants regardless: it emits DATE-form DTSTART/DTEND from one.
+  defp start_time(%{all_day: true, start_date: %Date{} = date}), do: date
+  defp start_time(event), do: event.start_at
+
+  defp end_time(%{all_day: true, end_date: %Date{} = date}), do: date
+  defp end_time(event), do: event.end_at
+
+  defp conflict_policy_for(%ProviderCalendarEventSchema{created_by_tymeslot: true}),
+    do: :keep_local
+
+  defp conflict_policy_for(_row), do: :fail
+
+  # The OfflineQueue runs inside an Oban worker which already rate-limits
+  # by the sync cadence, so we bypass the per-operation circuit breaker.
+  # Using the breaker here would also push the HTTP call into a separate
+  # process, breaking Req.Test stub visibility in unit tests.
+  defp events_opts, do: [skip_breaker: true]
+
+  # The collection to address the row in, in descending order of authority: the
+  # one the row is filed under, then the integration's booking collection,
+  # which is where `ClientManager.booking_client/1` writes and so where a
+  # the scheduler-created event with no href yet actually lives, and only then the
+  # first configured path. Taking the first path unconditionally would build
+  # the wrong URL for every integration whose booking calendar is not its
+  # first, and since a CalDAV DELETE counts 404 as success, would report the
+  # event deleted while it stays on the server.
+  defp collection_path(row, integration) do
+    case row.provider_calendar_id || CalendarPathResolver.resolve(integration) do
+      path when is_binary(path) and path != "" -> {:ok, path}
+      _none -> {:error, :no_primary_path}
+    end
+  end
+
+  # `Events.create_calendar_event/4` and `update_calendar_event/5` build the
+  # outgoing iCalendar payload via `ICalBuilder` *before* any HTTP call, and
+  # `ICalBuilder.Properties.build_dtstart/1` has no clause for a missing start
+  # time. A cache row written without one therefore raises `FunctionClauseError`
+  # rather than returning an error tuple, which would crash the whole sync job.
+  # Since `flush/2` runs before the remote fetch, that also blocks every other
+  # queued row and the integration's own remote sync behind it — and because
+  # the row is replayed every cycle, it never clears on its own.
+  #
+  # No retry can make such a row sendable, so it is skipped permanently
+  # instead: the row records why, and the rest of the sync proceeds.
+  defp sendable_event_data(%ProviderCalendarEventSchema{} = row) do
+    event_data = row_to_event_data(row)
+
+    if usable_time?(event_data.start_time) and usable_time?(event_data.end_time) do
+      {:ok, event_data}
+    else
+      {:error, :incomplete_event_data}
+    end
+  end
+
+  defp usable_time?(%DateTime{}), do: true
+  defp usable_time?(%Date{}), do: true
+  defp usable_time?(_other), do: false
+
+  defp skip_message(:no_primary_path), do: no_primary_path_message()
+  defp skip_message(:incomplete_event_data), do: incomplete_event_message()
+  defp skip_message(:recurring_event), do: recurring_event_message()
+
+  # The log keeps the raw term for diagnosis; `sync_last_error` is a
+  # user-facing column, so it gets the sentence from `CalDAVErrors.describe_error/1`
+  # rather than an inspected atom.
+  defp record_failure(integration, row, operation, reason) do
+    Logger.warning("CalDAV offline queue replay failed",
+      calendar_integration_id: integration.id,
+      uid: row.uid,
+      operation: operation,
+      error: LogFormat.reason(reason)
+    )
+
+    message = CalDAVErrors.describe_error(reason)
+
+    if reason in @unanswered_reasons do
+      count_before = DateTime.add(DateTime.utc_now(), -@deferral_grace_hours, :hour)
+      QueueQueries.mark_sync_deferred(integration.id, row.uid, message, count_before)
+    else
+      QueueQueries.mark_sync_failed(integration.id, row.uid, message)
+    end
+
+    if reason in @unreachable_reasons, do: :unreachable, else: :ok
+  end
+
+  defp record_skip(integration, row, reason) do
+    Logger.warning("CalDAV offline queue replay skipped",
+      calendar_integration_id: integration.id,
+      uid: row.uid,
+      sync_state: row.sync_state,
+      reason: reason
+    )
+
+    QueueQueries.mark_sync_failed(integration.id, row.uid, skip_message(reason))
+  end
+
+  defp log_success(row, operation) do
+    Logger.info("CalDAV offline queue replay succeeded",
+      uid: row.uid,
+      operation: operation
+    )
+  end
+
+  defp no_primary_path_message do
+    dgettext(
+      "integrations_calendar",
+      "No calendar is selected for this connection, so the change could not be sent to the calendar server."
+    )
+  end
+
+  defp unsendable_change_message do
+    dgettext(
+      "integrations_calendar",
+      "the scheduler could not send this change to the calendar server."
+    )
+  end
+
+  defp recurring_event_message do
+    dgettext(
+      "integrations_calendar",
+      "This change was made to one occurrence of a repeating event, and the calendar server would have applied it to every occurrence, so it was not sent."
+    )
+  end
+
+  defp incomplete_event_message do
+    dgettext(
+      "integrations_calendar",
+      "This change is missing the event's start or end time, so it could not be sent to the calendar server."
+    )
+  end
+end

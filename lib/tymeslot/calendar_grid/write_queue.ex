@@ -1,0 +1,557 @@
+defmodule Tymeslot.CalendarGrid.WriteQueue do
+  @moduledoc """
+  The order in which the calendar grid writes its edits of existing events,
+  as plain data, so that whichever process drives it (the grid's LiveView,
+  or `Tymeslot.CalendarGrid.WriteGuardian` once the LiveView is gone) makes
+  exactly the same writes in exactly the same order.
+
+  Every function that changes the queue answers `{queue, effects}`. The
+  effects are what the driver must do, in order:
+
+    * `{:start, write, event}`: start `write` against `event` (see
+      `Tymeslot.CalendarGrid.QueuedWrite.perform/3`), and hand its result
+      back to `settle/3`;
+    * `{:show, event}`: show `event` on the grid in place of its row;
+    * `:reload`: reload the grid's events;
+    * `{:membership_changed, original_event, updated_event}`: tell the
+      guests a write made with `:membership` added or removed, once
+      accepted or saved to sync later, from the event as it found it and
+      left it;
+    * `{:dropped, :series_write | :series_move, count}`: tell the organiser
+      that `count` changes were not applied.
+
+  Only `:start` reaches the provider. It and `:membership_changed` are made
+  by every driver; the others are for the screen, ignored without one.
+
+  ## One write in flight per event
+
+  Each event, known by its integration and uid, has at most one write in
+  flight. A write made while another is running waits in the event's
+  chain, and starts once the running one has answered, whether it
+  succeeded or failed. Writes to different events still run side by side.
+
+  Each write carries only its own change, and is applied to the event as the
+  provider last accepted it (the chain's `confirmed` event), not to the grid's
+  copy at the moment it was made. The grid's copy already shows every earlier
+  write's change, and every provider write sends the whole event, so a write
+  built from it would quietly carry an earlier write's change even after that
+  write had failed, and would send the event without what an earlier success
+  added on the provider's side (a video room's join line in the description).
+  So a waiting write cannot be finalised until the write before it answers.
+
+  ## When a write fails
+
+  Only the failed write's change is taken back. Writes waiting behind it
+  still run, and the grid shows the confirmed event with their changes on
+  top; with nothing waiting, it goes back to the confirmed event. So once an
+  event's queue drains, the grid shows what the provider holds.
+
+  An edit that could not reach the provider but was saved to sync later
+  (`:queued`) counts as accepted: the next write starts from it, as the replay will.
+
+  ## After a write to a whole series
+
+  A write of this and following events, or of all events, of a recurring
+  series (`:recurrence_scope` `:following` or `:all`) can move every
+  occurrence, and the grid's cached rows of the series are dropped until a
+  sync brings them back (see `Tymeslot.CalendarGrid.SeriesEdit`). When one
+  succeeds, the grid reloads its events.
+
+  The writes still waiting behind it for the same event are dropped, not
+  run. They were made against the occurrence as it was, whose row, and for
+  a split its uid, may no longer exist, and the chain's `confirmed` event
+  is no longer what the provider holds; running them could write a stale
+  copy of the event over the series-wide change, or to an occurrence the
+  series has left. The organiser is told how many changes were not applied.
+
+  A series moved to another calendar ends the same way (`series_moved/2`):
+  every write held while it moved is dropped and counted, and the grid reloads.
+
+  ## While a whole series is written or moved
+
+  Queueing by event alone would let an edit of another occurrence run beside
+  a write to the whole series, or its move, and land on the series as it was.
+
+  So while such a write or move is running, the series is held, known by
+  its integration and address (`Tymeslot.CalendarGrid.Occurrence.series_address/1`)
+  as read when it started. A write to any other event of the series waits
+  in the hold, not started, until the series write or move answers.
+  Writes to the event the series write was made from queue behind it as
+  before. When the series was changed, the held writes are dropped with
+  the ones queued behind it, and counted in the same warning; when it was
+  not, they start in the order they were made.
+
+  ## Events another driver is writing
+
+  While another driver of the same organiser still writes an event, or the
+  whole of a series, the queue keeps its own writes to it, not started,
+  until that driver has finished with it (`wait_elsewhere/2`, `resume/2`).
+  The bookkeeping, and the rules it follows, are in
+  `Tymeslot.CalendarGrid.WriteQueue.Elsewhere`.
+
+  ## References
+
+  Every write carries a reference, `{key, seq}`, where `seq` rises with every
+  write taken by any queue on the node, so no two writes share a reference,
+  even across two queues (a grid mounted again in the same LiveView starts a
+  new one while answers for the old one may still arrive). A result that
+  does not name the write in flight for its event is ignored, so a stale
+  failure can never revert a later edit.
+  """
+
+  alias Tymeslot.CalendarGrid.Occurrence
+  alias Tymeslot.CalendarGrid.QueuedWrite
+  alias Tymeslot.CalendarGrid.WriteQueue.Elsewhere
+
+  defstruct chains: %{}, holds: %{}, elsewhere: %{}
+
+  @typedoc "Identifies the event a chain of writes belongs to."
+  @type key :: {integer() | nil, String.t()}
+
+  @typedoc "What one driver lends another (see `Elsewhere`)."
+  @type lent :: Elsewhere.lent()
+
+  @typedoc "Identifies one write: its event and its place in the queue's writes."
+  @type ref :: {key(), pos_integer()}
+
+  @typedoc "How a write answered."
+  @type outcome :: {:ok, map()} | :unchanged | :queued | :failed
+
+  @typedoc "One write, as the queue keeps it."
+  @type write :: map()
+
+  @type effect ::
+          {:start, write(), map()}
+          | {:show, map()}
+          | :reload
+          | {:membership_changed, map(), map()}
+          | {:dropped, :series_write | :series_move, pos_integer()}
+
+  @type t :: %__MODULE__{chains: map(), holds: map(), elsewhere: map()}
+
+  @type lends :: Elsewhere.lends()
+  @type left :: Elsewhere.left()
+  @type release :: Elsewhere.release()
+
+  @doc "An empty queue."
+  @spec new() :: t()
+  def new, do: %__MODULE__{}
+
+  @doc """
+  Queues a write of `changes` to `event` through
+  `Tymeslot.CalendarGrid.Changes.update_event/4`. With `notify` set to
+  `:membership`, once it is accepted, the driver is asked to email the guests
+  the write added or removed (`{:membership_changed, original, updated}`).
+  """
+  @spec update(t(), map(), map(), keyword(), :membership | nil) :: {t(), [effect()]}
+  def update(queue, event, changes, opts, notify \\ nil),
+    do: queue |> update_ref(event, changes, opts, notify) |> Tuple.delete_at(2)
+
+  @doc "`update/5`, also answering the reference of the write it took."
+  @spec update_ref(t(), map(), map(), keyword(), :membership | nil) :: {t(), [effect()], ref()}
+  def update_ref(queue, event, changes, opts, notify \\ nil) do
+    write = %{kind: :update, changes: changes, opts: opts, notify: notify, ref: ref(event)}
+    queue |> run(&submit(&1, event, write)) |> Tuple.insert_at(2, write.ref)
+  end
+
+  @doc """
+  Queues a change of the video of `event` through
+  `Tymeslot.CalendarGrid.Changes.change_event_video/3`.
+  """
+  @spec change_video(t(), map(), pos_integer() | nil) :: {t(), [effect()]}
+  def change_video(queue, event, video_integration_id),
+    do:
+      run(queue, &submit(&1, event, %{kind: :video, video_integration_id: video_integration_id}))
+
+  @doc """
+  Records how the write `ref` answered and starts the next write waiting for
+  the same event. A result for a write that is not in flight is ignored.
+  """
+  @spec settle(t(), ref(), outcome()) :: {t(), [effect()]}
+  def settle(queue, {key, _seq} = ref, outcome) do
+    case queue.chains do
+      %{^key => %{in_flight: %{ref: ^ref} = write, confirmed: before} = chain} ->
+        run(queue, &(&1 |> advance(key, chain, outcome) |> notified(write, before, outcome)))
+
+      _stale ->
+        {queue, []}
+    end
+  end
+
+  @doc """
+  Holds every write to an event of the series `event` belongs to while the
+  series moves to another calendar, until `series_moved/2` or
+  `series_move_failed/2`.
+  """
+  @spec series_moving(t(), map()) :: t()
+  def series_moving(queue, event) do
+    case series_key(event) do
+      nil -> queue
+      series -> put_hold(queue, series, %{uid: nil, held: []})
+    end
+  end
+
+  @doc """
+  Drops every write held while the series `event` belongs to was moving,
+  once it has moved, and reloads.
+  """
+  @spec series_moved(t(), map()) :: {t(), [effect()]}
+  def series_moved(queue, event) do
+    run(queue, fn acc ->
+      series = series_key(event)
+      {held, acc} = take_hold(acc, series)
+      {kept, acc} = outdate_kept(acc, series)
+      acc |> dropped(:series_move, length(held) + kept) |> emit(:reload)
+    end)
+  end
+
+  @doc """
+  Starts the writes held while the series `event` belongs to was moving,
+  once the move has failed and left the series where it was.
+  """
+  @spec series_move_failed(t(), map()) :: {t(), [effect()]}
+  def series_move_failed(queue, event), do: run(queue, &release(&1, series_key(event)))
+
+  @doc """
+  Who is writing to `series`: the uid of the event whose write to the whole
+  series holds it (`nil` while it moves, `:none` when it is not held), and
+  the events, or `{:series, series}`, the queue writes or waits for in it.
+  """
+  @spec series_writers(t(), term()) :: %{held_by: String.t() | nil | :none, writing: [lent()]}
+  def series_writers(%__MODULE__{} = queue, series) do
+    %{
+      held_by: queue.holds |> Map.get(series, %{uid: :none}) |> Map.fetch!(:uid),
+      writing:
+        Elsewhere.lent_in(queue.elsewhere, series) ++
+          for({key, %{series: ^series}} <- queue.chains, do: key)
+    }
+  end
+
+  @doc "Whether writes to the series `event` belongs to are held."
+  @spec series_held?(t(), map()) :: boolean()
+  def series_held?(queue, event), do: Map.has_key?(queue.holds, series_key(event))
+
+  @doc "Whether any write is running, waiting or held, here or elsewhere."
+  @spec pending?(t()) :: boolean()
+  def pending?(%__MODULE__{chains: chains, holds: holds, elsewhere: elsewhere}),
+    do: map_size(chains) > 0 or map_size(holds) > 0 or map_size(elsewhere) > 0
+
+  @doc """
+  The events the queue has a write for, running, waiting or held, or waits
+  for elsewhere, and the series it holds, as `{:series, series}`.
+  """
+  @spec pending_keys(t()) :: [lent()]
+  def pending_keys(%__MODULE__{} = queue), do: queue |> lendable() |> Map.keys()
+
+  @doc """
+  What `pending_keys/1` names, each with the series it belongs to: what the
+  queue lends another driver (see `Elsewhere`).
+  """
+  @spec lendable(t()) :: lends()
+  def lendable(%__MODULE__{} = queue) do
+    held =
+      for {series, held} <- series_holds(queue),
+          {event, _write} <- held,
+          into: %{},
+          do: {key(event), series}
+
+    holds = for {series, _hold} <- queue.holds, into: %{}, do: {{:series, series}, series}
+    chains = for {key, chain} <- queue.chains, into: %{}, do: {key, chain.series}
+
+    held |> Map.merge(holds) |> Map.merge(Elsewhere.lends(queue.elsewhere)) |> Map.merge(chains)
+  end
+
+  @doc "The writes held for each series, whether the series is held here or lent."
+  @spec series_holds(t()) :: [{term(), [{map(), write()}]}]
+  def series_holds(queue) do
+    Enum.map(queue.holds, fn {series, hold} -> {series, hold.held} end) ++
+      Elsewhere.series_holds(queue.elsewhere)
+  end
+
+  @doc """
+  Waits for the events each driver in `lends`, given as `{driver, lends}`
+  (see `lendable/1`), is still writing: a write to one of them is kept, not started, until
+  every driver lending it has released it (`resume/2`).
+
+  An event the queue already has a write for, or already waits for, is left
+  out: the queue is already ordered behind the drivers it waits for, and a
+  driver that lends the event back may itself be waiting for this queue, so
+  waiting for it as well would leave each waiting for the other. Every lend
+  is checked against the queue as it was before any of them, so an event
+  that two drivers lend is waited for from both.
+  """
+  @spec wait_elsewhere(t(), [{pid(), lends()}]) :: t()
+  def wait_elsewhere(%__MODULE__{} = queue, lends) do
+    own = MapSet.new(pending_keys(queue))
+    %{queue | elsewhere: Elsewhere.wait(queue.elsewhere, lends, own)}
+  end
+
+  @doc """
+  Records that another driver has finished with an event the queue waits
+  for, and once none it waits for is left, shows the event as they left it
+  and starts the writes kept for it, applied to that event.
+  """
+  @spec resume(t(), release()) :: {t(), [effect()]}
+  def resume(queue, {_driver, key, left} = release) do
+    case Elsewhere.release(queue.elsewhere, release) do
+      {:ok, waiting, elsewhere} ->
+        run(%{queue | elsewhere: elsewhere}, fn acc ->
+          acc
+          |> outdate_series(left, waiting)
+          |> carry_on(key)
+        end)
+
+      :not_waiting ->
+        {queue, []}
+    end
+  end
+
+  # The machinery below threads `{queue, effects}`, the effects newest
+  # first; `run/2` puts them in order.
+  defp run(queue, fun) do
+    {queue, effects} = fun.({queue, []})
+    {queue, Enum.reverse(effects)}
+  end
+
+  defp emit({queue, effects}, effect), do: {queue, [effect | effects]}
+
+  defp dropped(acc, _reason, 0), do: acc
+  defp dropped(acc, reason, count), do: emit(acc, {:dropped, reason, count})
+
+  @doc """
+  The series `event` belongs to, as the queue holds its writes: its
+  integration and its address there, read once, when a write is made; or
+  `nil` for an event outside an addressable series.
+  """
+  @spec series_key(map()) :: term()
+  def series_key(%{calendar_integration_id: integration_id} = event) do
+    case Occurrence.series_address(event) do
+      {:ok, address} -> {integration_id, address}
+      {:error, _unaddressable} -> nil
+    end
+  end
+
+  def series_key(_event), do: nil
+
+  @doc "The event `event`'s writes are queued under."
+  @spec key(map()) :: key()
+  def key(event), do: {event.calendar_integration_id, event.uid}
+
+  defp submit({queue, effects}, event, write) do
+    key = key(event)
+    series = series_key(event)
+    write = write |> Map.put_new_lazy(:ref, fn -> ref(event) end) |> tag_series_wide(series)
+    lent_series = {:series, series}
+
+    case {queue.elsewhere, queue.holds} do
+      # See `Elsewhere`.
+      {%{^key => _waiting}, _holds} ->
+        keep_elsewhere({queue, effects}, key, event, write)
+
+      {%{^lent_series => _waiting}, _holds} ->
+        keep_elsewhere({queue, effects}, lent_series, event, write)
+
+      # See "While a whole series is written or moved" in the moduledoc.
+      {_elsewhere, %{^series => %{uid: holder} = hold}} when holder != event.uid ->
+        {put_hold(queue, series, %{hold | held: [{event, write} | hold.held]}), effects}
+
+      _free ->
+        enqueue({hold_for(queue, write, event), effects}, key, series, event, write)
+    end
+  end
+
+  defp ref(event), do: {key(event), System.unique_integer([:positive, :monotonic])}
+
+  defp keep_elsewhere({queue, effects}, lent, event, write),
+    do: {%{queue | elsewhere: Elsewhere.keep(queue.elsewhere, lent, event, write)}, effects}
+
+  # A release saying the series changed makes every write kept for an event
+  # of that series stale, not only the released event's: they were made on
+  # copies from before the change, and a third driver may still be writing
+  # one of those events, so its release would not say so (see
+  # `Elsewhere`). The grid reloads at once, as the series
+  # changed: here, unless the released event is about to resume, which
+  # reloads anyway.
+  defp outdate_series(acc, _left, %{series: nil}), do: acc
+
+  defp outdate_series(acc, :series_changed, waiting) do
+    {count, acc} = outdate_kept(acc, waiting.series)
+    acc = dropped(acc, :series_write, count)
+    if MapSet.size(waiting.from) > 0, do: emit(acc, :reload), else: acc
+  end
+
+  defp outdate_series(acc, _left, _waiting), do: acc
+
+  # Once no driver it waits for is left, the kept writes start from the
+  # event as those drivers left it (see `Elsewhere`).
+  defp carry_on({queue, effects} = acc, key) do
+    case Elsewhere.finish(queue.elsewhere, key) do
+      :waiting ->
+        acc
+
+      {:done, held, left, elsewhere} ->
+        start_kept({%{queue | elsewhere: elsewhere}, effects}, held, left)
+    end
+  end
+
+  defp start_kept(acc, held, :series_changed),
+    do: acc |> dropped(:series_write, length(held)) |> emit(:reload)
+
+  defp start_kept(acc, held, {:ok, event}) do
+    shown =
+      Enum.reduce(held, event, fn {_made_on, write}, shown ->
+        QueuedWrite.applied(shown, write)
+      end)
+
+    Enum.reduce(held, emit(acc, {:show, shown}), fn {_made_on, write}, acc ->
+      submit(acc, event, write)
+    end)
+  end
+
+  defp start_kept(acc, held, left) when left in [:outdated, :unknown],
+    do: Enum.reduce(held, acc, fn {event, write}, acc -> submit(acc, event, write) end)
+
+  @doc "See `Elsewhere.latest/2`."
+  @spec latest(left(), left()) :: left()
+  defdelegate latest(left, since), to: Elsewhere
+
+  defp enqueue({queue, _effects} = acc, key, series, event, write) do
+    case queue.chains do
+      %{^key => chain} ->
+        put_chain(acc, key, %{chain | waiting: :queue.in(write, chain.waiting)})
+
+      _idle ->
+        acc
+        |> put_chain(key, %{
+          confirmed: event,
+          series: series,
+          in_flight: write,
+          waiting: :queue.new()
+        })
+        |> emit({:start, write, event})
+    end
+  end
+
+  # A write to the whole of an addressable series carries the series, so
+  # the hold it puts on it can be lifted when it answers.
+  defp tag_series_wide(write, nil), do: write
+
+  defp tag_series_wide(%{kind: :update, opts: opts} = write, series) do
+    if Keyword.get(opts, :recurrence_scope) in [:following, :all],
+      do: Map.put(write, :series, series),
+      else: write
+  end
+
+  defp tag_series_wide(write, _series), do: write
+
+  defp hold_for(queue, %{series: series}, event) do
+    if Map.has_key?(queue.holds, series),
+      do: queue,
+      else: put_hold(queue, series, %{uid: event.uid, held: []})
+  end
+
+  defp hold_for(queue, _write, _event), do: queue
+
+  defp put_hold(queue, series, hold), do: %{queue | holds: Map.put(queue.holds, series, hold)}
+
+  # Lifts the hold on `series`, answering with the writes it held, oldest
+  # first.
+  defp take_hold({queue, effects} = acc, series) do
+    case Map.pop(queue.holds, series) do
+      {nil, _holds} -> {[], acc}
+      {hold, holds} -> {Enum.reverse(hold.held), {%{queue | holds: holds}, effects}}
+    end
+  end
+
+  # Lifts the hold on `series` and makes the writes it held, in order, as
+  # if they had just been made.
+  defp release(acc, series) do
+    {held, acc} = take_hold(acc, series)
+    Enum.reduce(held, acc, fn {event, write}, acc -> submit(acc, event, write) end)
+  end
+
+  # What a write made with `notify` asks of the driver (`update/5`).
+  defp notified(acc, write, before, outcome) do
+    case QueuedWrite.attendee_effect(write, before, outcome) do
+      nil -> acc
+      effect -> emit(acc, effect)
+    end
+  end
+
+  defp advance(acc, key, chain, outcome) do
+    cond do
+      QueuedWrite.series_wide_success?(chain.in_flight, outcome) ->
+        after_series_write(acc, key, chain)
+
+      Map.has_key?(chain.in_flight, :series) ->
+        acc
+        |> advance_chain(key, chain, outcome)
+        |> release_unless_pending(key, chain.in_flight.series)
+
+      true ->
+        advance_chain(acc, key, chain, outcome)
+    end
+  end
+
+  defp advance_chain(acc, key, chain, outcome) do
+    confirmed = QueuedWrite.confirmed_after(chain.confirmed, chain.in_flight, outcome)
+
+    case :queue.out(chain.waiting) do
+      {:empty, _none} ->
+        acc = delete_chain(acc, key)
+        if outcome == :failed, do: emit(acc, {:show, confirmed}), else: acc
+
+      {{:value, next}, rest} ->
+        acc
+        |> put_chain(key, %{chain | confirmed: confirmed, in_flight: next, waiting: rest})
+        |> show_waiting(outcome, confirmed, [next | :queue.to_list(rest)])
+        |> emit({:start, next, confirmed})
+    end
+  end
+
+  # A write to the whole series that did not change it lifts its hold,
+  # unless another one made from the same event is still to run.
+  defp release_unless_pending({queue, _effects} = acc, key, series) do
+    pending =
+      case queue.chains do
+        %{^key => chain} -> [chain.in_flight | :queue.to_list(chain.waiting)]
+        _drained -> []
+      end
+
+    if Enum.any?(pending, &(Map.get(&1, :series) == series)),
+      do: acc,
+      else: release(acc, series)
+  end
+
+  # See "After a write to a whole series" in the moduledoc.
+  defp after_series_write(acc, key, chain) do
+    series = Map.get(chain.in_flight, :series)
+    {held, acc} = take_hold(acc, series)
+    {kept, acc} = outdate_kept(acc, series)
+
+    acc
+    |> dropped(:series_write, :queue.len(chain.waiting) + length(held) + kept)
+    |> delete_chain(key)
+    |> emit(:reload)
+  end
+
+  # Drops the writes kept for events of `series` another driver is writing,
+  # once the series changed here; answers how many were dropped.
+  defp outdate_kept({queue, effects}, series) do
+    {elsewhere, count} = Elsewhere.outdate(queue.elsewhere, series)
+    {count, {%{queue | elsewhere: elsewhere}, effects}}
+  end
+
+  # A failure takes only its own change back: the writes still waiting keep
+  # theirs on screen, since they are about to be written.
+  defp show_waiting(acc, :failed, confirmed, waiting),
+    do: emit(acc, {:show, Enum.reduce(waiting, confirmed, &QueuedWrite.applied(&2, &1))})
+
+  defp show_waiting(acc, _accepted, _confirmed, _waiting), do: acc
+
+  defp put_chain({queue, effects}, key, chain),
+    do: {%{queue | chains: Map.put(queue.chains, key, chain)}, effects}
+
+  defp delete_chain({queue, effects}, key),
+    do: {%{queue | chains: Map.delete(queue.chains, key)}, effects}
+end

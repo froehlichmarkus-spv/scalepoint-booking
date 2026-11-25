@@ -1,0 +1,318 @@
+defmodule TymeslotWeb.Live.Scheduling.BookingDeepLinkTest do
+  @moduledoc """
+  `/:username/:slug/book` is a real, directly enterable route: a visitor can
+  paste it, and a confirmation email's links point into the same flow. Entering
+  it that way runs no state transition, so nothing upstream has resolved the
+  slug into a meeting type.
+
+  Without that resolution the submission carries `meeting_type_id: nil`, which
+  the domain waves through, and the duration falls back to parsing the slug —
+  with no upper bound, so `/host/99999/book` would hold a multi-day slot.
+
+  The second half of the file covers the other thing a pasted URL can do:
+  supply a parameter of a shape the flow never anticipated. Phoenix decodes
+  `?date[]=x` to a list and `?date[a]=b` to a map, and every consumer below is
+  written for strings, so an unguarded assign raises in `Date.from_iso8601/1`
+  or `normalize_duration_slug/1`. `Themes.Core.ErrorBoundary` rescues the
+  raise, which is why the assertions here are not about the process staying
+  alive: what it leaves behind is the theme's error page in place of the
+  booking flow, for anyone with the link, on a public page.
+  """
+
+  use TymeslotWeb.LiveCase, async: false
+
+  @moduletag :scheduling
+  @moduletag :live
+
+  import Mox
+  import Tymeslot.BookingTestHelpers, only: [seed_booking_account: 3]
+  import Tymeslot.Factory
+
+  alias Ecto.Changeset
+  alias Tymeslot.Infrastructure.AvailabilityCache
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.TestMocks
+
+  setup :verify_on_exit!
+
+  setup tags do
+    Mox.set_mox_from_context(tags)
+    RateLimiter.clear_all()
+    AvailabilityCache.clear_all()
+    TestMocks.setup_all_mocks()
+
+    user = insert(:user)
+
+    profile =
+      insert(:profile,
+        user: user,
+        username: "deeplinkhost",
+        booking_theme: "1",
+        timezone: "Etc/UTC"
+      )
+
+    schedule =
+      insert(:availability_schedule,
+        profile: profile,
+        is_default: true,
+        advance_booking_days: 30,
+        min_advance_hours: 0,
+        buffer_before_minutes: 0,
+        buffer_after_minutes: 0
+      )
+
+    Enum.each(1..7, fn day_of_week ->
+      insert(:weekly_availability,
+        schedule: schedule,
+        day_of_week: day_of_week,
+        is_available: true,
+        start_time: ~T[09:00:00],
+        end_time: ~T[17:00:00]
+      )
+    end)
+
+    meeting_type =
+      insert(:meeting_type,
+        user: user,
+        duration_minutes: 45,
+        name: "Deep Dive",
+        is_active: true
+      )
+
+    insert(:calendar_integration, user: user, is_active: true)
+
+    date = Date.to_string(Date.add(Date.utc_today(), 3))
+
+    %{profile: profile, meeting_type: meeting_type, date: date}
+  end
+
+  @tag :capture_log
+  test "landing straight on the booking step resolves the meeting type from the slug",
+       %{conn: conn, profile: profile, meeting_type: meeting_type, date: date} do
+    {:ok, view, _html} =
+      live(conn, "/#{profile.username}/deep-dive/book?date=#{date}&time=10:00%20AM")
+
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert assigns.meeting_type.id == meeting_type.id
+    assert assigns.meeting_type.duration_minutes == 45
+  end
+
+  @tag :capture_log
+  test "a slug naming no meeting type is refused rather than booked at its face value",
+       %{conn: conn, profile: profile, date: date} do
+    # "99999" parses to 99999 minutes — a 69-day hold — if it is ever allowed
+    # to stand in for a duration.
+    assert {:error, {:redirect, %{to: to, flash: flash}}} =
+             live(conn, "/#{profile.username}/99999/book?date=#{date}&time=10:00%20AM")
+
+    assert to == "/#{profile.username}"
+    assert flash["error"] =~ "Invalid meeting type"
+  end
+
+  @tag :capture_log
+  test "a dead link with a chosen time is refused on a theme asking for the time and details together",
+       %{conn: conn, date: date} do
+    # Each fact this one screen collects resolves the slug on entry. A slug
+    # that names nothing has them all refuse it, and a page redirects once.
+    seed_booking_account("3", "paperhost", "Etc/UTC")
+
+    assert {:error, {:redirect, %{to: "/paperhost", flash: flash}}} =
+             live(conn, "/paperhost/renamed-type/book?date=#{date}&time=10:00%20AM")
+
+    assert flash["error"] =~ "Invalid meeting type"
+  end
+
+  @tag :capture_log
+  test "an unresolvable slug on the schedule step is refused the same way",
+       %{conn: conn, profile: profile} do
+    assert {:error, {:redirect, %{to: to}}} =
+             live(conn, "/#{profile.username}/99999")
+
+    assert to == "/#{profile.username}"
+  end
+
+  @tag :capture_log
+  test "a reschedule link whose uid no longer resolves still resolves the meeting type from the slug",
+       %{conn: conn, profile: profile, meeting_type: meeting_type} do
+    {:ok, view, _html} =
+      live(
+        conn,
+        "/#{profile.username}/deep-dive/book?reschedule_meeting_uid=does-not-exist"
+      )
+
+    assigns = :sys.get_state(view.pid).socket.assigns
+
+    assert assigns.meeting_type.id == meeting_type.id
+  end
+
+  @tag :capture_log
+  test "a link to the booking step with no day and no time goes back to the schedule",
+       %{conn: conn, profile: profile} do
+    assert {:error, {:redirect, %{to: to}}} =
+             live(conn, "/#{profile.username}/deep-dive/book")
+
+    assert String.starts_with?(to, "/#{profile.username}/")
+    refute String.ends_with?(to, "/book")
+  end
+
+  @tag :capture_log
+  test "a reschedule link to the booking step with no day and no time is not sent back",
+       %{conn: conn, profile: profile} do
+    {:ok, view, _html} =
+      live(
+        conn,
+        "/#{profile.username}/deep-dive/book?reschedule_meeting_uid=does-not-exist"
+      )
+
+    # The meeting type has no questions, so the link opens the booking form.
+    assert has_element?(view, "[data-testid='booking-form']")
+  end
+
+  # The questions are confirmed, never assumed: optional ones validate blank,
+  # yet a link to the booking step still shows them first.
+  @tag :capture_log
+  test "a link to the booking step shows a meeting type's optional questions first",
+       %{conn: conn, profile: profile, meeting_type: meeting_type, date: date} do
+    {:ok, _meeting_type} =
+      MeetingTypes.update_meeting_type(meeting_type, %{
+        "custom_fields" => [
+          %{
+            "id" => "dl-topic",
+            "type" => "short_text",
+            "label" => "Anything to prepare?",
+            "required" => false,
+            "position" => 0
+          }
+        ]
+      })
+
+    {:ok, view, html} =
+      live(conn, "/#{profile.username}/deep-dive/book?date=#{date}&time=10:00%20AM")
+
+    assert html =~ "Anything to prepare?"
+    assert :sys.get_state(view.pid).socket.assigns.current_state == :questions
+    refute has_element?(view, "[data-testid='booking-form']")
+  end
+
+  # The series is chosen before the details, as the questions are: a link
+  # straight to the booking step of a type booked as a series opens the
+  # series first, for the day and time it names (09:00, on the type's
+  # 45-minute grid).
+  @tag :capture_log
+  test "a link to the booking step of a series type opens the series first",
+       %{conn: conn, profile: profile, meeting_type: meeting_type, date: date} do
+    meeting_type
+    |> Changeset.change(
+      series_mode: :recurring,
+      series_frequency: :weekly,
+      series_interval: 1,
+      series_min_occurrences: 3,
+      series_max_occurrences: 3
+    )
+    |> Repo.update!()
+
+    {:ok, view, _html} =
+      live(
+        conn,
+        "/#{profile.username}/deep-dive/book?date=#{date}&time=9:00%20AM&timezone=Etc/UTC"
+      )
+
+    render_async(view)
+
+    assert :sys.get_state(view.pid).socket.assigns.current_state == :series
+    assert has_element?(view, "#series-step")
+    refute has_element?(view, "[data-testid='booking-form']")
+
+    assert view
+           |> render()
+           |> Floki.parse_document!()
+           |> Floki.find("[data-testid='series-occurrence'][data-status='available']")
+           |> length() == 3
+  end
+
+  describe "query parameters of an unexpected shape" do
+    @tag :capture_log
+    test "a list-shaped date is dropped and the day is picked for the booker instead",
+         %{conn: conn, profile: profile, date: date} do
+      {:ok, view, _html} =
+        live(conn, "/#{profile.username}/deep-dive?date%5B%5D=#{date}")
+
+      assert_landed_on_a_real_day(view)
+    end
+
+    @tag :capture_log
+    test "a map-shaped date is dropped and the day is picked for the booker instead",
+         %{conn: conn, profile: profile, date: date} do
+      {:ok, view, _html} =
+        live(conn, "/#{profile.username}/deep-dive?date%5Bon%5D=#{date}")
+
+      assert_landed_on_a_real_day(view)
+    end
+
+    @tag :capture_log
+    test "a date string that does not parse is dropped rather than stranding the step",
+         %{conn: conn, profile: profile} do
+      # `NextAvailable` stands down for any non-empty `:selected_date`, so a
+      # value left on the socket here would park the booker on a schedule step
+      # with no day selected and a calendar-parsing error where the times go.
+      {:ok, view, _html} =
+        live(conn, "/#{profile.username}/deep-dive?date=2026-02-31")
+
+      assert_landed_on_a_real_day(view)
+    end
+
+    @tag :capture_log
+    test "a list-shaped duration leaves the overview page rendering its durations",
+         %{conn: conn, profile: profile} do
+      # `/:username` has no `slug` path segment, so `?duration=` is what the
+      # duration normaliser is handed. It raises earlier than the date does —
+      # inside `handle_param_updates/2` itself, so on the very first render.
+      {:ok, view, _html} = live(conn, "/#{profile.username}?duration%5B%5D=45min")
+
+      # The real overview, not the error boundary's page standing in for it.
+      assert has_element?(view, "button[data-testid='duration-option']")
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns[:theme_error] == nil
+      assert assigns.duration == nil
+      assert assigns.selected_duration == nil
+    end
+
+    @tag :capture_log
+    test "list-shaped time and reschedule parameters are treated as absent",
+         %{conn: conn, profile: profile, date: date} do
+      {:ok, view, _html} =
+        live(
+          conn,
+          "/#{profile.username}/deep-dive?date=#{date}" <>
+            "&time%5B%5D=10:00%20AM&reschedule_meeting_uid%5B%5D=abc"
+        )
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+
+      assert assigns.selected_date == date
+      assert assigns.selected_time == nil
+      assert assigns.reschedule_meeting_uid == nil
+
+      # A uid that never landed must not leave the flow believing it is
+      # rescheduling: the submit path branches on this assign alone.
+      refute assigns.is_rescheduling
+    end
+  end
+
+  # The booker is on a day the organiser actually offers — which is only
+  # possible because the malformed parameter was dropped early enough for the
+  # next-available search to run.
+  defp assert_landed_on_a_real_day(view) do
+    wait_until(fn -> :sys.get_state(view.pid).socket.assigns[:selected_date] != nil end)
+
+    selected_date = :sys.get_state(view.pid).socket.assigns.selected_date
+
+    assert {:ok, %Date{}} = Date.from_iso8601(selected_date)
+    assert render(view) =~ selected_date
+  end
+end

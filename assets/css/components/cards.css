@@ -1,0 +1,162 @@
+/* ===================================
+   CARD COMPONENTS
+   =================================== */
+
+/* Dashboard card: backs the <.card> component (Containers.card/1), which
+   picks the variant, padding and interactivity; a raw `card-glass` class is
+   for the few places a component cannot go (SaaS panels, mode-dependent
+   wrappers). Every card rule sits in the components layer, below Tailwind's
+   utilities, as the buttons do, so a caller's layout utilities and state
+   cues (a selected ring or border, an error border) apply instead of losing
+   to an unlayered rule. The surface itself (padding, shadow, hover) is the
+   component's to choose.
+
+   The base is the :glass variant at the :md padding. Only an interactive card
+   reacts to hover: a static card that lights up under the pointer reads as
+   clickable. Hover is guarded by (hover: hover) so a tap leaves no stuck
+   state. */
+@layer components {
+  .card-glass {
+    @apply bg-white border-2 border-tymeslot-50 rounded-token-3xl p-6 shadow-2xl transition-all duration-300;
+  }
+
+  /* A card inside another card, or a row in a list of settings: the same
+     surface without the lifted shadow, with a border that shows on white. */
+  .card-glass--flat {
+    @apply border-tymeslot-100 rounded-token-2xl shadow-none;
+  }
+
+  /* A recessed surface: secondary information beside the main card. */
+  .card-glass--muted {
+    @apply bg-tymeslot-50 border-tymeslot-100 rounded-token-2xl shadow-none;
+  }
+
+  .card-glass--interactive {
+    @apply cursor-pointer;
+  }
+
+  /* A flat card (a setting row) only tints its border: lifting it with a
+     shadow inside another card is too loud. */
+  @media (hover: hover) {
+    .card-glass--interactive:hover {
+      @apply border-turquoise-100;
+    }
+
+    .card-glass--interactive:not(.card-glass--flat):hover {
+      @apply shadow-xl shadow-turquoise-200/20;
+    }
+  }
+
+  /* Meeting type rows: an active type keeps the card's border visible, an
+     inactive one is greyed out. */
+  .card-glass-available {
+    border-color: var(--color-border-glass-dark);
+  }
+
+  .card-glass-unavailable {
+    background: color-mix(in oklab, var(--color-neutral-500) 25%, transparent);
+    border-color: color-mix(in oklab, var(--color-neutral-400) 50%, transparent);
+    opacity: 0.7;
+    transition: var(--transition-glass);
+    position: relative;
+  }
+
+  .card-glass-unavailable::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+      color-mix(in oklab, var(--color-neutral-500) 10%, transparent) 0%,
+      color-mix(in oklab, var(--color-neutral-600) 5%, transparent) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .card-glass-unavailable h3,
+  .card-glass-unavailable span,
+  .card-glass-unavailable label {
+    color: color-mix(in oklab, var(--color-neutral-500) 80%, transparent) !important;
+  }
+
+  /* Keep toggle button visible and clickable on unavailable days */
+  .card-glass-unavailable button[role="switch"] {
+    opacity: 1 !important;
+  }
+
+  .card-glass-unavailable button[role="switch"] span {
+    /* Deliberate non-palette white alpha: a neutral highlight, not a brand colour. */
+    background: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  /* An account card the visitor cannot change (social sign-in). */
+  .card-glass-disabled {
+    background: color-mix(in oklab, var(--color-neutral-400) 10%, transparent);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    border: 1px solid color-mix(in oklab, var(--color-neutral-400) 30%, transparent);
+    border-radius: var(--radius-2xl);
+    padding: var(--spacing-6);
+    box-shadow: var(--shadow-glass-card);
+    color: var(--color-text-glass-primary);
+    transition: var(--transition-glass);
+  }
+
+  /* Auth Card - High Contrast */
+  .auth-glass-card {
+    @apply bg-white/95 backdrop-blur-md border-2 border-tymeslot-100 rounded-token-5xl p-6 sm:p-8 shadow-2xl shadow-tymeslot-900/10 w-full max-w-[480px] mx-auto;
+  }
+
+  /* Selected State Glass Gradient */
+  .glass-gradient {
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary-500) 15%, transparent) 0%,
+      color-mix(in oklab, var(--color-primary-600) 10%, transparent) 100%
+    ) !important;
+    border-color: var(--color-primary-500) !important;
+    position: relative;
+    /* Ensure box sizing doesn't change */
+    box-sizing: border-box !important;
+  }
+
+  .glass-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-primary-500) 10%, transparent) 0%,
+      transparent 50%,
+      color-mix(in oklab, var(--color-primary-600) 5%, transparent) 100%
+    );
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Brand Card */
+  .brand-card {
+    @apply bg-white border-2 border-tymeslot-100 rounded-token-3xl p-6 shadow-xl shadow-tymeslot-200/50 transition-glass;
+  }
+
+  .brand-card:hover {
+    @apply border-turquoise-100 shadow-xl shadow-turquoise-500/10;
+  }
+
+  /* Glass Morphism Card — backs the <.glass_morphism_card> component */
+  .glass-morphism-card {
+    @apply bg-white/80 backdrop-blur-xl rounded-token-3xl border border-white/40 shadow-2xl;
+    /* Deliberate non-palette black alpha: a neutral shadow, not a brand colour. */
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Meeting Details Card */
+  .meeting-details-card {
+    @apply bg-linear-to-br from-turquoise-50 to-cyan-50 border border-turquoise-100 rounded-token-2xl p-6 shadow-sm;
+  }
+
+  @media (min-width: 640px) {
+    .meeting-details-card {
+      padding: 1rem;
+    }
+  }
+}

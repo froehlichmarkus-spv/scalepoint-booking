@@ -1,0 +1,319 @@
+defmodule TymeslotWeb.Dashboard.AnalyticsLive do
+  @moduledoc """
+  Built-in attribution dashboard for booking-page traffic.
+
+  Shows visits, unique visitors, bookings and conversion rate for the
+  signed-in user over a configurable date range (7/30/90 days), plus a
+  per-source attribution table and a visits-over-time chart.
+
+  All data is read through `Tymeslot.Analytics`; no Ecto queries live in
+  this module.
+  """
+  use TymeslotWeb, :live_view
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Analytics
+  alias Tymeslot.Utils.DateTimeUtils
+  alias Tymeslot.Utils.DateTimeUtils.TimeFormat
+  alias TymeslotWeb.Components.DashboardLayout
+  alias TymeslotWeb.Dashboard.AnalyticsLive.DeviceBreakdown
+  alias TymeslotWeb.Dashboard.AnalyticsLive.SourcesTable
+  alias TymeslotWeb.Dashboard.AnalyticsLive.SummaryCards
+  alias TymeslotWeb.Dashboard.AnalyticsLive.VisitsChart
+  alias TymeslotWeb.Dashboard.BookingLinkShare
+  alias TymeslotWeb.Dashboard.ComponentDispatch
+  alias TymeslotWeb.Dashboard.DashboardFormat
+  alias TymeslotWeb.Helpers.PageTitles
+
+  @ranges %{"7d" => 7, "30d" => 30, "90d" => 90}
+  @default_range "30d"
+
+  @impl Phoenix.LiveView
+  def mount(_params, _session, socket) do
+    socket = assign(socket, :page_title, PageTitles.dashboard_title(:analytics))
+
+    cond do
+      not Analytics.enabled?() ->
+        {:ok,
+         socket
+         |> put_flash(
+           :info,
+           dgettext(
+             "dashboard_analytics",
+             "Booking analytics is not enabled on this installation."
+           )
+         )
+         |> push_navigate(to: ~p"/dashboard")}
+
+      # Data is still collected for this organizer (collection is ungated); the
+      # dashboard itself is a paid feature, so a free user sees the upgrade
+      # prompt instead and no metrics are computed. `analytics_allowed` is set
+      # by the feature-assigns hook chain (default `true` in Core; SaaS overrides
+      # it per subscription).
+      not analytics_allowed?(socket) ->
+        {:ok, socket}
+
+      true ->
+        {:ok, assign_default_range(socket)}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_params(_params, _uri, socket) do
+    if connected?(socket) and analytics_allowed?(socket) do
+      {:noreply, load_data(socket)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  # The assign is always set by FeatureAssignsHook, which every dashboard route
+  # runs, so the fallback is only reached if that chain is bypassed. A missing
+  # assign means the entitlement is unknown, and unknown must not read as
+  # allowed. It only decides what to render: `Analytics.dashboard_metrics/3`
+  # checks the entitlement again before any data is read. Core's own default
+  # remains `true`, set in config, so a self-hosted deployment is unaffected.
+  defp analytics_allowed?(socket), do: Map.get(socket.assigns, :analytics_allowed, false)
+
+  @impl Phoenix.LiveView
+  def handle_event("set_range", %{"range" => range}, socket) when is_map_key(@ranges, range) do
+    {:noreply,
+     socket
+     |> assign(:range, range)
+     |> assign_window_for(range)
+     |> load_data()}
+  end
+
+  def handle_event("set_range", _params, socket), do: {:noreply, socket}
+
+  def handle_event("booking_link_copied", params, socket),
+    do: BookingLinkShare.handle_copied(socket, params["channel"])
+
+  # Metrics are cached for 60s, so a just-recorded visit may not show on a plain
+  # reload. Refresh drops the cache entry and recomputes, giving the organizer an
+  # explicit way to see fresh numbers without waiting out the TTL. The window end
+  # is re-derived to *now* as well, so a visit made after the dashboard was opened
+  # (it would otherwise fall past the mount-time `to`) is included.
+  def handle_event("refresh", _params, %{assigns: %{range: range}} = socket) do
+    # Data reloads immediately; the spin is held briefly so the refresh is
+    # perceptible even when the recompute returns in a few milliseconds.
+    Process.send_after(self(), :stop_refresh_spin, 600)
+
+    {:noreply,
+     socket
+     |> assign(:refreshing?, true)
+     |> assign_window_for(range)
+     |> load_data(&Analytics.refresh_dashboard_metrics/3)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info(:stop_refresh_spin, socket) do
+    {:noreply, assign(socket, :refreshing?, false)}
+  end
+
+  @impl Phoenix.LiveView
+  def render(assigns) do
+    ~H"""
+    <DashboardLayout.dashboard_layout
+      current_user={@current_user}
+      profile={@profile}
+      current_action={:analytics}
+      integration_status={@integration_status}
+      automations_allowed={@automations_allowed}
+      analytics_allowed={@analytics_allowed}
+      sidebar_extensions={@sidebar_extensions}
+      unseen_announcements={@unseen_announcements}
+    >
+      <ComponentDispatch.feature_placeholder
+        :if={!@analytics_allowed}
+        section={:analytics}
+        current_user={@current_user}
+        feature_placeholder_components={@feature_placeholder_components}
+      />
+
+      <.dashboard_page
+        :if={@analytics_allowed}
+        icon="hero-chart-bar"
+        title={dgettext("dashboard_common", "Analytics")}
+      >
+        <:actions>
+          <.segmented_control
+            id="analytics-range"
+            value={@range}
+            on_change="set_range"
+            param="range"
+            aria_label={dgettext("dashboard_analytics", "Date range")}
+          >
+            <:option value="7d" label={dgettext("dashboard_analytics", "7 days")} />
+            <:option value="30d" label={dgettext("dashboard_analytics", "30 days")} />
+            <:option value="90d" label={dgettext("dashboard_analytics", "90 days")} />
+          </.segmented_control>
+          <%!-- The arbitrary variant spins the component's icon while a
+                  refresh is in flight; the button itself stays still. --%>
+          <.icon_button
+            icon="hero-arrow-path"
+            label={dgettext("dashboard_analytics", "Refresh analytics")}
+            size={:sm}
+            class={@refreshing? && "[&>svg]:animate-spin"}
+            phx-click="refresh"
+          />
+        </:actions>
+
+        <p
+          :if={@loaded? and @refreshed_at}
+          class="text-token-xs tabular-nums text-tymeslot-500"
+          aria-live="polite"
+        >
+          {dgettext("dashboard_analytics", "Updated %{time}",
+            time: format_refreshed_at(@refreshed_at, @time_zone, @time_format)
+          )}
+        </p>
+
+        <.info_box :if={@unavailable?} variant={:warning}>
+          {dgettext(
+            "dashboard_analytics",
+            "Analytics are temporarily unavailable. Please try refreshing in a moment."
+          )}
+        </.info_box>
+
+        <.info_box :if={@partial_window?} variant={:info}>
+          {dgettext(
+            "dashboard_analytics",
+            "Booking analytics started collecting on %{date}. Dates before then show no data, so longer ranges will look sparse until more history builds up.",
+            date: format_launch_date(@launch_date)
+          )}
+        </.info_box>
+
+        <SummaryCards.cards
+          visits={@visits}
+          unique_visitors={@unique_visitors}
+          bookings={@bookings}
+          converting_visitors={@converting_visitors}
+          loading?={!@loaded?}
+        />
+
+        <p class="text-token-xs leading-relaxed text-tymeslot-500">
+          <%!--
+            Be honest about the cookieless model: the daily-rotated fingerprint
+            means a visitor is counted once per UTC day, so multi-day "unique
+            visitors" is a sum of daily uniques rather than truly distinct
+            people, and conversion compares two such counts. Labelled as an
+            estimate so the numbers aren't read as exact.
+          --%>
+          {dgettext(
+            "dashboard_analytics",
+            "Unique visitors and conversion are cookieless estimates: each visitor is counted once per day, so totals over a longer range approximate the number of distinct people. Conversion is the share of visitors who went on to book and is indicative, not exact."
+          )}
+        </p>
+
+        <VisitsChart.chart
+          points={@visits_by_day}
+          from={@from}
+          to={@to}
+          time_zone={@time_zone}
+          loading?={!@loaded?}
+        />
+
+        <DeviceBreakdown.breakdown devices={@devices} loading?={!@loaded?} />
+
+        <SourcesTable.table sources={@sources} loading?={!@loaded?} />
+      </.dashboard_page>
+    </DashboardLayout.dashboard_layout>
+    """
+  end
+
+  defp assign_default_range(socket) do
+    socket
+    |> assign(:range, @default_range)
+    |> assign_window_for(@default_range)
+    |> assign(
+      # Placeholder values for the dead render and the connected mount before
+      # `handle_params` loads real data. `loaded?` gates the skeletons so these
+      # zeros are never shown as numbers — see the component `loading?` attrs.
+      loaded?: false,
+      refreshed_at: nil,
+      refreshing?: false,
+      unavailable?: false,
+      visits: 0,
+      unique_visitors: 0,
+      bookings: 0,
+      converting_visitors: 0,
+      sources: [],
+      visits_by_day: [],
+      devices: []
+    )
+  end
+
+  defp assign_window_for(socket, range) do
+    days = Map.get(@ranges, range, @ranges[@default_range])
+    now = DateTime.utc_now()
+    from = DateTime.add(now, -days * 86_400, :second)
+
+    socket
+    |> assign(from: from, to: now, time_zone: organizer_time_zone(socket))
+    |> assign_collection_notice(from)
+  end
+
+  # When the window reaches back before booking analytics began collecting, the
+  # earlier days are necessarily empty — explain that rather than letting a
+  # freshly launched installation look broken. Driven by the configured launch
+  # date (`Analytics.launch_date/0`); absent that, no notice is shown.
+  defp assign_collection_notice(socket, from) do
+    launch_date = Analytics.launch_date()
+    from_date = DateTime.to_date(from)
+
+    partial_window? =
+      match?(%Date{}, launch_date) and Date.compare(from_date, launch_date) == :lt
+
+    assign(socket, launch_date: launch_date, partial_window?: partial_window?)
+  end
+
+  defp format_launch_date(%Date{} = date), do: DashboardFormat.long_date(date)
+  defp format_launch_date(_other), do: ""
+
+  defp organizer_time_zone(socket) do
+    case socket.assigns do
+      %{profile: %{timezone: tz}} when is_binary(tz) and tz != "" -> tz
+      _assigns -> "Etc/UTC"
+    end
+  end
+
+  # The context owns the entitlement check, the window and the metrics cache.
+  # A refusal (the plan changed since mount, or the assign was wrong) falls back
+  # to the upgrade placeholder rather than rendering empty metrics. A checker
+  # that failed says nothing about the plan, so it keeps the page and asks the
+  # organiser to retry instead of offering an upgrade they may already have.
+  defp load_data(socket, fetch \\ &Analytics.dashboard_metrics/3)
+
+  defp load_data(
+         %{assigns: %{current_user: user, range: range, time_zone: time_zone}} = socket,
+         fetch
+       ) do
+    case fetch.(user.id, Map.fetch!(@ranges, range), time_zone) do
+      {:ok, data} ->
+        socket
+        |> assign(Map.to_list(data))
+        |> assign(:loaded?, true)
+        |> assign(:unavailable?, false)
+        |> assign(:refreshed_at, DateTime.utc_now())
+
+      {:error, :feature_access_checker_failed} ->
+        assign(socket, :unavailable?, true)
+
+      {:error, _reason} ->
+        assign(socket, :analytics_allowed, false)
+    end
+  end
+
+  # The organiser's own clock, 12- or 24-hour, as on every other dashboard page.
+  defp format_refreshed_at(%DateTime{} = dt, time_zone, time_format) do
+    {local, _label} = DateTimeUtils.shift_or_utc(dt, time_zone)
+
+    TimeFormat.format(
+      local,
+      TimeFormat.resolve(time_format, Gettext.get_locale(TymeslotWeb.Gettext))
+    )
+  end
+
+  defp format_refreshed_at(_other, _time_zone, _time_format), do: ""
+end

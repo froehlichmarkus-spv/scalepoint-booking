@@ -1,0 +1,358 @@
+import Config
+
+# Configure environment
+config :tymeslot, environment: :test, video_room_backoff_base_ms: 0
+
+# Lets a test freeze the clock a mounted LiveView reads (see Tymeslot.Clock).
+config :tymeslot, :clock_follows_callers, true
+
+# Reduce bcrypt cost for tests — default log_rounds (12) adds ~200-400ms per
+# password hash, which compounds across hundreds of factory user inserts.
+config :bcrypt_elixir, log_rounds: 4
+
+# Core tests must not enforce legal agreements.
+config :tymeslot, enforce_legal_agreements: false
+
+# Poll tests in async modules share a handful of addresses and request links
+# on one poll repeatedly, so the per-address and per-poll budgets are raised
+# beyond their reach. Tests of the limits fill the buckets explicitly.
+config :tymeslot, :poll_email_limits,
+  per_recipient_hour: 1_000,
+  per_recipient_day: 1_000,
+  link_requests_per_poll_hour: 1_000
+
+# Core uses Tymeslot.PubSub in tests
+config :tymeslot, :pubsub_name, Tymeslot.PubSub
+
+# Force core router for tests
+config :tymeslot, :router, TymeslotWeb.Router
+
+# Test-only booking themes, which prove a new theme attaches without editing
+# shared code. The fixture (test/support/fixture_theme/) is shaped unlike
+# Quill and Rhythm; the showcase theme (test/support/showcase_theme/) offers
+# the shared option groups no shipped theme offers yet, so their dashboard
+# panels are reachable, and borrows the fixture's booking pages.
+# Tymeslot.Themes.Catalog and TymeslotWeb.Themes.Core.Registry read this at
+# compile time; no other environment sets it.
+config :tymeslot, :extra_themes, [
+  %{
+    id: "97",
+    key: :showcase,
+    name: "Showcase",
+    heading_style: :generic,
+    customization_spec: Tymeslot.Test.ShowcaseThemeSpec,
+    status: :beta,
+    module: TymeslotWeb.Test.ShowcaseTheme.Theme
+  },
+  %{
+    id: "96",
+    key: :fixture_scroll,
+    name: "Fixture Scroll",
+    heading_style: :generic,
+    customization_spec: Tymeslot.Test.JourneyFixtureSpec,
+    status: :beta,
+    module: TymeslotWeb.Test.JourneyFixtures.Scroll.Theme
+  },
+  %{
+    id: "95",
+    key: :fixture_talk,
+    name: "Fixture Talk",
+    heading_style: :generic,
+    customization_spec: Tymeslot.Test.JourneyFixtureSpec,
+    status: :beta,
+    module: TymeslotWeb.Test.JourneyFixtures.Talk.Theme
+  },
+  %{
+    id: "94",
+    key: :fixture_express,
+    name: "Fixture Express",
+    heading_style: :generic,
+    customization_spec: Tymeslot.Test.JourneyFixtureSpec,
+    status: :beta,
+    module: TymeslotWeb.Test.JourneyFixtures.Express.Theme
+  },
+  %{
+    id: "93",
+    key: :fixture_two,
+    name: "Fixture Two",
+    heading_style: :generic,
+    customization_spec: Tymeslot.Test.JourneyFixtureSpec,
+    status: :beta,
+    module: TymeslotWeb.Test.JourneyFixtures.Two.Theme
+  },
+  %{
+    id: "99",
+    key: :fixture,
+    name: "Fixture",
+    heading_style: :generic,
+    shows_intro: true,
+    customization_spec: Tymeslot.Test.FixtureThemeSpec,
+    status: :beta,
+    module: TymeslotWeb.Test.FixtureTheme.Theme
+  }
+]
+
+# What keeps one test run's database and upload directory apart from
+# another's. A worktree sets MIX_TEST_PARTITION to its own suffix; a
+# partitioned run (`mix precommit`, via Tymeslot.Precommit.Runner) needs that
+# variable to be the bare partition number, so it hands the worktree suffix on
+# as MIX_TEST_PARTITION_BASE and the two are joined here.
+test_run_suffix =
+  "#{System.get_env("MIX_TEST_PARTITION_BASE")}#{System.get_env("MIX_TEST_PARTITION")}"
+
+# Upload directory for tests: a per-partition temp dir, cleaned up after the
+# suite (see test_helper.exs). Keeps generated avatars/attachments out of the
+# repo tree entirely.
+config :tymeslot,
+       :upload_directory,
+       Path.join(System.tmp_dir!(), "tymeslot_test_uploads#{test_run_suffix}")
+
+config :tymeslot, TymeslotWeb.Endpoint,
+  http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("TEST_PORT") || "4002")],
+  url: [
+    host: "localhost",
+    port: String.to_integer(System.get_env("TEST_PORT") || "4002"),
+    scheme: "http"
+  ],
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") ||
+      "j47WN/+e1mzK5Volysi74F0YKzItGcdYUBq3T5QjmnZDcAnsAJE28y5XCysI66kP",
+  live_view: [signing_salt: "test_liveview_signing_salt"],
+  session_signing_salt: "test_session_signing_salt",
+  server: false
+
+# Data-at-rest encryption key, decoupled from SECRET_KEY_BASE. A fixed default is
+# used in test; production supplies DATA_ENCRYPTION_KEY via runtime.exs.
+config :tymeslot, Tymeslot.Security.Encryption,
+  data_encryption_key:
+    System.get_env("DATA_ENCRYPTION_KEY") ||
+      "RsxoYoIVSu/K+QDV2yukDwTFD3wDyDSFxuGmoauNAX0FcXJF58dAz5LhEyiNqhFP"
+
+# Configure the database.
+# An async test holds exactly one sandbox connection for its whole lifetime
+# (see Tymeslot.DataCase.setup_sandbox/1), so the pool is the hard ceiling on
+# suite parallelism: `max_cases` can never usefully exceed it. Sizing it one
+# per scheduler plus a small margin lets Tymeslot.Test.SuiteConfig derive a
+# `max_cases` that actually fills the machine, while the floor keeps small
+# hosts at the previous fixed value rather than below it. TEST_DB_POOL_SIZE
+# overrides it.
+default_pool_size = max(System.schedulers_online() + 4, 10)
+
+test_pool_size =
+  case System.get_env("TEST_DB_POOL_SIZE") do
+    nil ->
+      default_pool_size
+
+    value ->
+      case Integer.parse(value) do
+        {int, _rest} -> int
+        :error -> default_pool_size
+      end
+  end
+
+config :tymeslot, Tymeslot.Repo,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "tymeslot_test#{test_run_suffix}",
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: test_pool_size,
+  queue_target: 10_000,
+  queue_interval: 10_000,
+  # The queue budget above lets a checkout wait up to ten seconds before its
+  # statement even starts, which leaves almost no margin under Ecto's default
+  # 15_000 ms statement timeout: a saturated pool then fails a random test with
+  # Postgrex 57014 (query_canceled) on an otherwise trivial INSERT. Nothing here
+  # is a slow query, so raise the statement budget well clear of the queue
+  # budget rather than cutting parallelism. The ownership window is raised for
+  # the same reason: a case that queues repeatedly can exhaust the 60_000 ms
+  # default and surface it as a confusing "owner exited" error instead.
+  timeout: 30_000,
+  ownership_timeout: 120_000
+
+# Configure Oban for testing
+# Queues are loaded at runtime in application.ex from :oban_queues config
+config :tymeslot, Oban,
+  repo: Tymeslot.Repo,
+  pruner: [max_age: {1, :hour}],
+  testing: :manual
+
+# ErrorTracker stays off in tests: a test that exercises it switches it on
+# for itself (and must then be async: false).
+config :error_tracker, enabled: false
+
+# The per-fingerprint throttle's counters are global, so they would carry a
+# count from one test into the next; tests that exercise it switch it on.
+config :tymeslot, :error_tracking_throttle, max_per_window: nil
+
+# In test we don't send emails
+config :tymeslot, Tymeslot.Mailer, adapter: Swoosh.Adapters.Test
+
+# Disable swoosh api client
+config :swoosh, :api_client, false
+
+# Print only warnings and errors during test, but show structured metadata
+# so test failures and capture_log/1 output retain correlation_id / user_id.
+config :logger, level: :warning
+
+config :logger, :default_formatter,
+  format: "[$level] $message $metadata\n",
+  metadata: [:request_id, :user_id, :correlation_id, :event, :domain, :reason]
+
+# Initialize plugs at runtime for faster test compilation
+config :phoenix, :plug_init_mode, :runtime
+
+config :phoenix_live_view,
+  enable_expensive_runtime_checks: true
+
+# Mock configuration
+config :tymeslot, :calendar_module, Tymeslot.CalendarMock
+config :tymeslot, :email_service_module, Tymeslot.EmailServiceMock
+config :tymeslot, :google_calendar_api_module, GoogleCalendarAPIMock
+config :tymeslot, :outlook_calendar_api_module, OutlookCalendarAPIMock
+config :tymeslot, :google_calendar_oauth_helper, Tymeslot.GoogleOAuthHelperMock
+config :tymeslot, :outlook_calendar_oauth_helper, Tymeslot.OutlookOAuthHelperMock
+config :tymeslot, :teams_oauth_helper, Tymeslot.TeamsOAuthHelperMock
+config :tymeslot, :zoom_oauth_helper, Tymeslot.ZoomOAuthHelperMock
+config :tymeslot, :http_client_module, Tymeslot.HTTPClientMock
+config :tymeslot, :req_test_plug, {Req.Test, :tymeslot_http}
+config :tymeslot, :email_service, Tymeslot.EmailServiceMock
+config :tymeslot, :transcoder, Tymeslot.Media.TranscoderMock
+config :tymeslot, :health_check_module, Tymeslot.Integrations.HealthCheckMock
+
+# Flag a CalDAV integration on the first rejected sync, so tests about what
+# flagging does need not first fail the sync three times. The threshold itself
+# is tested with its own value.
+config :tymeslot, :caldav_reauth_after_failed_cycles, 1
+
+# MiroTalk test configuration
+config :tymeslot, :mirotalk_api,
+  api_key: "test-api-key",
+  base_url: "https://test.mirotalk.com"
+
+# Configure email settings for test
+from_email = System.get_env("EMAIL_FROM_ADDRESS") || "hello@tymeslot.app"
+
+config :tymeslot, :email,
+  from_name: System.get_env("EMAIL_FROM_NAME") || "Tymeslot",
+  from_email: from_email,
+  support_email: System.get_env("EMAIL_SUPPORT_ADDRESS") || from_email,
+  contact_recipient: System.get_env("EMAIL_CONTACT_RECIPIENT") || from_email,
+  domain: System.get_env("PHX_HOST") || "tymeslot.app"
+
+# Configure radicale for test
+config :tymeslot, :radicale,
+  url: "http://localhost:5232",
+  username: "test",
+  password: "test",
+  calendar_path: "/test/calendar.ics/"
+
+# Every SSO provider off, whatever the shell exports: config/runtime.exs
+# does not read ENABLE_*_AUTH in test. Tests that need a provider on set
+# `:social_auth` themselves (see `Tymeslot.AppSettingsEnvHelpers`).
+config :tymeslot, :social_auth,
+  google_enabled: false,
+  github_enabled: false,
+  oauth_enabled: false
+
+# OAuth state secrets for test (signs/validates the `state` parameter).
+# Tests typically mock State.validate/2, but OAuthStateGuard still reads
+# these configs to pass them through, so they must be present.
+config :tymeslot, :google_oauth, state_secret: "test-google-state-secret"
+config :tymeslot, :outlook_oauth, state_secret: "test-outlook-state-secret"
+
+# Booking analytics is enabled by default in the test suite so the analytics
+# tests exercise the live path. Tests covering the disabled path override this
+# per-test with `Application.put_env/3`.
+config :tymeslot, :booking_analytics_enabled, true
+
+# Write page views inline rather than in a fire-and-forget Task, so the write is
+# owned by the test process. A supervised Task outlives the test that mounted the
+# LiveView, and hits a torn-down sandbox connection with a
+# `DBConnection.OwnershipError` that ExUnit reports but does not fail on.
+config :tymeslot, :async_page_view_logging, false
+
+# Resolve month availability inline rather than in a linked Task, so the result
+# is owned by the test process. Both modes deliver the same `{ref, result}`
+# message to the same handler at the same point in the LiveView lifecycle; what
+# the inline mode removes is a task still in flight when a test ends, which is
+# killed mid-query and takes the checked-out sandbox connection with it.
+# `TymeslotWeb.Live.Scheduling.AvailabilityAsyncFetchTest` flips this back on to
+# cover the task path itself.
+config :tymeslot, :async_availability_fetch, false
+
+# Enable all providers for testing
+config :tymeslot, :video_providers, %{
+  mirotalk: [enabled: true],
+  google_meet: [enabled: true],
+  teams: [enabled: true],
+  kmeet: [enabled: true],
+  jitsi: [enabled: true],
+  nextcloud_talk: [enabled: true],
+  custom: [enabled: true]
+}
+
+config :tymeslot, :calendar_providers, %{
+  caldav: [enabled: true],
+  radicale: [enabled: true],
+  nextcloud: [enabled: true],
+  zimbra: [enabled: true],
+  mailbox_org: [enabled: true],
+  apple: [enabled: true],
+  baikal: [enabled: true],
+  google: [enabled: true],
+  outlook: [enabled: true],
+  exchange: [enabled: true],
+  demo: [enabled: false],
+  debug: [enabled: false]
+}
+
+# Configure reCAPTCHA for tests
+config :tymeslot, :recaptcha, signup_enabled: false, booking_enabled: false
+
+# Payment system configuration for tests
+config :tymeslot, :stripe_provider, Tymeslot.Payments.StripeMock
+config :tymeslot, :subscription_manager, Tymeslot.Payments.SubscriptionManagerMock
+
+config :tymeslot, :stripe_adapter, Tymeslot.MeetingPayments.StripeAdapterMock
+config :tymeslot, :stripe_connect_client_id, "ca_test"
+config :tymeslot, :show_branding, true
+
+# Pricing configuration for tests
+config :tymeslot, :pricing,
+  pro_monthly_cents: 500,
+  pro_annual_cents: 5000
+
+# Health check timeouts for faster testing
+config :tymeslot, Tymeslot.Integrations.HealthCheck,
+  yield_timeout: 100,
+  stream_timeout: 200
+
+# Wallaby E2E browser test configuration
+# otp_app + ecto_repos let Wallaby.Feature auto-checkout the sandbox and pass
+# the token in request headers so Phoenix.Ecto.SQL.Sandbox can allow the browser
+# request process to share the test's DB connection.
+# base_url is set dynamically in test_helper.exs via TymeslotWeb.Endpoint.url/0
+# so it respects the TEST_PORT env var.
+# Failure screenshots go to the system temp directory, not into the checkout:
+# they are disposable artefacts of a failed run, and writing them under test/
+# would leave untracked PNGs behind. Wallaby mkdir_p's the directory itself,
+# so nothing has to create it.
+# CHROME_BINARY names the browser on machines without the snap, as in SaaS.
+# Wallaby's own lookup of google-chrome on PATH does not help: a configured
+# binary replaces whatever it found, even when the path does not exist.
+config :wallaby,
+  otp_app: :tymeslot,
+  ecto_repos: [Tymeslot.Repo],
+  driver: Wallaby.Chrome,
+  screenshot_on_failure: true,
+  screenshot_dir: Path.join(System.tmp_dir!(), "tymeslot-screenshots"),
+  chromedriver: [
+    headless: true,
+    binary:
+      System.get_env("CHROME_BINARY", "/snap/chromium/current/usr/lib/chromium-browser/chrome")
+  ]
+
+# A calendar grid write guardian left driving after its test's LiveView has
+# gone gives up on writes that never answer within seconds, not minutes.
+config :tymeslot, Tymeslot.CalendarGrid.WriteGuardian, drain_timeout: 3_000

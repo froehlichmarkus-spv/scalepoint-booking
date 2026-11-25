@@ -1,0 +1,343 @@
+defmodule Tymeslot.Meetings.GuestQueries do
+  @moduledoc """
+  Database queries for the `meeting_guests` table.
+
+  Pure data access only — business rules (sanitising guest lists, deciding when
+  an RSVP is allowed) live in `Tymeslot.Meetings.Guests`.
+  """
+
+  import Ecto.Query
+
+  alias Ecto.Changeset
+  alias Tymeslot.Meetings.GuestSchema, as: Guest
+  alias Tymeslot.Meetings.ParticipantQueries
+  alias Tymeslot.Meetings.ParticipantSchema, as: Participant
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.Token
+
+  @doc "Inserts a single guest for a meeting."
+  @spec insert_guest(map()) :: {:ok, Guest.t()} | {:error, Changeset.t()}
+  def insert_guest(attrs) when is_map(attrs) do
+    %Guest{}
+    |> Guest.creation_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc "Fetches a guest by its RSVP token."
+  @spec get_by_token(String.t()) :: {:ok, Guest.t()} | {:error, :not_found}
+  def get_by_token(token) when is_binary(token) do
+    case Repo.get_by(Guest, rsvp_token_hash: Token.hash_token(token)) do
+      nil -> {:error, :not_found}
+      guest -> {:ok, guest}
+    end
+  end
+
+  # `inserted_at` is second-precision, and a booking's guests are all inserted
+  # inside the same second, so ordering on it alone is not a total order and
+  # Postgres may hand the rows back either way round. Email breaks the tie:
+  # it is unique per meeting, so the order is stable across calls.
+  @doc "Lists the guests for a meeting, oldest first."
+  @spec list_for_meeting(binary()) :: [Guest.t()]
+  def list_for_meeting(meeting_id) do
+    Guest
+    |> where([g], g.meeting_id == ^meeting_id)
+    |> order_by([g], asc: g.inserted_at, asc: g.email)
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists the guests for a meeting whose invitation still stands, oldest first,
+  with `:participant` preloaded.
+
+  On a group meeting a guest belongs to the participant who brought them, and
+  cancelling (or moving) that seat voids the guest's invitation while the
+  meeting carries on: the guest row stays, but nobody should email it about
+  this meeting again. A guest with no participant (a solo booking's) always
+  stands.
+  """
+  @spec list_live_for_meeting(binary()) :: [Guest.t()]
+  def list_live_for_meeting(meeting_id) do
+    Guest
+    |> where([g], g.meeting_id == ^meeting_id)
+    |> live_owner()
+    |> order_by([g], asc: g.inserted_at, asc: g.email)
+    |> Repo.all()
+  end
+
+  @doc """
+  Records a change to the meeting's end on every live guest (see
+  `list_live_for_meeting/1`). A guest with no end change pending keeps
+  `previous_end`, the end they knew, as their `notified_end_time`; one
+  already pending keeps the end they were last told.
+  """
+  @spec record_end_change(binary(), DateTime.t()) :: non_neg_integer()
+  def record_end_change(meeting_id, %DateTime{} = previous_end) do
+    {count, _rows} =
+      Guest
+      |> where([g], g.meeting_id == ^meeting_id)
+      |> where(
+        [g],
+        is_nil(g.participant_id) or g.participant_id in subquery(live_visible_seat_ids())
+      )
+      |> update([g],
+        set: [notified_end_time: fragment("COALESCE(?, ?)", g.notified_end_time, ^previous_end)]
+      )
+      |> Repo.update_all([])
+
+    count
+  end
+
+  @doc "Records that the guest has been told the meeting ends at `end_time`."
+  @spec put_notified_end(binary(), DateTime.t()) :: :ok
+  def put_notified_end(guest_id, %DateTime{} = end_time) do
+    Guest
+    |> where([g], g.id == ^guest_id)
+    |> Repo.update_all(set: [notified_end_time: end_time])
+
+    :ok
+  end
+
+  @doc "Reads a guest's RSVP status as it stands now; `nil` when the guest is gone."
+  @spec get_status(Guest.t()) :: Guest.status() | nil
+  def get_status(%Guest{id: id}) do
+    Guest
+    |> where([g], g.id == ^id)
+    |> select([g], g.status)
+    |> Repo.one()
+  end
+
+  @doc "Applies an RSVP changeset and persists the guest."
+  @spec update_rsvp(Guest.t(), map()) :: {:ok, Guest.t()} | {:error, Changeset.t()}
+  def update_rsvp(%Guest{} = guest, attrs) when is_map(attrs) do
+    guest
+    |> Guest.rsvp_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Lists the guests for a meeting whose confirmation email has not yet been sent.
+  """
+  @spec list_unsent_for_meeting(binary()) :: [Guest.t()]
+  def list_unsent_for_meeting(meeting_id) do
+    Guest
+    |> where([g], g.meeting_id == ^meeting_id and is_nil(g.confirmation_sent_at))
+    |> order_by([g], asc: g.inserted_at, asc: g.email)
+    |> Repo.all()
+  end
+
+  @doc "Lists the guests belonging to one participant, oldest first."
+  @spec list_for_participant(binary()) :: [Guest.t()]
+  def list_for_participant(participant_id) do
+    Guest
+    |> where([g], g.participant_id == ^participant_id)
+    |> order_by([g], asc: g.inserted_at)
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists the guests belonging to one participant whose confirmation email has
+  gone out, oldest first. A follow-up about the meeting (such as a moved
+  session) goes only to these: a guest never told of the booking must not
+  learn of it from a change notice.
+  """
+  @spec list_notified_for_participant(binary()) :: [Guest.t()]
+  def list_notified_for_participant(participant_id) do
+    Guest
+    |> where([g], g.participant_id == ^participant_id and not is_nil(g.confirmation_sent_at))
+    |> order_by([g], asc: g.inserted_at)
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists the guests belonging to one participant whose confirmation email has
+  not yet been sent.
+  """
+  @spec list_unsent_for_participant(binary()) :: [Guest.t()]
+  def list_unsent_for_participant(participant_id) do
+    Guest
+    |> where([g], g.participant_id == ^participant_id and is_nil(g.confirmation_sent_at))
+    |> order_by([g], asc: g.inserted_at)
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists the guests among `guest_ids` on `meeting_id` whose confirmation email
+  has not yet been sent.
+  """
+  @spec list_unsent_by_ids(binary(), [binary()]) :: [Guest.t()]
+  def list_unsent_by_ids(meeting_id, guest_ids) when is_list(guest_ids) do
+    Guest
+    |> where([g], g.meeting_id == ^meeting_id and g.id in ^guest_ids)
+    |> where([g], is_nil(g.confirmation_sent_at))
+    |> order_by([g], asc: g.inserted_at, asc: g.email)
+    |> Repo.all()
+  end
+
+  @doc """
+  Clears everything a meeting's guests were told about, or answered for, its
+  previous time: their RSVPs, and the reminder offsets already emailed.
+
+  The mirror of the `reminders_sent`/`reminder_email_sent` reset
+  `Tymeslot.Bookings.Reschedule` performs on the meeting row itself. Left
+  behind, a guest already reminded for an offset is rejected by
+  `list_for_reminder/3` at the new time and silently never reminded again,
+  while the host and the booker are.
+  """
+  @spec reset_for_new_time(binary()) :: non_neg_integer()
+  def reset_for_new_time(meeting_id) do
+    {count, _rows} =
+      Guest
+      |> where([g], g.meeting_id == ^meeting_id)
+      |> Repo.update_all(
+        set: [
+          status: :pending,
+          responded_at: nil,
+          reminders_sent: nil,
+          updated_at: DateTime.utc_now(:second)
+        ]
+      )
+
+    count
+  end
+
+  @doc """
+  `reset_for_new_time/1` for a planned session its host moved
+  (`Tymeslot.Meetings.SessionMove`): the guests answer for the new time,
+  except that a guest who declined keeps their answer. They are told the
+  new time like everyone else and can still say yes, which then has to
+  find a free seat; reset to pending, they would take one unasked.
+  """
+  @spec reset_for_moved_session(binary()) :: non_neg_integer()
+  def reset_for_moved_session(meeting_id) do
+    {count, _rows} =
+      Guest
+      |> where([g], g.meeting_id == ^meeting_id and g.status != :declined)
+      |> Repo.update_all(
+        set: [
+          status: :pending,
+          responded_at: nil,
+          reminders_sent: nil,
+          updated_at: DateTime.utc_now(:second)
+        ]
+      )
+
+    count
+  end
+
+  @doc "Stamps `confirmation_sent_at` on the given guest."
+  @spec mark_confirmation_sent(Guest.t(), DateTime.t()) ::
+          {:ok, Guest.t()} | {:error, Changeset.t()}
+  def mark_confirmation_sent(%Guest{} = guest, sent_at) do
+    guest
+    |> Guest.confirmation_sent_changeset(sent_at)
+    |> Repo.update()
+  end
+
+  @doc """
+  Claims the right to send `guest` their invitation by stamping
+  `confirmation_sent_at` with `sent_at`, but only while it is still unset.
+
+  One conditional update, so of two jobs racing for the same guest (the
+  booking's confirmation and an invitation job for a guest added meanwhile)
+  exactly one gets `:claimed` and the other `:already_claimed`. The claim is
+  taken before the send; `release_confirmation_claim/2` hands it back when the
+  send fails, so a retry can try again.
+  """
+  @spec claim_confirmation(Guest.t(), DateTime.t()) :: :claimed | :already_claimed
+  def claim_confirmation(%Guest{id: id}, sent_at) do
+    {count, _rows} =
+      Guest
+      |> where([g], g.id == ^id and is_nil(g.confirmation_sent_at))
+      |> Repo.update_all(set: [confirmation_sent_at: sent_at, updated_at: sent_at])
+
+    if count == 1, do: :claimed, else: :already_claimed
+  end
+
+  @doc """
+  Releases a claim taken by `claim_confirmation/2` with the same `sent_at`,
+  leaving the guest unsent. A stamp that has since changed is left alone.
+  """
+  @spec release_confirmation_claim(Guest.t(), DateTime.t()) :: :ok
+  def release_confirmation_claim(%Guest{id: id}, sent_at) do
+    Guest
+    |> where([g], g.id == ^id and g.confirmation_sent_at == ^sent_at)
+    |> Repo.update_all(set: [confirmation_sent_at: nil, updated_at: DateTime.utc_now(:second)])
+
+    :ok
+  end
+
+  @doc """
+  Guests to send the reminder for one configured offset to.
+
+  Excludes guests whose group-booking participant has cancelled or moved
+  their seat (see `list_live_for_meeting/1`), guests who were never invited
+  (no confirmation), guests who have
+  declined (the time has not changed, so their answer still stands), and
+  guests already stamped for this very offset. The last is what makes an Oban
+  retry safe: a meeting is reminded once per configured offset, so a partial
+  send must not re-email the guests it already reached.
+  """
+  @spec list_for_reminder(binary(), integer(), String.t()) :: [Guest.t()]
+  def list_for_reminder(meeting_id, value, unit) do
+    Guest
+    |> where([g], g.meeting_id == ^meeting_id)
+    |> live_owner()
+    |> where([g], not is_nil(g.confirmation_sent_at))
+    |> where([g], g.status != :declined)
+    |> order_by([g], asc: g.inserted_at, asc: g.email)
+    |> Repo.all()
+    |> Enum.reject(&reminder_sent?(&1, value, unit))
+  end
+
+  @doc """
+  Records that this guest has been emailed the reminder for one offset,
+  preserving the offsets already recorded.
+  """
+  @spec mark_reminder_sent(Guest.t(), integer(), String.t()) ::
+          {:ok, Guest.t()} | {:error, Changeset.t()}
+  def mark_reminder_sent(%Guest{} = guest, value, unit) do
+    if reminder_sent?(guest, value, unit) do
+      {:ok, guest}
+    else
+      entry = %{"value" => value, "unit" => unit}
+
+      guest
+      |> Guest.reminders_sent_changeset(List.wrap(guest.reminders_sent) ++ [entry])
+      |> Repo.update()
+    end
+  end
+
+  # Keeps guests with no participant, or whose participant still holds their
+  # seat and may be seen (not awaiting email verification), and preloads that
+  # participant so a caller can name the booker.
+  defp live_owner(query) do
+    query
+    |> join(:left, [g], p in assoc(g, :participant), as: :owner)
+    |> where(
+      [g],
+      is_nil(g.participant_id) or g.participant_id in subquery(live_visible_seat_ids())
+    )
+    |> preload([owner: p], participant: p)
+  end
+
+  # The seats whose guests count as invited: live, and not held for their
+  # booker's email verification (`ParticipantQueries.where_visible/1`). A held
+  # seat's guests are nobody's business but the booker's until they verify.
+  defp live_visible_seat_ids do
+    ParticipantQueries.where_visible(
+      from(p in Participant, where: is_nil(p.cancelled_at), select: p.id)
+    )
+  end
+
+  # Entries are written as string-keyed maps and read back from jsonb the same
+  # way, but a struct built in memory can still carry atom keys.
+  defp reminder_sent?(%Guest{reminders_sent: reminders_sent}, value, unit) do
+    reminders_sent
+    |> List.wrap()
+    |> Enum.any?(fn
+      %{"value" => v, "unit" => u} -> v == value and u == unit
+      %{value: v, unit: u} -> v == value and u == unit
+      _other -> false
+    end)
+  end
+end

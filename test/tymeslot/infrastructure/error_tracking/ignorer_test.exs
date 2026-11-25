@@ -1,0 +1,174 @@
+defmodule Tymeslot.Infrastructure.ErrorTracking.IgnorerTest do
+  use ExUnit.Case, async: true
+
+  @moduletag :infrastructure
+  @moduletag :unit
+
+  import ExUnit.CaptureLog
+
+  alias ErrorTracker.Error
+  alias Tymeslot.Infrastructure.ErrorTracking.Ignorer
+
+  defmodule ServerFaultError do
+    defexception message: "upstream broke", plug_status: 500
+  end
+
+  # ErrorTracker records an exception's kind as `to_string(module)`.
+  defp error_for(module), do: %Error{kind: to_string(module)}
+
+  # The context shapes ErrorTracker's integrations record.
+  @request %{"request.path" => "/jane/30min", "request.method" => "GET"}
+  @live_view %{"live_view.view" => "TymeslotWeb.DashboardLive"}
+  @job %{"job.worker" => "Tymeslot.Workers.WebhookWorker", "job.id" => 1}
+
+  describe "ignore?/2" do
+    test "ignores client errors raised by Plug and Phoenix while serving a request" do
+      for module <- [
+            Plug.CSRFProtection.InvalidCSRFTokenError,
+            Phoenix.Router.NoRouteError,
+            Phoenix.NotAcceptableError
+          ] do
+        assert Ignorer.ignore?(error_for(module), @request), "expected #{inspect(module)} ignored"
+      end
+    end
+
+    test "ignores a lookup that found no record while serving a request or a LiveView" do
+      assert Ignorer.ignore?(error_for(Ecto.NoResultsError), @request)
+      assert Ignorer.ignore?(error_for(Ecto.NoResultsError), @live_view)
+    end
+
+    test "ignores LiveView's reload after a 404 in connected mount" do
+      assert Ignorer.ignore?(error_for(Phoenix.LiveView.ReloadError), @request)
+    end
+
+    test "ignores LiveView's reload error reported from an Oban job" do
+      assert Ignorer.ignore?(error_for(Phoenix.LiveView.ReloadError), @job)
+    end
+
+    test "tracks the same lookup failure raised in an Oban job" do
+      refute Ignorer.ignore?(error_for(Ecto.NoResultsError), @job)
+    end
+
+    test "tracks the same lookup failure with no request context at all" do
+      refute Ignorer.ignore?(error_for(Ecto.NoResultsError), %{})
+    end
+
+    test "tracks a genuine server error raised serving a request" do
+      refute Ignorer.ignore?(error_for(RuntimeError), @request)
+    end
+
+    test "tracks an exception whose plug_status is a server error" do
+      refute Ignorer.ignore?(error_for(ServerFaultError), @request)
+    end
+
+    test "tracks a non-exception kind such as an Oban job's error tuple" do
+      refute Ignorer.ignore?(%Error{kind: "error"}, @request)
+    end
+
+    test "tracks a kind naming no loaded module" do
+      capture_log(fn ->
+        refute Ignorer.ignore?(%Error{kind: "Elixir.Tymeslot.NoSuchModuleEverDefined"}, @request)
+      end)
+    end
+
+    test "ignores an event no handle_event/3 clause of a LiveView matches" do
+      error = %Error{
+        kind: "Elixir.FunctionClauseError",
+        reason: "no function clause matching in TymeslotWeb.DashboardLive.handle_event/3"
+      }
+
+      assert Ignorer.ignore?(error, Map.put(@live_view, "live_view.event", "forged"))
+    end
+
+    test "tracks a function clause error raised inside a matched handle_event/3 clause" do
+      error = %Error{
+        kind: "Elixir.FunctionClauseError",
+        reason: "no function clause matching in Tymeslot.Onboarding.toggle/2"
+      }
+
+      refute Ignorer.ignore?(error, @live_view)
+    end
+
+    test "ignores a request whose client closed the connection mid-response" do
+      for reason <- [
+            "Unrecoverable error: closed",
+            "Unrecoverable error: econnreset",
+            "Client reset stream normally"
+          ] do
+        error = %Error{kind: "Elixir.Bandit.TransportError", reason: reason}
+
+        assert Ignorer.ignore?(error, @request), "expected #{inspect(reason)} ignored"
+      end
+    end
+
+    test "tracks any other transport error raised serving a request" do
+      error = %Error{
+        kind: "Elixir.Bandit.TransportError",
+        reason: "Received RST_STREAM from client: protocol_error (1)"
+      }
+
+      refute Ignorer.ignore?(error, @request)
+    end
+
+    test "tracks a closed connection reported outside a request" do
+      error = %Error{kind: "Elixir.Bandit.TransportError", reason: "Unrecoverable error: closed"}
+
+      refute Ignorer.ignore?(error, @job)
+      refute Ignorer.ignore?(error, %{})
+    end
+
+    test "ignores a query PostgreSQL refused for a null byte sent to a request or a LiveView" do
+      error = %Error{
+        kind: "Elixir.Postgrex.Error",
+        reason:
+          ~s|ERROR 22021 (character_not_in_repertoire) invalid byte sequence for encoding "UTF8": 0x00|
+      }
+
+      assert Ignorer.ignore?(error, @request)
+      assert Ignorer.ignore?(error, @live_view)
+    end
+
+    test "tracks the same refused query in an Oban job or with no request context" do
+      error = %Error{
+        kind: "Elixir.Postgrex.Error",
+        reason:
+          ~s|ERROR 22021 (character_not_in_repertoire) invalid byte sequence for encoding "UTF8": 0x00|
+      }
+
+      refute Ignorer.ignore?(error, Map.merge(@request, @job))
+      refute Ignorer.ignore?(error, @job)
+      refute Ignorer.ignore?(error, %{})
+    end
+
+    test "tracks a Postgrex error with any other code raised serving a request" do
+      for reason <- [
+            ~s|ERROR 23505 (unique_violation) duplicate key value violates unique constraint "users_email_index"|,
+            "ERROR 57P01 (admin_shutdown) terminating connection due to administrator command",
+            "tcp recv (idle): closed"
+          ] do
+        error = %Error{kind: "Elixir.Postgrex.Error", reason: reason}
+
+        refute Ignorer.ignore?(error, @request), "expected #{inspect(reason)} tracked"
+      end
+    end
+
+    test "tracks the null-byte message under any kind but Postgrex.Error" do
+      error = %Error{
+        kind: "Elixir.RuntimeError",
+        reason: "ERROR 22021 (character_not_in_repertoire) invalid byte sequence"
+      }
+
+      refute Ignorer.ignore?(error, @request)
+    end
+
+    test "tracks the error and logs a warning when the ignorer itself fails" do
+      log =
+        capture_log(fn ->
+          refute Ignorer.ignore?(%{not: "an error"}, %{"password" => "hunter2"})
+        end)
+
+      assert log =~ "ErrorTracker ignorer failed"
+      refute log =~ "hunter2"
+    end
+  end
+end

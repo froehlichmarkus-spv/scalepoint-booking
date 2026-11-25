@@ -1,0 +1,290 @@
+defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.ConfirmationComponent do
+  @moduledoc """
+  Folio's confirmation step: the full masthead, the outcome (confirmed,
+  rescheduled, or a request awaiting the organiser's approval) with its
+  badge, for a group type the line saying the booking is one of its spots,
+  the meeting's details (every session of a series, with its links and
+  the link to manage them all, in place of the day and time; with the day it ends on, when that is the next, and
+  a note when the address is still to be arranged), the booker's answers,
+  and the calendar file and a fresh start.
+
+  On Folio's continuous page it replaces everything below the masthead,
+  which it draws again in full, so the page keeps its top.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Availability.Offer
+  alias Tymeslot.Profiles
+  alias TymeslotWeb.Themes.Folio.Components.Masthead
+  alias TymeslotWeb.Themes.Shared.ApprovalDisplay
+  alias TymeslotWeb.Themes.Shared.BookingLocation
+  alias TymeslotWeb.Themes.Shared.BookingText
+  alias TymeslotWeb.Themes.Shared.Components.ApprovalNotice
+  alias TymeslotWeb.Themes.Shared.Components.CustomAnswers
+  alias TymeslotWeb.Themes.Shared.Components.GroupSession
+  alias TymeslotWeb.Themes.Shared.Components.LocationField
+  alias TymeslotWeb.Themes.Shared.Components.VerificationNotice
+  alias TymeslotWeb.Themes.Shared.ConfirmationText
+  alias TymeslotWeb.Themes.Shared.LocalizationHelpers
+  alias TymeslotWeb.Themes.Shared.PathHandlers
+  alias TymeslotWeb.Themes.Shared.SeriesSummary
+  alias TymeslotWeb.Themes.Shared.StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate update(assigns, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate handle_event(event, params, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns =
+      assign(assigns,
+        pending: ApprovalDisplay.awaiting_approval?(assigns),
+        badge_pending: ConfirmationText.pending?(assigns),
+        badge_icon: ConfirmationText.badge_icon(assigns),
+        follow_ups: ConfirmationText.follow_ups?(assigns),
+        next_day_end: LocalizationHelpers.booking_next_day_end(assigns),
+        series_count: SeriesSummary.booked_count(assigns)
+      )
+
+    ~H"""
+    <div class="folio-outcome-page booker-card" data-locale={@locale}>
+      <Masthead.masthead
+        variant={:full}
+        theme_tokens={@theme_tokens}
+        organizer_profile={@organizer_profile}
+        username_context={@username_context}
+      />
+
+      <section class="folio-section folio-outcome" data-testid="folio-confirmation">
+        <header class="folio-confirmation">
+          <span class={["folio-badge", @badge_pending && "folio-badge--pending"]} aria-hidden="true">
+            <.icon name={@badge_icon} class="folio-badge__icon" />
+          </span>
+          <h2 class="folio-title" data-testid="confirmation-heading">{headline(assigns)}</h2>
+          <p class="folio-lead" data-testid={!@follow_ups && "check-inbox"}>{message(assigns)}</p>
+        </header>
+
+        <ApprovalNotice.block
+          :if={@pending}
+          organizer_name={Profiles.display_name(@organizer_profile)}
+          stage={:after}
+        />
+
+        <VerificationNotice.resend :if={!@follow_ups} state={assigns[:verification_resend]} />
+
+        <GroupSession.confirmation_line meeting_type={@meeting_type} />
+
+        <section class="folio-details" aria-labelledby="folio-details-heading">
+          <h2 id="folio-details-heading" class="folio-eyebrow">
+            {dgettext("booking_confirmation", "Meeting Details")}
+          </h2>
+          <p :if={@meeting_type} class="folio-details__subject" data-testid="chosen-meeting-type">
+            {@meeting_type.name}
+          </p>
+          <SeriesSummary.booked
+            :if={@series_count}
+            series={@series}
+            meetings={@series_meetings}
+            timezone={@user_timezone}
+            organizer_profile={@organizer_profile}
+            duration={BookingText.duration_label(assigns)}
+            label_class="folio-eyebrow"
+            class="folio-series-booked"
+          />
+          <dl class="folio-details__list">
+            <div :if={is_nil(@series_count)} class="folio-details__row">
+              <dt>{dgettext("booking_confirmation", "Date")}</dt>
+              <dd>{LocalizationHelpers.format_date(@selected_date)}</dd>
+            </div>
+            <div :if={is_nil(@series_count)} class="folio-details__row">
+              <dt>{dgettext("booking_confirmation", "Time")}</dt>
+              <dd>
+                {LocalizationHelpers.format_slot_label(@selected_time)}
+                <span
+                  :if={@next_day_end}
+                  class="folio-details__note"
+                  data-testid="booking-next-day-end"
+                >
+                  {@next_day_end}
+                </span>
+              </dd>
+            </div>
+            <div :if={is_nil(@series_count)} class="folio-details__row">
+              <dt>{dgettext("booking_confirmation", "Timezone")}</dt>
+              <dd>
+                {LocalizationHelpers.format_zone_label(@selected_date, @selected_time, @user_timezone)}
+              </dd>
+            </div>
+            <div class="folio-details__row">
+              <dt>{dgettext("booking_confirmation", "Duration")}</dt>
+              <dd>
+                {dgettext("booking_confirmation", "%{minutes} min",
+                  minutes: Offer.duration_minutes(@meeting_type, @duration)
+                )}
+              </dd>
+            </div>
+            <div :if={@organizer_profile} class="folio-details__row">
+              <dt>{dgettext("booking_confirmation", "Appointment host")}</dt>
+              <dd>{Profiles.display_name(@organizer_profile)}</dd>
+            </div>
+            <div
+              :if={BookingLocation.chosen_display(assigns)}
+              class="folio-details__row"
+              data-testid="confirmation-location"
+            >
+              <dt>{dgettext("booking_confirmation", "Location")}</dt>
+              <dd>
+                {BookingLocation.chosen_display(assigns)}
+                <LocationField.arranged_note
+                  :if={BookingLocation.arranged_after_booking?(assigns)}
+                  class="folio-details__note"
+                />
+              </dd>
+            </div>
+            <div :if={@guest_emails not in [nil, []]} class="folio-details__row">
+              <dt>{dgettext("booking_confirmation", "Guests")}</dt>
+              <dd>{Enum.join(@guest_emails, ", ")}</dd>
+            </div>
+          </dl>
+          <p class="folio-muted">
+            {dgettext("booking_confirmation", "Sent to")} <strong>{@email}</strong>
+          </p>
+        </section>
+
+        <CustomAnswers.custom_answers
+          snapshot={@custom_fields_snapshot}
+          answers={@custom_field_answers}
+        />
+
+        <div class="folio-actions folio-actions--in-order">
+          <a
+            :if={@follow_ups && is_nil(@series_count) && PathHandlers.calendar_ics_path(assigns)}
+            href={PathHandlers.calendar_ics_path(assigns)}
+            download
+            class="folio-button folio-button--primary"
+            data-testid="add-to-calendar"
+          >
+            <.icon name="hero-calendar-days" class="folio-button__icon" />
+            {if @pending,
+              do: dgettext("booking_confirmation", "Add tentative hold to calendar"),
+              else: dgettext("booking_confirmation", "Add to calendar")}
+          </a>
+          <button
+            type="button"
+            class="folio-button folio-button--quiet"
+            phx-click="schedule_another"
+            phx-target={@myself}
+            data-testid="schedule-another"
+            data-intent="restart"
+          >
+            {dpgettext("booking_voice", "folio", "Book another session")}
+          </button>
+        </div>
+
+        <p :if={@follow_ups} class="folio-muted folio-confirmation__help">
+          {if @pending,
+            do:
+              dgettext(
+                "booking_confirmation",
+                "Changed your mind? Your request email has a link to withdraw it."
+              ),
+            else:
+              dgettext(
+                "booking_confirmation",
+                "Need to make changes? Check your email for reschedule options"
+              )}
+        </p>
+      </section>
+    </div>
+    """
+  end
+
+  # Which outcome applies is ConfirmationText's decision (a held request is
+  # never announced as confirmed); the words are Folio's, in its personal
+  # voice: the visitor by first name, the meeting by its day and date, so
+  # a session weeks away is never mistaken for this week's.
+  # The held line names nobody: the shared held sentence under it starts
+  # with the visitor's name. With no name to say, the day alone.
+  defp headline(%{series_count: count} = assigns) when is_integer(count),
+    do: SeriesSummary.headline(assigns, count)
+
+  defp headline(assigns) do
+    name = first_name(assigns[:name])
+    weekday = weekday(assigns[:selected_date])
+    date = LocalizationHelpers.format_date(assigns[:selected_date])
+
+    case {ConfirmationText.status(assigns), name} do
+      {:check_inbox, _name} ->
+        ConfirmationText.check_inbox_headline(:folio)
+
+      {:held, _name} ->
+        dpgettext("booking_voice", "folio", "Thank you. I'll reply to your request soon.")
+
+      {:rescheduled, ""} ->
+        dpgettext("booking_voice", "folio", "See you on %{weekday} %{date} instead",
+          weekday: weekday,
+          date: date
+        )
+
+      {:rescheduled, name} ->
+        dpgettext("booking_voice", "folio", "See you on %{weekday} %{date} instead, %{name}",
+          weekday: weekday,
+          date: date,
+          name: name
+        )
+
+      {:confirmed, ""} ->
+        dpgettext("booking_voice", "folio", "See you on %{weekday} %{date}",
+          weekday: weekday,
+          date: date
+        )
+
+      {:confirmed, name} ->
+        dpgettext("booking_voice", "folio", "See you on %{weekday} %{date}, %{name}",
+          weekday: weekday,
+          date: date,
+          name: name
+        )
+    end
+  end
+
+  defp first_name(name) when is_binary(name) do
+    case String.split(String.trim(name), ~r/\s+/, parts: 2) do
+      [first | _rest] when first != "" -> first
+      _blank -> ""
+    end
+  end
+
+  defp first_name(_no_name), do: ""
+
+  defp weekday(date) when is_binary(date) do
+    case Date.from_iso8601(date) do
+      {:ok, day} -> LocalizationHelpers.mid_sentence_weekday(Date.day_of_week(day))
+      {:error, _invalid} -> date
+    end
+  end
+
+  defp weekday(_no_date), do: ""
+
+  defp message(%{series_count: count} = assigns) when is_integer(count),
+    do: SeriesSummary.message(assigns, :folio)
+
+  defp message(assigns) do
+    case ConfirmationText.status(assigns) do
+      :check_inbox ->
+        ConfirmationText.check_inbox_message(assigns, :folio)
+
+      :held ->
+        ConfirmationText.held_message(assigns[:name], assigns[:organizer_profile], :folio)
+
+      _confirmed_or_rescheduled ->
+        dgettext("booking_confirmation", "%{name}, your meeting %{organizer} is confirmed",
+          name: assigns[:name],
+          organizer: ConfirmationText.organizer_fragment(assigns[:organizer_profile], :folio)
+        )
+    end
+  end
+end

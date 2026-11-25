@@ -1,0 +1,308 @@
+defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Components.ConfirmationComponent do
+  @moduledoc """
+  Rhythm theme component for the confirmation/thank you step.
+  Features clean, modern design with focus on readability.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Availability.Offer
+  alias Tymeslot.Profiles
+  alias TymeslotWeb.Themes.Shared.ApprovalDisplay
+  alias TymeslotWeb.Themes.Shared.BookingLocation
+  alias TymeslotWeb.Themes.Shared.BookingText
+  alias TymeslotWeb.Themes.Shared.ChosenLength
+  alias TymeslotWeb.Themes.Shared.Components.ApprovalNotice
+  alias TymeslotWeb.Themes.Shared.Components.CustomAnswers
+  alias TymeslotWeb.Themes.Shared.Components.GroupSession
+  alias TymeslotWeb.Themes.Shared.Components.LocationField
+  alias TymeslotWeb.Themes.Shared.Components.MeetingPrice
+  alias TymeslotWeb.Themes.Shared.Components.VerificationNotice
+  alias TymeslotWeb.Themes.Shared.ConfirmationText
+  alias TymeslotWeb.Themes.Shared.LocalizationHelpers
+  alias TymeslotWeb.Themes.Shared.PathHandlers
+  alias TymeslotWeb.Themes.Shared.SeriesSummary
+  alias TymeslotWeb.Themes.Shared.StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate update(assigns, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate handle_event(event, params, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns =
+      assign(assigns,
+        next_day_end: LocalizationHelpers.booking_next_day_end(assigns),
+        follow_ups: ConfirmationText.follow_ups?(assigns),
+        series_count: SeriesSummary.booked_count(assigns)
+      )
+
+    ~H"""
+    <div class="scheduling-box booker-card" data-locale={@locale} data-testid="booker-card">
+      <div class="slide-container">
+        <div class="slide slide--enter active">
+          <div class="slide-content confirmation-slide">
+            <div class="confirmation-container">
+              <div class="confirmation-header-section">
+                <div class="confirmation-title-row">
+                  <div class={[
+                    "success-badge",
+                    ConfirmationText.pending?(assigns) && "success-badge--pending"
+                  ]}>
+                    <div class={[
+                      "success-badge-inner",
+                      ConfirmationText.pending?(assigns) && "success-badge-inner--pending"
+                    ]}>
+                      <.icon
+                        name={ConfirmationText.badge_icon(assigns)}
+                        class="success-icon stroke-3"
+                      />
+                    </div>
+                  </div>
+
+                  <h1 class="confirmation-headline" data-testid="confirmation-heading">
+                    {headline(assigns)}
+                  </h1>
+                </div>
+
+                <p class="confirmation-message" data-testid={!@follow_ups && "check-inbox"}>
+                  {confirmation_message(assigns)}
+                </p>
+
+                <ApprovalNotice.block
+                  :if={ApprovalDisplay.awaiting_approval?(assigns)}
+                  organizer_name={Profiles.display_name(@organizer_profile)}
+                  stage={:after}
+                />
+
+                <VerificationNotice.resend
+                  :if={!@follow_ups}
+                  state={assigns[:verification_resend]}
+                />
+
+                <GroupSession.confirmation_line meeting_type={@meeting_type} />
+              </div>
+
+              <div class="meeting-ticket">
+                <div class="ticket-header">
+                  <span :if={@meeting_type} class="ticket-title" data-testid="chosen-meeting-type">
+                    {@meeting_type.name}
+                  </span>
+                  <span :if={!@meeting_type} class="ticket-label">
+                    {dgettext("booking_confirmation", "Meeting Details")}
+                  </span>
+                  <span class="ticket-badge">
+                    {dgettext("booking_confirmation", "%{minutes} min",
+                      minutes:
+                        Offer.duration_minutes(
+                          @meeting_type,
+                          @duration,
+                          ChosenLength.minutes(assigns)
+                        )
+                    )}
+                  </span>
+                </div>
+
+                <div class="ticket-body">
+                  <SeriesSummary.booked
+                    :if={@series_count}
+                    series={@series}
+                    meetings={@series_meetings}
+                    timezone={@user_timezone}
+                    organizer_profile={@organizer_profile}
+                    duration={BookingText.duration_label(assigns)}
+                    label_class="ticket-sublabel"
+                    class="ticket-series"
+                  />
+
+                  <div :if={is_nil(@series_count)} class="ticket-row">
+                    <div class="ticket-icon">
+                      <.icon name="hero-calendar" class="hero-icon hero-icon--md" />
+                    </div>
+                    <div class="ticket-info">
+                      <span class="ticket-value">{LocalizationHelpers.format_date(@selected_date)}</span>
+                      <span class="ticket-sublabel">{dgettext("booking_confirmation", "Date")}</span>
+                    </div>
+                  </div>
+
+                  <div :if={is_nil(@series_count)} class="ticket-row">
+                    <div class="ticket-icon">
+                      <.icon name="hero-clock" class="hero-icon hero-icon--md" />
+                    </div>
+                    <div class="ticket-info">
+                      <span class="ticket-value">
+                        {LocalizationHelpers.format_slot_label(@selected_time)}
+                      </span>
+                      <span class="ticket-sublabel">
+                        {LocalizationHelpers.format_zone_label(
+                          @selected_date,
+                          @selected_time,
+                          @user_timezone
+                        )}
+                      </span>
+                      <span
+                        :if={@next_day_end}
+                        class="ticket-sublabel"
+                        data-testid="booking-next-day-end"
+                      >
+                        {@next_day_end}
+                      </span>
+                    </div>
+                  </div>
+
+                  <%= if @organizer_profile do %>
+                    <div class="ticket-row">
+                      <div class="ticket-icon">
+                        <.icon name="hero-user" class="hero-icon hero-icon--md" />
+                      </div>
+                      <div class="ticket-info">
+                        <span class="ticket-value">
+                          {Profiles.display_name(@organizer_profile)}
+                        </span>
+                        <span class="ticket-sublabel">{dgettext(
+                          "booking_confirmation",
+                          "Appointment host"
+                        )}</span>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <div
+                    :if={BookingLocation.chosen_display(assigns)}
+                    class="ticket-row"
+                    data-testid="confirmation-location"
+                  >
+                    <div class="ticket-icon">
+                      <.icon name="hero-map-pin" class="hero-icon hero-icon--md" />
+                    </div>
+                    <div class="ticket-info">
+                      <span class="ticket-value">{BookingLocation.chosen_display(assigns)}</span>
+                      <span class="ticket-sublabel">{dgettext("booking_confirmation", "Location")}</span>
+                      <LocationField.arranged_note :if={
+                        BookingLocation.arranged_after_booking?(assigns)
+                      } />
+                    </div>
+                  </div>
+
+                  <div
+                    :if={MeetingPrice.paid_price(assigns[:paid_payment], @locale)}
+                    class="ticket-row"
+                    data-testid="confirmation-paid"
+                  >
+                    <div class="ticket-icon">
+                      <.icon name="hero-credit-card" class="hero-icon hero-icon--md" />
+                    </div>
+                    <div class="ticket-info">
+                      <span class="ticket-value">{MeetingPrice.paid_price(@paid_payment, @locale)}</span>
+                      <span class="ticket-sublabel">{dgettext("booking_confirmation", "Paid")}</span>
+                    </div>
+                  </div>
+
+                  <div :if={@guest_emails not in [nil, []]} class="ticket-row">
+                    <div class="ticket-icon">
+                      <.icon name="hero-user-group" class="hero-icon hero-icon--md" />
+                    </div>
+                    <div class="ticket-info">
+                      <span class="ticket-value">{Enum.join(@guest_emails, ", ")}</span>
+                      <span class="ticket-sublabel">{dgettext("booking_confirmation", "Guests")}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ticket-footer">
+                  <div class="email-confirmation">
+                    <.icon name="hero-envelope" class="email-icon" />
+                    <span>{dgettext("booking_confirmation", "Sent to")} <strong>{@email}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              <CustomAnswers.custom_answers
+                snapshot={@custom_fields_snapshot}
+                answers={@custom_field_answers}
+              />
+
+              <div class="confirmation-actions-section">
+                <a
+                  :if={
+                    @follow_ups && is_nil(@series_count) && PathHandlers.calendar_ics_path(assigns)
+                  }
+                  href={PathHandlers.calendar_ics_path(assigns)}
+                  download
+                  class="action-button-primary calendar-download-button"
+                  data-testid="add-to-calendar"
+                >
+                  <.icon name="hero-calendar-days" class="calendar-download-icon" />
+                  {if ApprovalDisplay.awaiting_approval?(assigns),
+                    do: dgettext("booking_confirmation", "Add tentative hold to calendar"),
+                    else: dgettext("booking_confirmation", "Add to calendar")}
+                </a>
+                <button
+                  type="button"
+                  phx-click="schedule_another"
+                  phx-target={@myself}
+                  data-testid="schedule-another"
+                  data-intent="restart"
+                  class="confirmation-restart-link"
+                >
+                  {dgettext("booking_confirmation", "Schedule Another Meeting")}
+                </button>
+
+                <p :if={@follow_ups} class="help-text">
+                  {if ApprovalDisplay.awaiting_approval?(assigns),
+                    do:
+                      dgettext(
+                        "booking_confirmation",
+                        "Changed your mind? Your request email has a link to withdraw it."
+                      ),
+                    else:
+                      dgettext(
+                        "booking_confirmation",
+                        "Need to make changes? Check your email for reschedule options"
+                      )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Helper functions
+  # Which status applies is decided in ConfirmationText (a held request must
+  # not be announced as a confirmed meeting); only the wording is Rhythm's.
+  defp headline(%{series_count: count} = assigns) when is_integer(count),
+    do: SeriesSummary.headline(assigns, count)
+
+  defp headline(assigns) do
+    case ConfirmationText.status(assigns) do
+      :check_inbox -> ConfirmationText.check_inbox_headline(:rhythm)
+      :held -> dgettext("booking_confirmation", "Request sent!")
+      :rescheduled -> dgettext("booking_confirmation", "Successfully Rescheduled!")
+      :confirmed -> dgettext("booking_confirmation", "You're All Set!")
+    end
+  end
+
+  defp confirmation_message(%{series_count: count} = assigns) when is_integer(count),
+    do: SeriesSummary.message(assigns, :rhythm)
+
+  defp confirmation_message(assigns) do
+    case ConfirmationText.status(assigns) do
+      :check_inbox ->
+        ConfirmationText.check_inbox_message(assigns, :rhythm)
+
+      :held ->
+        ConfirmationText.held_message(assigns[:name], assigns[:organizer_profile], :rhythm)
+
+      _confirmed_or_rescheduled ->
+        dgettext("booking_confirmation", "%{name}, your meeting %{organizer} is confirmed",
+          name: assigns[:name],
+          organizer: ConfirmationText.organizer_fragment(assigns[:organizer_profile], :rhythm)
+        )
+    end
+  end
+end

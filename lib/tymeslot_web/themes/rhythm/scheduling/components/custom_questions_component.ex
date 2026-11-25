@@ -1,0 +1,126 @@
+defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Components.CustomQuestionsComponent do
+  @moduledoc """
+  Rhythm-themed renderer for the custom-questions step. One question per
+  page, slide-box chrome, dots-row progress indicator (hidden when there
+  is exactly one question).
+
+  Receives the shared `Engine` state via assigns and bubbles events back
+  to the parent LiveView as `{:step_event, :questions, …}`.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias TymeslotWeb.Themes.Shared.CustomQuestions.Events
+  alias TymeslotWeb.Themes.Shared.CustomQuestions.Inputs.Renderer, as: InputRenderer
+  alias TymeslotWeb.Themes.Shared.Journey.Components, as: JourneyComponents
+  alias TymeslotWeb.Themes.Shared.StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate update(assigns, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate handle_event(event, params, socket), to: Events
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns = Events.assign_render_state(assigns)
+
+    ~H"""
+    <div
+      class="scheduling-box booker-card"
+      data-locale={@locale}
+      data-testid="booker-card"
+      id={assigns[:moment] && "#{assigns[:moment]}-step"}
+      data-moment={assigns[:moment]}
+      data-moment-state={assigns[:moment_state]}
+    >
+      <div class="slide-container">
+        <div class="slide slide--enter active">
+          <div class="slide-content">
+            <%= if @total > 1 do %>
+              <div
+                class="rhythm-progress-dots"
+                role="progressbar"
+                aria-label={dgettext("booking", "Question %{n} of %{m}", n: @index + 1, m: @total)}
+                aria-valuenow={@index + 1}
+                aria-valuemin={1}
+                aria-valuemax={@total}
+              >
+                <%= for i <- 0..(@total - 1) do %>
+                  <span
+                    aria-hidden="true"
+                    class={[
+                      "rhythm-progress-dot",
+                      i == @index && "is-active",
+                      i < @index && "is-done"
+                    ]}
+                  />
+                <% end %>
+              </div>
+            <% end %>
+
+            <JourneyComponents.moment_heading
+              moment={assigns[:moment]}
+              moment_state={assigns[:moment_state]}
+              focus={assigns[:journey_focus]}
+              class="slide-title"
+            >
+              {@definition["label"]}
+            </JourneyComponents.moment_heading>
+
+            <%= if @definition["help_text"] do %>
+              <p class="rhythm-questions-help">{@definition["help_text"]}</p>
+            <% end %>
+
+            <%!-- Not in an embed: the browser refuses autofocus inside a
+                  cross-origin frame and logs an error for the attempt. --%>
+            <InputRenderer.render
+              definition={@definition}
+              value={@value}
+              myself={@myself}
+              autofocus={!assigns[:embedded]}
+            />
+
+            <%= if @error do %>
+              <p class="rhythm-form-error">{@error}</p>
+            <% end %>
+
+            <div class="slide-actions horizontal">
+              <button
+                type="button"
+                class="prev-button"
+                phx-click="back_step"
+                phx-target={@myself}
+                data-intent="back"
+              >
+                <span class="custom-question-cta-nowrap">
+                  <.icon name="hero-arrow-left" class="inline-icon" />
+                  {dgettext("booking", "Back")}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="submit-button"
+                phx-click="next_step"
+                phx-target={@myself}
+                data-intent="continue"
+              >
+                <span class="custom-question-cta-nowrap">
+                  <%= if @last? do %>
+                    {dgettext("booking", "Continue")}
+                    <.icon name="hero-arrow-right" class="inline-icon" />
+                  <% else %>
+                    {dgettext("booking", "Next")}
+                    <.icon name="hero-arrow-right" class="inline-icon" />
+                  <% end %>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+end

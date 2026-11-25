@@ -1,0 +1,129 @@
+defmodule Tymeslot.Security.RateLimiterOAuthTest do
+  @moduledoc """
+  Direct coverage for the OAuth rate-limit buckets exposed by
+  `Tymeslot.Security.RateLimiter`:
+
+    * initiation  — 10 per 10 minutes per IP
+    * callback    — 20 per 2 minutes per IP, sign-in and integration
+                    connections each with their own bucket
+    * completion  —  6 per 20 minutes per IP
+
+  Each bucket is keyed separately so exhausting one does not trip another.
+  This is not the composition test for the OAuth flow itself — that is in
+  `flow_handler_composition_test.exs`. The goal here is to pin the limits
+  and bucket isolation so a bucket-wiring regression (e.g. two buckets
+  accidentally sharing a key) fails loudly.
+  """
+
+  use Tymeslot.DataCase, async: false
+
+  @moduletag :security
+
+  alias Tymeslot.Security.RateLimiter
+
+  setup do
+    RateLimiter.clear_all()
+    on_exit(fn -> RateLimiter.clear_all() end)
+    :ok
+  end
+
+  describe "initiation bucket (10 per 10 minutes)" do
+    test "allows 10 attempts then rate-limits the 11th" do
+      ip = unique_ip()
+
+      for _i <- 1..10 do
+        assert :ok = RateLimiter.check(:oauth_initiation, ip)
+      end
+
+      assert {:error, :rate_limited, message} =
+               RateLimiter.check(:oauth_initiation, ip)
+
+      assert message =~ "OAuth initiation"
+    end
+  end
+
+  describe "callback bucket (20 per 2 minutes)" do
+    test "allows 20 attempts then rate-limits the 21st" do
+      ip = unique_ip()
+
+      for _i <- 1..20 do
+        assert :ok = RateLimiter.check(:oauth_signin_callback, ip)
+      end
+
+      assert {:error, :rate_limited, message} = RateLimiter.check(:oauth_signin_callback, ip)
+      assert message =~ "OAuth callback"
+    end
+  end
+
+  describe "completion bucket (6 per 20 minutes)" do
+    test "allows 6 attempts then rate-limits the 7th" do
+      ip = unique_ip()
+
+      for _i <- 1..6 do
+        assert :ok = RateLimiter.check(:oauth_completion, ip)
+      end
+
+      assert {:error, :rate_limited, message} =
+               RateLimiter.check(:oauth_completion, ip)
+
+      assert message =~ "OAuth completion"
+    end
+  end
+
+  describe "bucket isolation" do
+    test "exhausting initiation does not impact callback or completion" do
+      ip = unique_ip()
+
+      for _i <- 1..10 do
+        assert :ok = RateLimiter.check(:oauth_initiation, ip)
+      end
+
+      assert {:error, :rate_limited, _msg} = RateLimiter.check(:oauth_initiation, ip)
+
+      # Every other bucket still has its full budget for this IP.
+      assert :ok = RateLimiter.check(:oauth_signin_callback, ip)
+      assert :ok = RateLimiter.check(:oauth_completion, ip)
+    end
+
+    test "exhausting completion does not impact initiation or callback" do
+      ip = unique_ip()
+
+      for _i <- 1..6 do
+        assert :ok = RateLimiter.check(:oauth_completion, ip)
+      end
+
+      assert {:error, :rate_limited, _msg} = RateLimiter.check(:oauth_completion, ip)
+
+      assert :ok = RateLimiter.check(:oauth_initiation, ip)
+      assert :ok = RateLimiter.check(:oauth_signin_callback, ip)
+    end
+
+    test "exhausting the integration callback budget does not refuse a sign-in callback" do
+      ip = unique_ip()
+
+      for _i <- 1..20 do
+        assert :ok = RateLimiter.check(:integration_oauth_callback, ip)
+      end
+
+      assert {:error, :rate_limited, _msg} = RateLimiter.check(:integration_oauth_callback, ip)
+
+      # A team behind one address connecting calendars can still sign in.
+      assert :ok = RateLimiter.check(:oauth_signin_callback, ip)
+    end
+
+    test "two different IPs on the same bucket have independent budgets" do
+      ip_a = unique_ip()
+      ip_b = unique_ip()
+
+      for _i <- 1..10 do
+        assert :ok = RateLimiter.check(:oauth_initiation, ip_a)
+      end
+
+      assert {:error, :rate_limited, _msg} = RateLimiter.check(:oauth_initiation, ip_a)
+      # ip_b is untouched.
+      assert :ok = RateLimiter.check(:oauth_initiation, ip_b)
+    end
+  end
+
+  defp unique_ip, do: "oauth-ip-#{System.unique_integer([:positive])}"
+end

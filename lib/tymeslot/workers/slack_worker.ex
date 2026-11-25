@@ -1,0 +1,340 @@
+defmodule Tymeslot.Workers.SlackWorker do
+  @moduledoc """
+  Oban worker for delivering Slack notifications.
+
+  Handles both delivery modes:
+    * `oauth` — `chat.postMessage` with the integration's bot token
+    * `webhook_url` — POST directly to the user-supplied Incoming Webhook URL
+
+  Errors are mapped to outcomes per the Slack API documentation:
+    * `token_revoked` / `account_inactive` / `channel_not_found` → auto-disable
+    * rate limiting (HTTP 429 from the Web API or hooks.slack.com, or the
+      `ok:false ratelimited` body) → `{:snooze, retry_after}`, without counting
+      toward the auto-disable failure budget
+    * Anything else → `{:error, reason}` and Oban retries with backoff
+
+  Failures are recorded against the integration only on the genuinely final
+  attempt, which is `max_attempts`: a snooze costs the job no attempt, so it
+  always gets its full budget of real ones.
+
+  The post is claimed through `Tymeslot.Workers.DeliveryClaims` before it is
+  sent, so a job the Oban lifeline rescues after the message reached Slack
+  does not post it to the channel a second time. Only a successful post keeps
+  the claim; every retry, snooze and discard path above releases it.
+  """
+
+  use Oban.Worker,
+    queue: :slack_messages,
+    max_attempts: 5,
+    priority: 2
+
+  require Logger
+
+  alias Tymeslot.Infrastructure.ErrorTracking
+  alias Tymeslot.Infrastructure.ExpectedJobOutcome
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Notifications.Recipients
+  alias Tymeslot.Slack
+  alias Tymeslot.Slack.{API, MessageBuilder, SlackIntegrationSchema, SlackQueries}
+  alias Tymeslot.Workers.DeliveryClaims
+  alias Tymeslot.Workers.MeetingNotificationJob
+  alias Tymeslot.Workers.RetryHelpers
+
+  @behaviour ExpectedJobOutcome
+
+  # The work no longer applies, or the user revoked access and the integration
+  # was switched off. Missing parameters are recorded.
+  @gone "Integration or meeting not found"
+  @disabled "Integration is disabled"
+  @insufficient_plan "Insufficient plan"
+  @feature_disabled "Automations are switched off"
+  @webhook_revoked "webhook_url_revoked"
+  # Auto-disabling Slack errors — token / account / channel are not retry-worthy.
+  @auto_disable_errors ~w(token_revoked account_inactive channel_not_found)
+
+  @impl ExpectedJobOutcome
+  def expected_outcome?(reason),
+    do:
+      reason in [@gone, @disabled, @insufficient_plan, @feature_disabled, @webhook_revoked] or
+        reason in @auto_disable_errors
+
+  @impl Oban.Worker
+  def perform(
+        %Oban.Job{
+          args:
+            %{
+              "integration_id" => integration_id,
+              "event_type" => event_type,
+              "meeting_id" => meeting_id
+            } = args,
+          attempt: attempt
+        } = job
+      ) do
+    Logger.metadata(job_id: job.id, attempt: attempt)
+
+    with {:ok, integration} <- SlackQueries.get_integration(integration_id),
+         :ok = ErrorTracking.put_context(user_id: integration.user_id),
+         :ok <- MeetingNotificationJob.feature_gate(integration.user_id),
+         :ok <- check_active(integration),
+         {:ok, meeting} <- MeetingNotificationJob.load_meeting(meeting_id, args["participant_id"]) do
+      timezone = Recipients.get_organizer_timezone(meeting)
+      blocks = MessageBuilder.build_blocks(event_type, meeting, timezone, args["series"])
+
+      DeliveryClaims.once(job, "slack_message", fn ->
+        result = deliver(integration, blocks)
+        handle_result(integration, event_type, meeting_id, blocks, job, result)
+      end)
+    else
+      {:error, :not_found} -> {:discard, @gone}
+      {:error, :disabled} -> {:discard, @disabled}
+      {:revoked, _reason} -> {:discard, @insufficient_plan}
+      {:discard, :feature_disabled} -> {:discard, @feature_disabled}
+      {:error, :feature_access_checker_failed} = error -> error
+    end
+  end
+
+  def perform(%Oban.Job{id: job_id, args: args, attempt: attempt}) do
+    Logger.metadata(job_id: job_id, attempt: attempt)
+
+    Logger.error("SlackWorker job missing required parameters",
+      arg_keys: Map.keys(args)
+    )
+
+    {:discard, "Missing required parameters"}
+  end
+
+  @doc """
+  Schedules a message for a meeting event.
+
+  `participant_id` names the seat of a group meeting the event is about (see
+  `Tymeslot.Meetings.SeatView`), or is `nil` for a solo meeting; the seat is
+  part of the uniqueness key (see
+  `Tymeslot.Workers.MeetingNotificationJob.schedule/5`).
+
+  `series` is the event's `series` object
+  (`Tymeslot.BookingSeries.Automation`), stored with the job for the
+  message of a series event.
+  """
+  @spec schedule_delivery(integer(), String.t(), binary(), binary() | nil, map() | nil) ::
+          :ok | {:error, term()}
+  def schedule_delivery(
+        integration_id,
+        event_type,
+        meeting_id,
+        participant_id \\ nil,
+        series \\ nil
+      ) do
+    MeetingNotificationJob.schedule(
+      __MODULE__,
+      put_series(
+        %{
+          "integration_id" => integration_id,
+          "event_type" => event_type,
+          "meeting_id" => meeting_id
+        },
+        series
+      ),
+      participant_id,
+      [:integration_id, :event_type, :meeting_id],
+      queue: :slack_messages
+    )
+  end
+
+  @impl Oban.Worker
+  defdelegate backoff(job), to: MeetingNotificationJob, as: :chat_backoff
+
+  # The event's `series` object (`Tymeslot.BookingSeries.Automation`), which
+  # a series event's message counts its sessions from.
+  defp put_series(args, nil), do: args
+  defp put_series(args, series) when is_map(series), do: Map.put(args, "series", series)
+
+  # ============================================================================
+  # Private helpers
+  # ============================================================================
+
+  defp check_active(%SlackIntegrationSchema{} = integration) do
+    if SlackIntegrationSchema.status(integration) == :active,
+      do: :ok,
+      else: {:error, :disabled}
+  end
+
+  defp deliver(%SlackIntegrationSchema{app_mode: :oauth} = integration, blocks) do
+    case Slack.resolve_bot_token(integration) do
+      {:ok, token} -> API.post_message_via_token(token, integration.channel_id, blocks)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp deliver(%SlackIntegrationSchema{app_mode: :webhook_url} = integration, blocks) do
+    case SlackIntegrationSchema.webhook_url(integration) do
+      nil -> {:error, :no_webhook_url}
+      url -> API.post_message_via_webhook(url, blocks)
+    end
+  end
+
+  defp handle_result(integration, event_type, meeting_id, blocks, %Oban.Job{} = job, result) do
+    delivery_attrs = %{
+      integration_id: integration.id,
+      event_type: event_type,
+      meeting_id: to_string(meeting_id),
+      message_blocks: %{"blocks" => blocks},
+      attempt_count: job.attempt
+    }
+
+    case result do
+      {:ok, body} -> handle_success(integration, delivery_attrs, body)
+      {:error, reason} -> handle_error(integration, delivery_attrs, job, reason)
+    end
+  end
+
+  defp handle_success(integration, delivery_attrs, body) do
+    persist_success(delivery_attrs, body)
+    Slack.record_success(integration)
+    :ok
+  end
+
+  defp handle_error(integration, delivery_attrs, _job, {:slack_error, err, _body})
+       when err in @auto_disable_errors,
+       do: auto_disable_and_log(integration, err, delivery_attrs)
+
+  # Rate-limit responses (HTTP 429 from either the Web API or hooks.slack.com,
+  # and the `ok:false ratelimited` body) snooze for the requested interval and
+  # must never count toward the auto-disable failure budget.
+  defp handle_error(_integration, delivery_attrs, _job, {:rate_limited, retry_after}) do
+    log_failure(delivery_attrs, "ratelimited", nil)
+    {:snooze, retry_after_from(retry_after)}
+  end
+
+  defp handle_error(
+         _integration,
+         delivery_attrs,
+         _job,
+         {:slack_error, "ratelimited", body, retry_after}
+       ) do
+    log_failure(delivery_attrs, "ratelimited", body)
+    {:snooze, retry_after_from(retry_after)}
+  end
+
+  defp handle_error(integration, delivery_attrs, job, {:slack_error, err, body}) do
+    log_failure(delivery_attrs, err, body)
+    if MeetingNotificationJob.final_attempt?(job), do: Slack.record_failure(integration, err)
+    {:error, err}
+  end
+
+  defp handle_error(integration, delivery_attrs, job, {:http_error, status, body}) do
+    log_failure(delivery_attrs, "http_#{status}", body)
+
+    if MeetingNotificationJob.final_attempt?(job),
+      do: Slack.record_failure(integration, "http_#{status}")
+
+    {:error, {:http_error, status}}
+  end
+
+  # A 404 from an Incoming Webhook URL means the user revoked the hook in Slack.
+  # Retries will never succeed — auto-disable the same way we do for token_revoked.
+  defp handle_error(integration, delivery_attrs, _job, {:webhook_error, 404, _body}),
+    do: auto_disable_and_log(integration, @webhook_revoked, delivery_attrs)
+
+  defp handle_error(integration, delivery_attrs, job, {:webhook_error, status, body}) do
+    log_failure(delivery_attrs, "webhook_#{status}", body)
+
+    if MeetingNotificationJob.final_attempt?(job),
+      do: Slack.record_failure(integration, "webhook_#{status}")
+
+    {:error, {:webhook_error, status}}
+  end
+
+  defp handle_error(integration, delivery_attrs, job, {:transport_error, reason}) do
+    log_failure(delivery_attrs, "transport_error", reason)
+
+    if MeetingNotificationJob.final_attempt?(job),
+      do: Slack.record_failure(integration, inspect(reason))
+
+    {:error, :transport_error}
+  end
+
+  defp handle_error(integration, delivery_attrs, job, reason) do
+    log_failure(delivery_attrs, inspect(reason), nil)
+
+    if MeetingNotificationJob.final_attempt?(job),
+      do: Slack.record_failure(integration, inspect(reason))
+
+    {:error, reason}
+  end
+
+  defp auto_disable_and_log(integration, reason, delivery_attrs) do
+    log_failure(delivery_attrs, reason, nil)
+    Slack.auto_disable(integration, reason)
+    {:discard, reason}
+  end
+
+  defp persist_success(delivery_attrs, body) do
+    sanitized = sanitize_body(body)
+
+    attrs =
+      Map.merge(delivery_attrs, %{
+        response_status: 200,
+        response_body: truncate(sanitized, 2000),
+        delivered_at: DateTime.utc_now()
+      })
+
+    persist_delivery(attrs)
+  end
+
+  defp log_failure(delivery_attrs, error, body) do
+    sanitized = sanitize_body(body)
+
+    attrs =
+      delivery_attrs
+      |> Map.put(:error_message, truncate(error, 255))
+      |> maybe_put_body(sanitized)
+
+    persist_delivery(attrs)
+  end
+
+  defp maybe_put_body(attrs, nil), do: attrs
+  defp maybe_put_body(attrs, body), do: Map.put(attrs, :response_body, truncate(body, 2000))
+
+  defp persist_delivery(attrs) do
+    case SlackQueries.create_delivery(attrs) do
+      {:ok, _delivery} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to create Slack delivery log", error: LogFormat.reason(reason))
+    end
+  end
+
+  # ============================================================================
+  # Response sanitisation
+  #
+  # Slack error payloads sometimes echo `access_token` / `token` keys. Strip
+  # them before persisting so the delivery log cannot leak credentials.
+  # ============================================================================
+
+  defp sanitize_body(nil), do: nil
+
+  defp sanitize_body(body) when is_struct(body), do: inspect(body)
+
+  defp sanitize_body(body) when is_map(body) do
+    body
+    |> Map.drop(["access_token", "token", :access_token, :token])
+    |> Jason.encode!()
+  end
+
+  defp sanitize_body(body) when is_binary(body), do: body
+  defp sanitize_body(body), do: inspect(body)
+
+  defp retry_after_from(seconds),
+    do: RetryHelpers.clamp_retry_after(seconds, max: 600, default: 30)
+
+  defp truncate(text, max) when is_binary(text) do
+    if String.length(text) > max do
+      String.slice(text, 0, max)
+    else
+      text
+    end
+  end
+
+  defp truncate(other, _max), do: inspect(other)
+end

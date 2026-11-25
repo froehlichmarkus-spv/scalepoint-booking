@@ -1,0 +1,218 @@
+defmodule Tymeslot.Meetings.BookingLimits do
+  @moduledoc """
+  Pure logic for booking limits: caps on how many bookings a host accepts
+  per day, week, and month.
+
+  Two axes compose, each with daily/weekly/monthly caps:
+
+    * account-wide caps, stored on the host's profile
+    * per-meeting-type caps, stored on the meeting type
+
+  A booking instant passes only when every configured cap still has room.
+  Limits count the scheduler bookings that hold a slot (see
+  `Tymeslot.Meetings.MeetingState.where_slot_live/1`) — never external
+  calendar events, which are conflict-checking's concern.
+
+  Period boundaries resolve in the host's timezone (the limit protects the
+  host), with weeks starting on the host's own week start day
+  (`Tymeslot.Integrations.Calendar.Management.get_week_start/1`). All functions here are pure; rows
+  come from `Tymeslot.Meetings.MeetingQueries.list_live_booking_starts/4`,
+  and `Tymeslot.Meetings.BookingLimits.Checker` wires the two together.
+  """
+
+  alias Tymeslot.Locales.WeekStart
+  alias Tymeslot.Utils.DateTimeUtils
+
+  @type caps :: %{day: pos_integer() | nil, week: pos_integer() | nil, month: pos_integer() | nil}
+  @type limits :: %{account: caps(), per_type: caps(), meeting_type_id: integer() | nil}
+  @type booking_row :: %{start_time: DateTime.t(), meeting_type_id: integer() | nil}
+  @type period_key :: {:day | :week | :month, Date.t()}
+  @type context :: %{
+          limits: limits(),
+          host_timezone: String.t(),
+          week_start: WeekStart.t(),
+          account_counts: %{period_key() => non_neg_integer()},
+          type_counts: %{period_key() => non_neg_integer()}
+        }
+
+  @doc """
+  Extracts the applicable caps from a profile (or settings map) and an
+  optional meeting type. Missing keys and `nil` sources mean "no cap".
+  """
+  @spec limits_for(map() | nil, map() | nil) :: limits()
+  def limits_for(profile_settings, meeting_type) do
+    %{
+      account: caps_from(profile_settings),
+      per_type: caps_from(meeting_type),
+      meeting_type_id: meeting_type && Map.get(meeting_type, :id)
+    }
+  end
+
+  @doc "Whether any cap is configured. Callers can skip all work when false."
+  @spec enabled?(limits()) :: boolean()
+  def enabled?(%{account: account, per_type: per_type}) do
+    Enum.any?(Map.values(account)) or Enum.any?(Map.values(per_type))
+  end
+
+  @doc "The host-timezone calendar day containing the given instant."
+  @spec day_key(DateTime.t(), String.t()) :: Date.t()
+  def day_key(%DateTime{} = instant, host_timezone) do
+    instant
+    |> DateTimeUtils.convert_to_timezone(host_timezone)
+    |> DateTime.to_date()
+  end
+
+  @doc """
+  The host dates the instants of the booker dates `start_date..end_date`
+  fall on, as `{first, last}`.
+
+  A booker's day can begin and end on host dates up to two days away from
+  it: zones sit up to 26 hours apart (UTC-12 to UTC+14), so a booker in
+  Pacific/Kiritimati looking at a Tuesday can be offered a slot on the host's
+  Sunday in Pacific/Pago_Pago.
+  """
+  @spec host_dates(Date.t(), Date.t(), String.t(), String.t()) :: {Date.t(), Date.t()}
+  def host_dates(%Date{} = start_date, %Date{} = end_date, booker_timezone, host_timezone) do
+    first =
+      start_date
+      |> DateTimeUtils.create_datetime_safe(~T[00:00:00], booker_timezone)
+      |> day_key(host_timezone)
+
+    last =
+      end_date
+      |> Date.add(1)
+      |> DateTimeUtils.create_datetime_safe(~T[00:00:00], booker_timezone)
+      |> DateTime.add(-1, :second)
+      |> day_key(host_timezone)
+
+    {first, last}
+  end
+
+  @doc """
+  The UTC window whose bookings can affect any day/week/month cap that a
+  host date in `start_date..end_date` falls under.
+
+  Widens the range to the enclosing `week_start` weeks and calendar months: weekly
+  and monthly caps are judged on the full enclosing period, even the parts
+  outside the displayed or bookable range. A caller starting from booker
+  dates converts them with `host_dates/4` first.
+  Returns `{from_utc, to_utc}` with `to_utc` exclusive.
+  """
+  @spec expanded_query_window(Date.t(), Date.t(), String.t(), WeekStart.t()) ::
+          {DateTime.t(), DateTime.t()}
+  def expanded_query_window(%Date{} = start_date, %Date{} = end_date, host_timezone, week_start) do
+    from_date =
+      Enum.min(
+        [Date.beginning_of_week(start_date, week_start), Date.beginning_of_month(start_date)],
+        Date
+      )
+
+    to_date =
+      Enum.max(
+        [Date.end_of_week(end_date, week_start), Date.end_of_month(end_date)],
+        Date
+      )
+
+    {host_midnight_utc(from_date, host_timezone),
+     host_midnight_utc(Date.add(to_date, 1), host_timezone)}
+  end
+
+  @doc """
+  Buckets booking rows into per-period counts for both axes. Type counts
+  only accumulate rows matching `limits.meeting_type_id`.
+  """
+  @spec build_context(limits(), String.t(), WeekStart.t(), [booking_row()]) :: context()
+  def build_context(limits, host_timezone, week_start, rows) do
+    empty = %{
+      limits: limits,
+      host_timezone: host_timezone,
+      week_start: week_start,
+      account_counts: %{},
+      type_counts: %{}
+    }
+
+    Enum.reduce(rows, empty, &count_booking(&2, &1))
+  end
+
+  @doc """
+  `context` with one more booking counted, as though `row` had been among
+  the rows it was built from. For a caller weighing several bookings that
+  are not yet made, such as the sessions of a series, each against the ones
+  before it.
+  """
+  @spec count_booking(context(), booking_row()) :: context()
+  def count_booking(context, %{start_time: start_time, meeting_type_id: meeting_type_id}) do
+    %{limits: limits, host_timezone: host_timezone, week_start: week_start} = context
+    bump = &bump_periods(&1, start_time, host_timezone, week_start)
+    context = Map.update!(context, :account_counts, bump)
+
+    if meeting_type_id == limits.meeting_type_id and not is_nil(meeting_type_id),
+      do: Map.update!(context, :type_counts, bump),
+      else: context
+  end
+
+  @doc """
+  Whether a candidate booking at `instant` would exceed any configured cap.
+  """
+  @spec slot_blocked?(context(), DateTime.t()) :: boolean()
+  def slot_blocked?(context, %DateTime{} = instant) do
+    keys = period_keys(instant, context.host_timezone, context.week_start)
+
+    axis_blocked?(context.limits.account, context.account_counts, keys) or
+      axis_blocked?(context.limits.per_type, context.type_counts, keys)
+  end
+
+  @doc """
+  Booking-time form of `slot_blocked?/2`.
+  """
+  @spec check_booking_allowed(context(), DateTime.t()) :: :ok | {:error, :booking_limit_reached}
+  def check_booking_allowed(context, %DateTime{} = instant) do
+    if slot_blocked?(context, instant) do
+      {:error, :booking_limit_reached}
+    else
+      :ok
+    end
+  end
+
+  defp caps_from(nil), do: %{day: nil, week: nil, month: nil}
+
+  defp caps_from(source) do
+    %{
+      day: Map.get(source, :max_bookings_per_day),
+      week: Map.get(source, :max_bookings_per_week),
+      month: Map.get(source, :max_bookings_per_month)
+    }
+  end
+
+  defp period_keys(instant, host_timezone, week_start) do
+    day = day_key(instant, host_timezone)
+
+    %{
+      day: {:day, day},
+      week: {:week, Date.beginning_of_week(day, week_start)},
+      month: {:month, Date.beginning_of_month(day)}
+    }
+  end
+
+  defp bump_periods(counts, start_time, host_timezone, week_start) do
+    start_time
+    |> period_keys(host_timezone, week_start)
+    |> Map.values()
+    |> Enum.reduce(counts, fn key, acc -> Map.update(acc, key, 1, &(&1 + 1)) end)
+  end
+
+  defp axis_blocked?(caps, counts, keys) do
+    Enum.any?([:day, :week, :month], fn period ->
+      case caps[period] do
+        nil -> false
+        cap -> Map.get(counts, keys[period], 0) >= cap
+      end
+    end)
+  end
+
+  defp host_midnight_utc(date, host_timezone) do
+    date
+    |> DateTimeUtils.create_datetime_safe(~T[00:00:00], host_timezone)
+    |> DateTimeUtils.convert_to_timezone("Etc/UTC")
+  end
+end

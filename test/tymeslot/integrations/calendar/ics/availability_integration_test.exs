@@ -1,0 +1,227 @@
+defmodule Tymeslot.Integrations.Calendar.Ics.AvailabilityIntegrationTest do
+  @moduledoc """
+  Exercises the read path a subscribed feed's cached events travel through to
+  reach availability: `ClientManager.clients/1` resolving the integration to
+  a client built by `Ics.Provider.new/1` (the config `build_client_configs/1`
+  produces never reaches `list_events/2` directly — `ProviderRegistry`
+  round-trips it through `new/1` first), and the cached event coming back out
+  through the real fan-out (`Runtime.EventFetcher`) rather than a unit test
+  calling `Provider.list_events/2` with a hand-built client.
+
+  A regression that stops `new/1` threading `calendar_integration_id` through
+  (or a `ClientManager` change that resolves the subscription via some other
+  path) would silently fail `list_events/2` open to `{:ok, []}` — no
+  conflicts, no blocked slots — without either of the read failing.
+  """
+
+  use Tymeslot.DataCase, async: false
+
+  @moduletag :integration
+  @moduletag :integrations
+  @moduletag :calendar
+
+  alias Ecto.Changeset
+  alias Tymeslot.Integrations.Calendar
+  alias Tymeslot.Integrations.Calendar.CalendarEntry
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Integrations.Calendar.Ics.Provider, as: IcsProvider
+  alias Tymeslot.Integrations.Calendar.Runtime.ClientManager
+  alias Tymeslot.Integrations.Calendar.Runtime.EventFetcher
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.Encryption
+  alias Tymeslot.Security.RateLimiter
+
+  @feed_url "https://feeds.example.com/secret-address/team.ics"
+
+  setup do
+    user = insert(:user)
+
+    integration =
+      insert(:calendar_integration,
+        user: user,
+        provider: "ics_url",
+        base_url: "https://feeds.example.com",
+        username_encrypted: nil,
+        password_encrypted: nil,
+        subscription_url_encrypted: Encryption.encrypt(@feed_url),
+        is_active: true
+      )
+
+    insert(:provider_calendar_event,
+      calendar_integration: integration,
+      provider: "ics_url",
+      provider_calendar_id: "subscription",
+      uid: "blocked-slot@example.com",
+      summary: "Publisher busy block",
+      start_at: ~U[2026-08-10 09:00:00.000000Z],
+      end_at: ~U[2026-08-10 10:00:00.000000Z],
+      all_day: false
+    )
+
+    %{user: user, integration: integration}
+  end
+
+  describe "ClientManager.clients/1 for a subscribed feed" do
+    test "yields the client Ics.Provider.new/1 builds, carrying the integration id through", %{
+      user: user,
+      integration: integration
+    } do
+      assert [%{provider_type: :ics_url, client: client, provider_module: IcsProvider}] =
+               ClientManager.clients(user.id)
+
+      # `ProviderRegistry.create_client/3` calls `new/1` on the config
+      # `build_client_configs/1` returns; assert the shape `new/1` actually
+      # produces (rather than the pre-`new/1` config) so a regression that
+      # drops `calendar_integration_id` on that hop fails here.
+      assert client.calendar_integration_id == integration.id
+      assert client.feed_url == @feed_url
+      assert client.calendar_path == "subscription"
+    end
+  end
+
+  describe "the subscribed feed's cached events block availability" do
+    test "the cached event reaches the real read path end-to-end", %{user: user} do
+      assert {:ok, events} =
+               EventFetcher.get_events_for_range_fresh(user.id, ~D[2026-08-01], ~D[2026-08-20])
+
+      assert Enum.any?(events, &(&1.uid == "blocked-slot@example.com"))
+    end
+
+    test "a feed set to show only contributes nothing", %{user: user, integration: integration} do
+      integration
+      |> Changeset.change(
+        calendar_list: [
+          %CalendarEntry{
+            id: "subscription",
+            path: "subscription",
+            selected: true,
+            read_only: true,
+            blocks_availability: false
+          }
+        ]
+      )
+      |> Repo.update!()
+
+      assert {:ok, events} =
+               EventFetcher.get_events_for_range_fresh(user.id, ~D[2026-08-01], ~D[2026-08-20])
+
+      refute Enum.any?(events, &(&1.uid == "blocked-slot@example.com"))
+    end
+
+    test "a range that excludes the cached event's window returns no events for it", %{
+      user: user
+    } do
+      assert {:ok, events} =
+               EventFetcher.get_events_for_range_fresh(user.id, ~D[2026-09-01], ~D[2026-09-30])
+
+      refute Enum.any?(events, &(&1.uid == "blocked-slot@example.com"))
+    end
+  end
+
+  describe "an event the feed marks free" do
+    setup %{integration: integration} do
+      # How holiday feeds publish every entry: free, so it does not show as
+      # busy in the calendars it is subscribed in.
+      insert(:provider_calendar_event,
+        calendar_integration: integration,
+        provider: "ics_url",
+        provider_calendar_id: "subscription",
+        uid: "public-holiday@example.com",
+        summary: "Public holiday",
+        start_at: ~U[2026-08-11 00:00:00.000000Z],
+        end_at: ~U[2026-08-12 00:00:00.000000Z],
+        all_day: true,
+        start_date: ~D[2026-08-11],
+        end_date: ~D[2026-08-12],
+        transparency: "transparent"
+      )
+
+      :ok
+    end
+
+    test "blocks nothing by default", %{user: user} do
+      assert holiday(user).transparency == "transparent"
+      refute CalendarEvent.blocking?(holiday(user))
+    end
+
+    test "blocks once the subscription counts every event as busy, without a new sync", %{
+      user: user,
+      integration: integration
+    } do
+      assert {:ok, %{all_events_busy: true}} =
+               Calendar.set_all_events_busy(user.id, integration.id, true)
+
+      assert holiday(user).transparency == "opaque"
+      assert CalendarEvent.blocking?(holiday(user))
+
+      # The feed's own busy event is untouched by the flag either way.
+      assert busy_block(user).transparency == "opaque"
+
+      assert {:ok, %{all_events_busy: false}} =
+               Calendar.set_all_events_busy(user.id, integration.id, false)
+
+      refute CalendarEvent.blocking?(holiday(user))
+    end
+  end
+
+  describe "Calendar.set_all_events_busy/3" do
+    test "refuses a connection that is not a subscription", %{user: user} do
+      caldav = insert(:calendar_integration, user: user, provider: "caldav")
+
+      assert {:error, :not_a_subscription} =
+               Calendar.set_all_events_busy(user.id, caldav.id, true)
+
+      refute Repo.reload!(caldav).all_events_busy
+    end
+
+    test "refuses a feed set not to block, keeping what was stored", %{
+      user: user,
+      integration: integration
+    } do
+      integration
+      |> Changeset.change(
+        calendar_list: [%{id: "subscription", selected: true, blocks_availability: false}]
+      )
+      |> Repo.update!()
+
+      assert {:error, :feed_does_not_block} =
+               Calendar.set_all_events_busy(user.id, integration.id, true)
+
+      refute Repo.reload!(integration).all_events_busy
+    end
+
+    test "refuses another user's subscription", %{integration: integration} do
+      other = insert(:user)
+
+      assert {:error, :not_found} =
+               Calendar.set_all_events_busy(other.id, integration.id, true)
+
+      refute Repo.reload!(integration).all_events_busy
+    end
+
+    test "is refused once the owner's write budget is spent", %{
+      user: user,
+      integration: integration
+    } do
+      fn -> RateLimiter.check(:integration_write, user.id) end
+      |> Stream.repeatedly()
+      |> Enum.find(&match?({:error, :rate_limited, _message}, &1))
+
+      assert {:error, {:rate_limited, message}} =
+               Calendar.set_all_events_busy(user.id, integration.id, true)
+
+      assert byte_size(message) > 0
+      refute Repo.reload!(integration).all_events_busy
+    end
+  end
+
+  defp holiday(user), do: event(user, "public-holiday@example.com")
+  defp busy_block(user), do: event(user, "blocked-slot@example.com")
+
+  defp event(user, uid) do
+    {:ok, events} =
+      EventFetcher.get_events_for_range_fresh(user.id, ~D[2026-08-01], ~D[2026-08-20])
+
+    Enum.find(events, &(&1.uid == uid))
+  end
+end

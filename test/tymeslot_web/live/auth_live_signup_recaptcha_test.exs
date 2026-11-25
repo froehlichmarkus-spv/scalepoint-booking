@@ -1,0 +1,419 @@
+defmodule TymeslotWeb.AuthLiveSignupRecaptchaTest do
+  use TymeslotWeb.LiveCase, async: false
+
+  alias Tymeslot.Auth.UserSchema
+  alias Tymeslot.HTTPClientMock
+  alias Tymeslot.Infrastructure.Security.Recaptcha
+  alias Tymeslot.Infrastructure.Security.RecaptchaHelpers
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.Test.SuiteConfig
+
+  @moduletag :recaptcha_signup_test
+  @moduletag backup_tests: true
+  @moduletag skip: SuiteConfig.unless_included(:backup_tests)
+  @moduletag :auth
+  @moduletag :security
+
+  setup do
+    RateLimiter.clear_all()
+
+    # Save original config and env vars
+    old_cfg = Application.get_env(:tymeslot, :recaptcha, [])
+    old_site_key = System.get_env("RECAPTCHA_SITE_KEY")
+    old_secret_key = System.get_env("RECAPTCHA_SECRET_KEY")
+
+    # The signup form only renders the terms checkbox when legal agreements are
+    # enforced, and every test here submits that field.
+    old_legal = Application.get_env(:tymeslot, :enforce_legal_agreements)
+    Application.put_env(:tymeslot, :enforce_legal_agreements, true)
+
+    on_exit(fn ->
+      Application.put_env(:tymeslot, :recaptcha, old_cfg)
+      Application.put_env(:tymeslot, :enforce_legal_agreements, old_legal)
+
+      if old_site_key,
+        do: System.put_env("RECAPTCHA_SITE_KEY", old_site_key),
+        else: System.delete_env("RECAPTCHA_SITE_KEY")
+
+      if old_secret_key,
+        do: System.put_env("RECAPTCHA_SECRET_KEY", old_secret_key),
+        else: System.delete_env("RECAPTCHA_SECRET_KEY")
+    end)
+
+    :ok
+  end
+
+  # Helper to enable reCAPTCHA for tests
+  defp enable_recaptcha do
+    Application.put_env(:tymeslot, :recaptcha,
+      signup_enabled: true,
+      signup_min_score: 0.3,
+      signup_action: "signup_form",
+      expected_hostnames: []
+    )
+
+    System.put_env("RECAPTCHA_SITE_KEY", "test_site_key")
+    System.put_env("RECAPTCHA_SECRET_KEY", "test_secret_key")
+  end
+
+  test "signup is blocked when reCAPTCHA token is missing and reCAPTCHA is enabled", %{conn: conn} do
+    enable_recaptcha()
+    {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+    params = %{
+      "email" => "recaptcha-test@example.com",
+      "password" => "ValidPassword123!",
+      "terms_accepted" => "true"
+      # g-recaptcha-response field will be empty in the form
+    }
+
+    view
+    |> form("#signup-form", %{"user" => params})
+    |> render_submit()
+
+    # Should stay on signup (not proceed)
+    assert render(view) =~ "Security verification failed"
+    # Should not create user
+    assert Repo.aggregate(UserSchema, :count, :id) == 0
+  end
+
+  test "signup proceeds when reCAPTCHA is disabled", %{conn: conn} do
+    # Disable reCAPTCHA for this test
+    Application.put_env(:tymeslot, :recaptcha, signup_enabled: false)
+
+    {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+    params = %{
+      "email" => "no-recaptcha@example.com",
+      "password" => "ValidPassword123!",
+      "terms_accepted" => "true"
+    }
+
+    view
+    |> form("#signup-form", %{"user" => params})
+    |> render_submit()
+
+    # Should proceed to verify-email (reCAPTCHA disabled)
+    assert_patch(view, ~p"/auth/verify-email")
+    assert Repo.aggregate(UserSchema, :count, :id) == 1
+  end
+
+  test "signup proceeds when reCAPTCHA is enabled but keys are missing", %{conn: conn} do
+    # Enable reCAPTCHA but don't set keys (should fail-open)
+    Application.put_env(:tymeslot, :recaptcha,
+      signup_enabled: true,
+      signup_min_score: 0.3,
+      signup_action: "signup_form",
+      expected_hostnames: []
+    )
+
+    # Ensure keys are not set
+    System.delete_env("RECAPTCHA_SITE_KEY")
+    System.delete_env("RECAPTCHA_SECRET_KEY")
+
+    {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+    params = %{
+      "email" => "missing-keys@example.com",
+      "password" => "ValidPassword123!",
+      "terms_accepted" => "true"
+    }
+
+    view
+    |> form("#signup-form", %{"user" => params})
+    |> render_submit()
+
+    # Should proceed (fail-open when keys missing)
+    assert_patch(view, ~p"/auth/verify-email")
+    assert Repo.aggregate(UserSchema, :count, :id) == 1
+  end
+
+  test "signup fails when reCAPTCHA script is blocked (CSP, extension, or JS disabled)", %{
+    conn: conn
+  } do
+    enable_recaptcha()
+    # Google answers, and refuses the marker as it refuses any non-token.
+    google_rejects_tokens()
+    {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+    # Simulate the client-side Recaptcha hook sending the special marker when the reCAPTCHA
+    # script failed to load (CSP, extension, or JS disabled). The form helper validates hidden
+    # inputs against DOM defaults (the hidden token is rendered with value=""), so we call the
+    # event directly but still include a real `_csrf_token`.
+    csrf_html = view |> element("input[name=_csrf_token]") |> render()
+    [_csrf_pattern, csrf_token] = Regex.run(~r/value="([^"]+)"/, csrf_html)
+
+    render_submit(view, "submit_signup", %{
+      "_csrf_token" => csrf_token,
+      "user" => %{
+        "email" => "blocked@example.com",
+        "password" => "ValidPassword123!",
+        "terms_accepted" => "true",
+        "g-recaptcha-response" => "RECAPTCHA_SCRIPT_BLOCKED"
+      }
+    })
+
+    # Should stay on signup with helpful error message
+    assert render(view) =~ "Security verification unavailable"
+    assert render(view) =~ "enable JavaScript"
+    # No user should be created
+    assert Repo.aggregate(UserSchema, :count, :id) == 0
+  end
+
+  describe "Google outage" do
+    test "signup goes through when siteverify cannot be reached", %{conn: conn} do
+      enable_recaptcha()
+      stub_siteverify({:error, %Req.TransportError{reason: :timeout}})
+
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+      submit_signup_with_token(view, "outage@example.com", "some-token")
+
+      assert_patch(view, ~p"/auth/verify-email")
+      assert Repo.aggregate(UserSchema, :count, :id) == 1
+    end
+
+    test "signup goes through when siteverify answers with a 5xx", %{conn: conn} do
+      enable_recaptcha()
+      stub_siteverify({:ok, %Req.Response{status: 502, body: ""}})
+
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+      submit_signup_with_token(view, "outage-5xx@example.com", "some-token")
+
+      assert_patch(view, ~p"/auth/verify-email")
+      assert Repo.aggregate(UserSchema, :count, :id) == 1
+    end
+
+    test "a token Google refuses still blocks signup", %{conn: conn} do
+      enable_recaptcha()
+      google_rejects_tokens()
+
+      {:ok, view, _html} = live(conn, ~p"/auth/signup")
+      submit_signup_with_token(view, "forged@example.com", "forged-token")
+
+      assert render(view) =~ "Security verification failed"
+      assert Repo.aggregate(UserSchema, :count, :id) == 0
+    end
+  end
+
+  defp submit_signup_with_token(view, email, token) do
+    csrf_html = view |> element("input[name=_csrf_token]") |> render()
+    [_csrf_pattern, csrf_token] = Regex.run(~r/value="([^"]+)"/, csrf_html)
+
+    render_submit(view, "submit_signup", %{
+      "_csrf_token" => csrf_token,
+      "user" => %{
+        "email" => email,
+        "password" => "ValidPassword123!",
+        "terms_accepted" => "true",
+        "g-recaptcha-response" => token
+      }
+    })
+  end
+
+  defp google_rejects_tokens do
+    body = Jason.encode!(%{"success" => false, "error-codes" => ["invalid-input-response"]})
+    stub_siteverify({:ok, %Req.Response{status: 200, body: body}})
+  end
+
+  defp stub_siteverify(response) do
+    Mox.stub(HTTPClientMock, :post, fn _url, _body, _headers, _opts -> response end)
+  end
+
+  test "rate limiter is checked before reCAPTCHA verification (hybrid gate)", %{conn: conn} do
+    enable_recaptcha()
+    {:ok, view, _html} = live(conn, ~p"/auth/signup")
+
+    # Hit rate limit by making multiple signup attempts (default limit is per rate limiter config)
+    for _i <- 1..10 do
+      params = %{
+        "email" => "rate-limited@example.com",
+        "password" => "ValidPassword123!",
+        "terms_accepted" => "true"
+      }
+
+      view
+      |> form("#signup-form", %{"user" => params})
+      |> render_submit()
+    end
+
+    # Next attempt should be rate-limited, NOT fail on reCAPTCHA
+    params = %{
+      "email" => "rate-limited@example.com",
+      "password" => "ValidPassword123!",
+      "terms_accepted" => "true"
+    }
+
+    view
+    |> form("#signup-form", %{"user" => params})
+    |> render_submit()
+
+    # Should show rate limit message, not reCAPTCHA message. The wording names
+    # the tightest signup tier, so it also pins that the refusal came from the
+    # signup limiter rather than from any other bucket.
+    rendered = render(view)
+
+    assert rendered =~ "reached the limit of 5 signup attempts per 10 minutes"
+
+    refute rendered =~ "Security verification failed",
+           "reCAPTCHA was verified before the rate limiter"
+  end
+
+  describe "Edge cases - Token and data handling" do
+    test "token at exactly 5KB boundary passes size check" do
+      # Enable reCAPTCHA
+      Application.put_env(:tymeslot, :recaptcha,
+        signup_enabled: true,
+        signup_min_score: 0.3,
+        signup_action: "signup_form",
+        expected_hostnames: []
+      )
+
+      System.put_env("RECAPTCHA_SITE_KEY", "test_site_key")
+      System.put_env("RECAPTCHA_SECRET_KEY", "test_secret_key")
+
+      # Create a token exactly 5KB (at the boundary, should not be rejected by size check)
+      max_token = String.duplicate("X", 5_000)
+
+      # The size check allows up to and including 5KB, so the token must reach
+      # the Google request rather than being rejected up front as :invalid_token.
+      Mox.stub(Tymeslot.HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:error, %Req.TransportError{reason: :timeout}}
+      end)
+
+      assert Recaptcha.verify(max_token) == {:error, :recaptcha_service_unavailable}
+    end
+
+    test "empty token is properly rejected with clear error" do
+      Application.put_env(:tymeslot, :recaptcha,
+        signup_enabled: true,
+        signup_min_score: 0.3,
+        signup_action: "signup_form",
+        expected_hostnames: []
+      )
+
+      System.put_env("RECAPTCHA_SITE_KEY", "test_site_key")
+      System.put_env("RECAPTCHA_SECRET_KEY", "test_secret_key")
+
+      result =
+        RecaptchaHelpers.verify(:signup, "", %{ip: "127.0.0.1", user_agent: "test"})
+
+      assert result == {:error, :recaptcha_failed}
+    end
+
+    test "signup with nil token is rejected safely" do
+      Application.put_env(:tymeslot, :recaptcha,
+        signup_enabled: true,
+        signup_min_score: 0.3,
+        signup_action: "signup_form",
+        expected_hostnames: []
+      )
+
+      System.put_env("RECAPTCHA_SITE_KEY", "test_site_key")
+      System.put_env("RECAPTCHA_SECRET_KEY", "test_secret_key")
+
+      result =
+        RecaptchaHelpers.verify(:signup, nil, %{ip: "127.0.0.1", user_agent: "test"})
+
+      assert result == {:error, :recaptcha_failed}
+    end
+  end
+
+  describe "Edge cases - Score boundaries" do
+    test "score validation respects threshold boundaries" do
+      # Test that score == threshold is accepted
+      result = Recaptcha.validate_min_score(0.3, 0.3)
+      assert result == :ok
+
+      # Test that score just below threshold is rejected
+      result = Recaptcha.validate_min_score(0.2999, 0.3)
+      assert result == {:error, :recaptcha_score_too_low}
+
+      # Test that score well above threshold is accepted
+      result = Recaptcha.validate_min_score(0.99, 0.3)
+      assert result == :ok
+
+      # Test boundary at 0.0 (all bots)
+      result = Recaptcha.validate_min_score(0.0, 0.3)
+      assert result == {:error, :recaptcha_score_too_low}
+
+      # Test boundary at 1.0 (all humans)
+      result = Recaptcha.validate_min_score(1.0, 0.3)
+      assert result == :ok
+    end
+
+    test "non-numeric score is properly rejected" do
+      result = Recaptcha.validate_min_score("not_a_number", 0.3)
+      assert result == {:error, :recaptcha_invalid_score}
+    end
+
+    test "non-numeric min_score configuration is rejected (prevents bypass)" do
+      # This catches the bug where someone sets signup_min_score: "0.5" instead of 0.5
+      result = Recaptcha.validate_min_score(0.8, "0.5")
+      assert result == {:error, :recaptcha_configuration_error}
+    end
+
+    test "string min_score config does not silently pass all scores" do
+      # Ensure that a configuration error (string min_score) doesn't cause silent bypass
+      # Even a perfect score should be rejected if config is broken
+      result1 = Recaptcha.validate_min_score(0.99, "0.3")
+      result2 = Recaptcha.validate_min_score(1.0, "0.3")
+
+      assert result1 == {:error, :recaptcha_configuration_error}
+      assert result2 == {:error, :recaptcha_configuration_error}
+    end
+
+    test "nil min_score allows verification (optional validation)" do
+      # When min_score is nil, it's treated as optional validation
+      result = Recaptcha.validate_min_score(0.5, nil)
+      assert result == :ok
+    end
+  end
+
+  describe "Edge cases - Action and hostname validation" do
+    test "action mismatch is properly detected and rejected" do
+      result = Recaptcha.validate_expected_action("wrong_action", "signup_form")
+      assert result == {:error, :recaptcha_action_mismatch}
+    end
+
+    test "matching action is accepted" do
+      result = Recaptcha.validate_expected_action("signup_form", "signup_form")
+      assert result == :ok
+    end
+
+    test "nil action with no expectation is accepted" do
+      result = Recaptcha.validate_expected_action(nil, nil)
+      assert result == :ok
+    end
+
+    test "hostname mismatch is properly detected" do
+      result =
+        Recaptcha.validate_expected_hostname(
+          "attacker.com",
+          ["myapp.com", "www.myapp.com"]
+        )
+
+      assert result == {:error, :recaptcha_hostname_mismatch}
+    end
+
+    test "matching hostname is accepted" do
+      result =
+        Recaptcha.validate_expected_hostname(
+          "myapp.com",
+          ["myapp.com", "www.myapp.com"]
+        )
+
+      assert result == :ok
+    end
+
+    test "empty expected_hostnames allows any hostname" do
+      result =
+        Recaptcha.validate_expected_hostname(
+          "any-hostname.com",
+          []
+        )
+
+      assert result == :ok
+    end
+  end
+end

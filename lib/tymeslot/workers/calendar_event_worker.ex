@@ -1,0 +1,479 @@
+defmodule Tymeslot.Workers.CalendarEventWorker do
+  @moduledoc """
+  Oban worker for handling calendar event creation and updates with intelligent retry logic.
+
+  This worker handles:
+  - Async creation of calendar events in CalDAV servers
+  - Smart retry logic with progressive backoff
+  - Error categorization for appropriate handling
+  - Timeouts for CalDAV operations
+  - Error notifications to calendar owner on persistent failures
+
+  Total retry duration: ~18 minutes
+  - 5 attempts with 90s timeout each = 450s
+  - Backoff delays: 30s + 60s + 120s + 180s = 390s
+  - Total: 840s ≈ 14 minutes (plus processing time ≈ 18 minutes)
+  """
+
+  use Oban.Worker,
+    queue: :calendar_events,
+    max_attempts: 5,
+    # High priority for calendar sync
+    priority: 1
+
+  alias Tymeslot.Availability
+  alias Tymeslot.Infrastructure.ExpectedJobOutcome
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Integrations.Calendar.CalDAV.QueueWiring
+  alias Tymeslot.Integrations.Calendar.CalendarEventBuilder
+  alias Tymeslot.Integrations.Calendar.Events, as: CalendarEvents
+  alias Tymeslot.Integrations.Shared.ReauthHandling
+  alias Tymeslot.Jobs
+  alias Tymeslot.Meetings
+  alias Tymeslot.Meetings.CalendarEventSync
+  alias Tymeslot.Meetings.MeetingQueries
+  alias Tymeslot.Workers.Backoff
+  alias Tymeslot.Workers.Bounded
+  alias Tymeslot.Workers.RetryHelpers
+  alias Tymeslot.Workers.SnoozePolicy
+  require Logger
+
+  # Configuration
+  # 90 seconds for CalDAV operations, which are slow enough to need the room
+  # when a background job retries.
+  #
+  # Read at runtime rather than through `Application.compile_env/3`, which is
+  # this project's default: a compiled-in constant cannot be lowered by the test
+  # that exercises the timeout branch, so that test sat waiting out the full 90
+  # seconds and was half the Core suite's wall clock on its own. One
+  # `Application.get_env/3` per job is not a hot path.
+  @default_calendar_timeout_ms 90_000
+
+  # How long to wait behind another write to the same event, and for how many
+  # executions. A CalDAV round trip is a second or two, so a handful of short
+  # waits covers an ordinary one; a write wedged behind a slow server stops
+  # waiting and takes its chances rather than snoozing out of sight.
+  #
+  # The budget is measured in executions, genuine attempts included, so a job
+  # on its first run gets seven waits (roughly 14 to 21 seconds) and a retry
+  # gets correspondingly fewer; from the eighth attempt on it never waits.
+  @write_wait_seconds 2
+  @write_wait_jitter_seconds 1
+  @max_write_waits 8
+
+  @doc """
+  Performs the calendar event operation based on the action specified.
+  """
+  @behaviour ExpectedJobOutcome
+
+  # The meeting is gone, a conflicting write was handed to the offline queue,
+  # or only the owner can fix the integration by reconnecting. A calendar
+  # refusing authentication is recorded.
+  @meeting_gone "Meeting not found"
+  @queued_for_replay "Conflicting server-side change; queued for offline replay"
+  @no_calendar "No calendar to write the event to"
+
+  @impl ExpectedJobOutcome
+  def expected_outcome?(reason),
+    do:
+      reason in [@meeting_gone, @queued_for_replay, @no_calendar] or
+        reason == ReauthHandling.discard_reason()
+
+  @impl Oban.Worker
+  def perform(
+        %Oban.Job{args: %{"action" => action, "meeting_id" => meeting_id}, attempt: attempt} = job
+      ) do
+    Logger.metadata(job_id: job.id, attempt: attempt)
+
+    case wait_behind_earlier_write(job, meeting_id) do
+      {:snooze, seconds} -> {:snooze, seconds}
+      :go -> run(action, meeting_id, job, attempt)
+    end
+  end
+
+  # Every "wait for the calendar to recover" verdict below (a timeout, an open
+  # breaker, an unresponsive server, a failed connection, a rate limit) is a
+  # snooze, and from Oban 2.24 a snooze costs no attempt, so without a bound a
+  # calendar that never recovers keeps the booking's job alive for ever and
+  # its owner is never told. Twelve runs is anything from about twenty minutes
+  # (two-minute waits on an open breaker) to two hours (ten-minute waits on an
+  # unresponsive server); past it each run fails and spends an attempt.
+  #
+  # None of those verdicts reaches the owner email `CalendarEventSync` sends
+  # for a persistent create failure, so a create that spends its last attempt
+  # this way sends it here: otherwise the booking's calendar entry is lost
+  # with only an operator alert to show for it.
+  @max_recovery_snoozes 12
+  @recovery_exhausted "Calendar server did not recover within the maximum wait"
+
+  defp run(action, meeting_id, job, attempt) do
+    action
+    |> run_unbounded(meeting_id, job, attempt)
+    |> SnoozePolicy.bound(job,
+      max_snoozes: @max_recovery_snoozes,
+      reason: @recovery_exhausted
+    )
+    |> tap(&notify_if_create_abandoned(&1, action, meeting_id, job))
+  end
+
+  defp notify_if_create_abandoned(
+         {:error, @recovery_exhausted},
+         "create",
+         meeting_id,
+         %Oban.Job{attempt: attempt, max_attempts: max_attempts}
+       )
+       when attempt >= max_attempts,
+       do: CalendarEventSync.notify_create_abandoned(meeting_id, @recovery_exhausted)
+
+  defp notify_if_create_abandoned(_result, _action, _meeting_id, _job), do: :ok
+
+  defp run_unbounded(action, meeting_id, job, attempt) do
+    timeout_ms = attempt_timeout_ms()
+
+    case Bounded.run(fn -> dispatch_action(action, meeting_id, job.args, attempt) end, timeout_ms) do
+      {:ok, result} ->
+        handle_result(result, job)
+
+      {:exit, reason} ->
+        Logger.error("Calendar operation crashed",
+          action: action,
+          meeting_id: meeting_id,
+          reason: LogFormat.reason(reason)
+        )
+
+        {:error, "Calendar operation crashed: #{LogFormat.reason(reason)}"}
+
+      :timeout ->
+        Logger.error("Calendar operation timed out",
+          action: action,
+          meeting_id: meeting_id,
+          timeout_ms: timeout_ms
+        )
+
+        # Snooze instead of error to give the server recovery time before
+        # the next attempt, especially important before the final attempt.
+        {:snooze, 300}
+    end
+  end
+
+  @impl Oban.Worker
+  def backoff(%Oban.Job{attempt: attempt}), do: Backoff.ladder(attempt, [30, 60, 120, 180])
+
+  # ---------------------------------------------------------------------------
+  # One write at a time per event
+  # ---------------------------------------------------------------------------
+
+  # Oban's `unique` keeps a queued write from repeating one that has not begun,
+  # but nothing holds back a write that arrives while another is in flight —
+  # this queue runs ten at a time. Two conditional PUTs against one event
+  # cannot both win: the loser's `If-Match` names an ETag the winner has
+  # already replaced, and the server answers 412.
+  #
+  # That costs the newer write, which is the one carrying whatever prompted it.
+  # Approving a booking with a video meeting does exactly this: the approval's
+  # update is still talking to the server when the room is created, and the
+  # update that would carry the link collides with it. The host's entry then
+  # sits without the link until the offline queue replays the write on its next
+  # sync cycle, up to fifteen minutes later.
+  #
+  # Waiting is also what makes the write correct. A job that starts after the
+  # one in flight has finished reads the meeting again, and so writes the video
+  # link, the new title, the answer that changed — whatever landed while the
+  # other write was on the wire.
+  #
+  # Only a job that *started* earlier is waited for, so of any two jobs exactly
+  # one waits and the queue always moves.
+  defp wait_behind_earlier_write(%Oban.Job{id: id, attempted_at: %DateTime{}} = job, meeting_id)
+       when is_integer(id) do
+    if Jobs.earlier_job_executing?(__MODULE__, meeting_id, job) do
+      case SnoozePolicy.snooze_or_exhaust(SnoozePolicy.executions(job),
+             max_snoozes: @max_write_waits,
+             base_seconds: @write_wait_seconds,
+             jitter_seconds: @write_wait_jitter_seconds
+           ) do
+        {:snooze, seconds} ->
+          Logger.info("Another write to this event is in flight, waiting",
+            meeting_id: meeting_id,
+            snooze_seconds: seconds
+          )
+
+          {:snooze, seconds}
+
+        # Out of patience rather than out of options: run, and let the 412 path
+        # hand the write to the offline queue if the other one is still there.
+        :exhausted ->
+          :go
+      end
+    else
+      :go
+    end
+  end
+
+  # `Oban.Testing.perform_job/3` builds a job that was never inserted, so there
+  # is no queue for it to be behind.
+  defp wait_behind_earlier_write(_job, _meeting_id), do: :go
+
+  defp dispatch_action(action, meeting_id, args, attempt) do
+    case {action, args} do
+      {"create", _args} -> CalendarEventSync.create(meeting_id, attempt)
+      {"update", _args} -> CalendarEventSync.update(meeting_id, attempt)
+      {"delete", _args} -> CalendarEventSync.delete(meeting_id, attempt)
+      {"replace", %{"event_id" => id}} -> CalendarEventSync.replace(meeting_id, id, attempt)
+      _unknown -> {:discard, "Unknown action: #{action}"}
+    end
+  end
+
+  @doc """
+  The most one run of the job may spend on the calendar, in milliseconds.
+
+  The run's work (reading the meeting, refreshing the provider token, the
+  provider call itself and recording the event it made) happens in a task
+  that is stopped at this deadline, so nothing the run does outlasts it: by
+  then the event's id is recorded, or this run never records one. The worker
+  sets no Oban timeout of its own, so Oban never stops the job first and
+  leaves the task running.
+
+  `Tymeslot.Integrations.MeetingProvisioning.booking_event_video_fields/1`
+  relies on that bound, so it reads it from here rather than repeating it.
+  """
+  @spec attempt_timeout_ms() :: pos_integer()
+  def attempt_timeout_ms do
+    Application.get_env(:tymeslot, :calendar_timeout_ms, @default_calendar_timeout_ms)
+  end
+
+  # Private functions
+
+  defp handle_result(result, job) do
+    case result do
+      :ok ->
+        tidy_after_write(job)
+        :ok
+
+      # A rate limit that said how long to wait (see `OAuthBase`).
+      {:error, {:rate_limited, seconds}} when is_integer(seconds) ->
+        tag_for_offline_queue(job, :rate_limited)
+        handle_error_result(:rate_limited, job, "retry_after:#{seconds}")
+
+      {:error, error_type} ->
+        handle_failure(error_type, job)
+
+      {:error, error_type, message} when is_binary(message) ->
+        tag_for_offline_queue(job, error_type)
+        handle_error_result(error_type, job, message)
+
+      {:discard, reason} ->
+        {:discard, reason}
+
+      _unexpected ->
+        handle_unexpected_result(result)
+    end
+  end
+
+  # The organiser has no calendar the scheduler can write to (none connected, or the
+  # one the meeting named is gone). Retrying cannot change that, so the job ends
+  # here rather than failing through every attempt.
+  defp handle_failure(error_type, job) do
+    if CalendarEvents.no_calendar_error?(error_type) do
+      Logger.info("No calendar to write to, skipping calendar event job",
+        action: job.args["action"],
+        meeting_id: job.args["meeting_id"]
+      )
+
+      {:discard, @no_calendar}
+    else
+      tag_for_offline_queue(job, error_type)
+      handle_error_result(error_type, job)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Offline queue integration (CalDAV only)
+  # ---------------------------------------------------------------------------
+
+  # Errors a later retry cannot recover are never tagged: they would only
+  # keep a dead row in the queue forever.
+  defp tag_for_offline_queue(%Oban.Job{args: args}, error_type) do
+    action = args["action"]
+    meeting_id = args["meeting_id"]
+
+    with true <- CalendarEvents.queueable_error?(error_type),
+         {:ok, meeting} <- MeetingQueries.get_meeting(meeting_id),
+         action_atom when action_atom in [:create, :update, :delete] <- action_to_atom(action) do
+      event_data =
+        CalendarEventBuilder.build_event_data(meeting,
+          attendees: Meetings.attendees_for_calendar(meeting)
+        )
+
+      QueueWiring.tag(meeting, action_atom, event_data)
+    else
+      _other -> :ok
+    end
+  end
+
+  # A successful write clears the meeting's offline queue tag and, for a
+  # create, invalidates the organiser's availability cache.
+  defp tidy_after_write(%Oban.Job{args: %{"action" => action, "meeting_id" => meeting_id}}) do
+    case MeetingQueries.get_meeting(meeting_id) do
+      {:ok, meeting} ->
+        QueueWiring.clear(meeting, nil)
+        maybe_invalidate_availability_cache(action, meeting)
+
+      # A deletion counts a meeting that is already gone as done.
+      {:error, :not_found} when action == "delete" ->
+        :ok
+
+      # Deleted while the write was in flight: the calendar now holds an
+      # event for a booking that no longer exists.
+      {:error, reason} ->
+        Logger.warning("Meeting gone after a successful calendar write",
+          meeting_id: meeting_id,
+          action: action,
+          reason: reason
+        )
+    end
+  end
+
+  defp action_to_atom("create"), do: :create
+  defp action_to_atom("update"), do: :update
+  defp action_to_atom("delete"), do: :delete
+  defp action_to_atom(_other), do: nil
+
+  # A successful "create" write has just added a busy block to the
+  # organiser's calendar; invalidate their availability cache so the next
+  # booking-page load reflects it immediately rather than the cached window
+  # from before the event existed. "update"/"delete" don't shift what counts
+  # as busy in a way booking-page callers observe, so this is create-only.
+  defp maybe_invalidate_availability_cache("create", meeting),
+    do: Availability.changed(meeting.organizer_user_id)
+
+  defp maybe_invalidate_availability_cache(_action, _meeting), do: :ok
+
+  # Group all handle_error_result/2 clauses together
+  defp handle_error_result(:rate_limited, job), do: handle_error_result(:rate_limited, job, nil)
+
+  defp handle_error_result(:unauthorized, _job) do
+    Logger.error("Calendar authentication failed, discarding job")
+    {:discard, "Authentication failed"}
+  end
+
+  # The provider understood the write and declined it (a 400, 409 or 422, see
+  # `ApiResponse`): the same request is declined on every attempt, so retrying
+  # only spends requests and delays the owner's email `CalendarEventSync` sends.
+  defp handle_error_result(:refused, job) do
+    Logger.error("Calendar refused the write, discarding job", action: job.args["action"])
+    {:discard, "Calendar refused the request"}
+  end
+
+  defp handle_error_result(:not_found, job) do
+    # Event doesn't exist, check if it's OK based on action
+    action = job.args["action"]
+
+    if action in ["update", "delete"] do
+      Logger.info("Calendar event not found, considering success", action: action)
+      :ok
+    else
+      {:error, :not_found}
+    end
+  end
+
+  defp handle_error_result(:meeting_not_found, _job) do
+    Logger.error("Meeting not found, discarding job")
+    {:discard, @meeting_gone}
+  end
+
+  defp handle_error_result(:precondition_failed, %Oban.Job{args: %{"action" => "update"}}) do
+    # A 412 means the server's ETag no longer matches the one we sent: someone
+    # else changed the event. Replaying the identical conditional PUT cannot
+    # resolve that — it fails the same way on every attempt, and spends the
+    # job's remaining attempts to arrive at a permanent-failure alert.
+    #
+    # The write is not lost. `tag_for_offline_queue/2` has already marked the
+    # cache row `locally_modified`, and `CalDAV.OfflineQueue` replays it on the
+    # next sync cycle under the row's conflict policy — `:keep_local` for events
+    # the scheduler owns, which force-writes and actually settles the conflict.
+    Logger.info("Calendar event changed on the server, handing the write to the offline queue")
+
+    {:discard, @queued_for_replay}
+  end
+
+  defp handle_error_result(:precondition_failed, _job) do
+    # Only an update may hand a 412 to the offline queue. A create that finds an
+    # event already at its UID has switched to an update inside
+    # `CalendarEventSync`, so a 412 surfacing here is that update's conflict
+    # still being carried as a create, and the queue replays creates without a
+    # conflict policy: it would 412 again on every sync cycle without ever
+    # alerting anyone. Keep the ordinary retry path, whose exhaustion still
+    # surfaces the problem.
+    {:error, :precondition_failed}
+  end
+
+  defp handle_error_result(:circuit_open, _job) do
+    # The host circuit breaker is open — the CalDAV server is unreachable right now.
+    # Snooze for the circuit recovery timeout (2 min for caldav/zimbra) so the breaker
+    # has time to transition to half-open before the next attempt, rather than burning
+    # retry slots against a still-open circuit.
+    {:snooze, 120}
+  end
+
+  defp handle_error_result(:server_unresponsive, _job) do
+    # The CalDAV server accepted the TCP connection but did not respond
+    # within the write deadline. Retrying immediately is actively harmful:
+    # each mid-flight interruption can leave the server holding a stale
+    # file lock, worsening the condition that's slowing it down in the
+    # first place. Back off for 10 minutes so the server has a real chance
+    # to recover (whatever was slowing it — backup, GC pause, lock
+    # contention from another client) before we touch it again. A snooze
+    # costs no attempt, so it is `run/4`'s bound that ends the wait.
+    Logger.warning(
+      "CalDAV server unresponsive on write, snoozing 10 minutes to avoid worsening wedge"
+    )
+
+    {:snooze, 600}
+  end
+
+  defp handle_error_result(:connection_failed, _job) do
+    # Network issues - use longer backoff
+    # Retry in 1 minute
+    {:snooze, 60}
+  end
+
+  defp handle_error_result(reason, _job) when is_binary(reason) do
+    # Generic error - retry with backoff
+    {:error, reason}
+  end
+
+  defp handle_error_result(reason, _job) do
+    # Unknown error format - return as-is for retry
+    {:error, reason}
+  end
+
+  # Group all handle_error_result/3 clauses together, after the /2 clauses
+  defp handle_error_result(:rate_limited, job, message) do
+    # Honour a provider-supplied Retry-After, from this error or the last one.
+    # Without one, the fallback is paced by executions rather than
+    # `job.attempt`, so a provider that keeps rate limiting is backed off
+    # further each time rather than being retried every minute forever: from
+    # Oban 2.24 a snooze no longer advances `attempt`.
+    retry_after =
+      RetryHelpers.parse_retry_after_from_message(message) ||
+        RetryHelpers.parse_retry_after_from_last_error(job)
+
+    snooze_seconds =
+      RetryHelpers.clamp_retry_after(retry_after,
+        min: 10,
+        max: 600,
+        default: min(300, 60 * SnoozePolicy.executions(job))
+      )
+
+    Logger.warning("Calendar service rate limited, snoozing", snooze_seconds: snooze_seconds)
+    {:snooze, snooze_seconds}
+  end
+
+  defp handle_error_result(error_type, job, _message), do: handle_error_result(error_type, job)
+
+  # Helpers
+  defp handle_unexpected_result(result) do
+    Logger.error("Unexpected result from calendar job", result: result)
+    {:error, "Unexpected result"}
+  end
+end

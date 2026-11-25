@@ -1,0 +1,163 @@
+defmodule Tymeslot.Integrations.Calendar.Orchestration.Workflows do
+  @moduledoc """
+  Complex multi-step calendar workflows.
+
+  Responsibilities:
+  - Asynchronous calendar list refresh workflows
+  - Integration discovery and update pipelines
+  - Discovery with filtering and validation
+  """
+
+  require Logger
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Infrastructure.Tasks
+  alias Tymeslot.Integrations.Calendar.Discovery
+  alias Tymeslot.Integrations.Calendar.Management
+  alias Tymeslot.Integrations.Calendar.Selection
+
+  @type user_id :: pos_integer()
+  @type integration_id :: pos_integer()
+
+  @doc """
+  Initiates an asynchronous calendar list refresh for an integration.
+  Discovers fresh calendars from the provider and updates the database.
+  Sends {:calendar_list_refreshed, component_id, integration_id, calendars} back to
+  the caller, where `calendars` is a `[CalendarEntry.t()]` — the same shape as
+  `integration.calendar_list` — so every consumer sees one shape regardless of path.
+  """
+  @spec refresh_calendar_list_async(integration_id(), user_id(), String.t()) ::
+          DynamicSupervisor.on_start_child()
+  def refresh_calendar_list_async(integration_id, user_id, component_id) do
+    parent = self()
+
+    Logger.info("Starting async calendar list refresh",
+      integration_id: integration_id,
+      user_id: user_id
+    )
+
+    Tasks.start_child(Tymeslot.TaskSupervisor, fn ->
+      case Management.get_calendar_integration(integration_id, user_id) do
+        {:ok, integration} ->
+          case Discovery.discover_calendars_for_integration(integration) do
+            {:ok, calendars} ->
+              Logger.info("Successfully discovered calendars",
+                integration_id: integration_id,
+                count: length(calendars)
+              )
+
+              # Merged with the selection as it stands once discovery is
+              # back, so refreshing never un-selects calendars the user enabled.
+              case Selection.persist_discovered(integration, calendars) do
+                {:ok, {_integration, merged}} ->
+                  send(
+                    parent,
+                    {:calendar_list_refreshed, component_id, integration_id, merged}
+                  )
+
+                {:error, reason} ->
+                  Logger.error("Failed to persist calendar list",
+                    integration_id: integration_id,
+                    error: LogFormat.reason(reason)
+                  )
+
+                  send(
+                    parent,
+                    {:calendar_list_refreshed, component_id, integration_id,
+                     integration.calendar_list}
+                  )
+              end
+
+            {:error, reason} ->
+              Logger.error("Failed to discover calendars",
+                integration_id: integration_id,
+                error: LogFormat.reason(reason)
+              )
+
+              send(
+                parent,
+                {:calendar_list_refreshed, component_id, integration_id,
+                 integration.calendar_list}
+              )
+          end
+
+        {:error, reason} ->
+          Logger.error("Failed to find integration for calendar refresh",
+            integration_id: integration_id,
+            error: LogFormat.reason(reason)
+          )
+
+          send(parent, {:calendar_list_refreshed, component_id, integration_id, []})
+      end
+    end)
+  end
+
+  @doc """
+  Discover calendars and update the integration with merged selection state.
+  Persists the updated calendar_list to the database.
+
+  Preserves existing selection state if discovery returns empty but integration
+  previously had calendars selected, to prevent accidental data loss.
+  """
+  @spec update_integration_with_discovery(map()) ::
+          {:ok, Tymeslot.Integrations.Calendar.CalendarIntegrationSchema.t()} | {:error, term()}
+  def update_integration_with_discovery(integration) do
+    with {:ok, refreshed_integration} <- reload_integration(integration),
+         {:ok, calendars} <- Discovery.discover_calendars_for_integration(refreshed_integration),
+         {:ok, {updated, _merged}} <-
+           Selection.persist_discovered(refreshed_integration, calendars) do
+      {:ok, updated}
+    end
+  end
+
+  @doc """
+  Discovers calendars for raw credentials and filters them for valid paths.
+
+  `user_id` is the plain owner id the discovery is charged to; the
+  rate-limiter actor tuple is built here rather than by the caller.
+  """
+  @spec discover_and_filter_calendars(
+          atom() | String.t(),
+          String.t(),
+          String.t(),
+          String.t(),
+          user_id(),
+          keyword()
+        ) ::
+          {:ok, %{calendars: list(), discovery_credentials: map()}} | {:error, any()}
+  def discover_and_filter_calendars(provider, url, username, password, user_id, opts) do
+    case Discovery.discover_calendars_for_credentials(
+           provider,
+           url,
+           username,
+           password,
+           Keyword.merge(opts, force_refresh: true, actor: {:user, user_id})
+         ) do
+      {:ok, %{calendars: calendars, discovery_credentials: credentials}} ->
+        # Drops anything the sync could not later ask the server for. An EWS
+        # folder has no path of its own — it is named by the opaque `FolderId`
+        # the server issues — but `CalendarEntry.with_defaults/1` has already
+        # copied that id into `path` by this point, so one filter serves both
+        # families.
+        {:ok,
+         %{
+           calendars: Enum.filter(calendars, &is_binary(&1.path)),
+           discovery_credentials: credentials
+         }}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  # --- Private Helpers ---
+
+  defp reload_integration(%{id: id, user_id: user_id} = _integration)
+       when is_integer(id) and is_integer(user_id) do
+    case Management.get_calendar_integration(id, user_id) do
+      {:ok, fresh} -> {:ok, fresh}
+      {:error, :not_found} -> {:error, :not_found}
+    end
+  end
+
+  defp reload_integration(integration), do: {:ok, integration}
+end

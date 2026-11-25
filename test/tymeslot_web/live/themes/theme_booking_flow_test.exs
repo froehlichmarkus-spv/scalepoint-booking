@@ -1,0 +1,649 @@
+defmodule TymeslotWeb.Live.Themes.ThemeBookingFlowTest do
+  use TymeslotWeb.LiveCase, async: false
+  use Oban.Testing, repo: Tymeslot.Repo
+  @moduletag :utils
+
+  import Ecto.Query, only: [from: 2]
+  import Mox
+  import Phoenix.LiveViewTest
+  import Tymeslot.Factory
+  import Tymeslot.BookingTestHelpers, only: [seed_booking_account: 3]
+
+  alias Tymeslot.Availability.AvailabilityScheduleSchema
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Repo
+  alias Tymeslot.Test.LogCapture
+  alias Tymeslot.TestMocks
+  alias TymeslotWeb.BookingDriver
+  alias TymeslotWeb.Live.Scheduling.PreviewToken
+  alias TymeslotWeb.ThemeTestMatrix
+
+  setup :verify_on_exit!
+
+  setup tags do
+    Mox.set_mox_from_context(tags)
+
+    TestMocks.setup_email_mocks()
+    TestMocks.setup_subscription_mocks()
+
+    Tymeslot.CalendarMock
+    |> stub(:get_events_for_range_fresh, fn _user_id, _start_date, _end_date -> {:ok, []} end)
+    |> stub(:get_booking_integration_info, fn _user_id -> {:error, :no_integration} end)
+
+    :ok
+  end
+
+  describe "theme booking flow (feature-level)" do
+    for theme <- ThemeTestMatrix.registered() do
+      @tag :capture_log
+      test "visitor can book end-to-end with #{theme.slug} theme", %{conn: conn} do
+        timezone = "America/New_York"
+
+        %{user: user, profile: profile} =
+          seed_booking_account(unquote(theme.id), "book-#{unquote(theme.slug)}", timezone)
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=#{timezone}")
+
+        attendee_email = "attendee-#{unquote(theme.slug)}@example.com"
+
+        confirmation_html =
+          BookingDriver.book(view,
+            attendee: %{name: "Test Attendee", email: attendee_email, message: "Hello!"}
+          )
+
+        assert confirmation_html =~ attendee_email
+
+        # The confirmation must show the meeting type's real duration, derived from
+        # `duration_minutes` — never parsed from the URL slug. A named type like
+        # "Quick Chat" has the slug "quick-chat", which carries no minutes, so a
+        # slug-based duration previously rendered "Unknown duration" on Quill.
+        assert confirmation_html =~ "30 min"
+        refute confirmation_html =~ "Unknown duration"
+
+        meeting =
+          Repo.get_by!(MeetingSchema, organizer_user_id: user.id, attendee_email: attendee_email)
+
+        assert meeting.status == :confirmed
+      end
+
+      # With a week of notice the first bookable day always falls in a later week
+      # than today, so the page has to jump there before anything is clickable.
+      # This is the Sunday-evening case, where the day's last slot has already
+      # passed, reproduced at any hour.
+      @tag :capture_log
+      test "visitor can book with #{theme.slug} theme when the first bookable day is a week out",
+           %{conn: conn} do
+        timezone = "America/New_York"
+
+        %{user: user, profile: profile} =
+          seed_booking_account(unquote(theme.id), "notice-#{unquote(theme.slug)}", timezone)
+
+        Repo.update_all(
+          from(s in AvailabilityScheduleSchema, where: s.profile_id == ^profile.id),
+          set: [min_advance_hours: 168]
+        )
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=#{timezone}")
+        attendee_email = "notice-#{unquote(theme.slug)}@example.com"
+
+        BookingDriver.book(view,
+          attendee: %{name: "Test Attendee", email: attendee_email, message: "Hello!"}
+        )
+
+        meeting =
+          Repo.get_by!(MeetingSchema, organizer_user_id: user.id, attendee_email: attendee_email)
+
+        assert DateTime.diff(meeting.start_time, DateTime.utc_now(), :hour) >= 167
+      end
+    end
+  end
+
+  describe "preview booking is simulated, not persisted" do
+    @tag :capture_log
+    test "an owner preview (valid token) shows confirmation but creates no meeting or side effects",
+         %{conn: conn} do
+      timezone = "America/New_York"
+      %{user: user, profile: profile} = seed_booking_account("1", "preview-book", timezone)
+
+      # Load the page as the owner: `?preview=true` for display plus a verified,
+      # owner-bound token that authorises simulate mode. Bookings here must be
+      # simulated, exactly as the onboarding/dashboard preview iframe loads it.
+      token = PreviewToken.sign(user.id)
+
+      {:ok, view, _html} =
+        live(
+          conn,
+          ~p"/#{profile.username}?preview=true&preview_token=#{token}&timezone=#{timezone}"
+        )
+
+      attendee_email = "preview-attendee@example.com"
+
+      # The full confirmation flow renders, exactly as a real visitor would see.
+      confirmation_html =
+        BookingDriver.book(view,
+          attendee: %{name: "Preview Attendee", email: attendee_email, message: "Just looking!"}
+        )
+
+      assert confirmation_html =~ attendee_email
+
+      # ...but nothing was persisted, and no real side effects fired: no meeting
+      # row, and no confirmation-email / video-room jobs were enqueued.
+      assert Repo.get_by(MeetingSchema, organizer_user_id: user.id) == nil
+      assert [] = all_enqueued()
+    end
+
+    @tag :capture_log
+    test "bare ?preview=true with no token is blocked — no real booking, explicit error",
+         %{conn: conn} do
+      # BEHAVIOUR CHANGE (S1): previously a bare `?preview=true` with no valid
+      # owner token persisted a real booking. Now it is blocked with an error so
+      # the page owner's belief that they are in "preview mode" is never silently
+      # violated by a stale session or token expiry.
+      timezone = "America/New_York"
+      %{user: user, profile: profile} = seed_booking_account("1", "preview-blocked", timezone)
+
+      {:ok, view, _html} = live(conn, ~p"/#{profile.username}?preview=true&timezone=#{timezone}")
+
+      LogCapture.attach()
+      attendee_email = "blocked-attendee@example.com"
+
+      BookingDriver.book(view,
+        attendee: %{
+          name: "Blocked Attendee",
+          email: attendee_email,
+          message: "This must not persist"
+        },
+        until: :submitted
+      )
+
+      # No meeting row must be created — the submission was blocked.
+      assert Repo.get_by(MeetingSchema,
+               organizer_user_id: user.id,
+               attendee_email: attendee_email
+             ) ==
+               nil
+
+      # No real side-effects: no confirmation email, no video-room job.
+      assert [] = all_enqueued()
+
+      # The LiveView must show the error flash rather than the confirmation view.
+      _drain = :sys.get_state(view.pid)
+      assert render(view) =~ "Preview session expired"
+      refute has_element?(view, "[data-testid='confirmation-heading']")
+
+      # And the block must not be silent. With no meeting row, no email and no
+      # exception, this line is the only server-side trace that a submission was
+      # dropped; its absence is what made #84 so hard to diagnose from the logs.
+      event = LogCapture.await_log("Booking blocked: preview claimed without a valid owner token")
+
+      assert event.level == :warning
+      assert event.meta.organizer_user_id == user.id
+    end
+
+    @tag :capture_log
+    test "cross-user token (valid token for user A on user B's page) is blocked", %{conn: conn} do
+      # A token is bound to a specific owner. Replaying user A's token against
+      # user B's page must not grant simulate-mode — `owner?/2` checks the bound
+      # user id, so B's page sees `owner_preview=false`. Combined with
+      # `theme_preview=true` (from `?preview=true`), the submission is blocked.
+      timezone = "America/New_York"
+      %{user: user_a} = seed_booking_account("1", "cross-user-a", timezone)
+      %{user: user_b, profile: profile_b} = seed_booking_account("1", "cross-user-b", timezone)
+
+      token_for_a = PreviewToken.sign(user_a.id)
+
+      {:ok, view, _html} =
+        live(
+          conn,
+          ~p"/#{profile_b.username}?preview=true&preview_token=#{token_for_a}&timezone=#{timezone}"
+        )
+
+      attendee_email = "cross-user@example.com"
+
+      BookingDriver.book(view,
+        attendee: %{
+          name: "Cross User Attacker",
+          email: attendee_email,
+          message: "Should be blocked"
+        },
+        until: :submitted
+      )
+
+      # No meeting for user B — the cross-user token was rejected.
+      assert Repo.get_by(MeetingSchema,
+               organizer_user_id: user_b.id,
+               attendee_email: attendee_email
+             ) ==
+               nil
+
+      assert [] = all_enqueued()
+
+      _drain = :sys.get_state(view.pid)
+      assert render(view) =~ "Preview session expired"
+      refute has_element?(view, "[data-testid='confirmation-heading']")
+    end
+  end
+
+  describe "booking form validation" do
+    # Validation is the app's: its own messages and clear-on-type behaviour
+    # must not be pre-empted by the browser blocking an empty submission. The
+    # form is the shared `BookingForm`, so every theme carries both attributes.
+    for theme <- ThemeTestMatrix.registered() do
+      @tag :capture_log
+      test "#{theme.slug} booking form leaves validation to the app", %{conn: conn} do
+        %{profile: profile} =
+          seed_booking_account(unquote(theme.id), "novalidate-#{unquote(theme.slug)}", "UTC")
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=UTC")
+        BookingDriver.book(view, until: :attendee)
+
+        assert has_element?(view, "form[data-testid='booking-form'][novalidate]")
+      end
+
+      @tag :capture_log
+      test "#{theme.slug} marks name and email required for assistive technology", %{conn: conn} do
+        %{profile: profile} =
+          seed_booking_account(unquote(theme.id), "required-#{unquote(theme.slug)}", "UTC")
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=UTC")
+        BookingDriver.book(view, until: :attendee)
+
+        assert has_element?(
+                 view,
+                 "form[data-testid='booking-form'] input[name='booking[name]'][required]"
+               )
+
+        assert has_element?(
+                 view,
+                 "form[data-testid='booking-form'] input[name='booking[email]'][required]"
+               )
+      end
+    end
+  end
+
+  describe "booking edge cases" do
+    @tag :capture_log
+    test "blocks booking on a past date via URL manipulation", %{conn: conn} do
+      user = insert(:user)
+      profile = insert(:profile, user: user, booking_theme: "1", username: "past-fuzzer")
+      _integration = insert(:calendar_integration, user: user, is_active: true)
+
+      # `/:username/:slug/book` resolves the slug into a meeting type, so the
+      # deep link needs one to reach the booking form at all.
+      insert(:meeting_type, user: user, name: "30 Minutes", duration_minutes: 30, is_active: true)
+
+      past_date = Date.to_string(Date.add(Date.utc_today(), -1))
+      time = "10:00 AM"
+      timezone = "America/New_York"
+
+      # Direct link to booking with past date
+      {:ok, view, _html} =
+        live(
+          conn,
+          ~p"/#{profile.username}/30-minutes/book?date=#{past_date}&time=#{time}&timezone=#{timezone}"
+        )
+
+      view
+      |> form("form[data-testid='booking-form']", %{
+        "booking" => %{
+          "name" => "Hacker",
+          "email" => "hacker@example.com",
+          "message" => "I am from the past"
+        }
+      })
+      |> render_submit()
+
+      # The flash is delivered to the parent LiveView via
+      # `send(self(), {:flash, _})` from the submission handler, which is
+      # processed after `render_submit/1` returns. Drain the mailbox via a
+      # synchronous `:sys.get_state/1` before asserting on the render.
+      _drain = :sys.get_state(view.pid)
+
+      # Should show error and NOT redirect to confirmation
+      assert render(view) =~ "Booking time must be in the future"
+      refute has_element?(view, "[data-testid='confirmation-heading']")
+    end
+
+    @tag :capture_log
+    test "handles DST transition correctly for slot generation", %{conn: conn} do
+      # US DST spring-forward: 2nd Sunday of March, 2:00 AM → 3:00 AM.
+      # We want to see if slots during the DST gap (2:00-3:00 AM) are skipped.
+
+      timezone = "America/New_York"
+
+      # Find the next 2nd-Sunday-of-March (DST spring-forward) that's in the future
+      dst_date = next_dst_spring_forward(Date.utc_today())
+      dst_day_of_week = Date.day_of_week(dst_date)
+
+      user = insert(:user)
+
+      profile =
+        insert(:profile,
+          user: user,
+          booking_theme: "1",
+          timezone: timezone,
+          username: "dst-test"
+        )
+
+      schedule =
+        insert(:availability_schedule,
+          profile: profile,
+          is_default: true,
+          advance_booking_days: 400,
+          min_advance_hours: 0,
+          buffer_before_minutes: 0,
+          buffer_after_minutes: 0
+        )
+
+      _integration = insert(:calendar_integration, user: user, is_active: true)
+
+      _meeting_type =
+        insert(:meeting_type,
+          user: user,
+          duration_minutes: 30,
+          name: "30 Minutes",
+          is_active: true
+        )
+
+      # Set availability for the DST day (always a Sunday, day_of_week 7)
+      insert(:weekly_availability,
+        schedule: schedule,
+        day_of_week: dst_day_of_week,
+        is_available: true,
+        start_time: ~T[01:00:00],
+        end_time: ~T[05:00:00]
+      )
+
+      dst_date_str = Date.to_string(dst_date)
+
+      # We use schedule route to see generated slots
+      {:ok, view, _html} =
+        live(
+          conn,
+          ~p"/#{profile.username}/30-minutes?date=#{dst_date_str}&timezone=#{timezone}"
+        )
+
+      wait_until(fn -> has_element?(view, "[data-fact='time']") end)
+
+      slots_html = render(view)
+
+      # 1:00 AM should be there
+      # 1:30 AM should be there
+      # 2:00 AM - 3:00 AM should NOT be there (it doesn't exist in EST/EDT transition)
+      # 3:00 AM should be there
+
+      assert slots_html =~ "1:00 AM"
+      assert slots_html =~ "1:30 AM"
+      refute slots_html =~ "2:00 AM"
+      refute slots_html =~ "2:30 AM"
+      assert slots_html =~ "3:00 AM"
+      assert slots_html =~ "3:30 AM"
+    end
+  end
+
+  describe "theme deep-link/refresh contract" do
+    for theme <- ThemeTestMatrix.all() do
+      @tag :capture_log
+      test "visitor can open schedule route directly with #{theme.slug} theme", %{conn: conn} do
+        timezone = "America/New_York"
+        user = insert(:user)
+
+        profile =
+          insert(:profile,
+            user: user,
+            username: "deeplink-#{unquote(theme.slug)}",
+            booking_theme: unquote(theme.id),
+            timezone: timezone
+          )
+
+        schedule =
+          insert(:availability_schedule,
+            profile: profile,
+            is_default: true,
+            advance_booking_days: 30,
+            min_advance_hours: 0,
+            buffer_before_minutes: 0,
+            buffer_after_minutes: 0
+          )
+
+        _meeting_type =
+          insert(:meeting_type,
+            user: user,
+            duration_minutes: 30,
+            name: "Quick Chat",
+            is_active: true
+          )
+
+        Enum.each(1..7, fn day_of_week ->
+          insert(:weekly_availability,
+            schedule: schedule,
+            day_of_week: day_of_week,
+            is_available: true,
+            start_time: ~T[09:00:00],
+            end_time: ~T[17:00:00]
+          )
+        end)
+
+        _integration =
+          insert(:calendar_integration,
+            user: user,
+            is_active: true
+          )
+
+        {:ok, view, _html} =
+          live(conn, ~p"/#{profile.username}/quick-chat?timezone=#{timezone}")
+
+        BookingDriver.pick_first_slot(view)
+
+        wait_until(fn ->
+          has_element?(view, "[data-testid=next-step]:not([disabled]), form[data-fact=attendee]")
+        end)
+      end
+
+      # Paper picks the time on its schedule screen, so /book opens there (paper_theme_test.exs).
+      if theme.key != :paper do
+        @tag :capture_log
+        test "visitor can open booking route directly with #{theme.slug} theme", %{conn: conn} do
+          timezone = "America/New_York"
+          user = insert(:user)
+
+          profile =
+            insert(:profile,
+              user: user,
+              username: "deeplink-book-#{unquote(theme.slug)}",
+              booking_theme: unquote(theme.id),
+              timezone: timezone
+            )
+
+          schedule =
+            insert(:availability_schedule,
+              profile: profile,
+              is_default: true,
+              advance_booking_days: 30,
+              min_advance_hours: 0,
+              buffer_before_minutes: 0,
+              buffer_after_minutes: 0
+            )
+
+          _meeting_type =
+            insert(:meeting_type,
+              user: user,
+              duration_minutes: 30,
+              name: "Quick Chat",
+              is_active: true
+            )
+
+          Enum.each(1..7, fn day_of_week ->
+            insert(:weekly_availability,
+              schedule: schedule,
+              day_of_week: day_of_week,
+              is_available: true,
+              start_time: ~T[09:00:00],
+              end_time: ~T[17:00:00]
+            )
+          end)
+
+          insert(:calendar_integration, user: user, is_active: true)
+
+          # Direct link to booking page without a prior date/time selection must
+          # redirect to the schedule step rather than showing an unusable booking form.
+          assert {:error, {:redirect, %{to: to}}} =
+                   live(conn, ~p"/#{profile.username}/quick-chat/book?timezone=#{timezone}")
+
+          assert to == ~p"/#{profile.username}/quick-chat"
+        end
+      end
+    end
+  end
+
+  describe "meeting types ordering" do
+    for theme <- ThemeTestMatrix.all() do
+      @tag :capture_log
+      test "preserves user-configured sort_order on the overview step with #{theme.slug} theme",
+           %{conn: conn} do
+        user = insert(:user)
+
+        profile =
+          insert(:profile,
+            user: user,
+            username: "order-#{unquote(theme.slug)}",
+            booking_theme: unquote(theme.id),
+            timezone: "America/New_York"
+          )
+
+        _schedule =
+          insert(:availability_schedule,
+            profile: profile,
+            is_default: true,
+            advance_booking_days: 30,
+            min_advance_hours: 0,
+            buffer_before_minutes: 0,
+            buffer_after_minutes: 0
+          )
+
+        _integration = insert(:calendar_integration, user: user, is_active: true)
+
+        insert(:meeting_type,
+          user: user,
+          name: "Zebra Session",
+          duration_minutes: 45,
+          sort_order: 0,
+          is_active: true
+        )
+
+        insert(:meeting_type,
+          user: user,
+          name: "Alpha Session",
+          duration_minutes: 15,
+          sort_order: 1,
+          is_active: true
+        )
+
+        insert(:meeting_type,
+          user: user,
+          name: "Middle Session",
+          duration_minutes: 30,
+          sort_order: 2,
+          is_active: true
+        )
+
+        {:ok, _view, html} = live(conn, ~p"/#{profile.username}?timezone=America/New_York")
+
+        rendered_slugs =
+          html
+          |> Floki.parse_document!()
+          |> Floki.find("[data-fact='meeting_type']")
+          |> Enum.map(&Floki.attribute(&1, "data-value"))
+          |> List.flatten()
+
+        assert rendered_slugs == ["zebra-session", "alpha-session", "middle-session"]
+      end
+    end
+  end
+
+  describe "meeting cancel flow (feature-level)" do
+    for theme <- ThemeTestMatrix.all() do
+      @tag :capture_log
+      test "visitor can keep meeting on cancel page with #{theme.slug} theme", %{conn: conn} do
+        user = insert(:user)
+
+        profile =
+          insert(:profile,
+            user: user,
+            username: "cancel-keep-#{unquote(theme.slug)}",
+            booking_theme: unquote(theme.id)
+          )
+
+        meeting =
+          insert(:meeting,
+            organizer_user_id: user.id,
+            organizer_name: user.name,
+            attendee_timezone: profile.timezone,
+            status: :confirmed
+          )
+
+        {:ok, view, _html} =
+          live(conn, ~p"/#{profile.username}/meeting/#{meeting.uid}/cancel")
+
+        assert has_element?(view, "[data-testid='keep-meeting']")
+
+        view
+        |> element("[data-testid='keep-meeting']")
+        |> render_click()
+
+        assert render(view) =~ "Meeting Confirmed"
+      end
+
+      @tag :capture_log
+      test "visitor can cancel meeting from cancel page with #{theme.slug} theme", %{conn: conn} do
+        user = insert(:user)
+
+        profile =
+          insert(:profile,
+            user: user,
+            username: "cancel-cancel-#{unquote(theme.slug)}",
+            booking_theme: unquote(theme.id)
+          )
+
+        meeting =
+          insert(:meeting,
+            organizer_user_id: user.id,
+            organizer_name: user.name,
+            attendee_timezone: profile.timezone,
+            status: :confirmed
+          )
+
+        {:ok, view, _html} =
+          live(conn, ~p"/#{profile.username}/meeting/#{meeting.uid}/cancel")
+
+        assert has_element?(view, "[data-testid='cancel-meeting']")
+
+        assert {:error, {:redirect, %{to: to}}} =
+                 view
+                 |> element("[data-testid='cancel-meeting']")
+                 |> render_click()
+
+        assert String.contains?(to, "/cancel-confirmed")
+
+        assert Repo.get_by!(MeetingSchema, uid: meeting.uid).status == :cancelled
+      end
+    end
+  end
+
+  # Returns the next 2nd-Sunday-of-March (US DST spring-forward) after `today`.
+  defp next_dst_spring_forward(%Date{} = today) do
+    Enum.find_value(today.year..(today.year + 2), fn year ->
+      date = second_sunday_of_march(year)
+      if Date.compare(date, today) == :gt, do: date
+    end)
+  end
+
+  defp second_sunday_of_march(year) do
+    march_1 = Date.new!(year, 3, 1)
+    days_to_sunday = rem(7 - Date.day_of_week(march_1), 7)
+    first_sunday = Date.add(march_1, days_to_sunday)
+    # If March 1 is a Sunday, first_sunday is March 1
+    first_sunday = if days_to_sunday == 0, do: march_1, else: first_sunday
+    Date.add(first_sunday, 7)
+  end
+end

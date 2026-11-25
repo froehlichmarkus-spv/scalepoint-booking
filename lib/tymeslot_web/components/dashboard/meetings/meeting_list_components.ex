@@ -1,0 +1,238 @@
+defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents do
+  @moduledoc """
+  UI components for displaying and filtering meetings in the dashboard.
+  """
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias TymeslotWeb.Components.CoreComponents.Buttons
+  alias TymeslotWeb.Components.CoreComponents.Containers
+  alias TymeslotWeb.Components.CoreComponents.Feedback
+  alias TymeslotWeb.Components.CoreComponents.Navigation
+  alias TymeslotWeb.Components.CoreComponents.Select
+  alias TymeslotWeb.Components.Dashboard.Meetings.MeetingCard
+
+  # Filter Tabs
+  attr :active, :string, required: true
+  attr :target, :any, required: true
+  attr :awaiting_approval_count, :integer, default: 0
+
+  @spec filter_tabs(map()) :: Phoenix.LiveView.Rendered.t()
+  def filter_tabs(assigns) do
+    ~H"""
+    <Navigation.segmented_control
+      id="meetings-filter"
+      value={@active}
+      on_change="filter_meetings"
+      param="filter"
+      target={@target}
+      aria_label={dgettext("dashboard_bookings", "Show meetings")}
+    >
+      <:option
+        value="upcoming"
+        label={dpgettext("dashboard_bookings", "filter tab", "Upcoming")}
+        icon="hero-clock"
+      />
+      <:option
+        value="past"
+        label={dpgettext("dashboard_bookings", "filter tab", "Past")}
+        icon="hero-calendar-days"
+      />
+      <:option
+        value="cancelled"
+        label={dpgettext("dashboard_bookings", "filter tab", "Cancelled")}
+        icon="hero-x-mark"
+      />
+      <%!-- Only shown once there is something to answer: a host who requires no
+            approvals should never see an option that is permanently empty. --%>
+      <:option
+        :if={@awaiting_approval_count > 0 or @active == "awaiting_approval"}
+        value="awaiting_approval"
+        label={dgettext("dashboard_bookings", "Requests")}
+        icon="hero-inbox-arrow-down"
+        count={if @awaiting_approval_count > 0, do: @awaiting_approval_count}
+        attention
+      />
+    </Navigation.segmented_control>
+    """
+  end
+
+  @doc """
+  Narrows the list to the bookings made through one booking page, or through
+  the host's own page. Shown only to a host with booking pages.
+  """
+  attr :pages, :list, required: true
+  attr :selected, :any, required: true, doc: "nil (every page), `:main` or a page id"
+  attr :target, :any, required: true
+
+  @spec page_filter(map()) :: Phoenix.LiveView.Rendered.t()
+  def page_filter(assigns) do
+    ~H"""
+    <.form
+      for={%{}}
+      as={:page_filter}
+      id="meetings-page-filter"
+      phx-change="filter_booking_page"
+      phx-target={@target}
+      class="lg:w-64"
+      novalidate
+    >
+      <Select.select
+        id="meetings-page-filter-select"
+        name="page"
+        label={dgettext("dashboard_bookings", "Booked through")}
+        value={page_filter_value(@selected)}
+        options={page_filter_options(@pages)}
+      />
+    </.form>
+    """
+  end
+
+  defp page_filter_options(pages) do
+    [
+      {dgettext("dashboard_bookings", "All pages"), "all"},
+      {dgettext("dashboard_bookings", "Main page"), "main"}
+      | Enum.map(pages, &{&1.name, Integer.to_string(&1.id)})
+    ]
+  end
+
+  defp page_filter_value(nil), do: "all"
+  defp page_filter_value(:main), do: "main"
+  defp page_filter_value(id) when is_integer(id), do: Integer.to_string(id)
+
+  @doc """
+  The notice above a list narrowed to one booking (`?meeting=<id>`, where a
+  host's links to a booking land), with the way back to the whole list. When
+  the link names no booking of theirs (someone else's, a deleted one, a
+  mangled link), it says so in place of the list.
+  """
+  attr :found, :boolean, required: true
+
+  @spec focus_notice(map()) :: Phoenix.LiveView.Rendered.t()
+  def focus_notice(assigns) do
+    ~H"""
+    <Containers.info_box variant={if @found, do: :info, else: :warning}>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <span :if={@found}>{dgettext("dashboard_bookings", "Showing one booking.")}</span>
+        <span :if={!@found}>
+          {dgettext("dashboard_bookings", "This booking isn't available.")}
+        </span>
+        <.link patch="/dashboard/meetings" class="font-semibold underline">
+          {dgettext("dashboard_bookings", "Show all meetings")}
+        </.link>
+      </div>
+    </Containers.info_box>
+    """
+  end
+
+  # Meetings List
+  attr :loading, :boolean, required: true
+  attr :is_empty, :boolean, required: true
+  attr :filter, :string, required: true
+  attr :profile, :any, required: false
+  attr :time_format, :string, required: true
+  attr :cancelling_meeting, :any, required: false
+  attr :sending_reschedule, :any, required: false
+
+  attr :answering_request, :any,
+    default: MapSet.new(),
+    doc: "the ids of the requests whose answer is in flight"
+
+  attr :move_offers, :map, default: %{}
+  attr :target, :any, required: true
+  attr :meetings_stream, :any, required: true
+
+  @spec meetings_list(map()) :: Phoenix.LiveView.Rendered.t()
+  def meetings_list(assigns) do
+    ~H"""
+    <div>
+      <Feedback.loading_card
+        :if={@loading}
+        label={dgettext("dashboard_bookings", "Loading meetings")}
+      />
+      <.no_meetings :if={!@loading and @is_empty} filter={@filter} />
+      <div :if={!@loading and !@is_empty} class="space-y-4" id="meetings" phx-update="stream">
+        <div :for={{dom_id, meeting} <- @meetings_stream} id={dom_id}>
+          <MeetingCard.meeting_card
+            meeting={meeting}
+            profile={@profile}
+            time_format={@time_format}
+            cancelling_meeting={@cancelling_meeting}
+            sending_reschedule={@sending_reschedule}
+            answering_request={@answering_request}
+            move_offer={@move_offers[meeting.id]}
+            target={@target}
+          />
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :has_more, :boolean, required: true
+  attr :loading_more, :boolean, required: true
+  attr :target, :any, required: true
+
+  @doc """
+  The button that pages further into the list.
+
+  Lives here rather than in the dashboard component's own `render/1` so that
+  everything the meetings list draws is in one module — and so that module
+  stays inside the project's size limit.
+  """
+  @spec load_more(map()) :: Phoenix.LiveView.Rendered.t()
+  def load_more(assigns) do
+    ~H"""
+    <div :if={@has_more} class="mt-10 text-center">
+      <Buttons.loading_button
+        variant={:secondary}
+        size={:lg}
+        phx-click="load_more"
+        phx-target={@target}
+        loading={@loading_more}
+        loading_text={dgettext("dashboard_bookings", "Loading...")}
+      >
+        {dgettext("dashboard_bookings", "Load more meetings")}
+      </Buttons.loading_button>
+    </div>
+    """
+  end
+
+  attr :filter, :string, required: true
+
+  defp no_meetings(assigns) do
+    ~H"""
+    <Feedback.empty_state
+      icon="hero-calendar-days"
+      size={:lg}
+      heading={:h2}
+      title={no_meetings_title(@filter)}
+      description={no_meetings_description(@filter)}
+    />
+    """
+  end
+
+  defp no_meetings_title("upcoming"), do: dgettext("dashboard_bookings", "No upcoming meetings")
+  defp no_meetings_title("past"), do: dgettext("dashboard_bookings", "No past meetings")
+  defp no_meetings_title("cancelled"), do: dgettext("dashboard_bookings", "No cancelled meetings")
+
+  defp no_meetings_title("awaiting_approval"),
+    do: dgettext("dashboard_bookings", "Nothing waiting on you")
+
+  defp no_meetings_description("upcoming"),
+    do:
+      dgettext("dashboard_bookings", "Your upcoming appointments will appear here automatically.")
+
+  defp no_meetings_description("past"),
+    do: dgettext("dashboard_bookings", "You haven't had any meetings in this period yet.")
+
+  defp no_meetings_description("cancelled"),
+    do: dgettext("dashboard_bookings", "You don't have any cancelled appointments to show.")
+
+  defp no_meetings_description("awaiting_approval"),
+    do:
+      dgettext(
+        "dashboard_bookings",
+        "Booking requests you haven't answered yet will appear here."
+      )
+end

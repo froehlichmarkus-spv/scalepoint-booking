@@ -1,0 +1,420 @@
+defmodule Tymeslot.Integrations.Video.Providers.MiroTalkProvider do
+  @moduledoc """
+  MiroTalk P2P video conferencing provider implementation.
+
+  Provides functions to create meeting rooms, generate join URLs, and manage
+  video conferencing sessions for scheduled appointments.
+  """
+
+  @behaviour Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  require Logger
+
+  alias Tymeslot.Infrastructure.Config
+  alias Tymeslot.Infrastructure.HTTPClient
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Infrastructure.Logging.Redactor
+  alias Tymeslot.Integrations.Shared.ApiResponse
+  alias Tymeslot.Integrations.Shared.ProviderConfigHelper
+  alias Tymeslot.Integrations.Video.Providers.LinkRoom
+  alias Tymeslot.Integrations.Video.Providers.MiroTalk.HttpHelpers
+  alias Tymeslot.Integrations.Video.Providers.MiroTalk.JoinUrlBuilder
+  alias Tymeslot.Integrations.Video.Providers.SsrfOptions
+  alias Tymeslot.Integrations.Video.RoomData
+  alias Tymeslot.Security.SsrfGuard
+  alias Tymeslot.Security.UrlValidation
+
+  @typedoc """
+  A tagged `perform_connection_test/1` failure.
+
+  `:invalid_api_key` is the server explicitly rejecting the credential (HTTP
+  401); `:unreachable` covers everything else, where the server could not be
+  reached or did not answer as a MiroTalk API, which points at the base URL.
+  """
+  @type test_failure :: {:invalid_api_key | :unreachable, String.t()}
+
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def connection_test_bucket, do: :mirotalk
+
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def config_schema do
+    %{
+      api_key: %{type: :string, required: true, description: "API key for MiroTalk server"},
+      base_url: %{type: :string, required: true, description: "Base URL of MiroTalk server"}
+    }
+  end
+
+  # Structural validation only, in line with every other video provider: the
+  # callers that need connectivity (`Video.Connection.probe/3`,
+  # `ProviderAdapter.create_meeting_room/2`) invoke `validate_config/1` first and
+  # then the function that talks to the server. Reaching the network from here
+  # doubled every scheduled health probe against the customer's self-hosted
+  # MiroTalk instance, and burned two rate-limiter tokens for one probe.
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def validate_config(config) do
+    with :ok <- ProviderConfigHelper.validate_required_fields(config, [:api_key, :base_url]) do
+      validate_base_url(Map.get(config, :base_url))
+    end
+  end
+
+  # The API key travels with every request, and a login name or password in
+  # the address would travel beside it as Basic auth. Checked when an address
+  # is saved only: one stored before the rule keeps getting rooms.
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def validate_config_for_save(config),
+    do: LinkRoom.validate_server_url(Map.get(config, :base_url))
+
+  @doc """
+  Tests the connection to the MiroTalk API.
+
+  Pure I/O — the caller (`Tymeslot.Integrations.Video.Connection`) decides
+  whether and to whom the test is rate-limited.
+
+  Failures come back tagged, `{:error, {tag, message}}`. The tag is derived
+  from the raw HTTP status here, where it is still unambiguous; `message` is
+  display text and nothing may branch on it. The web layer maps the tag to a
+  form field (`TymeslotWeb.Helpers.IntegrationProviders.reason_to_form_errors/1`)
+  and renders only the message. This is the same split the calendar half
+  already applies (see `Tymeslot.Integrations.Calendar.Creation` and
+  `Tymeslot.Integrations.Calendar.Reconnection`): matching English keywords
+  back out of a localised message picks the right field in English only.
+  """
+  @spec perform_connection_test(%{
+          required(:api_key) => String.t(),
+          required(:base_url) => String.t()
+        }) ::
+          {:ok, String.t()} | {:error, test_failure()}
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def perform_connection_test(config) do
+    # For MiroTalk, we can test by checking if the API endpoint is reachable
+    base_url = Map.get(config, :base_url)
+    api_key = Map.get(config, :api_key)
+
+    case validate_base_url(base_url) do
+      :ok -> test_api_connection(base_url, api_key)
+      {:error, message} -> {:error, {:unreachable, message}}
+    end
+  end
+
+  # Returns untagged errors: `validate_config/1` is the structural gate every
+  # provider shares, and its contract is `{:error, message}`. Only
+  # `perform_connection_test/1` tags what it hands back.
+  defp validate_base_url(url) when url in [nil, ""],
+    do: {:error, dgettext("integrations_video", "Base URL is required")}
+
+  defp validate_base_url(url) do
+    UrlValidation.validate_http_url(url,
+      block_private_ips: not SsrfGuard.allow_private_for_video?()
+    )
+  end
+
+  defp test_api_connection(base_url, api_key) do
+    headers = build_api_headers(api_key)
+    options = [timeout: 5_000] ++ SsrfOptions.request_options()
+
+    # Always try HTTPS first; if it fails due to network/connection, fall back to HTTP
+    handle_api_response(
+      HttpHelpers.try_https_then_http(base_url, "/api/v1/meeting", fn url ->
+        Config.http_client_module().post(url, "", headers, options)
+      end)
+    )
+  end
+
+  defp build_api_headers(api_key) do
+    [
+      {"authorization", api_key || ""},
+      {"Content-Type", "application/json"},
+      {"Accept", "application/json"}
+    ]
+  end
+
+  defp handle_api_response({:error, error}), do: handle_http_error(error)
+
+  # Every status is either named below or reported as unexpected, so no
+  # status counts as success: a connection test answers with a sentence for
+  # the organiser, never a decoded body.
+  defp handle_api_response(response) do
+    response
+    |> ApiResponse.handle_tagged(
+      label: "MiroTalk",
+      custom: &connection_status/1,
+      success: [],
+      log_level: :warning
+    )
+    |> connection_result()
+  end
+
+  defp connection_status({:ok, %{status: 200}}) do
+    {:ok, dgettext("integrations_video", "Connection successful - API key is valid")}
+  end
+
+  defp connection_status({:ok, %{status: 401, body: body}}) do
+    handle_auth_error(
+      body,
+      dgettext("integrations_video", "Authentication failed - Please check your API key")
+    )
+  end
+
+  # A 403 is not the server calling the key invalid — a reverse proxy in front
+  # of the wrong base URL answers the same way — so it stays on `:unreachable`.
+  defp connection_status({:ok, %{status: 403}}) do
+    {:error,
+     {:unreachable,
+      dgettext(
+        "integrations_video",
+        "Access forbidden - API key may lack required permissions"
+      )}}
+  end
+
+  defp connection_status({:ok, %{status: 404}}) do
+    {:error,
+     {:unreachable,
+      dgettext(
+        "integrations_video",
+        "API endpoint not found - Please verify the base URL is correct"
+      )}}
+  end
+
+  defp connection_status({:ok, %{status: 406}}) do
+    {:error,
+     {:unreachable,
+      dgettext(
+        "integrations_video",
+        "Not Acceptable - The MiroTalk server rejected the request. Please verify your base URL and API configuration"
+      )}}
+  end
+
+  defp connection_status(_response), do: :default
+
+  defp connection_result({:error, {:http_error, status, _message}}) when status >= 500 do
+    {:error,
+     {:unreachable,
+      dgettext(
+        "integrations_video",
+        "MiroTalk server error (status %{status}) - Please try again later",
+        status: status
+      )}}
+  end
+
+  defp connection_result({:error, {:http_error, status, _message}}) do
+    {:error,
+     {:unreachable,
+      dgettext(
+        "integrations_video",
+        "Unexpected response (status %{status}) - Please verify your configuration",
+        status: status
+      )}}
+  end
+
+  defp connection_result(result), do: result
+
+  defp handle_auth_error(body, default_message) do
+    if String.contains?(body || "", "Unauthorized") do
+      {:error,
+       {:invalid_api_key,
+        dgettext("integrations_video", "Invalid API key - Authentication failed")}}
+    else
+      {:error, {:invalid_api_key, default_message}}
+    end
+  end
+
+  defp handle_http_error(exception) when is_exception(exception) do
+    case exception do
+      # Mint transport errors with specific reasons
+      %Mint.TransportError{reason: :nxdomain} ->
+        {:error, {:unreachable, domain_not_found_message()}}
+
+      %Mint.TransportError{reason: :econnrefused} ->
+        {:error, {:unreachable, connection_refused_message()}}
+
+      %Mint.TransportError{reason: :timeout} ->
+        {:error, {:unreachable, connection_timeout_message()}}
+
+      # Req transport errors (may wrap Mint errors)
+      %Req.TransportError{reason: :nxdomain} ->
+        {:error, {:unreachable, domain_not_found_message()}}
+
+      %Req.TransportError{reason: :econnrefused} ->
+        {:error, {:unreachable, connection_refused_message()}}
+
+      %Req.TransportError{reason: :timeout} ->
+        {:error, {:unreachable, connection_timeout_message()}}
+
+      # Generic fallback with message
+      _other ->
+        {:error,
+         {:unreachable,
+          dgettext("integrations_video", "Connection failed: %{reason}",
+            reason: Exception.message(exception)
+          )}}
+    end
+  end
+
+  @doc """
+  Creates a new MiroTalk meeting room.
+
+  Returns {:ok, meeting_url} on success or {:error, reason} on failure.
+  """
+  @spec create_meeting_room(%{
+          required(:api_key) => String.t(),
+          required(:base_url) => String.t()
+        }) :: {:ok, map()} | {:error, term()}
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def create_meeting_room(config) do
+    base_url = Map.get(config, :base_url)
+
+    headers = [
+      {"authorization", Map.get(config, :api_key)},
+      {"Content-Type", "application/json"}
+    ]
+
+    # Try HTTPS first, then HTTP
+    response =
+      HttpHelpers.try_https_then_http(base_url, "/api/v1/meeting", fn url ->
+        Config.http_client_module().post(url, "", headers, SsrfOptions.request_options())
+      end)
+
+    case ApiResponse.handle_tagged(response, label: "MiroTalk", success: [200]) do
+      {:ok, response} ->
+        build_room_data(response, config)
+
+      {:error, {:http_error, _status, _message}} = error ->
+        error
+
+      {:error, reason} ->
+        Logger.error("Failed to create MiroTalk room", error: Redactor.redact(reason))
+        {:error, reason}
+    end
+  end
+
+  # A 200 response that carries neither a room id nor a meeting URL is not a
+  # usable room: persisting it would attach an empty room to the booking. Treat
+  # it as a failed creation so the caller can retry or surface the failure.
+  defp build_room_data(response, config) when is_map(response) do
+    room_id = presence(response["room_id"] || response["meeting"])
+    meeting_url = presence(response["meeting_url"] || response["meeting"])
+
+    if is_nil(room_id) and is_nil(meeting_url) do
+      Logger.error("MiroTalk API returned no room identifier",
+        response_keys: response |> Map.keys() |> Enum.sort()
+      )
+
+      {:error, :invalid_room_response}
+    else
+      {:ok,
+       %RoomData{
+         room_id: room_id,
+         meeting_url: meeting_url,
+         provider_data: response,
+         provider_config: config
+       }}
+    end
+  end
+
+  defp build_room_data(_response, _config) do
+    Logger.error("MiroTalk API returned a non-object JSON body")
+    {:error, :invalid_room_response}
+  end
+
+  defp presence(nil), do: nil
+  defp presence(""), do: nil
+  defp presence(value), do: value
+
+  # The slowest creation tries https and then falls back to plain http, both at
+  # the HTTP client's default timeouts.
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def room_creation_budget_ms, do: HTTPClient.request_budget_ms(:post) * 2
+
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def create_join_url(room_data, participant_name, participant_email, role, meeting_time) do
+    room_id = room_data.room_id
+    config = room_data.provider_config
+
+    if room_id != "" and participant_name != "" and config do
+      # The stored room id can be the full meeting URL (MiroTalk's `meeting`
+      # field), but the join API and its token take only the room name, the
+      # URL's last path segment.
+      room_name = extract_room_id(room_id)
+
+      # We prefer using the MiroTalk API to generate the join URL.
+      # This ensures the token is generated by the server itself and is guaranteed to be valid.
+      case JoinUrlBuilder.create_join_url_via_api(
+             config,
+             room_name,
+             participant_name,
+             participant_email,
+             role
+           ) do
+        {:ok, join_url} ->
+          {:ok, join_url}
+
+        {:error, reason} ->
+          Logger.warning(
+            "Failed to create join URL via MiroTalk API, falling back to manual generation",
+            reason: LogFormat.reason(reason)
+          )
+
+          # Fallback to manual generation if API fails
+          join_url =
+            JoinUrlBuilder.create_secure_direct_join_url(
+              config,
+              room_name,
+              participant_name,
+              role,
+              meeting_time
+            )
+
+          {:ok, join_url}
+      end
+    else
+      {:error, :invalid_parameters}
+    end
+  end
+
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def extract_room_id(meeting_url) when is_binary(meeting_url) and meeting_url != "" do
+    # MiroTalk API returns the full meeting URL, but the 'room' parameter
+    # and JWT payload expect only the room name (the last part of the URL).
+    case URI.parse(meeting_url) do
+      %URI{path: path} when is_binary(path) and path != "" ->
+        path
+        |> String.split("/")
+        |> Enum.reject(&(&1 == ""))
+        |> List.last()
+
+      _other ->
+        meeting_url
+    end
+  end
+
+  def extract_room_id(_url), do: nil
+
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def build_config(integration, decrypted, _opts) do
+    %{api_key: decrypted.api_key, base_url: integration.base_url}
+  end
+
+  @impl Tymeslot.Integrations.Video.Providers.ProviderBehaviour
+  def credential_spec do
+    %{
+      required: [:base_url],
+      credential_pairs: [{:api_key, :api_key_encrypted}],
+      url_fields: [:base_url]
+    }
+  end
+
+  defp domain_not_found_message,
+    do: dgettext("integrations_video", "Domain not found - Please check the URL")
+
+  defp connection_refused_message,
+    do:
+      dgettext(
+        "integrations_video",
+        "Connection refused - Server may be down or URL incorrect"
+      )
+
+  defp connection_timeout_message,
+    do: dgettext("integrations_video", "Connection timeout - Server took too long to respond")
+end

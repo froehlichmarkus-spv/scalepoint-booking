@@ -1,0 +1,58 @@
+name: spv-booking
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking
+      POSTGRES_DB: booking
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d booking"]
+      interval: 4s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "127.0.0.1:4474:8025"
+      - "127.0.0.1:4475:1025"
+
+  app:
+    image: spv-booking:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    ports:
+      - "127.0.0.1:4473:4000"
+    environment:
+      MIX_ENV: prod
+      PHX_SERVER: "true"
+      PHX_HOST: 127.0.0.1
+      PORT: "4000"
+      URL_SCHEME: http
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY}
+      DATABASE_URL: ecto://booking:booking@postgres:5432/booking
+      TYMESLOT_EMBEDDED_DB: "false"
+      EMAIL_ADAPTER: smtp
+      EMAIL_FROM_ADDRESS: booking@scalepoint-ventures.com
+      EMAIL_FROM_NAME: ScalePoint Ventures
+      DEFAULT_BRAND_KEY: scalepoint
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_SSL: "false"
+      SPV_DEMO_CALENDAR: "true"
+      BRAND_SEED: "true"
+      SEED_NEUTRAL_TENANT: "true"
+      SEED_SAMPLE_MAIL: "true"
+      SPV_SENDER_EMAIL: booking@scalepoint-ventures.com
+      SPV_SENDER_NAME: ScalePoint Ventures
+      NEUTRAL_SENDER_EMAIL: booking@meetdesk24.com
+      NEUTRAL_SENDER_NAME: MeetDesk24
+      SPV_OWNER_PASSWORD: ${SPV_OWNER_PASSWORD}
+      NEUTRAL_OWNER_PASSWORD: ${NEUTRAL_OWNER_PASSWORD}
+      ELIXIR_ERL_OPTIONS: "+S 2:2"

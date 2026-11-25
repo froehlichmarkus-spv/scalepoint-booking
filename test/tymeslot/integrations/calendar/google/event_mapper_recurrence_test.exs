@@ -1,0 +1,201 @@
+defmodule Tymeslot.Integrations.Calendar.Google.EventMapperRecurrenceTest do
+  use ExUnit.Case, async: true
+
+  @moduletag :integrations
+  @moduletag :calendar
+
+  alias Tymeslot.CalendarGrid.ProviderPayload
+  alias Tymeslot.Integrations.Calendar.Google.EventMapper
+
+  describe "format_event_data/1 — recurrence" do
+    test "emits recurrence as an RRULE-prefixed list" do
+      event_data = %{
+        summary: "Standup",
+        start_time: ~U[2026-04-18 10:00:00Z],
+        end_time: ~U[2026-04-18 10:15:00Z],
+        recurrence_rule: "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+      }
+
+      result = EventMapper.format_event_data(event_data)
+
+      assert result["recurrence"] == ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR"]
+    end
+
+    test "does not double-prefix a rule that already carries RRULE:" do
+      event_data = %{
+        summary: "Standup",
+        start_time: ~U[2026-04-18 10:00:00Z],
+        end_time: ~U[2026-04-18 10:15:00Z],
+        recurrence_rule: "RRULE:FREQ=DAILY"
+      }
+
+      result = EventMapper.format_event_data(event_data)
+
+      assert result["recurrence"] == ["RRULE:FREQ=DAILY"]
+    end
+
+    test "leaves a series' exclusions out of an edit's body" do
+      event_data = %{
+        summary: "Standup",
+        start_time: ~U[2026-04-20 10:00:00Z],
+        end_time: ~U[2026-04-20 10:15:00Z],
+        recurrence_rule: "FREQ=DAILY;COUNT=5",
+        recurrence_exceptions: [~U[2026-04-21 10:00:00Z]]
+      }
+
+      assert EventMapper.format_event_data(event_data)["recurrence"] == [
+               "RRULE:FREQ=DAILY;COUNT=5"
+             ]
+    end
+  end
+
+  # Outlook refuses some ordinal rules it has no pattern for; Google stores
+  # the RRULE itself, so the same rules reach it unchanged.
+  describe "an ordinal monthly rule" do
+    for rule <- [
+          "FREQ=MONTHLY;BYDAY=2TU",
+          "FREQ=MONTHLY;BYDAY=-1FR",
+          "FREQ=MONTHLY;BYDAY=2TU,-1FR"
+        ] do
+      test "#{rule} is written as its RRULE, on create and on edit" do
+        event_data = %{
+          summary: "Review",
+          start_time: ~U[2026-04-14 10:00:00Z],
+          end_time: ~U[2026-04-14 11:00:00Z],
+          recurrence_rule: unquote(rule)
+        }
+
+        assert EventMapper.format_new_event_data(event_data)["recurrence"] == [
+                 "RRULE:" <> unquote(rule)
+               ]
+
+        assert EventMapper.format_event_data(event_data)["recurrence"] == [
+                 "RRULE:" <> unquote(rule)
+               ]
+      end
+    end
+  end
+
+  describe "format_new_event_data/1 — recurrence" do
+    test "follows a new series' rule with its excluded occurrences" do
+      event_data = %{
+        summary: "Standup",
+        start_time: ~U[2026-04-20 10:00:00Z],
+        end_time: ~U[2026-04-20 10:15:00Z],
+        recurrence_rule: "FREQ=DAILY;COUNT=5",
+        recurrence_exceptions: [~U[2026-04-21 10:00:00Z], ~U[2026-04-23 10:00:00Z]]
+      }
+
+      result = EventMapper.format_new_event_data(event_data)
+
+      assert result["recurrence"] == [
+               "RRULE:FREQ=DAILY;COUNT=5",
+               "EXDATE:20260421T100000Z,20260423T100000Z"
+             ]
+    end
+
+    # Google rejects a recurring event whose start names no zone ("Missing
+    # time zone definition for start time"), and expands the rule in that
+    # zone, so the series keeps its local time across DST.
+    test "writes a zoned series' timing as wall clocks in its zone" do
+      zoned =
+        ProviderPayload.put_series_zone(
+          %{
+            summary: "Standup",
+            start_time: ~U[2026-04-20 08:00:00Z],
+            end_time: ~U[2026-04-20 08:15:00Z],
+            recurrence_rule: "FREQ=DAILY;COUNT=5",
+            recurrence_exceptions: [~U[2026-04-23 08:00:00Z]]
+          },
+          "Europe/Berlin"
+        )
+
+      result = EventMapper.format_new_event_data(zoned)
+
+      assert result["start"] == %{
+               "dateTime" => "2026-04-20T10:00:00",
+               "timeZone" => "Europe/Berlin"
+             }
+
+      assert result["end"] == %{
+               "dateTime" => "2026-04-20T10:15:00",
+               "timeZone" => "Europe/Berlin"
+             }
+
+      assert result["recurrence"] == [
+               "RRULE:FREQ=DAILY;COUNT=5",
+               "EXDATE:20260423T080000Z"
+             ]
+    end
+
+    test "excludes a new all-day series' occurrences by date" do
+      event_data = %{
+        summary: "Gym",
+        start_time: ~D[2026-04-20],
+        end_time: ~D[2026-04-21],
+        all_day: true,
+        recurrence_rule: "FREQ=WEEKLY",
+        recurrence_exceptions: [~D[2026-04-27]]
+      }
+
+      result = EventMapper.format_new_event_data(event_data)
+
+      assert result["recurrence"] == ["RRULE:FREQ=WEEKLY", "EXDATE;VALUE=DATE:20260427"]
+    end
+
+    test "omits the recurrence key when no rule is present" do
+      event_data = %{
+        summary: "Once",
+        start_time: ~U[2026-04-18 10:00:00Z],
+        end_time: ~U[2026-04-18 11:00:00Z]
+      }
+
+      result = EventMapper.format_new_event_data(event_data)
+
+      refute Map.has_key?(result, "recurrence")
+    end
+  end
+
+  # Google refuses a recurring timed event whose start names no zone
+  # ("Missing time zone definition for start time").
+  describe "format_event_data/1 — a series written without a zone" do
+    test "is written in UTC, at the same instants" do
+      result =
+        EventMapper.format_event_data(%{
+          summary: "Standup",
+          start_time: ~U[2026-04-18 10:00:00Z],
+          end_time: ~U[2026-04-18 10:15:00Z],
+          timezone: nil,
+          recurrence_rule: "FREQ=DAILY;COUNT=5"
+        })
+
+      assert result["start"] == %{"dateTime" => "2026-04-18T10:00:00", "timeZone" => "Etc/UTC"}
+      assert result["end"] == %{"dateTime" => "2026-04-18T10:15:00", "timeZone" => "Etc/UTC"}
+    end
+
+    test "keeps the zone a series names" do
+      result =
+        EventMapper.format_event_data(%{
+          summary: "Standup",
+          start_time: ~U[2026-04-18 08:00:00Z],
+          end_time: ~U[2026-04-18 08:15:00Z],
+          timezone: "Europe/Berlin",
+          recurrence_rule: "FREQ=DAILY;COUNT=5"
+        })
+
+      assert result["start"]["timeZone"] == "Europe/Berlin"
+    end
+
+    test "leaves a single event without a zone as it was" do
+      result =
+        EventMapper.format_event_data(%{
+          summary: "One-off",
+          start_time: ~U[2026-04-18 10:00:00Z],
+          end_time: ~U[2026-04-18 10:15:00Z],
+          timezone: nil
+        })
+
+      refute Map.has_key?(result["start"], "timeZone")
+    end
+  end
+end

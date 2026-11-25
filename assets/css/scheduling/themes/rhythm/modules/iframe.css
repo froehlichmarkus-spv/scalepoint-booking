@@ -1,0 +1,74 @@
+/* iframe.css — Rhythm's own overrides for iframe embeds.
+
+   The shell rules every theme shares (body sizing, the booker root sized to
+   content, the footer hidden, the slot scroll region released, full width
+   in the column layout) live in shared/embed.css, imported just before
+   this file. What follows is specific to Rhythm, starting with its page
+   grid, which is Rhythm's own markup.
+
+   All selectors are scoped to html.rhythm-theme[data-embedded] so they
+   activate only when iframe_embed.js sets the [data-embedded] attribute. */
+
+/* ---------------------------------------------------------------------------
+   1. Background and layout containers
+   --------------------------------------------------------------------------- */
+
+/* The page grid (.booker-page on the theme grid in Rhythm's wrapper): sized
+   to content. It must stay the first rule after shared/embed.css, where it
+   used to live, so its place in the cascade does not change. */
+html.scheduling-app[data-embedded] .booker-page {
+  min-height: auto;
+  grid-template-rows: auto;
+}
+
+/* Drop the standalone padding around the grid. */
+html.rhythm-theme[data-embedded] .video-background-theme {
+  padding: 0;
+}
+
+html.rhythm-theme[data-embedded] .video-background-theme.theme-grid .content-area {
+  padding: var(--space-sm);
+  min-height: 0;
+  overflow: visible;
+}
+
+html.rhythm-theme[data-embedded] .slide-container,
+html.rhythm-theme[data-embedded] .slide-content,
+html.rhythm-theme[data-embedded] .schedule-grid {
+  flex: initial;
+}
+
+/* Background container switches from fixed to absolute so it fills the
+   content area instead of the iframe viewport. */
+html.rhythm-theme[data-embedded] .video-background-container {
+  position: absolute;
+}
+
+/* Scheduling box — full-width, no border/radius in embedded mode */
+html.rhythm-theme[data-embedded] .scheduling-box {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0;
+  border: none;
+}
+
+/* Language switcher: tighter to the corner where it floats there (from
+   1024px); below, it keeps its own row (language-switcher.css). */
+@media (min-width: 1024px) {
+  html.rhythm-theme[data-embedded] .language-switcher-container {
+    top: var(--space-xs);
+    right: var(--space-xs);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   2. Column layout — wide-canvas variant for narrow embed containers
+   ---------------------------------------------------------------------------
+   Designed for WordPress columns and other constrained-width contexts.
+   shared/embed.css drops the centred 520-640px max-width cap on the
+   scheduling box; here the content area loses its side padding so the
+   booker uses every pixel of the embed container's width. */
+html.rhythm-theme[data-embed-layout="column"] .video-background-theme.theme-grid .content-area {
+  padding-left: 0;
+  padding-right: 0;
+}

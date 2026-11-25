@@ -1,0 +1,574 @@
+defmodule TymeslotWeb.DashboardRoutesTest do
+  use TymeslotWeb.LiveCase, async: false
+  @moduletag :live
+  @moduletag :meetings
+
+  import Phoenix.ConnTest
+  import Phoenix.LiveViewTest
+  import Tymeslot.AuthTestHelpers
+  import Tymeslot.Factory
+
+  alias Phoenix.Flash
+  alias Tymeslot.Infrastructure.DashboardCache
+
+  setup_all do
+    case Process.whereis(DashboardCache) do
+      nil -> start_supervised!(DashboardCache)
+      _pid -> :ok
+    end
+
+    :ok
+  end
+
+  defp setup_authenticated_user(conn) do
+    DashboardCache.clear_all()
+
+    user =
+      insert(:user,
+        onboarding_completed_at: DateTime.utc_now(),
+        dashboard_tour_seen_at: DateTime.utc_now()
+      )
+
+    profile =
+      insert(:profile,
+        user: user,
+        username: "testuser",
+        full_name: "Test User",
+        booking_theme: "1"
+      )
+
+    conn =
+      conn
+      |> init_test_session(%{})
+      |> log_in_user(user)
+
+    %{conn: conn, user: user, profile: profile}
+  end
+
+  describe "authentication" do
+    test "dashboard requires login", %{conn: conn} do
+      conn = get(conn, ~p"/dashboard")
+
+      assert redirected_to(conn) == "/auth/login?redirect_to=%2Fdashboard"
+      assert Flash.get(conn.assigns.flash, :error) =~ "You must be logged in"
+    end
+  end
+
+  describe "disconnected mount" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    test "dashboard returns HTML before WebSocket upgrade", %{conn: conn} do
+      conn = get(conn, ~p"/dashboard")
+      assert html_response(conn, 200) =~ "dashboard"
+
+      {:ok, _view, _html} = live(conn)
+    end
+  end
+
+  # The booking pages screen was the Theme screen; bookmarks and sent emails
+  # still carry its old addresses.
+  describe "the Theme screen's old addresses" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    test "forward to the booking pages screen, keeping the selected page", %{conn: conn} do
+      assert conn |> get("/dashboard/theme") |> redirected_to() == "/dashboard/pages"
+
+      assert conn |> get("/dashboard/theme?page=7") |> redirected_to() ==
+               "/dashboard/pages?page=7"
+
+      assert conn |> get("/dashboard/theme/customize/2?page=7") |> redirected_to() ==
+               "/dashboard/pages/customize/2?page=7"
+    end
+  end
+
+  describe "dashboard pages" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    @routes [
+      {"/dashboard", "calendar-surface"},
+      {"/dashboard/overview", "Welcome back"},
+      {"/dashboard/settings", "Basic Information"},
+      {"/dashboard/availability", "Availability"},
+      {"/dashboard/meeting-settings", "Meeting Types"},
+      {"/dashboard/locations", "Locations"},
+      {"/dashboard/calendar", "calendar-surface"},
+      {"/dashboard/integrations", "Integrations"},
+      {"/dashboard/pages", "Booking Page Text"},
+      {"/dashboard/meetings", "Meetings"},
+      {"/dashboard/automation", "Automation"},
+      {"/dashboard/polls", "Polls"}
+    ]
+
+    for {path, expected_text} <- @routes do
+      test "renders #{path}", %{conn: conn} do
+        {:ok, _view, html} = live(conn, unquote(path))
+        assert html =~ unquote(expected_text)
+      end
+    end
+
+    # Every section names itself once, in an h1 that reads exactly like its
+    # entry in the sidebar, so the page outline and the navigation agree.
+    @section_titles [
+      {"/dashboard", "Calendar"},
+      {"/dashboard/overview", "Overview"},
+      {"/dashboard/meetings", "Meetings"},
+      {"/dashboard/analytics", "Analytics"},
+      {"/dashboard/meeting-settings", "Meeting Types"},
+      {"/dashboard/locations", "Locations"},
+      {"/dashboard/availability", "Availability"},
+      {"/dashboard/polls", "Polls"},
+      {"/dashboard/pages", "Booking pages"},
+      {"/dashboard/pages/customize/1", "Booking pages"},
+      {"/dashboard/integrations", "Integrations"},
+      {"/dashboard/integrations?tab=video", "Integrations"},
+      {"/dashboard/embed", "Embed & Share"},
+      {"/dashboard/settings", "Profile"},
+      {"/dashboard/automation", "Automation"}
+    ]
+
+    for {path, title} <- @section_titles do
+      test "#{path} has one h1, named like its sidebar entry", %{conn: conn} do
+        {:ok, view, _html} = live(conn, unquote(path))
+        doc = view |> render() |> Floki.parse_document!()
+
+        assert [h1] = Floki.find(doc, "h1")
+        assert squish(h1) == unquote(title)
+        assert active_nav_label(doc) == unquote(title)
+      end
+    end
+
+    test "renders the polls section body", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/dashboard/polls")
+
+      assert html =~ "Find a time that works for everyone"
+    end
+
+    # The standalone calendar/video/payments pages are now tabs in the unified
+    # hub. Their routes stay defined (deep links, emails and OAuth/Stripe returns
+    # still target them) but redirect to the matching hub tab.
+    @legacy_redirects [
+      {"/dashboard/calendar-integration", "/dashboard/integrations?tab=calendars"},
+      {"/dashboard/video-integration", "/dashboard/integrations?tab=video"},
+      {"/dashboard/payments", "/dashboard/integrations?tab=payments"}
+    ]
+
+    for {from, to} <- @legacy_redirects do
+      test "#{from} redirects into the hub", %{conn: conn} do
+        assert {:error, {:live_redirect, %{to: unquote(to)}}} =
+                 live(conn, unquote(from))
+      end
+    end
+
+    test "/dashboard/payments?return=1 carries the Stripe return marker into the hub redirect",
+         %{conn: conn} do
+      assert {:error, {:live_redirect, %{to: to}}} =
+               live(conn, "/dashboard/payments?return=1")
+
+      assert to =~ "tab=payments"
+      assert to =~ "return=1"
+    end
+
+    test "/dashboard/payments?refresh=1 carries the Stripe refresh marker into the hub redirect",
+         %{conn: conn} do
+      assert {:error, {:live_redirect, %{to: to}}} =
+               live(conn, "/dashboard/payments?refresh=1")
+
+      assert to =~ "tab=payments"
+      assert to =~ "refresh=1"
+    end
+
+    test "availability renders the weekly schedule", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard/availability")
+
+      assert render(view) =~ "Weekly Schedule"
+    end
+
+    test "meeting settings can open the add meeting type form", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard/meeting-settings")
+
+      view
+      |> element("button", "Add Meeting Type")
+      |> render_click()
+
+      assert render(view) =~ "Add Meeting Type"
+      assert has_element?(view, "form[phx-submit='create_meeting_type']")
+    end
+
+    test "theme customization can be opened and browsed", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard/pages")
+
+      view
+      |> element("button[phx-click='show_customization'][phx-value-theme='1']")
+      |> render_click()
+
+      assert render(view) =~ "Customise Quill"
+      assert has_element?(view, "#theme-customization-uploads")
+
+      view
+      |> element("button[phx-click='theme:set_browsing_type'][phx-value-type='color']")
+      |> render_click()
+
+      assert render(view) =~ "Select a solid colour"
+
+      view
+      |> element("button[phx-click='theme:set_browsing_type'][phx-value-type='image']")
+      |> render_click()
+
+      assert has_element?(view, "#theme-background-image-form")
+
+      view
+      |> element("button[phx-click='theme:set_browsing_type'][phx-value-type='video']")
+      |> render_click()
+
+      assert has_element?(view, "#theme-background-video-form")
+    end
+  end
+
+  describe "page outline" do
+    # With something on every page, so the cards and list rows render too.
+    setup %{conn: conn} do
+      %{user: user} = context = setup_authenticated_user(conn)
+
+      insert(:meeting_type, user: user)
+      insert(:future_meeting, organizer_user: user, organizer_email: user.email)
+      insert(:video_integration, user: user)
+      insert(:calendar_integration, user: user)
+      insert(:venue, user: user)
+      insert(:webhook, user: user)
+      poll = insert(:poll, user: user)
+      insert(:poll_time_slot, poll: poll)
+
+      {:ok, context}
+    end
+
+    for {path, _title} <- @section_titles do
+      test "#{path} never skips a heading level", %{conn: conn} do
+        {:ok, view, _html} = live(conn, unquote(path))
+
+        levels =
+          view
+          |> render()
+          |> Floki.parse_document!()
+          # A dialog's title belongs to the dialog's own outline.
+          |> Floki.filter_out("[role=dialog]")
+          |> Floki.find("h1, h2, h3, h4, h5, h6")
+          |> Enum.map(fn {"h" <> level, _attrs, _children} -> String.to_integer(level) end)
+
+        assert [1 | _rest] = levels
+
+        skips =
+          levels
+          |> Enum.chunk_every(2, 1, :discard)
+          |> Enum.reject(fn [previous, next] -> next <= previous + 1 end)
+
+        assert skips == []
+      end
+    end
+  end
+
+  describe "overview" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    test "shows the user's full name in the welcome banner", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+
+      assert html =~ "Welcome back, Test User"
+    end
+
+    test "shows empty state when no meetings are scheduled", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+
+      assert html =~ "Nothing on your plate today or tomorrow"
+    end
+
+    test "shows upcoming meeting title and attendee name", %{conn: conn, user: user} do
+      insert(:meeting,
+        organizer_user_id: user.id,
+        organizer_email: user.email,
+        title: "Strategy Session",
+        attendee_name: "Jane Smith"
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+
+      assert html =~ "Strategy Session"
+      assert html =~ "Jane Smith"
+    end
+
+    test "updates welcome banner name when profile is updated", %{conn: conn, profile: profile} do
+      {:ok, view, html} = live(conn, ~p"/dashboard/overview")
+      assert html =~ "Welcome back, Test User"
+
+      send(view.pid, {:profile_updated, %{profile | full_name: "Updated Name"}})
+
+      assert render(view) =~ "Updated Name"
+    end
+
+    test "refreshes meeting list after meeting type is changed", %{conn: conn, user: user} do
+      {:ok, view, html} = live(conn, ~p"/dashboard/overview")
+      assert html =~ "Nothing on your plate today or tomorrow"
+
+      insert(:meeting,
+        organizer_user_id: user.id,
+        organizer_email: user.email,
+        title: "Newly Scheduled Meeting"
+      )
+
+      send(view.pid, {:meeting_type_changed})
+
+      assert render(view) =~ "Newly Scheduled Meeting"
+    end
+  end
+
+  describe "sidebar navigation" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    test "sidebar is present on scheduling pages", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+      assert html =~ "dashboard-sidebar"
+    end
+
+    test "sidebar is present on the calendar page", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard")
+      assert html =~ "dashboard-sidebar"
+    end
+
+    test "the same sidebar renders on every dashboard page", %{conn: conn} do
+      # The calendar used to swap the sidebar for a slim icon rail, so moving
+      # between the two reflowed the whole layout. Both must now carry the
+      # identical set of nav destinations.
+      {:ok, _view, calendar_html} = live(conn, ~p"/dashboard")
+      {:ok, _view, overview_html} = live(conn, ~p"/dashboard/overview")
+
+      assert sidebar_hrefs(calendar_html) == sidebar_hrefs(overview_html)
+    end
+
+    test "the Calendar item is active on the dashboard landing page", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard")
+      assert "dashboard-nav-link--active" in nav_link_classes(html, "/dashboard")
+    end
+
+    test "the Overview item is active on the overview page", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+      assert "dashboard-nav-link--active" in nav_link_classes(html, "/dashboard/overview")
+    end
+
+    test "the mode tab bar is gone", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard")
+      refute html =~ "mode-tab-bar"
+      refute html =~ ~s(data-testid="calendar-rail")
+    end
+  end
+
+  defp sidebar_hrefs(html) do
+    html
+    |> Floki.parse_document!()
+    |> Floki.find("#dashboard-sidebar a")
+    |> Enum.flat_map(&Floki.attribute(&1, "href"))
+  end
+
+  defp nav_link_classes(html, href) do
+    [link] =
+      html
+      |> Floki.parse_document!()
+      |> Floki.find("#dashboard-sidebar a[href='#{href}']")
+
+    link |> Floki.attribute("class") |> List.first() |> String.split()
+  end
+
+  describe "overview - nil full name" do
+    setup %{conn: conn} do
+      DashboardCache.clear_all()
+
+      user =
+        insert(:user,
+          onboarding_completed_at: DateTime.utc_now(),
+          dashboard_tour_seen_at: DateTime.utc_now()
+        )
+
+      insert(:profile,
+        user: user,
+        username: "noname",
+        full_name: nil,
+        booking_theme: "1"
+      )
+
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> log_in_user(user)
+
+      {:ok, %{conn: conn}}
+    end
+
+    test "shows welcome banner without name when full_name is nil", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+
+      assert html =~ "Welcome back!"
+    end
+  end
+
+  describe "overview - first visit" do
+    setup %{conn: conn} do
+      DashboardCache.clear_all()
+
+      # Onboarding is complete (so no redirect) but the dashboard tour has
+      # never been seen — the hallmark of a first dashboard visit.
+      user =
+        insert(:user,
+          onboarding_completed_at: DateTime.utc_now(),
+          dashboard_tour_seen_at: nil
+        )
+
+      insert(:profile,
+        user: user,
+        username: "firsttimer",
+        full_name: "First Timer",
+        booking_theme: "1"
+      )
+
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> log_in_user(user)
+
+      {:ok, %{conn: conn}}
+    end
+
+    test "greets a first-time visitor with 'Welcome' rather than 'Welcome back'", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/overview")
+
+      assert html =~ "Welcome, First Timer"
+      refute html =~ "Welcome back"
+    end
+  end
+
+  describe "onboarding redirect" do
+    test "redirects to onboarding when onboarding is not completed", %{conn: conn} do
+      DashboardCache.clear_all()
+      user = insert(:user, onboarding_completed_at: nil)
+      insert(:profile, user: user, username: "incomplete", booking_theme: "1")
+
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> log_in_user(user)
+
+      assert {:error, {:redirect, %{to: "/onboarding"}}} = live(conn, ~p"/dashboard")
+    end
+  end
+
+  describe "overview - invalid timezone" do
+    setup %{conn: conn} do
+      DashboardCache.clear_all()
+
+      user =
+        insert(:user,
+          onboarding_completed_at: DateTime.utc_now(),
+          dashboard_tour_seen_at: DateTime.utc_now()
+        )
+
+      insert(:profile,
+        user: user,
+        username: "badtz",
+        full_name: "Bad TZ User",
+        timezone: "Invalid/Timezone",
+        booking_theme: "1"
+      )
+
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> log_in_user(user)
+
+      {:ok, %{conn: conn, user: user}}
+    end
+
+    test "renders meeting without crashing when profile timezone is invalid", %{
+      conn: conn,
+      user: user
+    } do
+      insert(:meeting,
+        organizer_user_id: user.id,
+        organizer_email: user.email,
+        title: "Timeless Meeting",
+        attendee_name: "Jane"
+      )
+
+      {:ok, _view, html} = live(conn, ~p"/dashboard")
+
+      # Meeting still renders even with invalid timezone — time falls back to UTC
+      assert html =~ "Timeless Meeting"
+      assert html =~ "Jane"
+    end
+  end
+
+  describe "external redirect validation" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    test "allows HTTPS external redirects", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard")
+
+      send(view.pid, {:external_redirect, "https://accounts.google.com/o/oauth2/auth"})
+
+      assert_redirect(view, "https://accounts.google.com/o/oauth2/auth")
+    end
+
+    test "rejects non-HTTPS external redirects", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard")
+
+      send(view.pid, {:external_redirect, "http://evil.com/phish"})
+
+      html = render(view)
+      assert html =~ "Invalid redirect URL"
+    end
+
+    test "rejects javascript: scheme redirects", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard")
+
+      send(view.pid, {:external_redirect, "javascript:alert(1)"})
+
+      html = render(view)
+      assert html =~ "Invalid redirect URL"
+    end
+  end
+
+  describe "handle_info resilience" do
+    setup %{conn: conn} do
+      {:ok, setup_authenticated_user(conn)}
+    end
+
+    test "silently ignores unknown messages", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard")
+
+      send(view.pid, {:completely_unknown_message, "some data"})
+
+      # Should not crash, should still render the dashboard
+      assert render(view) =~ "calendar-surface"
+    end
+  end
+
+  defp squish(node), do: node |> Floki.text() |> String.split() |> Enum.join(" ")
+
+  # The current section's sidebar link, without the badges it may carry.
+  defp active_nav_label(doc) do
+    assert [link] = Floki.find(doc, "aside nav a[aria-current=page]")
+
+    link
+    |> Floki.filter_out(".dashboard-nav-notification")
+    |> Floki.filter_out("[data-testid$=pro-badge]")
+    |> squish()
+  end
+end

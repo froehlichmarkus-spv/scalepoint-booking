@@ -1,0 +1,493 @@
+defmodule Tymeslot.Security.SecurityLoggerTest do
+  @moduledoc false
+
+  # async: false is required because these tests attach a global :logger handler
+  # and lower the primary Logger level; running concurrently would leak both.
+  use ExUnit.Case, async: false
+
+  @moduletag :security
+
+  @redactor_filter :tymeslot_metadata_redactor
+
+  import Mox, only: [verify_on_exit!: 1]
+
+  alias Tymeslot.Security.{SecurityLogger, Token}
+  alias Tymeslot.Test.LogCapture
+
+  # SecurityLogger emits most events at :info, while config/test.exs pins the primary level
+  # to :warning. Lower it for the duration of the call and restore afterwards.
+  #
+  # MetadataRedactor is installed as a primary :logger filter and rewrites every
+  # metadata key containing "session_id" to "[REDACTED]" before any handler sees
+  # it. Lift it here so these tests observe what SecurityLogger itself emits;
+  # that global belt-and-braces layer has its own tests.
+  defp capture_security_logs(fun) do
+    previous =
+      :logger.get_primary_config() |> Map.fetch!(:filters) |> Keyword.get(@redactor_filter)
+
+    _removed = :logger.remove_primary_filter(@redactor_filter)
+
+    try do
+      LogCapture.with_capture([logger_level: :info], fun)
+    after
+      # Put back exactly what was installed, and nothing when nothing was.
+      if previous, do: :ok = :logger.add_primary_filter(@redactor_filter, previous)
+    end
+  end
+
+  describe "email masking via log_authentication_attempt/4" do
+    # mask_email/1 is a private helper; its contract is verified here through the
+    # public entry point by asserting on the :email_masked metadata key that
+    # reaches Logger, and that no raw address reaches it under any key.
+
+    test "masks the local part and keeps the domain" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt(
+          "alice@example.com",
+          false,
+          "bad_password",
+          %{ip_address: "203.0.113.1"}
+        )
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "authentication_failure"} = meta}}
+      assert meta.email_masked == "a***@example.com"
+      assert meta.ip_address == "203.0.113.1"
+    end
+
+    test "trims and downcases before masking" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt(
+          " Alice@Example.COM ",
+          false,
+          "bad_password",
+          %{}
+        )
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "authentication_failure"} = meta}}
+      assert meta.email_masked == "a***@example.com"
+    end
+
+    test "drops a nil email rather than logging a placeholder" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt(nil, false, "missing_email", %{})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "authentication_failure"} = meta}}
+      assert meta.email_masked == nil
+    end
+
+    test "drops a malformed email (no @ sign) entirely" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt("no-at-sign", false, "malformed", %{})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "authentication_failure"} = meta}}
+      assert meta.email_masked == nil
+      refute inspect(meta) =~ "no-at-sign"
+    end
+
+    test "masks a unicode local part without crashing" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt("漢字@example.com", false, "test", %{})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "authentication_failure"} = meta}}
+      assert meta.email_masked == "漢***@example.com"
+      refute inspect(meta) =~ "漢字@example.com"
+    end
+  end
+
+  describe "log_authentication_attempt/4" do
+    test "records the caller-supplied request context alongside the failure event" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt(
+          "johndoe@example.com",
+          false,
+          "bad_password",
+          %{user_id: 42, ip_address: "203.0.113.1", user_agent: "curl/8.0"}
+        )
+      end)
+
+      assert_receive {:captured_log,
+                      %{level: level, meta: %{event_type: "authentication_failure"} = meta}}
+
+      # Failed logins are logged at :warning so level-keyed alerting sees them.
+      assert level == :warning
+      assert meta.user_id == 42
+      assert meta.reason == "bad_password"
+      assert meta.email_masked == "j***@example.com"
+      assert meta.ip_address == "203.0.113.1"
+      assert meta.user_agent == "curl/8.0"
+    end
+
+    test "logs the success event type and leaves absent context nil" do
+      # The third positional argument is `reason`, not metadata; a nil reason
+      # and absent request context leave their keys nil on the log line.
+      capture_security_logs(fn ->
+        SecurityLogger.log_authentication_attempt("x@y.com", true, nil, %{})
+      end)
+
+      assert_receive {:captured_log,
+                      %{level: level, meta: %{event_type: "authentication_success"} = meta}}
+
+      assert level == :info
+      assert meta.email_masked == "x***@y.com"
+      assert meta.reason == nil
+      assert meta.user_id == nil
+      assert meta.ip_address == nil
+      assert meta.user_agent == nil
+    end
+
+    # Through the installed redactor, as production writes it: the line keeps
+    # the visitor's network for telling traffic apart, never the address.
+    test "never writes a full client address, IPv4 or IPv6" do
+      LogCapture.with_capture([logger_level: :info], fn ->
+        for ip <- ["203.0.113.77", "2001:db8:85a3:8d3:1319:8a2e:370:7348"] do
+          SecurityLogger.log_authentication_attempt("alice@example.com", false, "bad_password", %{
+            ip_address: ip
+          })
+        end
+      end)
+
+      logged =
+        LogCapture.drain()
+        |> Enum.filter(&(&1.meta[:event_type] == "authentication_failure"))
+        |> Enum.map(& &1.meta.ip_address)
+
+      assert logged == ["203.0.113.0/24", "2001:db8:85a3::/48"]
+    end
+  end
+
+  describe "log_security_event/2" do
+    test "emits the event type with every detail key nil when details are sparse" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("sparse_event", %{})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "sparse_event"} = meta}}
+      assert meta.user_id == nil
+      assert meta.email_masked == nil
+      assert meta.ip_address == nil
+      assert meta.user_agent == nil
+      assert meta.session_hash == nil
+    end
+
+    test "forwards every supplied detail as structured metadata" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("full_event", %{
+          user_id: 1,
+          ip_address: "1.2.3.4",
+          user_agent: "test",
+          session_hash: "abcdef12345678",
+          email: "c@d.com"
+        })
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "full_event"} = meta}}
+      assert meta.user_id == 1
+      assert meta.ip_address == "1.2.3.4"
+      assert meta.user_agent == "test"
+      assert meta.session_hash == "abcdef12345678"
+      assert meta.email_masked == "c***@d.com"
+    end
+
+    test "the raw email never reaches Logger under any key" do
+      raw = "alice@example.com"
+
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("test_event", %{email: raw})
+      end)
+
+      assert_receive {:captured_log, %{msg: {:string, message}, meta: meta}}
+      assert IO.iodata_to_binary(message) == "Security event"
+      assert meta.email_masked == "a***@example.com"
+      refute inspect(meta) =~ raw
+    end
+
+    test "a mixed-case raw email never reaches Logger under any key" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("test_event", %{email: " Alice@Example.COM "})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "test_event"} = meta}}
+      assert meta.email_masked == "a***@example.com"
+      refute inspect(meta) =~ "Alice@Example.COM"
+      refute inspect(meta) =~ "alice@example.com"
+    end
+
+    test "forwards an identifier-shaped provider unchanged" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("test_event", %{provider: "nextcloud"})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "test_event"} = meta}}
+      assert meta.provider == "nextcloud"
+    end
+
+    test "drops a provider carrying unvalidated user input rather than logging it verbatim" do
+      malicious = "<script>alert(1)</script>\nX-Injected: true"
+
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("test_event", %{provider: malicious})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "test_event"} = meta}}
+      assert meta.provider == nil
+      refute inspect(meta) =~ malicious
+    end
+
+    test "drops an over-long provider value" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_security_event("test_event", %{provider: String.duplicate("a", 33)})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "test_event"} = meta}}
+      assert meta.provider == nil
+    end
+  end
+
+  describe "log_blocked_input/3" do
+    test "logs the field, the check that fired and the sanitised context" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_blocked_input(:email, "sql_injection", %{
+          ip: "1.2.3.4",
+          user_id: 42,
+          user_agent: "curl/8.0"
+        })
+      end)
+
+      assert_receive {:captured_log,
+                      %{level: :warning, msg: {:string, message}, meta: %{check: _check} = meta}}
+
+      assert IO.iodata_to_binary(message) == "Suspicious input sanitised"
+      assert meta.field == :email
+      assert meta.check == "sql_injection"
+      assert meta.ip_address == "1.2.3.4"
+      assert meta.user_id == 42
+      assert meta.user_agent == "curl/8.0"
+    end
+
+    test "accepts a string field name and drops context that fails validation" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_blocked_input("email", "path_traversal", %{
+          ip: "not-an-ip",
+          user_id: "not-an-integer"
+        })
+      end)
+
+      assert_receive {:captured_log, %{meta: %{check: "path_traversal"} = meta}}
+      assert meta.field == "email"
+      assert meta.ip_address == nil
+      assert meta.user_id == nil
+    end
+  end
+
+  describe "log_session_event/4" do
+    test "names the session by the start of its stored hash, never by the token" do
+      token = "super_secret_session_token_abcdef12"
+
+      capture_security_logs(fn ->
+        SecurityLogger.log_session_event("created", 1, token, %{})
+      end)
+
+      assert_receive {:captured_log,
+                      %{level: :info, meta: %{event_type: "session_created"} = meta}}
+
+      assert meta.user_id == 1
+      assert meta.session_hash == binary_part(Token.hash_token(token), 0, 16)
+      refute inspect(meta) =~ "super_secret_session_token"
+      refute inspect(meta) =~ "abcdef12"
+    end
+
+    test "tolerates a nil session token" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_session_event("destroyed", 1, nil, %{})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "session_destroyed"} = meta}}
+      assert meta.session_hash == nil
+    end
+  end
+
+  # Level-keyed alerting must see every refusal and failure.
+  describe "event levels" do
+    test "lockouts, rate-limit refusals, CSRF failures and failed social sign-ins warn" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_account_lockout("a@b.com", "failed_attempts", %{})
+        SecurityLogger.log_rate_limit_violation("a@b.com", "login", %{})
+        SecurityLogger.log_csrf_violation(1, "login", %{})
+        SecurityLogger.log_social_auth_event("google", false, %{})
+        SecurityLogger.log_social_auth_event("google", true, %{})
+      end)
+
+      for event <- ~w(account_lockout rate_limit_violation csrf_violation social_auth_failure) do
+        assert_receive {:captured_log, %{level: :warning, meta: %{event_type: ^event}}}
+      end
+
+      assert_receive {:captured_log, %{level: :info, meta: %{event_type: "social_auth_success"}}}
+    end
+  end
+
+  describe "log_account_lockout/3" do
+    test "names the locked-out account as a masked email and records its kind" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_account_lockout("alice@example.com", "locked", %{
+          user_id: 7,
+          ip_address: "203.0.113.9",
+          user_agent: "curl/8.0"
+        })
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "account_lockout"} = meta}}
+      assert meta.email_masked == "a***@example.com"
+      assert meta.lockout_type == "locked"
+      assert meta.user_id == 7
+      assert meta.ip_address == "203.0.113.9"
+      assert meta.user_agent == "curl/8.0"
+      refute inspect(meta) =~ "alice@example.com"
+    end
+
+    test "distinguishes a throttle from a lock" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_account_lockout("bob@example.com", "throttled", %{})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "account_lockout"} = meta}}
+      assert meta.lockout_type == "throttled"
+      assert meta.user_id == nil
+    end
+  end
+
+  describe "log_rate_limit_violation/3" do
+    test "names an email identifier as a masked email, never raw" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_rate_limit_violation("dave@example.com", "signup", %{
+          ip_address: "203.0.113.9",
+          user_agent: "curl/8.0"
+        })
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "rate_limit_violation"} = meta}}
+      assert meta.email_masked == "d***@example.com"
+      assert meta.user_id == nil
+      assert meta.limit_type == "signup"
+      assert meta.ip_address == "203.0.113.9"
+      assert meta.user_agent == "curl/8.0"
+      refute inspect(meta) =~ "dave@example.com"
+    end
+
+    test "names an integer identifier as a user id, not an email" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_rate_limit_violation(42, "email_verification", %{
+          ip_address: "203.0.113.9"
+        })
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "rate_limit_violation"} = meta}}
+      assert meta.user_id == 42
+      assert meta.email_masked == nil
+      assert meta.limit_type == "email_verification"
+    end
+  end
+
+  describe "log_social_auth_event/3" do
+    test "records which provider the attempt was against" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_social_auth_event("google", true, %{
+          email: "carol@example.com",
+          ip_address: "203.0.113.4"
+        })
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "social_auth_success"} = meta}}
+      assert meta.provider == "google"
+      assert meta.email_masked == "c***@example.com"
+      assert meta.ip_address == "203.0.113.4"
+    end
+
+    test "records the provider on a failure with no email available" do
+      capture_security_logs(fn ->
+        SecurityLogger.log_social_auth_event("github", false, %{ip_address: "203.0.113.5"})
+      end)
+
+      assert_receive {:captured_log, %{meta: %{event_type: "social_auth_failure"} = meta}}
+      assert meta.provider == "github"
+      assert meta.email_masked == nil
+    end
+  end
+
+  describe "monitoring webhook payload" do
+    setup :verify_on_exit!
+
+    setup do
+      Mox.set_mox_global()
+
+      original_enabled = Application.get_env(:tymeslot, :security_monitoring_enabled)
+      original_webhook = Application.get_env(:tymeslot, :security_monitoring_webhook)
+
+      Application.put_env(:tymeslot, :security_monitoring_enabled, true)
+      Application.put_env(:tymeslot, :security_monitoring_webhook, "https://example.com/webhook")
+
+      on_exit(fn ->
+        Application.put_env(:tymeslot, :security_monitoring_enabled, original_enabled)
+        Application.put_env(:tymeslot, :security_monitoring_webhook, original_webhook)
+      end)
+
+      :ok
+    end
+
+    test "carries lockout_type to the webhook, not just the Logger line" do
+      test_pid = self()
+
+      Mox.expect(Tymeslot.HTTPClientMock, :post, fn _url, body, _headers, _opts ->
+        send(test_pid, {:webhook_body, Jason.decode!(body)})
+        {:ok, %Req.Response{status: 200}}
+      end)
+
+      capture_security_logs(fn ->
+        SecurityLogger.log_account_lockout("alice@example.com", "account_throttled", %{
+          user_id: 7
+        })
+      end)
+
+      assert_receive {:webhook_body, payload}, 1000
+      assert payload["lockout_type"] == "account_throttled"
+      assert payload["email_masked"] == "a***@example.com"
+      refute Jason.encode!(payload) =~ "alice@example.com"
+    end
+
+    test "carries limit_type to the webhook" do
+      test_pid = self()
+
+      Mox.expect(Tymeslot.HTTPClientMock, :post, fn _url, body, _headers, _opts ->
+        send(test_pid, {:webhook_body, Jason.decode!(body)})
+        {:ok, %Req.Response{status: 200}}
+      end)
+
+      capture_security_logs(fn ->
+        SecurityLogger.log_rate_limit_violation("dave@example.com", "signup", %{})
+      end)
+
+      assert_receive {:webhook_body, payload}, 1000
+      assert payload["limit_type"] == "signup"
+    end
+
+    test "carries provider to the webhook" do
+      test_pid = self()
+
+      Mox.expect(Tymeslot.HTTPClientMock, :post, fn _url, body, _headers, _opts ->
+        send(test_pid, {:webhook_body, Jason.decode!(body)})
+        {:ok, %Req.Response{status: 200}}
+      end)
+
+      capture_security_logs(fn ->
+        SecurityLogger.log_social_auth_event("github", false, %{ip_address: "203.0.113.5"})
+      end)
+
+      assert_receive {:webhook_body, payload}, 1000
+      assert payload["provider"] == "github"
+    end
+  end
+end

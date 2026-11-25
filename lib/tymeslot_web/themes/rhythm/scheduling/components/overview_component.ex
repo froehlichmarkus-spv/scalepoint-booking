@@ -1,0 +1,173 @@
+defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Components.OverviewComponent do
+  @moduledoc """
+  Rhythm theme component for the overview/duration selection step.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Demo
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Profiles
+  alias TymeslotWeb.Themes.Shared.BookingText
+  alias TymeslotWeb.Themes.Shared.Components.ApprovalNotice
+  alias TymeslotWeb.Themes.Shared.Components.GroupSession
+  alias TymeslotWeb.Themes.Shared.Components.MeetingPrice
+  alias TymeslotWeb.Themes.Shared.Journey.Components, as: JourneyComponents
+  alias TymeslotWeb.Themes.Shared.LocalizationHelpers
+  alias TymeslotWeb.Themes.Shared.StepEvents
+
+  import TymeslotWeb.Components.FlagHelpers
+
+  @impl Phoenix.LiveComponent
+  defdelegate update(assigns, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate handle_event(event, params, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    profile = assigns.organizer_profile
+
+    assigns =
+      assign(assigns,
+        greeting: BookingText.greeting(profile, Profiles.display_name(profile), :rhythm),
+        instruction: BookingText.instruction(profile, :rhythm)
+      )
+
+    ~H"""
+    <div
+      class="scheduling-box booker-card"
+      data-locale={@locale}
+      data-testid="booker-card"
+      id={assigns[:moment] && "#{assigns[:moment]}-step"}
+      data-moment={assigns[:moment]}
+      data-moment-state={assigns[:moment_state]}
+    >
+      <div class="slide-container">
+        <div class="slide active">
+          <div class="slide-content">
+            <JourneyComponents.moment_heading
+              tag="h1"
+              moment={assigns[:moment]}
+              moment_state={assigns[:moment_state]}
+              focus={assigns[:journey_focus]}
+              class="slide-title"
+            >
+              {BookingText.heading(
+                @organizer_profile,
+                :rhythm,
+                Profiles.display_name(@organizer_profile)
+              )}
+            </JourneyComponents.moment_heading>
+
+            <div class="organizer-profile">
+              <div class="organizer-avatar">
+                <img
+                  src={Demo.avatar_url(@organizer_profile, :thumb)}
+                  alt={Demo.avatar_alt_text(@organizer_profile)}
+                  class="avatar-image"
+                />
+                <div class="avatar-checkmark">
+                  <.icon name="hero-check-mini" class="avatar-checkmark__icon" />
+                </div>
+              </div>
+              <div :if={@greeting || @instruction} class="organizer-info">
+                <p :if={@greeting} class="organizer-greeting">{@greeting}</p>
+                <p :if={@instruction} class="organizer-instruction">{@instruction}</p>
+              </div>
+            </div>
+
+            <%= if @username_context && @meeting_types == [] do %>
+              <div class="overview-empty-state">
+                <p class="overview-empty-title">
+                  {dgettext("booking", "No meeting types available")}
+                </p>
+                <p class="overview-empty-subtitle">
+                  {dgettext("booking", "Please contact the organiser")}
+                </p>
+              </div>
+            <% else %>
+              <div class="duration-grid">
+                <%= for meeting_type <- @meeting_types do %>
+                  <% slug = MeetingTypes.effective_slug(meeting_type) %>
+                  <div class={"duration-card #{if @selected_duration == slug, do: "selected", else: ""}"}>
+                    <button
+                      phx-click="choose_duration"
+                      phx-value-duration={slug}
+                      phx-target={@myself}
+                      class="duration-button"
+                      data-testid="duration-option"
+                      data-duration={slug}
+                      data-fact="meeting_type"
+                      data-value={slug}
+                    >
+                      <div class="duration-icon shrink-0">
+                        {render_icon(meeting_type.icon || get_default_icon(meeting_type))}
+                      </div>
+                      <div class="duration-info">
+                        <div class="duration-name">
+                          {meeting_type.name}
+                          <ApprovalNotice.pill :if={Approval.required?(meeting_type)} />
+                        </div>
+                        <div class="duration-time">
+                          {LocalizationHelpers.format_length_badge(meeting_type)}
+                        </div>
+                        <GroupSession.hint meeting_type={meeting_type} />
+                        <MeetingPrice.hint
+                          :if={!assigns[:is_rescheduling]}
+                          meeting_type={meeting_type}
+                          currency={@host_currency}
+                          locale={@locale}
+                        />
+                        <div class="duration-description">
+                          {meeting_type.description}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Helpers
+  # Keyed to the type's *primary* duration on purpose. This is the card in the
+  # type list, rendered before any length has been picked and unchanged once
+  # one is: an icon that swapped itself out under the booker would read as the
+  # card having become a different meeting type. A type offering several
+  # lengths shows the icon of the one its organiser put first, and the span of
+  # lengths is stated on the card's badge instead.
+  defp get_default_icon(meeting_type) do
+    case meeting_type.duration_minutes do
+      15 -> "hero-bolt"
+      30 -> "hero-chat-bubble-left-right"
+      60 -> "hero-hand-raised"
+      90 -> "hero-chart-bar"
+      120 -> "hero-flag"
+      _duration -> "hero-clock"
+    end
+  end
+
+  defp render_icon(icon) do
+    assigns = %{icon: icon, safe_icon: sanitize_css_class(icon)}
+
+    case icon do
+      "none" ->
+        ~H""
+
+      "hero-" <> _rest ->
+        ~H"""
+        <.icon name={@safe_icon} class="hero-icon hero-icon--md" />
+        """
+
+      _emoji ->
+        ~H"{@icon}"
+    end
+  end
+end

@@ -1,0 +1,461 @@
+defmodule Tymeslot.CalendarGrid.EventMove do
+  @moduledoc """
+  Moving a calendar-grid event to another calendar.
+
+  No provider can move an event between accounts, so a move is a create on
+  the destination followed by a delete on the source.
+
+  ## Create first
+
+  The destination is written first, and the source is only deleted once the
+  destination has accepted the event. A failed create therefore leaves the
+  organiser exactly where they started. The opposite order lost the event
+  whenever the create failed, which it always did for all-day events.
+
+  A failed delete after a successful create cannot lose anything either: the
+  event exists on the destination, and the original is either queued for
+  deletion on the next sync (the CalDAV family, whose offline queue replays
+  deletes) or left in place for the organiser to remove. Anything that raises
+  once the create has succeeded is reported as that, never as a move that did
+  not happen, since the event is on the destination by then.
+
+  ## Which uid the moved row gets
+
+  The one the destination's sync will key the event by, so the next sync
+  updates the row rather than adding a second one beside it. For the CalDAV
+  family that is the uid the create was written under; Google and Outlook
+  report an iCalendar UID of their own on the create, which is what their
+  syncs key by (`CreatedEvent.cache_uid/1`).
+
+  ## What travels with the event
+
+  The destination receives the whole event through
+  `Tymeslot.CalendarGrid.ProviderPayload`: timing (dates for an all-day
+  event), description, location, attendees, reminders and colour. A video
+  link travels in the description it was written into, and the cached link
+  and video integration are carried onto the destination's row.
+
+  The reminders are those the destination keeps
+  (`CreateParams.fit_reminders/2`): one notification on Outlook or Exchange,
+  at most `CreateParams.max_reminders/0` elsewhere. The create and the cached
+  row get the same list, so the panel shows what the destination holds.
+
+  ## Recurring events
+
+  A member of a series is never moved on its own. The create path writes a
+  single event, so a move would turn a series into a one-off and, on CalDAV
+  where an occurrence is addressed through its series' resource, delete
+  every occurrence rather than the one the organiser picked. A move of any
+  member is therefore a move of the whole series, which
+  `Tymeslot.CalendarGrid.SeriesTransfer` does on Google, Outlook and the
+  CalDAV family. Whether an event is a member is read off its cached row,
+  as a delete reads it (`Tymeslot.CalendarGrid.Occurrence.cached_row/1`),
+  since the event handed in may be an optimistic copy.
+
+  An occurrence edited on its own needs its own check on the iCalendar
+  providers. It is a VEVENT with a `RECURRENCE-ID` and no `RRULE`, so its row
+  carries no repeat rule and names no series, yet it lives in the series'
+  resource like every other occurrence. Only the recurrence id the sync keeps
+  in `provider_metadata` marks it.
+
+  Exchange sets none of those fields. Its only series marker is the EWS item
+  type the sync keeps in `provider_metadata`, and it matters most for the
+  series itself: a server that does not expand series (grommunio) puts the
+  `RecurringMaster` on the grid, and deleting it by its item id removes every
+  occurrence. Exchange has no series-wide write, so its series are refused.
+  """
+
+  alias Tymeslot.Availability
+  alias Tymeslot.CalendarGrid.CreateParams
+  alias Tymeslot.CalendarGrid.EditGuard
+  alias Tymeslot.CalendarGrid.EventVideoRooms
+  alias Tymeslot.CalendarGrid.Occurrence
+  alias Tymeslot.CalendarGrid.ProviderPayload
+  alias Tymeslot.CalendarGrid.SeriesTransfer
+  alias Tymeslot.Clock
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Integrations.Calendar
+  alias Tymeslot.Integrations.Calendar.CreatedEvent
+  alias Tymeslot.Integrations.Calendar.Defaults
+  alias Tymeslot.Integrations.Calendar.Events, as: CalendarEvents
+  alias Tymeslot.Integrations.Calendar.ICalBuilder
+  alias Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries
+  alias Tymeslot.Integrations.Calendar.Reminder
+
+  require Logger
+
+  # Cache columns describing the event itself, copied to the destination row.
+  # Ownership travels too, so the destination row is flagged as the source
+  # was from the start rather than only once a sync has read it back.
+  # Everything the source provider owns (etag, raw_ical, provider_event_id,
+  # provider_metadata) belongs to the original resource and is left behind.
+  @carried_fields ~w(summary description location visibility colour all_day start_date end_date
+                     start_at end_at timezone transparency status organiser attendees reminders
+                     attachments links video_link video_integration_id created_by_tymeslot)a
+
+  @type destination :: %{
+          required(:integration) => map(),
+          optional(:calendar_id) => String.t() | nil
+        }
+
+  @type moved :: %{
+          required(:uid) => String.t(),
+          required(:integration_id) => pos_integer(),
+          optional(:source) => :queued_delete | :left_behind | :unknown
+        }
+
+  @doc """
+  Whether `event` may be moved to another calendar, and how much of it
+  moves. Reads the cached row, as `move_event/3` does.
+
+  Returns `:ok` for an event outside any series, and `{:ok, :series}` for a
+  member of a series on Google, Outlook or the CalDAV family (a series, an
+  occurrence of one, or an occurrence edited on its own), whose move takes
+  the whole series with it. Returns `{:error, :recurring_event}` for any
+  Exchange item that is not a `Single` one, since Exchange has no
+  series-wide write.
+  """
+  @spec ensure_movable(map()) :: :ok | {:ok, :series} | {:error, :recurring_event}
+  def ensure_movable(event), do: event |> Occurrence.cached_row() |> movable()
+
+  defp movable(stored) do
+    case Occurrence.series_family(stored) do
+      :single -> :ok
+      :unsupported -> {:error, :recurring_event}
+      _series_wide -> {:ok, :series}
+    end
+  end
+
+  @doc """
+  Whether the series `event` belongs to can move to `integration`, and what
+  the organiser should be told the move will not carry. Reads the cached
+  row, as `move_event/3` does; see `SeriesTransfer.notes/2`.
+  """
+  @spec series_move_notes(map(), map()) ::
+          {:ok, [SeriesTransfer.note()]}
+          | {:error, :recurring_event | :cross_provider_series | :unaddressable_series}
+  def series_move_notes(event, integration),
+    do: event |> Occurrence.cached_row() |> SeriesTransfer.notes(integration)
+
+  @doc """
+  Whether a calendar of `integration` keeps every reminder `event` has, so a
+  move there carries them all (`CreateParams.fit_reminders/2`). Outlook and
+  Exchange keep one notification, so an event with more, or with an email
+  reminder, loses the rest when it moves there. A series always keeps them:
+  it moves only within its provider's family, copied as the provider holds
+  it (`SeriesTransfer`). Reads the cached row, as `move_event/3` does.
+  """
+  @spec keeps_reminders?(map(), map()) :: boolean()
+  def keeps_reminders?(event, %{provider: provider}) do
+    stored = Occurrence.cached_row(event)
+
+    case movable(stored) do
+      {:ok, :series} ->
+        true
+
+      _single_or_refused ->
+        reminders = Map.get(stored, :reminders)
+        fit_reminders(reminders, provider) == reminders
+    end
+  end
+
+  # `reminders` as a calendar of `provider` keeps them, left exactly as they
+  # are when it keeps them all: a cached list is string-keyed, and is only
+  # rewritten in the canonical shape when something had to go.
+  defp fit_reminders(reminders, provider) do
+    normalised = reminders |> List.wrap() |> Enum.map(&Reminder.normalise/1)
+
+    case CreateParams.fit_reminders(normalised, provider) do
+      ^normalised -> reminders
+      fitted -> fitted
+    end
+  end
+
+  @doc """
+  Moves `event` to `destination`'s integration, on the calendar named by
+  `:calendar_id` or that integration's default when it is `nil`. A member
+  of a series moves the whole series (see
+  `Tymeslot.CalendarGrid.SeriesTransfer.move/4`, which answers in the same
+  shape and has refusals of its own).
+
+  Returns `{:ok, %{uid: uid, integration_id: id}}` once the event is on the
+  destination and gone from the source. When the source delete failed, the
+  result also carries `:source`: `:queued_delete` when the delete will be
+  replayed on the next sync, `:left_behind` when the original is still on its
+  calendar, and `:unknown` when something failed after the destination accepted
+  the event, which is then there while the original may or may not be. Returns
+  `{:error, reason}`, with nothing written anywhere, when the event cannot be
+  moved or the destination refused it, including
+  `{:error, :no_destination_calendar}` when the destination integration has no
+  calendar to write to. An event `EditGuard.write_gates/3` refuses as a
+  change of timing is refused with its reason before anything else: one not
+  on a writable calendar of the organiser's own, the calendar copy of a
+  booking, or one held by live seats.
+  """
+  @spec move_event(pos_integer(), map(), destination()) ::
+          {:ok, moved()}
+          | {:error,
+             :recurring_event
+             | :cross_provider_series
+             | :unaddressable_series
+             | :no_destination_calendar
+             | :invalid_timing
+             | term()}
+  def move_event(user_id, event, destination) do
+    with :ok <- EditGuard.write_gates(user_id, event, :timing) do
+      stored = Occurrence.cached_row(event)
+
+      case movable(stored) do
+        :ok -> move_single(user_id, event, stored, destination)
+        {:ok, :series} -> SeriesTransfer.move(user_id, stored, destination)
+        {:error, _reason} = refused -> refused
+      end
+    end
+  end
+
+  @doc """
+  `move_event/3`, answered in the shape a calendar LiveView and its
+  `Tymeslot.CalendarGrid.WriteGuardian` read a move's result in, the
+  message `{:event_move_result, result}`: `{:ok, keyword}` with the moved
+  event's `:uid` and `:integration_id`, the `:source` note `move_event/3`
+  gave (or `nil`), and the `:original_event`; or `{:error, keyword}` with
+  the `:original_event` and the `:reason`.
+
+  `series_to` is the destination calendar's name for a whole series' move,
+  `nil` for a single event. It rides along as `:series_to`, which tells the
+  guardian a series was held for the move and the calendars which toast to
+  show.
+  """
+  @spec reported(pos_integer(), map(), destination(), String.t() | nil) ::
+          {:ok, keyword()} | {:error, keyword()}
+  def reported(user_id, event, destination, series_to) do
+    case move_event(user_id, event, destination) do
+      {:ok, moved} ->
+        {:ok,
+         [
+           uid: moved.uid,
+           integration_id: moved.integration_id,
+           source: moved[:source],
+           original_event: event
+         ] ++ series(series_to)}
+
+      {:error, reason} ->
+        {:error, [original_event: event, reason: reason] ++ series(series_to)}
+    end
+  end
+
+  @doc "What a move of `event` answers when its task crashes, in `reported/4`'s shape."
+  @spec crash_report(map(), String.t() | nil) :: {:error, keyword()}
+  def crash_report(event, series_to),
+    do: {:error, [original_event: event, reason: :crashed] ++ series(series_to)}
+
+  defp series(nil), do: []
+  defp series(calendar), do: [series_to: calendar]
+
+  defp move_single(user_id, event, stored, %{integration: integration} = destination) do
+    moved = moved_event(event, stored, integration, Map.get(destination, :calendar_id))
+
+    with :ok <- ensure_destination(moved),
+         {:ok, payload} <- ProviderPayload.from_event(moved),
+         {:ok, created} <- create_on_destination(user_id, moved, payload) do
+      settle_move(user_id, event, moved, created)
+    end
+  end
+
+  # Everything after the create. The event now exists on the destination, so
+  # nothing from here on may report that it was not moved: a raise past this
+  # point is reported as `source: :unknown`, since the original may or may not
+  # have been deleted by then. A raise before the create returned escapes to
+  # the caller, where "nothing moved" is the truth.
+  defp settle_move(user_id, event, moved, %CreatedEvent{} = created) do
+    integration_id = moved.calendar_integration_id
+    cached_uid = CreatedEvent.cache_uid(created) || moved.uid
+
+    try do
+      finish_move(user_id, event, moved, created, cached_uid)
+    catch
+      kind, reason ->
+        Logger.error("Calendar event move failed after the destination accepted it",
+          calendar_integration_id: integration_id,
+          kind: kind,
+          reason: failure_label(kind, reason)
+        )
+
+        Availability.changed(user_id)
+        {:ok, %{uid: cached_uid, integration_id: integration_id, source: :unknown}}
+    end
+  end
+
+  defp finish_move(user_id, event, moved, created, cached_uid) do
+    # The event keeps its description, and with it the join link, so its
+    # video rooms follow it to the new identity. `moved.uid` is the uid the
+    # create was written with; the provider's answer is how it addresses the
+    # event, which is the same except where the provider assigns its own. The
+    # calendar is the one the destination actually wrote to, the same one the
+    # cached row below is filed under.
+    :ok =
+      EventVideoRooms.moved(
+        event,
+        moved.calendar_integration_id,
+        moved.uid,
+        CreatedEvent.local_uid(created) || moved.uid,
+        created.calendar_id || moved.provider_calendar_id
+      )
+
+    # Cached under the key the destination's sync will look the event up by,
+    # so the next sync updates this row instead of adding a second one.
+    cache_destination(%{moved | uid: cached_uid}, created)
+    result = %{uid: cached_uid, integration_id: moved.calendar_integration_id}
+
+    result =
+      case remove_source(user_id, event) do
+        :removed -> result
+        left -> Map.put(result, :source, left)
+      end
+
+    Availability.changed(user_id)
+    {:ok, result}
+  end
+
+  # The exception's type, never its message: a failed match carries the row
+  # it failed on, event details included.
+  defp failure_label(:error, %{__exception__: true, __struct__: module}), do: inspect(module)
+  defp failure_label(kind, _reason), do: Atom.to_string(kind)
+
+  # The event as it will exist on the destination. The uid is generated here
+  # so that the create and the cache row address the same event.
+  #
+  # Ownership is read off the cached row, since the event handed in may be an
+  # optimistic copy, and only an explicit `false` makes the event somebody
+  # else's, as in `ProviderPayload`. It decides the uid: the CalDAV and ICS
+  # syncs take any `@tymeslot.com` uid for the scheduler's, so somebody else's
+  # event must not be given one on its way to a new calendar.
+  defp moved_event(event, stored, integration, calendar_id) do
+    owned? = Map.get(stored, :created_by_tymeslot) != false
+
+    %{
+      Map.put(event, :created_by_tymeslot, owned?)
+      | uid: ICalBuilder.generate_uid(if(owned?, do: :tymeslot, else: :foreign)),
+        calendar_integration_id: integration.id,
+        provider: integration.provider,
+        reminders: fit_reminders(event.reminders, integration.provider),
+        provider_calendar_id: destination_calendar_id(integration, calendar_id),
+        provider_event_id: nil
+    }
+  end
+
+  @doc """
+  The calendar a move to `integration` writes to: `calendar_id` when the
+  organiser chose one, else the integration's booking calendar. `nil` for a
+  CalDAV integration with no collection to write to: discovery left none at
+  all, every collection is read-only, or none is selected.
+  """
+  @spec destination_calendar_id(map(), String.t() | nil) :: String.t() | nil
+  # The chosen calendar first, for every provider: CalDAV writes honour
+  # `event_data[:calendar_id]` when it names a writable collection, so the row
+  # is filed under the chosen collection, not the booking one.
+  # `booking_calendar_path/1` resolves nothing when the stored booking calendar
+  # id matches no discovered collection, which is the state a rediscovery
+  # leaves behind; the move then goes to the first writable collection, which
+  # the create is asked for by name, so the row and the event agree. A
+  # destination whose collections are all read-only has nowhere to write to,
+  # and resolves to nil, which refuses the move before anything is written.
+  # The "primary" placeholder is only meaningful to the OAuth providers, where
+  # it names the account's own calendar.
+  def destination_calendar_id(integration, calendar_id) do
+    if integration.provider in Calendar.caldav_based_provider_strings() do
+      calendar_id || Calendar.booking_calendar_path(integration) ||
+        List.first(Calendar.writable_calendar_paths(integration))
+    else
+      calendar_id || Defaults.booking_calendar_id(integration)
+    end
+  end
+
+  # An integration with no collection to write to (none discovered, every
+  # one read-only, or none selected) has nowhere to put the event. Refusing
+  # before the create keeps a destination the cache row cannot name from
+  # accepting the event anyway, which would leave a copy on the destination
+  # while the organiser is told nothing moved.
+  defp ensure_destination(%{provider_calendar_id: nil}), do: {:error, :no_destination_calendar}
+  defp ensure_destination(_moved), do: :ok
+
+  defp create_on_destination(user_id, moved, payload) do
+    payload =
+      payload
+      |> Map.delete(:provider_event_id)
+      |> Map.put(:uid, moved.uid)
+
+    CalendarEvents.create_event(payload, {moved.calendar_integration_id, user_id})
+  end
+
+  # The destination's answer carries the event's identity there, which is the
+  # one thing the moved row cannot inherit from the source: the href and ETag
+  # it held belonged to the resource that is about to be deleted.
+  defp cache_destination(moved, %CreatedEvent{} = created) do
+    row =
+      moved
+      |> Map.take(@carried_fields)
+      |> Map.merge(%{
+        uid: moved.uid,
+        calendar_integration_id: moved.calendar_integration_id,
+        provider: moved.provider,
+        # What the destination actually wrote, before what was asked for: a
+        # CalDAV create falls back to the booking collection when the chosen
+        # calendar is not one the integration lists as writable, and filing
+        # the row under the request would put the moved event on a calendar it
+        # is not on.
+        provider_calendar_id: created.calendar_id || moved.provider_calendar_id,
+        provider_event_id: created.provider_event_id,
+        etag: created.etag,
+        synced_at: Clock.utc_now()
+      })
+
+    {:ok, _count} = ProviderCalendarEventQueries.upsert_batch([row])
+    :ok
+  end
+
+  defp remove_source(user_id, event) do
+    # The source's own calendar, not the integration's default: the event
+    # lives on its source calendar, which on a secondary Google or Outlook
+    # calendar is not the default, so addressing the default would 404 and
+    # leave the original behind beside the copy.
+    opts =
+      Enum.reject(
+        [provider_event_id: event.provider_event_id, calendar_id: event.provider_calendar_id],
+        fn {_key, value} -> is_nil(value) end
+      )
+
+    context = {event.calendar_integration_id, user_id}
+
+    case CalendarEvents.delete_event(event.uid, context, opts) do
+      :ok ->
+        {:ok, _deleted} =
+          ProviderCalendarEventQueries.delete_by_uid(event.calendar_integration_id, event.uid)
+
+        :removed
+
+      {:error, reason} ->
+        queue_source_delete(event, reason)
+    end
+  end
+
+  # A `:not_found` is not taken as "already gone": the source may simply have
+  # been looked for on the wrong calendar, and reporting it removed would hide
+  # a duplicate the organiser has to clean up.
+  defp queue_source_delete(event, reason) do
+    target = %{uid: event.uid, calendar_integration_id: event.calendar_integration_id}
+
+    with true <- CalendarEvents.queueable_error?(reason),
+         :ok <- CalendarEvents.queue_for_offline_retry(target, :delete, %{}) do
+      :queued_delete
+    else
+      _not_queued ->
+        Logger.warning("Moved calendar event was copied but its original could not be deleted",
+          calendar_integration_id: event.calendar_integration_id,
+          reason: LogFormat.reason(reason)
+        )
+
+        :left_behind
+    end
+  end
+end

@@ -1,0 +1,481 @@
+# Tymeslot: Ukrainian (uk) Translation Style Guide & Termbase
+
+Authoritative. Mined from the ~3,800 already-translated Ukrainian msgstrs and settled during
+the terminology unification sweep and the native copy-edit of the public website. Follow this
+exactly. Where this guide contradicts an existing msgstr in the repo, **this guide wins**: the
+existing string is drift and is being corrected.
+
+The guiding principle behind every call below: **prefer standard Ukrainian over a
+transliterated Anglicism, and over a Russian calque.** A loanword is kept only where it is
+genuinely naturalised in Ukrainian (`слот`, `провайдер`, `вебхук`), never merely because the
+English word was convenient to respell in Cyrillic.
+
+---
+
+## 1. REGISTER
+
+**Formal «ви» / «ваш» everywhere.** Booking flow, emails, dashboard, admin, marketing.
+No exceptions. Never «ти».
+
+Write the polite pronoun **lowercase** (`ви`, `ваш`, `вам`), not `Ви`. This is the modern
+Ukrainian convention for addressing an unknown reader, and it is already consistent across all
+40 catalogues. Do not "upgrade" it to the capitalised form.
+
+Buttons take the **infinitive** (`Скасувати`, `Зберегти`, `Видалити`, `Від'єднати`).
+Instructions and prompts take the **2nd-person-plural imperative** (`Виберіть`, `Підключіть`,
+`Введіть`, `Підтвердьте`).
+
+---
+
+## 2. GLOSSARY
+
+| English | Ukrainian |
+|---|---|
+| meeting | **зустріч** |
+| appointment | **зустріч** |
+| booking (noun) | **бронювання** |
+| to book | **забронювати** / **бронювати** |
+| booking page / link / flow | **сторінка бронювання** / **посилання для бронювання** / **процес бронювання** |
+| meeting type / event type | **тип зустрічі** / **тип події** |
+| **slot / time slot** | **слот** **[DECIDED]**; `часовий слот` where the bare noun would be ambiguous. Never `вікно` (that is a UI window), never bare `час` |
+| event (calendar event) | **подія**, distinct from **зустріч** (a booked Tymeslot meeting). Do not conflate them |
+| attendee | **учасник** |
+| guest | **гість** / **гості** |
+| invitee | **запрошений** / **запрошені** |
+| host / organiser | **організатор** |
+| availability | **доступність** |
+| buffer (the setting) | **буферний час** **[DECIDED]** |
+| calendar | **календар** |
+| schedule (verb) | **планувати** |
+| scheduling (noun) | **планування** |
+| reschedule | **перенести** |
+| cancel | **скасувати** |
+| confirm / confirmation | **підтвердити** / **підтвердження** |
+| timezone | **часовий пояс** |
+| duration | **тривалість** |
+| reminder | **нагадування** |
+| **account** | **обліковий запис** **[DECIDED]**; never `акаунт`, in any catalogue, including emails and marketing |
+| sign in / log in | **увійти** |
+| sign up / register | **зареєструватися** |
+| password | **пароль** |
+| authentication | **автентифікація** |
+| user | **користувач** |
+| admin / administrator | **адміністратор** |
+| **dashboard** | **панель керування**; never `дашборд`, never Latin `dashboard` |
+| settings | **налаштування** |
+| profile | **профіль** |
+| **application / app** | **застосунок** **[DECIDED]**; **never `додаток`**, which means *appendix/attachment* and is a calque of Russian «приложение». `додатковий` (*additional*) is a different word and is fine |
+| **provider** (calendar / OAuth / video / login) | **провайдер** **[DECIDED]**; see the note below |
+| **vendor** (the company selling a competing product) | **постачальник**, deliberately kept distinct from *provider* |
+| integration | **інтеграція** |
+| automation | **автоматизація** |
+| workflow | **робочий процес** |
+| webhook | **вебхук** |
+| embed / embedding | **вбудовування**; the artefact is a **віджет** |
+| **logs** | **журнали** **[DECIDED]**; never `логи` |
+| **test / testing** (verb / gerund) | **перевірити** / **перевірка** **[DECIDED]**; never `тестувати`/`тестування` for UI actions |
+| **disconnect** | **від'єднати** / **від'єднано** **[DECIDED]**; never `відключити` (which reads as *switch off*; `вимкнути` is the word for *disable*) |
+| **invalid** (a malformed value, ID, format, request) | **некоректний** **[DECIDED]** |
+| **invalid** (a link or token with no force) | **недійсний**, reserved for exactly this sense |
+| (never) | `неправильний` for *invalid*. Eliminated. Exception: *wrong credentials* (`Неправильний пароль`), where the value is well-formed but does not match |
+| **valid** | **коректний**; never `дійсне число` (that is *a real number* in maths) |
+| `is invalid` (Ecto field error) | **має некоректне значення**, a gender-neutral construction; Ecto appends it to field labels of arbitrary gender, so no adjective can agree |
+| subscription | **підписка** |
+| plan (pricing tier) | **тариф** |
+| billing | **оплата** / **виставлення рахунків** |
+| upgrade (the action) | **розширити**, e.g. `Розширити дозволи`. Never `Оновити`, which collides head-on with *Refresh* |
+| refresh | **оновити** |
+| payment | **платіж** / **оплата** |
+| payment receipt | **квитанція про оплату** |
+| refund | **повернення коштів** |
+| video call / video meeting | **відеозустріч** |
+| Video Integration | **Інтеграція відеозв'язку** (not `Інтеграція відео`) |
+| location | **місце** |
+| question (a custom booking question) | **запитання**; never `питання`, which means *issue/matter* |
+| **lifetime** (a one-off perpetual licence) | **довічний** / **довічно** **[DECIDED]**; never `пожиттєво` |
+| forever (free forever) | **назавжди**, a different idea from *lifetime*; keep both |
+| **Live Preview** | **Перегляд наживо** **[DECIDED]**, distinct from plain *Preview* → **Попередній перегляд** |
+| **Unlisted** | **Прихований** |
+| Default (a badge / option label) | **Стандартний** |
+| by default (adverbial) | **за замовчуванням**; see §4 |
+| Failed (a status) | **Помилка** |
+| staff | **працівники** |
+| Agenda (calendar view) | **Розклад** |
+| Weekly Schedule (availability) | **Тижневий розклад** |
+| **bookable times** (the hatched layer on the organiser's calendar) | **час для бронювання**; the short band label *Bookable* → **Можна забронювати**. Never `доступний час` (that is *availability*) or `вільний час` (the opposite of *busy*) |
+| **open for booking** (opening extra time for a meeting type) | **відкрити для бронювання** / **відкрито для бронювання**; *Just this once* → **Лише цього разу**, *Every week* → **Щотижня** |
+| **treat as busy / free** (a local setting on a read-only all-day event) | **для бронювань вважається зайнятим / вільним**; the label *Treat as* before the Busy/Free choice → **Для бронювань** |
+| **Layers** (calendar rail heading) | **Шари** |
+| **block this time** / **Blocked** | **заблокувати цей час** / **Заблоковано** |
+| **Request** (pill on a calendar block) / **booking request** | **Запит** / **запит на бронювання**; the *Expired* pill → **Протерміновано** |
+| **tell guests** (notify guests of a change to an event) | **повідомити гостей** **[DECIDED]**: *Tell guests* → **Повідомити гостей**, *Delete and tell guests* → **Видалити й повідомити гостей**; the update that is sent is **повідомлення про зміни** (*Guests will get an update* → **Гості отримають повідомлення про зміни**). *tell* is **повідомити**, keeping `сповістити` / `сповіщення` for English *notify* / *notification*; never `оновлення` for the message itself (that reads as a software update or a refresh) |
+| **Tymeslot meeting** (a booked meeting sent from the calendar, as opposed to a plain calendar event) | **зустріч Tymeslot** **[DECIDED]**: *Send as a Tymeslot meeting* → **Надіслати як зустріч Tymeslot**. Always **зустріч**, never **подія**; a plain calendar event stays **подія** |
+| **Syncing** (a calendar write not yet confirmed by the provider) | **Синхронізація** as the status label or tooltip; in a sentence **триває синхронізація** (*Syncing with your calendar* → **Триває синхронізація з вашим календарем**) |
+| translation (noun; booking-page languages) | **переклад** (pl. **переклади**); *%{language} translations* → **Переклади: %{language}**, *Your %{language} translations* → **Ваші переклади (%{language})**: `%{language}` is filled with the language's own name and can't be declined |
+| translate | **перекласти** / **перекладати**; *%{translated}/%{total} translated* → **Перекладено %{translated}/%{total}** |
+| original language (the language the host writes their texts in) | **мова оригіналу**; *in %{language}* → **мовою оригіналу (%{language})**; the original text is **оригінал** (*в оригіналі*), and the badge beside that language reads **оригінал** |
+| translation language (a language the host translates into) | **мова перекладу** (pl. **мови перекладу**: *вашими мовами перекладу*) |
+| language switcher (the visitor-facing control on the booking page) | **перемикач мови** |
+| Outdated (a translation whose original changed) | **Застаріло** as the status; attributive **застарілий** (*%{count} застарілий текст / застарілі тексти / застарілих текстів*) |
+| Missing (a text not translated yet) | **Бракує** as the status pill; attributive **відсутній** (*Лише відсутні або застарілі*) |
+| Translated (status) | **Перекладено** |
+| Review (the link to a language's review page) | **Перевірити** |
+
+### Booking series
+
+A **series** is several sessions of one meeting type that a booker books with a host in one go; each **session** is one meeting of that series. The terms below are the ones `emails_booking_series` uses; keep them in every series string.
+
+| English | uk |
+|---|---|
+| session (one meeting within a booking series) | **сесія** (`Сесія %{position} з %{count}`, `Керувати всіма сесіями`); this is the product term for a session of a booking series, separate from the marketing uses listed under *Sessions, lessons, no-shows* |
+| series (a booking series) | **серія** (`Нова серія`) |
+
+### Booking pages (a host's extra pages)
+
+A host has one **main page** at `/<username>` and may add extra **booking pages**, each at `/<username>/<page>` with its own theme and meeting types. An extra page is still a booking page, so it uses the same noun as the generic entry; the main page is told apart by its name, never by a different noun.
+
+| English | uk |
+|---|---|
+| booking page (any public page guests book through, extra or main) | **сторінка бронювання** (plural **сторінки бронювання**) |
+| main page (the host's own page at `/<username>`, as opposed to their extra booking pages) | **головна сторінка** (always with the qualifier; never the bare word for *home page*) |
+| draft (a booking page not public yet because it lists no meeting type) | **чернетка** (same word as the poll draft) |
+| address (the URL path of a page, `/<username>/<page>`) | **адреса** Ніколи `URL` чи `шлях`; адреса електронної пошти й адреса місця проведення є іншими поняттями зі своїм перекладом |
+
+### Sessions, lessons, no-shows, deposits and other marketing terms
+
+These recur across the `/for` profession pages and the marketing catalogues. They were drifting
+between two or three renderings each; the calls below are settled.
+
+| English | Ukrainian |
+|---|---|
+| **session** (health, body and beauty work: therapy, massage, physical therapy, chiropractic, tattoo) | **сеанс** **[DECIDED]** |
+| **photo shoot / photo session** (photographers) | **фотосесія** / **зйомка** **[DECIDED]**; never `сеанс` |
+| **session** (coaching, psychology, consulting conversations) | **сесія** **[DECIDED]**; `коуч-сесія` is the established Ukrainian term |
+| **lesson** (tutoring, language lessons, music lessons) | **урок** **[DECIDED]**: what Ukrainian pupils, parents and teachers actually say (`щотижневий урок`, `пробний урок`, `урок гри на гітарі`). The three lesson pages (`tutors`, `language-tutors`, `music-teachers`) use `урок` throughout; `для занять` (*for practising*, as in an instrument at home) is a different sense and stays |
+| **class / session** (yoga, pilates, personal training, speech therapy (`логопедичне заняття`), and generic group sessions) | **заняття** **[DECIDED]** |
+| **session** (a login session, in product UI) | **сеанс** |
+| **session** (generic product copy for a booked appointment, e.g. the shared ROI calculator) | **зустріч** |
+| **consultation** (lawyers, accountants, advisers, doctors, vets) | **консультація** / **прийом** (clinical) |
+| **no-show** (noun) | **неявка** **[DECIDED]**; as a clause, **клієнт не прийшов** |
+| **deposit** (a payment taken at booking) | **передоплата** **[DECIDED]**; never `завдаток`, which is a specific legal instrument in Ukrainian civil law (ЦК України, ст. 570). A non-refundable one is **передоплата, що не повертається** |
+| **payments** (the feature: taking payment at booking) | **прийом оплати** **[DECIDED]**; the verb is **приймати оплату** |
+| **platform fee** | **комісія платформи** **[DECIDED]**; never `платформна комісія` |
+| **double bookings** (in benefit copy) | **накладки в розкладі** **[DECIDED]** (`Забудьте про накладки в розкладі`, `запобігає накладкам у розкладі`). An FAQ question phrased the way a reader would type it may keep **подвійні бронювання** |
+| **open source** | **відкритий вихідний код** **[DECIDED]** (`з відкритим вихідним кодом`); never bare `відкритий код`, never Latin `open source` |
+| **managed cloud** (the hosted offering on tymeslot.app) | **керована хмара** **[DECIDED]** (`у керованій хмарі`); never `хмарна версія` for Tymeslot's own hosting. **керований сервіс** stays for *the managed service* where the English says *service* |
+| **hiring manager** (recruiters) | **лінійний керівник** **[DECIDED]**; never `наймаючий менеджер` |
+| **onboarding** (a client's first working meeting or the intake process) | **стартова зустріч** (the meeting) / **прийом нових клієнтів** (the process) **[DECIDED]**; never `онбординг`. Product set-up onboarding is **початкове налаштування** (§3) |
+| **FAQ** (section heading) | **Часті запитання** **[DECIDED]** |
+| **expired** (link, token, code) | **термін дії минув** / **строк дії закінчився** |
+| **expired** (trial, subscription) | **завершився** / **закінчився** |
+| **seat** (a paid user licence) | **користувач**: `10 $/користувача/міс.`, `5 користувачів`. Never `місце`, which is already *location* |
+| **white-label** | **під вашим брендом** / **без брендингу Tymeslot**. Never Latin `white-label` |
+| **fork** (a code fork, noun / verb) | **форк** / **створити форк**, naturalised in Ukrainian developer usage |
+| **physiotherapist / physiotherapy** | **фізичний терапевт** / **фізична терапія** **[DECIDED]**, the regulated Ukrainian titles. Never `фізіотерапевт`, which in Ukraine names a doctor of physical-agent treatment (фізіотерапія), a different profession |
+| **psychotherapist** | **психотерапевт**; never bare `терапевт`, which is a general practitioner |
+
+**English in brackets.** Do not gloss a Ukrainian term with its English original in brackets
+(`передоплата (deposit)`) in marketing copy. The only Latin text in a Ukrainian sentence is a
+brand, product or third-party name from §5. An abbreviation from §5 may follow its Ukrainian expansion once (`Єдиний вхід (SSO)`); drop other glosses only where the Ukrainian term is clear on its own, otherwise rephrase.
+
+**Personal names.** The founder's name stays in Latin script, **Luka Breitig**, matching the
+byline and the author page in every locale. Customer and sample names in examples are
+localised (`Олена`, `Андрій`).
+
+### Tymeslot in a Ukrainian sentence
+
+**Tymeslot does not decline.** Never `Tymeslot'у`, `Tymeslotом` or similar. Where the grammar
+needs an oblique case, put a declinable noun in front of it and decline that instead:
+**`Сервісом Tymeslot керує компанія з ЄС`**, `сторінки бронювання Tymeslot`, `користувачі
+Tymeslot`.
+
+**`у ЄС` / `в ЄС`.** Follow the normal у/в alternation: **`у ЄС`** after a consonant or a pause
+(`хостинг у ЄС`, `хостингом у ЄС`, `у Німеччині, у ЄС`), `в ЄС` after a vowel (`дані
+зберігаються в ЄС`, `розміщено в ЄС`).
+
+**Profession names mid-sentence.** `profession_in_text` in `priv/professions/*/uk.exs` is the
+nominative plural (`психологи`, `інструктори з йоги`, `ІТ-консультанти`). Ukrainian cannot put a
+nominative after `для`, so every msgstr that interpolates it is built so the profession is the
+grammatical subject: `Усе, без чого не обходяться %{profession_in_text}.`, `Стартове
+налаштування, з якого можуть почати %{profession_in_text}`.
+
+**Sample URLs.** `tymeslot.app/yourname` stays verbatim in marketing copy; it is a format-shaped
+sample (see §5).
+
+### Money and numbers on Ukrainian pages
+
+Every figure on a Ukrainian page is in **гривнях**, written `1 200 грн` (non-breaking or plain
+space as the thousands separator, `грн` postfix, no full stop). Never `£`, `фунтів стерлінгів`,
+or a Ukrainian page quoting a UK price. The `/for` pages' prose figures must agree with that
+page's own calculator defaults (`calculator: %{hourly_rate: …}` in `priv/professions/*/uk.exs`,
+which is already in hryvnia), and every derived total must be arithmetic the reader could redo.
+Product prices (`29 $`, `9 €`) stay in the currency Tymeslot actually charges.
+
+A competitor's price is quoted in the currency it publishes: US dollars with the postfix sign
+(**`10 $`**, `29,99 $ на місяць`), Canadian dollars spelled out (**`59 канадських доларів`**),
+never `$10`, `CA$59` or `CAD`.
+
+Percentages take a **space before the sign**: **`0,5 %`**, `1 %`, `1,29 %`, `30 %`; never
+`0,5%`. This includes the bare fee tile on /features (`0,5 %`).
+
+UK-only institutions do not belong on a Ukrainian page either: replace them with the Ukrainian
+counterpart where one exists (UTR → **РНОКПП**, HMRC → **податкова** / **ДПС**) or drop the
+reference.
+
+### A note on `провайдер` vs `постачальник`
+
+Both are correct Ukrainian; `провайдер` is a dictionary-attested naturalised loan, not a
+Russianism. The split is by **sense**, and it is load-bearing:
+
+- **`провайдер`** = a *service provider* the product integrates with: Google Calendar, a
+  CalDAV server, an OAuth identity provider, a video provider. This is the dominant existing
+  usage and reads naturally to a Ukrainian IT user.
+- **`постачальник`** = a *vendor*, the company selling a competing product ("check the
+  vendor's page", "no vendor to depend on"). This sense appears throughout
+  `marketing_compare.po`.
+
+Collapsing the two would make `постачальник` carry both meanings in the same file. Keep them
+apart.
+
+### Self-hosting: the highest-value term in the catalogue
+
+`marketing_compare.po` is the page whose entire argument turns on this word. Five renderings
+existed, including the raw transliteration `селф-хостинг`. It is now one system:
+
+| English | Ukrainian |
+|---|---|
+| self-hosting (noun) | **самостійний хостинг** **[DECIDED]** |
+| of self-hosting (gen.) | **самостійного хостингу** |
+| to self-host / when self-hosting | **розгорнути на власному сервері** / **у разі самостійного хостингу** |
+| self-hosted (adj., of a deployment) | **на власному сервері** |
+| the self-hosted version/build | **версія для власного сервера** |
+| `Self-Hosted` (the pricing-card title) | **На власному сервері** |
+
+**Never** `селф-хостинг`. **Never** Latin `self-hosted` inside a Ukrainian sentence.
+
+### Email
+
+Latin-script `email` never appears inside a Ukrainian sentence, label, or subject line.
+
+| English | Ukrainian |
+|---|---|
+| email (the medium / channel) | **електронна пошта** |
+| email address | **адреса електронної пошти** (or **електронна адреса** where brevity matters) |
+| by email (adverbial) | **електронною поштою** |
+| emails (the messages) | **листи** |
+| `Email` (a bare form-field or column label) | **Електронна пошта** |
+
+`%{email}` placeholders are of course untouched: the *variable* is not the *word*.
+
+### Plan and tier names
+
+- Compound tier names are **proper nouns and stay verbatim**: `Cloud Free`, `Cloud Pro`, `Pro`,
+  `Enterprise`.
+- Bare **`Free`** is translated, and the sense decides the form:
+  - as a **tier label** on a pricing card → **`Безкоштовний`** (agreeing with *тариф*), and
+    "Everything in Free" → **`Усе, що є в безкоштовному тарифі`**;
+  - as a **price value** (the big number slot on a card) → **`Безкоштовно`**.
+- `Self-Hosted` as a card title is descriptive, not a brand: **`На власному сервері`**.
+
+### Setup wizard (onboarding)
+
+| English | Ukrainian |
+|---|---|
+| **link** (the username field and the wizard's first step) | **посилання** (`Ваше посилання`, `Це посилання вже зайняте`) |
+| **booking link** | **посилання для бронювання**; never `посилання на бронювання` |
+| **keep** (your link: save it somewhere you'll find it) | **зберегти** (`Або збережіть на потім`, `Ваше посилання збережено`) |
+| **free/busy** | **зайнятість** / **статус зайнятості** (`фід статусу зайнятості`) |
+| **Live** (the wizard's last step and the badge on the page preview) | **Онлайн** |
+| **live** (a page that takes bookings), **go live** | **працює** / **запрацює** (`Ваша сторінка працює`, `щоб сторінка запрацювала`); never `вийти онлайн`, and never `Ви онлайн`, which reads as a chat presence status |
+| **look** (a theme, the wizard's step) | **оформлення**; never `вигляд` for *your look*, which reads as personal appearance |
+| a message the host sends to someone they know (`Hi %{name}, you can pick a time with me here`) | the informal **ти**, with **Привіт**: the host's own voice, the one exception to §1. Text addressed to anyone (the email-signature line) stays formal: `Запишіться до мене на зустріч: %{url}` |
+
+### Calendar views
+
+`view` (a calendar display mode) → **подання**. One word, no synonyms.
+
+| English | Ukrainian |
+|---|---|
+| Views | **Подання** |
+| Day view | **Денне подання** |
+| Week view | **Тижневе подання** |
+| Month view | **Місячне подання** |
+| Agenda view | **Подання «Розклад»** |
+| in month view / in week view | **у місячному поданні** / **у тижневому поданні** |
+
+Never `режим` for a calendar view (it means *mode* and is used for other things).
+
+### `+%{count} more`
+
+**`ще %{count}`** in both catalogues that carry it (`dashboard_home` and
+SaaS's `marketing_home`). `ще` already means "more"; the leading `+` was
+English-idiom noise.
+
+---
+
+## 3. RUSSIAN CALQUES AND TRANSLITERATIONS: BANNED
+
+Each of these shipped in the catalogue at least once. All are now eliminated. Do not
+reintroduce them.
+
+| Banned | Use instead |
+|---|---|
+| `додаток` (as *app*) | **застосунок** |
+| `акаунт` | **обліковий запис** |
+| `Описання` (not a word) | **опис** |
+| `селф-хостинг` | **самостійний хостинг** |
+| `з коробки` («из коробки») | **одразу після встановлення**, or rephrase: `Profession-tuned out of the box` → **Готові налаштування під кожну професію** |
+| `інстанс` | **екземпляр** |
+| `кастомний` | **власний** |
+| `Фолоап` | **Подальші дії** |
+| `аптайм` | **безперебійна робота** |
+| `чекліст` | **контрольний список** |
+| `онбординг` | **початкове налаштування** (product set-up); **стартова зустріч** / **прийом нових клієнтів** (a client's onboarding) |
+| `наймаючий менеджер` | **лінійний керівник** |
+| `платформна комісія` | **комісія платформи** |
+| `безлімітний` | **необмежена кількість …** |
+| `дашборд` | **панель керування** |
+| `логи` | **журнали** |
+| `паритетність` | **паритет** |
+| `продакшн` / `не для продакшену` | **промислова експлуатація** / **не для промислового використання** |
+| Latin `staging` | **тестове середовище** |
+| Latin `self-hosted`, `email`, `dashboard`, `Free`, `open source` mid-sentence | see the tables above |
+
+**Character-level:** never `ы`, `э`, `ъ`, `ё`. Use `і`, `ї`, `є`, `ґ` correctly. The apostrophe
+is `'` (as in `зв'язок`, `від'єднати`, `пам'ятайте`).
+
+---
+
+## 4. THE ONE DELIBERATE COMPROMISE: `за замовчуванням`
+
+`за замовчуванням` is, strictly, a calque of Russian «по умолчанию»; the prescriptive forms are
+`за умовчанням` and `типово`.
+
+**We keep `за замовчуванням` for the adverbial sense ("by default").** It is the form Ukrainian
+users actually meet in Microsoft's and Google's products, it is gender-neutral (so it is safe in
+badges where the referent's gender is unknown), and it is unambiguous. This is a considered
+house decision, not an oversight.
+
+For the **adjectival** sense (`Default` as an option name or badge), use **`Стандартний`**.
+
+---
+
+## 5. DO NOT TRANSLATE: keep verbatim
+
+**Tymeslot**, Stripe, Stripe Checkout, Stripe Connect, reCAPTCHA, Google, Google Calendar,
+Google Meet, GitHub, Outlook, Microsoft Teams, Zoom, CalDAV, Nextcloud, iCloud, Fastmail,
+Zimbra, Radicale, mailbox.org, MiroTalk, Keycloak, Authentik, Lemonldap, JavaScript, OAuth,
+OIDC, SSO, SLA, DPA, Oban, UTM, Cloudron, Quill, Rhythm, Docker, PostgreSQL, Railway, AGPLv3.
+
+**Environment-variable and config names, always verbatim:** `REGISTRATION_ENABLED`,
+`PASSWORD_AUTH_ENABLED`, `STRIPE_SECRET_KEY`, `RECAPTCHA_SITE_KEY`, `GITHUB_CLIENT_ID`,
+`OAUTH_*`. Likewise embed attributes: `data-theme`, `data-primary-color`, `data-locale`.
+
+**Sample and placeholder values:** localise prose-shaped samples in the product UI (`yourname`
+→ `vashe_imya`), but keep format-shaped ones verbatim: email addresses
+(`your.email@example.com`), URLs (including `tymeslot.app/yourname` on the marketing pages),
+hosts, and API keys (`your-api-key-here`). An API key can never contain Cyrillic, so a
+Cyrillic API-key placeholder is a bug.
+
+### Third-party UI labels: never guess
+
+When an instruction tells the user to click something inside another company's product, the
+label must match what that product actually shows in Ukrainian. Invent one and the user hunts
+for a menu item that does not exist.
+
+> **Settled.** Apple's own Ukrainian surface calls the feature **пароль для програми**
+> (plural **паролі для програм**), under **Вхід і безпека** in **Обліковий запис Apple**.
+> Apple-facing strings use Apple's wording (`Вхід і безпека → Паролі для програм`), even though
+> our own termbase says `застосунок`; this is the one place `програма` is right. A generic
+> CalDAV app password that is not Apple's keeps **пароль застосунку**.
+
+---
+
+## 6. PLACEHOLDERS, MARKUP, TYPOGRAPHY
+
+**Placeholders `%{name}`: the hard rule:**
+- Reproduce **byte-for-byte**. Never translate, rename, add, or drop one.
+- If the msgid has three placeholders, the msgstr must have exactly those three.
+- You **may and should reorder** them to fit Ukrainian syntax.
+- A dropped or invented placeholder is a runtime crash, not a typo.
+
+**Beware composition.** Several strings interpolate a *pre-formatted* fragment. Check what the
+call site actually produces before adding a preposition around `%{…}`: Ukrainian case
+government makes stacked prepositions (`до за 90 днів`) and case mismatches (`через 1 година`)
+very easy to ship. A link label interpolated into a sentence (`%{docker_guide}`,
+`%{embed_guide}`) is its own msgid, so its case is fixed: build the sentence around it
+(`скористайтеся %{docker_guide}` with the instrumental label `посібником із налаштування
+Docker`; `як це зробити, показує %{embed_guide}` with the nominative `посібник із
+вбудовування`).
+
+**Markup and entities** pass through verbatim: `<strong>…</strong>`, `&` (literal), bullets `•`,
+checkmarks `✓`, emoji, `\n` paragraph separators.
+
+**Typography:**
+- Quotation marks: Ukrainian guillemets **`«…»`**
+- **No em-dashes** (`—`), anywhere. Use commas, colons, parentheses or full stops. A decorative
+  dash carried over from English (an aside, an appended clause) becomes a comma, colon,
+  brackets or a full stop; check the sentence still has a verb after splitting it. The only
+  dash-like mark in running text is the space-padded hyphen **` - `**, and only where
+  Ukrainian grammar requires one (omitted copula `Tymeslot - це…`, separators like
+  `%{name} - %{title}`).
+- Numeric ranges take an **unspaced en dash**: `30–50 %`, `15–20 хвилин`, `3 000–5 000 грн`.
+  This is the only place `–` is allowed; `від 30 до 50` is equally fine in running prose.
+- Ellipsis `…`
+- Decimal **comma**: `0.0 and 1.0` → `від 0,0 до 1,0`
+- Percent sign after a space: `0,5 %`
+- Currency **postfix**, per Ukrainian convention: `29 $`, `10 $/користувача/міс.`, `0 €`;
+  not `$29`
+- Abbreviate months as `/міс.` (with the full stop), consistently
+
+---
+
+## 7. PLURALS: UKRAINIAN HAS THREE FORMS
+
+`nplurals=3`. Every plural entry carries exactly `msgstr[0]`, `msgstr[1]`, `msgstr[2]`. Never
+collapse them, never leave one empty.
+
+```po
+msgid "hour"
+msgid_plural "hours"
+msgstr[0] "година"   # n mod 10 == 1 and n mod 100 != 11  → nominative singular
+msgstr[1] "години"   # n mod 10 in 2..4                   → genitive singular
+msgstr[2] "годин"    # everything else, including 0       → genitive plural
+```
+
+**Watch the case the label lands in.** `msgstr[0]` is nominative by default, but if the label is
+interpolated after a preposition that governs the accusative (`за %{label}`, `через %{label}`),
+form [0] must be **accusative**: `хвилину`, `годину`. Forms [1] and [2] happen to coincide with
+the accusative already.
+
+**A hard-coded genitive plural is a latent bug.** `%{duration} хвилин` is right for 15/30/45 and
+wrong for 22. If the count can vary freely, the source needs `dngettext`, not a fixed form.
+
+---
+
+## 8. TONE BY REGISTER
+
+- **Marketing**: warm, direct, confident. Rephrase idioms rather than calquing them. Headlines
+  should land as headlines. Long comparison prose should read as though written in Ukrainian,
+  not translated into it.
+- **Dashboard / admin UI**: terse, functional. Buttons are infinitives. Toggle states are
+  adjectives. System feedback is clean declarative: `Не вдалося оновити налаштування.`
+  No filler, no exclamation marks except on genuine success.
+- **Transactional email**: polite, clear, human. Greeting **`Вітаю, %{name},`** for host-voice
+  mail (the platform writing on the host's behalf). Never `Привіт`: it is the informal
+  «ти»-register and clashes with the formal register used everywhere else.
+- **Booking flow (public)**: friendly, encouraging. The guest is not an operator: prefer plain
+  language over product jargon where the two compete.
+
+---
+
+## 9. ONE-LINE SUMMARY
+
+Formal lowercase **ви**. **обліковий запис** (never акаунт) · **застосунок** (never додаток) ·
+**самостійний хостинг** (never селф-хостинг) · **провайдер** (integration) vs **постачальник**
+(vendor) · **подання** (calendar view) · **від'єднати** · **слот** · **некоректний** (bad value)
+vs **недійсний** (dead link) · **журнали** · **перевірка** · **електронна пошта** (never Latin
+`email`) · **урок** (lessons) vs **заняття** (classes) · **комісія платформи** · **прийом
+оплати** · **відкритий вихідний код** · **керована хмара**. Three plural forms, always. Keep
+**Tymeslot / brand names / env vars / `%{…}`** verbatim; Tymeslot never declines. Use `«…»`,
+` - `, `…`, no em-dashes, decimal comma, `0,5 %`, postfix currency, гривні on Ukrainian pages.

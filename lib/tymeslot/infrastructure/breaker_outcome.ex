@@ -1,0 +1,225 @@
+defmodule Tymeslot.Infrastructure.BreakerOutcome do
+  @moduledoc """
+  Decides what a call's result says about the *provider's* health.
+
+  A circuit breaker exists to stop hammering a service that is down. That makes
+  the only question it needs answered "is the remote side unwell?", which is a
+  narrower question than "did this call fail?". A rejected OAuth grant, a
+  missing scope, a 404, a changeset error: all of these are failures, and none
+  of them is evidence that the provider is unavailable. Counting them as
+  outages opens a breaker that is shared by every tenant, so one user's bad
+  credentials stop everyone else's calls.
+
+  Hence three outcomes rather than two:
+
+  - `:failure` - the provider looks unwell (transport errors, 5xx, 408, 429, and
+    anything a caller explicitly tags `{:provider_error, reason}`).
+  - `:success` - the call worked.
+  - `:ignore` - the call failed, but for a reason local to us or specific to
+    this tenant's data. Breaker state is left completely untouched: it neither
+    trips nor counts towards closing a half-open breaker.
+
+  The `{:provider_error, reason}` tag is the deliberate escape hatch, and the
+  video providers already use it: `ZoomProvider.classify_token_result/1` hands
+  back a plain `{:error, _}` for a rejected grant and `{:provider_error, _}`
+  for "anything else, for the breaker to witness". This module is where that
+  convention is decided once, so a new provider inherits it instead of growing
+  another copy.
+  """
+
+  @type outcome :: :success | :failure | :ignore
+
+  # OAuth error markers that mean the credential itself is gone — a rejected
+  # or expired grant, not the provider being unwell. Shared by every OAuth
+  # video provider (Zoom, Teams, Google Meet) and by
+  # `HealthCheck.ResponseHandler`'s reauth fast-path. A bare atom reason
+  # (`:unauthorized`, `:invalid_credentials`, `:token_expired`) must match
+  # here too, or it would fall through to `{:provider_error, _}` and trip the
+  # shared breaker instead of being recognised as the tenant's problem.
+  #
+  # String markers are matched against whole-word tokens extracted from the
+  # lowercased error reason (split on non-alphanumeric/underscore
+  # boundaries), which prevents `"invalid_grant"` from matching extended
+  # forms such as `"invalid_grant_period_started"` and prevents
+  # `"unauthorized"` false positives from strings like `"unauthorized
+  # origin"` produced by CalDAV servers and Google JS-API errors — which is
+  # also why the string list omits `"unauthorized"`: the atom form already
+  # covers it without that risk.
+  @permanent_credential_error_strings ~w(invalid_grant invalid_client access_denied)
+  @permanent_credential_error_atoms [:unauthorized, :invalid_credentials, :token_expired]
+
+  @doc """
+  Whether `reason` describes a permanently rejected credential (an expired or
+  revoked OAuth grant) rather than a provider outage.
+
+  A caller that gets `true` back should surface this as a plain `{:error, _}`
+  that bypasses the breaker entirely; the tenant needs to reconnect, and
+  retrying or counting it against a shared breaker helps no one.
+  """
+  @spec permanent_credential_error?(term()) :: boolean()
+  def permanent_credential_error?(reason) when is_atom(reason),
+    do: reason in @permanent_credential_error_atoms
+
+  def permanent_credential_error?(reason) when is_binary(reason),
+    do: Enum.any?(@permanent_credential_error_strings, &(&1 in error_tokens(reason)))
+
+  def permanent_credential_error?({:exception, message}) when is_binary(message),
+    do: permanent_credential_error?(message)
+
+  def permanent_credential_error?(_reason), do: false
+
+  @doc """
+  Splits an error reason into whole-word, lowercased tokens for marker
+  matching (used by `permanent_credential_error?/1`). Exposed so other
+  modules doing the same kind of matching (e.g. `HealthCheck.ResponseHandler`)
+  can share this rather than carrying their own copy. Non-UTF-8 reasons (some
+  providers hand back raw bytes) tokenise to nothing rather than blowing up
+  `String.downcase/1`.
+  """
+  @spec error_tokens(term()) :: [String.t()]
+  def error_tokens(reason) do
+    if String.valid?(reason) do
+      reason |> String.downcase() |> String.split(~r/[^a-z0-9_]+/, trim: true)
+    else
+      []
+    end
+  end
+
+  # Reasons that describe the connection itself rather than the response, plus
+  # the structured "provider cannot serve this right now" reasons a client can
+  # report directly instead of a raw HTTP status (rate limiting, an explicit
+  # outage signal).
+  #
+  # `server_error` belongs here for the same reason `classify_status/1` treats
+  # a 5xx as a failure: it is the name the calendar clients
+  # (`CalDAV.Http`, `Exchange.Client`) give a 5xx once they have classified it,
+  # so a status that would trip the breaker as `{:http_error, 500}` has to trip
+  # it in atom form too. Without it every calendar 5xx was scored `:ignore` and
+  # a server answering nothing but 500s could never open its breaker.
+  #
+  # `malformed_response` is the JSON API clients' name, calendar and video
+  # alike, for a reply whose body will not decode (`Shared.ApiResponse`),
+  # typically a proxy or load balancer answering with HTML in front of a
+  # struggling provider. A provider that answers nothing but garbage still has
+  # to be able to open its breaker.
+  @transport_reasons ~w(
+    timeout network_error closed econnrefused econnreset ehostunreach
+    enetunreach etimedout nxdomain closed_by_peer socket_closed_remotely
+    rate_limited service_unavailable server_error malformed_response
+  )a
+
+  @transport_tokens Enum.map(@transport_reasons, &Atom.to_string/1)
+
+  # Transport-level exception structs, matched by name so that neither Req nor
+  # Mint has to be a compile-time dependency of this module.
+  @transport_exceptions ~w(
+    Elixir.Req.TransportError Elixir.Mint.TransportError Elixir.Mint.HTTPError
+  )a
+
+  @doc """
+  Classifies a (normalised) call result.
+
+  Anything unrecognised is treated as `:ignore` rather than `:failure`: an
+  unclassified error is not evidence of an outage, and the cost of guessing
+  wrong in that direction is a breaker that stays closed one call too long,
+  against a breaker that opens for everyone on a local validation error.
+  """
+  @spec classify(term()) :: outcome()
+  def classify(:ok), do: :success
+  def classify({:ok, _result}), do: :success
+  def classify({:provider_error, _reason}), do: :failure
+  # The calendar clients report errors as `{:error, reason, message}`; the
+  # message carries no classification signal, only the reason does.
+  def classify({:error, reason, _message}), do: classify_error(reason)
+  def classify({:error, reason}), do: classify_error(reason)
+  # `execute_function/2` normalises bare values into `{:ok, _}`, so anything
+  # still untagged here came from a caller reporting its own result.
+  def classify(_other), do: :success
+
+  @doc """
+  Whether an error `reason` says the provider cannot serve the call right
+  now (a transport failure, a timeout, 408, 429 or 5xx), so the same call may
+  succeed if retried: exactly the reasons a breaker counts as a failure.
+
+  The default retry rule of `Tymeslot.Infrastructure.Retry`, so a retry loop
+  and the breaker around it agree on what is transient. A refusal from an open
+  breaker is not: retrying it only asks the breaker again. A rate limit that
+  names its wait (`{:rate_limited, seconds}`, as the Zoom and Teams profile
+  requests report one) is transient too.
+  """
+  @spec transient?(term()) :: boolean()
+  def transient?({:rate_limited, _retry_after}), do: true
+  def transient?(reason), do: classify_error(reason) == :failure
+
+  @doc """
+  A short description of why a call counted as a `:failure`, safe to put in
+  an admin alert or a log line.
+
+  Only the classifying part of the result is kept: a reason atom, an HTTP
+  status, an exception's module. Response bodies, exception messages and free
+  text are dropped, because a provider call runs with decrypted credentials
+  in scope and any of them can echo one back.
+
+  The one thing taken from a message is a known transport reason. The JSON
+  calendar clients fold every transport failure into `:network_error` and
+  keep the underlying reason only in the message
+  (`"Network error: %Req.TransportError{reason: :nxdomain}"`), and a DNS
+  failure, a refused connection and a timeout call for different responses.
+  Only a word from `@transport_reasons` is ever copied, never the text
+  around it.
+  """
+  @spec failure_summary(term()) :: String.t()
+  def failure_summary({:provider_error, reason}), do: "provider error: #{summarise(reason)}"
+
+  def failure_summary({:error, reason, message}) when is_atom(reason) and is_binary(message) do
+    case message_transport_reason(reason, message) do
+      nil -> summarise(reason)
+      detail -> "#{summarise(reason)} (#{detail})"
+    end
+  end
+
+  def failure_summary({:error, reason, _message}), do: summarise(reason)
+  def failure_summary({:error, reason}), do: summarise(reason)
+  def failure_summary(_result), do: "unclassified"
+
+  defp summarise({:http_error, status, _body}), do: summarise({:http_error, status})
+  defp summarise({:http_error, status}) when is_integer(status), do: "HTTP #{status}"
+  defp summarise(nil), do: "unclassified"
+  defp summarise(reason) when is_atom(reason), do: Atom.to_string(reason)
+  defp summarise(%module{reason: nil}), do: inspect(module)
+
+  defp summarise(%module{reason: reason}) when is_atom(reason),
+    do: "#{inspect(module)} (#{reason})"
+
+  defp summarise(%module{}), do: inspect(module)
+  defp summarise(_reason), do: "unclassified"
+
+  defp message_transport_reason(reason, message) do
+    own = Atom.to_string(reason)
+    Enum.find(error_tokens(message), &(&1 in @transport_tokens and &1 != own))
+  end
+
+  # A breaker refusal from a nested call says nothing new about the provider,
+  # and counting it would let an open breaker keep itself open.
+  defp classify_error(:circuit_open), do: :ignore
+
+  defp classify_error({:http_error, status, _body}), do: classify_status(status)
+  defp classify_error({:http_error, status}), do: classify_status(status)
+
+  defp classify_error(reason) when reason in @transport_reasons, do: :failure
+
+  defp classify_error(%module{}) when module in @transport_exceptions, do: :failure
+
+  # Everything else is ours or the tenant's: changeset errors, missing scopes,
+  # rejected grants, not-found, misconfiguration.
+  defp classify_error(_reason), do: :ignore
+
+  # 429 and 5xx mean "the provider cannot serve this right now". 408 is a
+  # timeout the provider reported about itself. Every other 4xx is a statement
+  # about the request, not about the provider's health.
+  defp classify_status(status) when is_integer(status) and status >= 500, do: :failure
+  defp classify_status(429), do: :failure
+  defp classify_status(408), do: :failure
+  defp classify_status(status) when is_integer(status), do: :ignore
+  defp classify_status(_status), do: :ignore
+end

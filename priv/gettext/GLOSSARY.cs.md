@@ -1,0 +1,413 @@
+# Tymeslot: Czech (cs) Translation Style Guide & Termbase
+
+Authoritative. Written ahead of the first Czech catalogue, from the ~4,000 source msgids across Core and the SaaS overlay, and modelled on the settled German and Ukrainian termbases. Follow this exactly. Where a translator's instinct contradicts this guide, **this guide wins**: consistency across twenty translators is worth more than any individual improvement.
+
+The guiding principle behind every call below: **prefer standard Czech over a transliterated Anglicism.** A loanword is kept only where it is genuinely naturalised and declines like a Czech noun (`webhook`, `widget`, `tarif`, `integrace`), never merely because the English word was convenient to respell.
+
+---
+
+## 1. REGISTER
+
+**Formal `vy` / `váš` everywhere.** Booking flow, e-mails, dashboard, admin, marketing. No exceptions. Never `ty`.
+
+Write the polite pronoun **lowercase** (`vy`, `váš`, `vám`, `vás`), not `Vy`. Capitalised `Vy` belongs to personal correspondence addressed to one named individual; our strings address an unknown reader. This applies to transactional e-mail too, even though e-mail is where translators most often reach for the capital.
+
+### Gender agreement is the hardest problem in this catalogue
+
+Czech past participles and predicate adjectives agree with the subject in gender and number. The subject of most of our strings is *the user*, whose gender we do not know. `Byl jste přihlášen` is masculine and wrong for half our users; `Byl(a) jste přihlášen(a)` is unreadable. **Restructure instead.** Three sanctioned constructions, in order of preference:
+
+1. **Make the object the subject.** The object's gender is known because it is one of our own terms: `Meeting cancelled successfully` → **`Schůzka byla zrušena.`** (schůzka is feminine, so `zrušena` is determinate).
+2. **Use the verbal noun or the impersonal `nepodařilo se`.** `Failed to save meeting to database` → **`Schůzku se nepodařilo uložit do databáze.`** `Upload failed` → **`Nahrání se nezdařilo.`** Nothing agrees with the user here.
+3. **Stay in the present tense or the infinitive**, which carry no gender: `You don't have any cancelled appointments to show.` → **`Nemáte žádné zrušené schůzky.`**
+
+Never address one user with a masculine plural predicate. `Are you sure you want to…?` is **`Opravdu chcete…?`**, never `Jste si jisti, že…`: `jisti` forces a gender and a number that the string cannot know.
+
+**Escape hatch, last resort:** the bracketed form `přihlášen(a)`. Permitted only in dense admin or legal text where no restructuring works. Never in marketing, the booking flow, or e-mail. Never the slash form `přihlášen/a`.
+
+### Imperatives vs infinitives
+
+**Buttons, menu commands, and link labels take the infinitive:** `Uložit`, `Zrušit`, `Smazat`, `Odeslat`, `Pokračovat`, `Zavřít`, `Odpojit`. This is the Czech convention in every major localised product (Microsoft, Apple, Google), it is the shortest form, and (decisively for us) the infinitive carries no gender or number, so it never collides with §1's agreement problem.
+
+**Instructions, prompts, and helper text take the 2nd-person-plural imperative:** `Vyberte datum`, `Zadejte e-mailovou adresu`, `Připojte kalendář`, `Potvrďte svou účast`. The dividing line is whether the string *is* the control (infinitive) or *tells the user to operate* a control (imperative).
+
+---
+
+## 2. GLOSSARY
+
+Genitive singular and genitive plural are given wherever a translator will need them: after numerals, after prepositions, and inside compounds. `m.a.` = masculine animate, `m.i.` = masculine inanimate, `f.` = feminine, `n.` = neuter.
+
+### Core nouns
+
+| English | Czech | Gender | Gen. sg. | Nom. pl. | Gen. pl. |
+|---|---|---|---|---|---|
+| booking (noun) | **rezervace** | f. | rezervace | rezervace | rezervací |
+| meeting | **schůzka** | f. | schůzky | schůzky | schůzek |
+| appointment | **schůzka**: the same word; Czech does not split them | f. | schůzky | schůzky | schůzek |
+| event (calendar event) | **událost**; never conflate with *schůzka* | f. | události | události | událostí |
+| slot / time slot | **termín** **[DECIDED]**: the bookable unit of time | m.i. | termínu | termíny | termínů |
+| availability | **dostupnost** | f. | dostupnosti | n/a | n/a |
+| schedule (the weekly availability) | **rozvrh** | m.i. | rozvrhu | rozvrhy | rozvrhů |
+| scheduling (the activity) | **plánování** | n. | plánování | n/a | n/a |
+| calendar | **kalendář** | m.i. | kalendáře | kalendáře | kalendářů |
+| time zone | **časové pásmo** **[DECIDED]**, never *časová zóna* | n. | časového pásma | časová pásma | časových pásem |
+| host (the person being booked) | **hostitel** | m.a. | hostitele | hostitelé | hostitelů |
+| organiser | **organizátor**: a distinct role from *hostitel*; keep them distinct | m.a. | organizátora | organizátoři | organizátorů |
+| attendee | **účastník** | m.a. | účastníka | účastníci | účastníků |
+| guest | **host** (note the trap: English *host* is Czech **hostitel**, English *guest* is Czech **host**) | m.a. | hosta | hosté | hostů |
+| invitee | **pozvaný** where it means an invited person, **host** where it means guest | m.a. (adj. decl.) | pozvaného | pozvaní | pozvaných |
+| buffer | **časová rezerva** **[DECIDED]**: always both words, so it can never be misread as *rezervace* | f. | časové rezervy | časové rezervy | časových rezerv |
+| minimum notice | **minimální předstih** | m.i. | předstihu | n/a | n/a |
+| advance booking window / booking horizon | **období pro rezervace** **[DECIDED]**, matching the dashboard label *Období pro rezervace*; never *horizont rezervací*. Only *období* declines: *s obdobím pro rezervace 120 dní*, *krátké / kratší období pro rezervace*; with a length, prefer *nastavte období pro rezervace na šest týdnů* | n. | období pro rezervace | n/a | n/a |
+| reminder | **připomínka** | f. | připomínky | připomínky | připomínek |
+| confirmation | **potvrzení** | n. | potvrzení | potvrzení | potvrzení |
+| cancellation | **zrušení** | n. | zrušení | n/a | n/a |
+| reschedule (noun) | **přesunutí**; *reschedule request* → **žádost o přesunutí** | n. | přesunutí | n/a | n/a |
+| no-show | **neúčast** | f. | neúčasti | n/a | n/a |
+| deposit | **záloha** **[DECIDED]** | f. | zálohy | zálohy | záloh |
+| backups (of data) | **zálohování dat** **[DECIDED]**, never bare *zálohy*, which on our site always means deposits: *aktualizace a zálohování dat*, *s automatickým zálohováním dat* | n. | zálohování dat | n/a | n/a |
+| payment | **platba** | f. | platby | platby | plateb |
+| refund | **vrácení platby**; *Refunded* → **Vráceno** | n. | vrácení | n/a | n/a |
+| subscription | **předplatné** (adjectival declension: gen. **předplatného**, dat. předplatnému) | n. | předplatného | n/a | n/a |
+| plan (pricing tier) | **tarif** | m.i. | tarifu | tarify | tarifů |
+| trial | **zkušební období** | n. | zkušebního období | n/a | n/a |
+| workspace | **pracovní prostor** | m.i. | pracovního prostoru | n/a | n/a |
+| profile | **profil** | m.i. | profilu | profily | profilů |
+| dashboard | **nástěnka** **[DECIDED]**, in the app and on the website alike; never Latin *dashboard*. *Overview* is **Přehled**, a separate nav item | f. | nástěnky | nástěnky | nástěnek |
+| settings | **nastavení** | n. | nastavení | nastavení | nastavení |
+| integration | **integrace** | f. | integrace | integrace | integrací |
+| embed (the artefact) | **widget**; *to embed* → **vložit**, *embedding* → **vkládání** | m.i. | widgetu | widgety | widgetů |
+| webhook | **webhook**: naturalised, declines | m.i. | webhooku | webhooky | webhooků |
+| theme (Quill/Rhythm) | **motiv** **[DECIDED]**, never *téma*, never *theme*; Quill/Rhythm stay verbatim | m.i. | motivu | motivy | motivů |
+| custom field | **vlastní pole** | n. | vlastního pole | vlastní pole | vlastních polí |
+| custom question | **vlastní otázka** | f. | vlastní otázky | vlastní otázky | vlastních otázek |
+| meeting type | **typ schůzky**; the nav label is **Typy schůzek**; note the genitive plural (`Typy schůzky` is the commonest error in this file) | m.i. | typu schůzky | typy schůzek | typů schůzek |
+| recurring | **opakující se** (adj., agrees: *opakující se schůzka / událost*) | n/a | n/a | n/a | n/a |
+| one-off | **jednorázový** (adj.) | n/a | n/a | n/a | n/a |
+
+### Extended termbase
+
+| English | Czech |
+|---|---|
+| account | **účet** (m.i., gen. účtu), never *akaunt* |
+| user | **uživatel** (m.a., gen. uživatele, pl. uživatelé, gen. pl. uživatelů) |
+| admin / administrator | **správce** (m.a., gen. správce); *Admin Settings* → **Nastavení správce** |
+| password | **heslo** (n., gen. hesla, gen. pl. hesel) |
+| e-mail (the medium and the message) | **e-mail**: hyphenated, lowercase mid-sentence; *Email Address* → **E-mailová adresa** |
+| sign in / log in | **přihlásit se**; noun **přihlášení** |
+| sign up / register | **zaregistrovat se**; noun **registrace** |
+| sign out / log out | **odhlásit se**; noun **odhlášení** |
+| authentication | **ověření**; *two-factor authentication* → **dvoufázové ověření** |
+| provider (calendar / video / OAuth) | **poskytovatel** (m.a.), never *provider* |
+| video call | **videohovor** (m.i., one word) |
+| video meeting | **videoschůzka** (f., one word) |
+| location | **místo** (n.); *In-person* → **Osobně** |
+| duration | **délka** (f.), never bare *trvání* |
+| break (in the availability grid) | **přestávka** (f., gen. pl. přestávek), kept distinct from *časová rezerva* |
+| booking page / link / flow | **rezervační stránka** / **rezervační odkaz** / **průběh rezervace** |
+| available times | **Volné termíny** |
+| bookable times (the hatched calendar layer for one meeting type) | **termíny k rezervaci**; the pill *Bookable* → **K rezervaci**. Never *volné termíny* here: *free* is the opposite of *busy* |
+| Layers (calendar rail heading) | **Vrstvy** |
+| open for booking (organiser opens extra time) | **otevřít pro rezervace** (button and kind label); the draft title and toasts use a colon frame: *Open for %{name}* → **Otevřeno pro: %{name}**. *Just this once* → **Jen tentokrát**, *Every week* → **Každý týden** |
+| Treat as (Busy / Free on a read-only all-day event) | **Považovat za** + **Obsazeno** / **Volno**; *Treated as busy for bookings* → **Pro rezervace se počítá jako obsazeno** |
+| block this time / Blocked | **zablokovat tento čas** (button, toasts *Zablokováno*); the default event title *Blocked* → **Blokováno**; *Unblocked* → **Odblokováno** |
+| Request / Expired (pills on a booking request) | **Žádost** / **Vypršeno** (as in *dashboard_bookings*); screen-reader fragments: **žádost čeká na vaši odpověď**, **žádost vypršela bez odpovědi** |
+| tell guests (notify guests of a change to an event) | **informovat hosty**: *Tell guests* → **Informovat hosty**, *Delete and tell guests* → **Smazat a informovat hosty**, *Couldn't tell guests* → **Hosty se nepodařilo informovat**, *Guests won't be told* → **Hosté nebudou informováni**; *without telling them* → **bez upozornění**. `hosty` here is the accusative plural of **host** (guest), never **hostitel** (host), which is the organiser |
+| update (the message guests get about a change) | **oznámení o změnách** (n., so *toto oznámení … nečeká*); where the string says guests receive it by e-mail, **e-mail o změnách** (*Guests will get an update.* → **Hosté dostanou e-mail o změnách.**). Never *aktualizace*, which reads as a software update |
+| Tymeslot meeting (a booked meeting sent from the calendar, with guests and an invitation) | **schůzka Tymeslot** (uninflected brand after the noun): *Send as a Tymeslot meeting* → **Odeslat jako schůzku Tymeslot**, *Add a guest to send a Tymeslot meeting.* → **Pro odeslání schůzky Tymeslot přidejte hosta.** A plain entry in the connected calendar stays **událost**; never call a Tymeslot meeting *událost Tymeslot* or a calendar event *schůzka* |
+| Syncing (status: a calendar write the provider has not confirmed yet) | **Probíhá synchronizace** as the tooltip and screen-reader label, no ellipsis; in a sentence **Probíhá synchronizace s vaším kalendářem.** The bare in-flight **Synchronizace…** (§ Verbs) is for a progress line with an ellipsis |
+| Preview / Live Preview | **náhled** (m.i.): *Theme Preview* → **Náhled motivu**, *No preview yet* → **Zatím žádný náhled**; *Live Preview* (the panel that updates as you edit) → **Živý náhled**, in running text lowercase **v živém náhledu**. Never *preview* or *živé zobrazení* |
+| hatched (times on the calendar) | **vyšrafovaný**: *ve vyšrafovaných časech* |
+| Available / Unavailable (a day or slot badge) | **K dispozici** / **Není k dispozici**: gender-neutral, so it is safe on *den*, *termín* and *schůzka* alike |
+| Unlisted | **Neveřejné** |
+| Default (badge / option label) | **Výchozí** |
+| by default (adverbial) | **ve výchozím nastavení** |
+| Custom (a user-defined value) | **vlastní**, never *kastomizovaný*, never Latin *custom* |
+| Pending | **Čeká na vyřízení**; *Pending Stripe review* → **Čeká na kontrolu Stripe** |
+| Failed (a status) | **Chyba** |
+| Declined (a guest) | **Odmítnuto**, distinct from **Zrušeno** (a cancelled meeting) |
+| logs / read-only | **protokoly** (never *logy*) / **jen pro čtení** |
+| self-hosting / self-hosted | **provoz na vlastním serveru** / **na vlastním serveru**; never *self-hosted* inside a Czech sentence, never *selfhosting* |
+| open source | **otevřený zdrojový kód** (noun) · **open-source** (attributive, hyphenated) |
+| Free (as a price value or tier label) | **Zdarma** **[DECIDED]**, only where it is the label itself: the pricing-card title, a price value, the card heading *Everything in Free* → **Vše z tarifu Zdarma** |
+| the free tier (in running text) | **bezplatný tarif** **[DECIDED]**: *ne v bezplatném tarifu ani v tarifu Pro*, *bezplatný tarif ani tarif Pro ji nezahrnují*, *Existuje bezplatný tarif pro…?*; a meta description ends **Bezplatný tarif.** Never *tarify Zdarma a Pro* or *tarif zdarma* in a sentence. The adverb *zdarma* (free of charge) is unaffected: *úvodní hovor zdarma* |
+| platform fee | **platformní poplatek**; *0.5%* → **0,5 %** |
+| data processing agreement (DPA) | **smlouva o zpracování osobních údajů**; the abbreviation *DPA* may follow in brackets or stand alone once introduced |
+| ad trackers | **reklamní sledovací prvky** (*bez reklamních sledovacích prvků*); avoid *trackery* |
+| managed cloud / self-hosted version | **spravovaný cloud** / **verze pro vlastní server** |
+| `+%{count} more` | **`+%{count} dalších`** in all three plural forms: the elided noun differs per surface (událost f., účastník m., kalendář m.), so no agreeing form is right everywhere; the invariant genitive plural is the convention |
+| translation (noun; booking-page languages) | **překlad** (m.i., pl. **překlady**); *%{language} translations* → **Překlady: %{language}**, *Your %{language} translations* → **Vaše překlady (%{language})**: `%{language}` is filled with the language's own name and can't be declined |
+| translate | **přeložit** (pf.) / **překládat** (impf.); *%{translated}/%{total} translated* → **Přeloženo %{translated}/%{total}** |
+| original language (the language the host writes their texts in) | **původní jazyk** (m.i.); *in %{language}* → **v původním jazyce (%{language})**; the original text is **originál** (*v originále*); the badge beside that language is **původní**, agreeing with *jazyk* |
+| translation language (a language the host translates into) | **jazyk překladu** (pl. **jazyky překladu**) |
+| language switcher (the visitor-facing control on the booking page) | **přepínač jazyka** (m.i.) |
+| Outdated (a translation whose original changed) | **Neaktuální**, never *zastaralý*; counted **%{count} neaktuální text / neaktuální texty / neaktuálních textů** |
+| Missing (a text not translated yet) | **Chybí** as the status pill; attributive **chybějící** (*Jen chybějící nebo neaktuální*) |
+| Translated (status) | **Přeloženo** (impersonal neuter, safe for any text) |
+| Review (the link to a language's review page) | **Zkontrolovat** |
+
+### Booking series
+
+A **series** is several sessions of one meeting type that a booker books with a host in one go; each **session** is one meeting of that series. The terms below are the ones `emails_booking_series` uses; keep them in every series string.
+
+| English | cs |
+|---|---|
+| session (one meeting within a booking series) | **termín** (m. inanimate: *termín / termíny / termínů*; `Termín %{position} z %{count}`, `Zrušit termín`, `Spravovat všechny termíny`). Never `schůzka` for a session of a series, so it matches `booking_errors` |
+| series (a booking series) | **série** (`Nová série`) |
+
+### Booking pages (a host's extra pages)
+
+A host has one **main page** at `/<username>` and may add extra **booking pages**, each at `/<username>/<page>` with its own theme and meeting types. An extra page is still a booking page, so it uses the same noun as the generic entry; the main page is told apart by its name, never by a different noun.
+
+| English | cs |
+|---|---|
+| booking page (any public page guests book through, extra or main) | **rezervační stránka** (plural **rezervační stránky**) |
+| main page (the host's own page at `/<username>`, as opposed to their extra booking pages) | **Hlavní stránka** (always with the qualifier; never the bare word for *home page*) |
+| draft (a booking page not public yet because it lists no meeting type) | **Koncept** (same word as the poll draft) |
+| address (the URL path of a page, `/<username>/<page>`) | **Adresa** (nikdy `URL` ani `cesta`; e-mailová adresa a adresa místa konání jsou jiné věci a mají vlastní překlad) |
+
+### Setup wizard (`onboarding_wizard`)
+
+| English | cs |
+|---|---|
+| booking link | **rezervační odkaz** (the generic entry above); in the wizard, where the context is clear, plain **odkaz** |
+| link (the field that was *username*: the `/<link>` part of the booking page address) | **odkaz**: *Your link* → **Váš odkaz**, *Someone already has this link* → **Tento odkaz už někdo má**; never *uživatelské jméno* in the wizard |
+| keep (your link: save it somewhere you will find it again) | **uložit si**: *Or keep it for later* → **Nebo si ho uložte na později**, *Send or keep your link first* → **Nejdřív odkaz pošlete nebo si ho uložte**; never *ponechat*, which is *keep* as opposed to *remove* |
+| Live (the step name, the badge, and *go live* / *is live*) | **online** **[DECIDED]**: step and badge **Online**, *You're live* → **Jste online**, *Almost live* → **Téměř online**, *isn't live yet* → **zatím není online**, *goes live* → **bude online**. The dashboard's *goes live* for a draft booking page stays **zveřejní se** |
+| free/busy | **volno/obsazeno** (*Free/busy feed* → **Kanál volno/obsazeno**); *when you're busy* → **kdy máte obsazeno** (never *zaneprázdnění*, which forces a gender); *free times* → **volné termíny** |
+| app-specific password (Apple) | **heslo pro konkrétní aplikaci**, Apple's own term; the section is **Hesla pro konkrétní aplikace**. Apple ID / Apple Account → **účet Apple** (*Apple ID email* → **E-mail účtu Apple**, *Apple ID password* → **heslo k účtu Apple**) |
+| text the host sends to someone they know (the share message and its subject) | **tykání**, the one sanctioned exception to §1: *Hi %{name}, you can pick a time with me here: %{url}* → **Ahoj %{name}, tady si u mě můžeš vybrat termín: %{url}**. The e-mail signature line (*Book a time with me: %{url}*) addresses strangers and stays formal: **Rezervujte si u mě termín: %{url}** |
+
+### Verbs: always give the aspect the string needs
+
+Czech verbs come in perfective/imperfective pairs. **Buttons and completed-action messages take the perfective; ongoing states and in-flight statuses take the imperfective or the verbal noun.** This is where Czech translators drift most.
+
+| English | Perfective | Imperfective | In-flight status |
+|---|---|---|---|
+| to book | **zarezervovat** | rezervovat | Rezervuji… → use **Rezervace…** |
+| to schedule | **naplánovat** | plánovat | Plánování… |
+| to reschedule | **přesunout** | přesouvat | Přesouvání… |
+| to cancel | **zrušit** | rušit | **Rušení…** (`Cancelling...`) |
+| to confirm | **potvrdit** | potvrzovat | **Potvrzování…** (`Confirming your payment…`) |
+| to save | **uložit** | ukládat | **Ukládání…** (`Saving...`) |
+| to delete | **smazat** | mazat | Mazání… |
+| to remove | **odebrat**, kept distinct from *smazat* | odebírat | n/a |
+| to invite | **pozvat** | zvát | n/a |
+| to connect | **připojit** | připojovat | **Připojování…** (`Connecting…`) |
+| to disconnect | **odpojit** | odpojovat | n/a |
+| to reconnect | **připojit znovu**, never *reconnectovat*, never *znovupřipojit* | n/a | n/a |
+| to sync | **synchronizovat** (biaspectual) | n/a | **Synchronizace…** |
+| to enable / disable | **zapnout** / **vypnout** | zapínat / vypínat | states are **Zapnuto** / **Vypnuto** (neuter, gender-neutral) |
+| to upgrade (tier) | **přejít na vyšší tarif**; *Upgrade to Pro* → **Přejít na Pro** | n/a | n/a |
+| to downgrade | **přejít na nižší tarif** | n/a | n/a |
+| to upgrade (permissions) | **rozšířit oprávnění**, never *aktualizovat*, which is *update* | n/a | n/a |
+| to refresh | **obnovit** | obnovovat | n/a |
+| to update | **aktualizovat** (biaspectual) | n/a | **Aktualizace…** |
+| to submit | **odeslat** | odesílat | **Odesílání…** (`Sending...`) |
+| to process | **zpracovat** | zpracovávat | **Zpracování…** (`Processing...`) |
+| to test | **otestovat** | testovat | **Testování…** (`Testing...`) |
+
+### Weekdays and months
+
+Weekday and month names are **lowercase in running prose** and capitalised only as standalone column headers or list labels.
+
+- Weekdays: pondělí · úterý · středa · čtvrtek · pátek · sobota · neděle
+- Abbreviations (grid headers): **Po · Út · St · Čt · Pá · So · Ne**; the all-caps source variants (`MON`) become **PO · ÚT · ST · ČT · PÁ · SO · NE**
+- Months, nominative: leden · únor · březen · duben · květen · červen · červenec · srpen · září · říjen · listopad · prosinec
+- Months **in a date, always genitive**: ledna · února · března · dubna · května · června · července · srpna · září · října · listopadu · prosince
+- Month abbreviations: led · úno · bře · dub · kvě · čvn · čvc · srp · zář · říj · lis · pro
+
+---
+
+## 3. ANGLICISMS: BANNED
+
+Each of these is the form a Czech developer reaches for first. None of them ships.
+
+| Banned | Use instead |
+|---|---|
+| `meeting` | **schůzka** |
+| `event` (Latin) | **událost** |
+| `slot`, `časový slot` | **termín** |
+| `buffer` | **časová rezerva** |
+| `dashboard` | **nástěnka** |
+| `časová zóna` | **časové pásmo** |
+| `provider` | **poskytovatel** |
+| `logy` | **protokoly** |
+| `akaunt` | **účet** |
+| `kastomizovat`, `customizovat` | **přizpůsobit** / **vlastní** |
+| `upgradovat`, `downgradovat` | **přejít na vyšší / nižší tarif** |
+| `updatovat` | **aktualizovat** |
+| `nalinkovat`, `linkněte` | **propojit**, **odkaz** |
+| `supportovat` | **podporovat** |
+| `selfhosting`, Latin `self-hosted` mid-sentence | **provoz na vlastním serveru** |
+| `zabookovat` | **zarezervovat** |
+| `cancelnout` | **zrušit** |
+| `téma` (as UI theme) | **motiv** (*téma* is a *topic*) |
+
+**Diacritics are mandatory** in every msgstr: `ě š č ř ž ý á í é ú ů ó ď ť ň`. The only exception is a sample value that is a URL slug (§5).
+
+---
+
+## 4. UI MICRO-COPY CONVENTIONS
+
+**Headings and page titles are sentence case, not title case.** English source strings capitalise every word; Czech capitalises the first word and proper nouns only. This is the single most frequent Czech localisation defect, and it applies to nav items, buttons, tab labels, table headers, and modal titles alike.
+
+| Surface | Convention | Worked example |
+|---|---|---|
+| Button label | Infinitive, sentence case, no full stop | `Cancel Meeting` → **`Zrušit schůzku`** · `Keep Meeting` → **`Ponechat schůzku`** · `Send Reschedule Request` → **`Odeslat žádost o přesunutí`** |
+| Page / section title | Sentence-case noun phrase, no full stop | `Meeting Management` → **`Správa schůzek`** · `Account Settings` → **`Nastavení účtu`** · `Weekly Schedule` → **`Týdenní rozvrh`** |
+| Form label | Bare sentence-case noun, no colon unless the msgid has one | `Email Address` → **`E-mailová adresa`** · `Start Time` → **`Začátek`** · `Display Name` → **`Zobrazované jméno`** |
+| Placeholder text | Prose-shaped samples localised, format-shaped ones verbatim (§5) | `e.g. Lunch` → **`např. oběd`** · `e.g. John Doe` → **`např. Jan Novák`** · `your.email@example.com` → unchanged |
+| Empty state | Full clause, plain declarative, no exclamation mark | `No upcoming meetings` → **`Žádné nadcházející schůzky`** · `You don't have any cancelled appointments to show.` → **`Nemáte žádné zrušené schůzky.`** |
+| Error message | Impersonal `nepodařilo se`, full stop, no blame | `Failed to load meetings` → **`Schůzky se nepodařilo načíst.`** · `Something went wrong. Please try again.` → **`Došlo k chybě. Zkuste to prosím znovu.`** |
+| Toast / flash | Passive with the object as subject, or a bare verbal noun | `Meeting cancelled successfully` → **`Schůzka byla zrušena.`** · `Booking link copied!` → **`Rezervační odkaz byl zkopírován.`** |
+| Confirmation dialog | `Opravdu chcete…?`, the fixed rendering, never `Jste si jisti` | `Are you sure you want to cancel this appointment?` → **`Opravdu chcete tuto schůzku zrušit?`** |
+
+**`Cancel` is two different words in one string set.** As a dialog dismiss it is **`Zrušit`**; as the destructive action on a meeting it is **`Zrušit schůzku`**, never a bare `Zrušit`, because the two appear side by side in the cancellation modal and would read identically. Check the msgid's `#:` reference before choosing. Where a bare dismiss sits next to `Keep Meeting`, use **`Zpět`**.
+
+Ecto field errors are lowercase fragments appended to a field label of arbitrary gender, so **the predicate must not agree with anything**. Use verb-only or predicate-noun constructions:
+
+| msgid | msgstr | why |
+|---|---|---|
+| `can't be blank` | **`je povinná položka`** | *položka* carries the agreement, not the field name |
+| `is invalid` | **`má neplatnou hodnotu`** | the adjective agrees with *hodnota* |
+| `has already been taken` | **`již existuje`** | verb only, no agreement |
+| `does not match confirmation` | **`se neshoduje s potvrzením`** | verb only |
+| `is reserved` | **`je vyhrazená hodnota`** | predicate noun |
+
+---
+
+## 5. DO NOT TRANSLATE: keep verbatim
+
+**Tymeslot**, Stripe, Stripe Checkout, Stripe Connect, reCAPTCHA, Google, **Google Calendar**, Google Meet, GitHub, Outlook, Microsoft Teams, Zoom, CalDAV, Nextcloud, iCloud, Fastmail, Zimbra, Radicale, mailbox.org, MiroTalk, Keycloak, Authentik, Lemonldap, JavaScript, OAuth, OIDC, SSO, Oban, UTM, Cloudron.
+
+Also verbatim, established by the other termbases and applying equally here: Quill, Rhythm, Baikal, Docker, PostgreSQL, Railway, AGPLv3, WordPress, Apple Pay, Google Pay.
+
+**Environment-variable and config names, always verbatim:** `REGISTRATION_ENABLED`, `PASSWORD_AUTH_ENABLED`, `STRIPE_SECRET_KEY`, `RECAPTCHA_SITE_KEY`, `GITHUB_CLIENT_ID`, `OAUTH_*`, and friends. Likewise embed attributes: `data-theme`, `data-primary-color`, `data-locale`.
+
+**Czech-specific additions:**
+
+- Tier names are proper nouns: `Pro`, `Cloud Free`, `Cloud Pro`, `Enterprise`, `Self-Hosted` as a pricing-card title. Bare `Free` as a price or tier value is translated → **`Zdarma`**.
+- **Tymeslot never inflects and never takes a Czech ending.** Write `účet Tymeslot`, `nástěnka Tymeslot`, `ve službě Tymeslot`; never `Tymeslotu`, `Tymeslotem`, `Tymeslotový`. Where a case is unavoidable, front it with a declinable noun (`aplikace`, `služba`, `účet`). **[DECIDED]** After a preposition that governs the genitive, dative, locative or instrumental, the bare name is not used either: `s aplikací Tymeslot`, `k aplikaci Tymeslot`, `v aplikaci Tymeslot`, `vedle aplikace Tymeslot`; for the provider as a contracting party, `služba`: `smlouva se službou Tymeslot`, `od služby Tymeslot`. Nominative and accusative need no noun: `Tymeslot vytvoří odkaz`, `rezervace přes Tymeslot`. Tier names stay bare: `v tarifu Tymeslot Pro`.
+- **Google Calendar stays verbatim and uninflected [DECIDED]**, on the website as in the dashboard; never *Google Kalendář* or *Kalendář Google*. In a list it behaves like `Google Meet` and `Apple iCloud`: `synchronizuje s Google Calendar, Outlookem a kalendáři CalDAV`, `několik účtů Google Calendar a Outlook`. Where a lone oblique case would read awkwardly, front it with a noun: `připojení ke službě Google Calendar`.
+- Unit symbols do not decline and are separated from the number by a non-breaking space: `30 min`, `24 h`, `10 MB`, `%{count} s`.
+
+**Sample and placeholder values:** localise prose-shaped samples: `yourname` → **`vasejmeno`** (no diacritics; it is a URL slug), `John Doe` → **`Jan Novák`**, `e.g. Lunch` → **`např. oběd`**. Keep format-shaped ones verbatim: e-mail addresses (`your.email@example.com`, `guest@example.com`), URLs and hosts (`https://caldav.example.com`), API keys, and anything containing `example.com`. A Czech-diacritic API key or hostname is a bug.
+
+### Third-party UI labels: never guess
+
+When a setup instruction tells the user to click something inside another company's product, the label must match what that product actually shows in Czech. Invent one and the user hunts for a menu item that does not exist.
+
+> **Apple: verified [DECIDED].** Apple's Czech support page for app-specific passwords (support.apple.com/cs-cz/102654) reads *V části Přihlášení a zabezpečení vyberte Hesla pro konkrétní aplikace* and *Vygenerovat heslo pro konkrétní aplikaci*, and calls the account **účet Apple** (no *Apple ID*). Use exactly **`Přihlášení a zabezpečení → Hesla pro konkrétní aplikace`**, never *Hesla pro aplikace*. Apple's iOS/macOS Settings wording may still differ from the web, as the German termbase records.
+>
+> **Open item: mailbox.org** has no Czech UI at all, so keep its English label (`Settings → Security`) and add a Czech gloss in parentheses.
+
+---
+
+## 6. PLACEHOLDERS, MARKUP, TYPOGRAPHY
+
+**Placeholders `%{name}` (the hard rule):**
+
+- Reproduce **byte-for-byte**. Never translate, rename, add, or drop one.
+- If the msgid has three placeholders, the msgstr must have exactly those three.
+- You **may and should reorder** them to fit Czech syntax: `"%{month} %{day}, %{year}"` → `"%{day}. %{month} %{year}"`.
+- A dropped or invented placeholder is a runtime crash, not a typo. A build gate checks this.
+
+**Beware composition.** Several strings interpolate a *pre-formatted* fragment: `%{organizer}` already reads `with Jane`, `%{time_until}` already reads `in 30 minutes`, `%{advance}` already reads `90 days in advance`. Check what the call site produces before wrapping a preposition around `%{…}`; Czech case government makes stacked prepositions and case mismatches very easy to ship.
+
+**Markup and entities pass through verbatim:** `<strong>…</strong>`, `&` (literal, not `&amp;`), bullets `•`, checkmarks `✓`, arrows `→`, emoji, `\n` paragraph separators.
+
+**Typography (the defects reviewers will look for first):**
+
+- **Quotation marks `„…“`**: low-9 opening `„` (U+201E), high-6 closing `“` (U+201C). Nested quotes use `‚…‘` (U+201A / U+2018). Never `"…"`.
+- **Non-breaking space (U+00A0) after every single-letter preposition or conjunction** **[DECIDED]**: `k`, `s`, `v`, `z`, `o`, `u`, `a`, `i`, capitalised or not. `v kalendáři`, `s hostitelem`, `k dispozici`, `a jak` all carry a U+00A0. The vocalised prepositions `ve`, `ke`, `ze`, `ku` are bound too (`ve službě`). **`se` is not bound**: in our copy it is mostly the reflexive pronoun (`se objeví`, `se nastavují`), and leaving the prepositional `se` unbound as well keeps the rule mechanical. Also bind inside a thousands group (`2 500 Kč`) and before a unit, currency or standalone percentage (`30 min`, `250 Kč`, `0,5 %`). This applies to the website (profession pages and every `marketing_*` catalogue) as much as to the app.
+- **Numbers: `1 234,56`**. Non-breaking (or narrow non-breaking) space as the thousands separator, **comma** as the decimal separator. Never `1,234.56`. `"0.0 and 1.0"` → `„0,0 a 1,0“`.
+- **Dates: `15. 3. 2026`**. No leading zeros, a full stop after each number, and a non-breaking space after each full stop. The long form puts the month in the genitive and lowercase: `15. března 2026`.
+- **Ordinals take a full stop:** `1.`, `2.`, `15.` A cardinal does not: `Step %{current} of %{total}` → `Krok %{current} z %{total}`.
+- **24-hour clock: `14:30`.** Never `2:30 PM`. Time ranges use an unspaced en dash: `9:00–17:00`.
+- **Currency is postfixed**, separated by a non-breaking space: `120 €`, `1 200 Kč`, `29 $`. Never `€120`. `/month` → `/měsíc`.
+- **Percent:** a space when it is a standalone quantity (`50 %`, `Nahrávání… %{percent} %`), no space when it is attributive (`50% sleva`).
+- **Dashes:** **no em dashes.** Where the English source has `—`, rewrite the sentence with a comma, a colon, parentheses or a full stop; do not swap in a spaced en dash for a parenthetical aside. The en dash **`–`** (U+2013) remains for numeric and time ranges (unspaced: `9:00–17:00`) and, space-padded, as a title or label separator (`Schůzka – %{name}`).
+- **Ellipsis `…`** (U+2026), never `...`, and **no space before it**: `Načítání…`, `Ukládání…`.
+- **No serial comma.** Czech never puts a comma before `a`, `i`, or `nebo` in a simple enumeration: `rezervace, platby a kalendáře`. (A comma *is* required before `a` when it joins clauses in an adversative or consecutive relation, as in `a proto` and `a to`, but never in a list.)
+- **Abbreviations keep their full stops:** `např.`, `tj.`, `atd.`, `hod.`, `min.`, `mj.`
+
+---
+
+## 7. PLURALS: CZECH HAS THREE FORMS
+
+```
+nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;
+```
+
+This line is written into every `cs/LC_MESSAGES/*.po` header by gettext. **Do not edit the header.** Every plural entry carries exactly `msgstr[0]`, `msgstr[1]`, `msgstr[2]`. Never collapse them, never leave one empty.
+
+| Index | Covers | Czech case |
+|---|---|---|
+| `msgstr[0]` | exactly **1** | nominative singular |
+| `msgstr[1]` | **2, 3, 4** | nominative plural |
+| `msgstr[2]` | **0** and **5 and above** (everything else) | **genitive plural** |
+
+**Index `[2]` covers zero.** `0` takes the genitive plural, the same form as `100`: `0 schůzek`, never `0 schůzka`. Translators coming from German or English get this wrong on the first pass, every time.
+
+```po
+msgid "minute"
+msgid_plural "minutes"
+msgstr[0] "minuta"    # 1 minuta
+msgstr[1] "minuty"    # 2, 3, 4 minuty
+msgstr[2] "minut"     # 0 minut, 5 minut, 27 minut
+
+msgid "%{count} hour"
+msgid_plural "%{count} hours"
+msgstr[0] "%{count} hodina"
+msgstr[1] "%{count} hodiny"
+msgstr[2] "%{count} hodin"
+```
+
+`schůzka / schůzky / schůzek` · `rezervace / rezervace / rezervací` · `den / dny / dní` · `událost / události / událostí` · `kalendář / kalendáře / kalendářů` · `host / hosté / hostů`.
+
+**Identical forms are sometimes correct.** Unit symbols do not decline, so `Resend available in %{count}s` is `Znovu odeslat lze za %{count} s` in all three forms. Fill all three anyway; an empty form is a build failure, not a shortcut.
+
+**A hard-coded genitive plural is a latent bug.** `%{duration} minut` is right for 15, 30 and 45 and wrong for 22. If a count can vary freely and the source uses plain `dgettext`, flag it for the developers rather than picking a form and hoping.
+
+---
+
+## 8. DECLENSION AROUND NUMERALS AND PLACEHOLDERS
+
+**Everything agreeing with `%{count}` must follow the plural index, including adjectives and the verb.** The verb is the trap: with index `[2]` it goes to the **3rd person singular neuter**.
+
+```po
+msgid "Stripe account disconnected. %{count} pending booking cancelled."
+msgid_plural "Stripe account disconnected. %{count} pending bookings cancelled."
+msgstr[0] "Účet Stripe byl odpojen. %{count} čekající rezervace byla zrušena."
+msgstr[1] "Účet Stripe byl odpojen. %{count} čekající rezervace byly zrušeny."
+msgstr[2] "Účet Stripe byl odpojen. %{count} čekajících rezervací bylo zrušeno."
+```
+
+Note all three axes moving together: the adjective (`čekající` → `čekajících`), the noun (`rezervace` → `rezervací`), and the verb (`byla zrušena` → `byly zrušeny` → `bylo zrušeno`).
+
+**`%{profession_in_text}` (the /for pages) is a nominative plural** written for mid-sentence use (`účetní`, `IT konzultanti`, `instruktoři pilates`). Czech `pro` would need the accusative, which differs for animate nouns (`architekty`), so the msgstrs are built around the nominative instead of `pro %{…}`: `Vše, co %{profession_in_text} potřebují.`, `Výchozí nastavení, se kterým mohou %{profession_in_text} hned začít`, `Jak %{profession_in_text} chrání soukromí a dodržují předpisy`. Keep any new string on the same footing.
+
+**Names in placeholders are never inflected.** `%{name}` arrives in the nominative and stays there. Never append a Czech ending (`s %{name}em`), and never place the placeholder directly after a preposition that governs a case. Three sanctioned patterns:
+
+1. **Verb-first nominative**: the cleanest. `Hosted by %{name}` → **`Pořádá %{name}`**. `%{name} has scheduled a meeting with you.` → **`%{name} s vámi naplánoval schůzku.`** Careful: that participle agrees with the *name*; prefer **`Máte novou schůzku od: %{name}`** or restructure.
+2. **A declinable noun absorbs the case**: the primary escape hatch. `Meeting with %{name}` → **`Schůzka s uživatelem %{name}`**; `Refund %{attendee} for %{meeting_type}.` → **`Vrátit platbu účastníkovi %{attendee} za typ schůzky %{meeting_type}.`** The Czech noun carries the ending; the placeholder stays untouched.
+3. **A colon or dash frame** where brevity matters: **`Hostitel: %{name}`**, **`Schůzka – %{name}`**.
+
+**English possessives must be restructured, not calqued.** A msgid like `"%{name}'s booking"` has no Czech equivalent: the possessive suffix `-ův/-ova/-ovo` would have to agree with the gender of the possessor *and* of the possessed noun, and would have to inflect the name itself. Write **`rezervace uživatele %{name}`** or **`rezervace – %{name}`** instead.
+
+**Prepositions inside pre-formatted fragments.** `Bookings available up to %{advance}` interpolates a whole phrase (`90 days in advance`). Translate the fragment so it stands alone in the nominative (`90 dní dopředu`) and frame the host string without a preposition: **`Rezervace až %{advance}`**.
+
+---
+
+## 9. TONE BY REGISTER
+
+- **Marketing**: warm, direct, confident. Not stiff corporate Czech, and not calqued English. Rephrase idioms rather than translating them word for word; `stop the back-and-forth and start booking` becomes a Czech sentence, not a Czech-shaped English one. Keep `vy`, but let the sentences breathe. Headlines should land as headlines.
+- **Dashboard / admin UI**: terse, functional. Buttons are infinitives, toggle states are neuter participles (`Zapnuto` / `Vypnuto`), system feedback is clean declarative: `Nastavení se nepodařilo aktualizovat.` No filler, no exclamation marks except on genuine success.
+- **Transactional e-mail**: polite, clear, human. Greeting **`Dobrý den, %{name},`**, never `Ahoj`, which is the `ty` register and clashes with everything else. Sign-off `Best,` → **`S pozdravem`**, standing alone on its line with no comma. Apologies stay courteous and in the present tense, which is gender-free: `Omlouvám se za případné komplikace.` Much of `emails.pot` is written in the host's first-person voice; keep it first person, and avoid past-tense first-person forms, which would force a gender on the host.
+- **Booking flow (public)**: friendly, encouraging, and free of product jargon. The guest is not an operator: `Please select a date to see available times` → **`Vyberte prosím datum, abyste viděli volné termíny.`** Success is upbeat but not shouty: `You're All Set!` → **`Máte hotovo!`**
+
+---
+
+## 10. ONE-LINE SUMMARY
+
+Formal lowercase **vy**; buttons take the **infinitive**, prompts the 2nd-person-plural imperative; restructure away from gendered participles. **schůzka** (meeting and appointment) · **rezervace** (booking) · **termín** (slot) · **událost** (calendar event) · **typ schůzky** / **Typy schůzek** · **hostitel** (host) vs **host** (guest) vs **organizátor** · **časová rezerva** (buffer) · **časové pásmo** · **nástěnka** (dashboard) · **motiv** (theme) · **poskytovatel** · **předplatné** / **tarif** · **vlastní** (custom). Three plural forms, `[2]` covering **zero** and 5+. Keep **Tymeslot** (uninflected, fronted by *aplikace* / *služba* after a case-governing preposition), **Google Calendar**, brand names, env vars and `%{…}` verbatim. **období pro rezervace** (booking window) · **zálohování dat** (backups) vs **záloha** (deposit) · **bezplatný tarif** in prose, **Zdarma** only as the label. Use `„…“`, `–` for ranges and separators (never `—`), `…`, `15. 3. 2026`, `14:30`, `1 234,56`, `1 200 Kč`, sentence-case headings, and a non-breaking space after every single-letter preposition.

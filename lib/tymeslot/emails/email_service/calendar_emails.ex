@@ -1,0 +1,146 @@
+defmodule Tymeslot.Emails.EmailService.CalendarEmails do
+  @moduledoc "Calendar-related emails: sync errors, external booking changes, invitations, and reschedule requests, answered or lapsed."
+
+  require Logger
+
+  alias Tymeslot.Emails.Delivery
+  alias Tymeslot.Emails.HostClock
+
+  alias Tymeslot.Emails.Templates.{
+    CalendarInvitation,
+    CalendarSyncError,
+    EventUpdateNotification,
+    ExternalBookingChange,
+    RescheduleRequest,
+    RescheduleRequestLapsed,
+    RescheduleRequestUnanswered
+  }
+
+  @doc """
+  Sends a calendar sync error notification to the calendar owner.
+
+  Sent from the email job `Tymeslot.Meetings.CalendarEventSync` schedules
+  when a booking's calendar event cannot be written: at once when the
+  calendar declines the create (`:refused`, which no retry changes), and
+  otherwise once the create, or an update that cannot be applied, has spent
+  its last attempt, including a create given up on after waiting out an
+  unreachable calendar. An unauthorised write sends the integration's
+  reconnection notice instead. The operator is alerted when the job is
+  scheduled, not here, so a retried send does not alert again.
+  """
+  @spec send_calendar_sync_error(map(), any()) :: {:ok, any()} | {:error, any()}
+  def send_calendar_sync_error(meeting, error_reason) do
+    Logger.info("Sending calendar sync error notification", meeting_id: meeting.id)
+
+    meeting
+    |> CalendarSyncError.render(error_reason)
+    |> Delivery.deliver()
+  end
+
+  @doc """
+  Notifies an organizer that one of their meetings was changed in their external calendar.
+
+  `discrepancy` is either `:deleted` (the event was removed from the external calendar)
+  or `:modified` (the event was rescheduled in the external calendar).
+  """
+  @spec send_external_booking_change(map(), String.t(), ExternalBookingChange.discrepancy()) ::
+          {:ok, any()} | {:error, any()}
+  def send_external_booking_change(meeting, organizer_email, discrepancy) do
+    Logger.info("Sending external booking change notification",
+      meeting_id: meeting.id,
+      organizer_email: organizer_email,
+      discrepancy: discrepancy
+    )
+
+    owner_timezone = HostClock.timezone(meeting)
+
+    result =
+      Delivery.deliver(
+        ExternalBookingChange.render(meeting, organizer_email, discrepancy, owner_timezone)
+      )
+
+    Logger.info("External booking change notification sent",
+      sent: match?({:ok, _}, result),
+      discrepancy: discrepancy
+    )
+
+    result
+  end
+
+  @doc """
+  Tells an organiser that a meeting now ends where they moved its end in their
+  own calendar, and who was emailed the new end. `notice` carries the end it
+  had before (`:previous_end_time`), the names of the attendees reached
+  (`:attendees`) and how many guests were (`:guests`).
+  """
+  @spec send_end_change_to_organizer(map(), String.t(), ExternalBookingChange.end_notice()) ::
+          {:ok, any()} | {:error, any()}
+  def send_end_change_to_organizer(meeting, organizer_email, notice) do
+    Logger.info("Sending external end change notice", meeting_id: meeting.id)
+
+    meeting
+    |> ExternalBookingChange.render_end_followed(
+      organizer_email,
+      notice,
+      HostClock.timezone(meeting)
+    )
+    |> Delivery.deliver()
+  end
+
+  @doc """
+  Sends a calendar invitation email to an attendee for a dashboard-created event.
+  """
+  @spec send_calendar_invitation(String.t(), map()) :: {:ok, any()} | {:error, any()}
+  def send_calendar_invitation(attendee_email, invitation_details) do
+    Logger.info("Sending calendar invitation")
+
+    attendee_email
+    |> CalendarInvitation.render(invitation_details)
+    |> Delivery.deliver()
+  end
+
+  @doc """
+  Sends an event update notification to an attendee with a change summary and updated .ics.
+  """
+  @spec send_event_update_notification(String.t(), map()) :: {:ok, any()} | {:error, any()}
+  def send_event_update_notification(attendee_email, update_details) do
+    Logger.info("Sending event update notification")
+
+    attendee_email
+    |> EventUpdateNotification.render(update_details)
+    |> Delivery.deliver()
+  end
+
+  @doc """
+  Sends a reschedule request email.
+  """
+  @spec send_reschedule_request(map()) :: {:ok, any()} | {:error, any()}
+  def send_reschedule_request(meeting) do
+    Logger.info("Sending reschedule request", meeting_id: meeting.id)
+
+    email = RescheduleRequest.render(meeting)
+    Delivery.deliver(email)
+  end
+
+  @doc """
+  Tells the host the attendee never answered their reschedule request, so the
+  meeting has expired. `locale` is the host's.
+  """
+  @spec send_reschedule_request_unanswered(map(), String.t()) :: {:ok, any()} | {:error, any()}
+  def send_reschedule_request_unanswered(meeting, locale) do
+    meeting
+    |> RescheduleRequestUnanswered.render(locale)
+    |> Delivery.deliver()
+  end
+
+  @doc """
+  Tells the attendee the host's request to pick a new time has lapsed, with
+  the booking page to book again from.
+  """
+  @spec send_reschedule_request_lapsed(map()) :: {:ok, any()} | {:error, any()}
+  def send_reschedule_request_lapsed(meeting) do
+    meeting
+    |> RescheduleRequestLapsed.render()
+    |> Delivery.deliver()
+  end
+end

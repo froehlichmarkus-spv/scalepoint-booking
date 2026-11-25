@@ -1,0 +1,224 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{current} / %{total}"
+msgstr "%{current} / %{total}"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Account settings and log out are here in the top-right."
+msgstr "Le impostazioni dell'account e il logout si trovano qui in alto a destra."
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Back"
+msgstr "Indietro"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Confirmation"
+msgstr "Conferma"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Date & Time"
+msgstr "Data e orario"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Details"
+msgstr "Dettagli"
+
+#: lib/tymeslot_web/components/step_navigation.ex
+#, elixir-autogen, elixir-format
+msgid "Duration"
+msgstr "Durata"
+
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Finish"
+msgstr "Fine"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#, elixir-autogen, elixir-format
+msgid "Got it"
+msgstr "Capito"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#, elixir-autogen, elixir-format
+msgid "New feature"
+msgstr "Nuova funzione"
+
+#: lib/tymeslot_web/components/announcement_modal_component.ex
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Next"
+msgstr "Avanti"
+
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Skip"
+msgstr "Salta"
+
+#: lib/tymeslot_web/components/tour_overlay.ex
+#, elixir-autogen, elixir-format
+msgid "Step %{n} of %{total}"
+msgstr "Passaggio %{n} di %{total}"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Take 30 seconds to learn where everything lives."
+msgstr "Prenditi 30 secondi per scoprire dove si trova ogni cosa."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to your the scheduler dashboard"
+msgstr "Benvenuto nella tua dashboard di the scheduler"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "You're set"
+msgstr "Tutto pronto"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Your account"
+msgstr "Il tuo account"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Read the docs"
+msgstr "Leggi la documentazione"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Go create your first event type - and let people book you."
+msgstr "Crea il tuo primo tipo di evento e fatti prenotare."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Everything lives here"
+msgstr "Qui c'è tutto"
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
+msgstr ""
+"Il tuo calendario è la pagina iniziale. Riunioni, disponibilità, "
+"integrazioni e il tuo profilo sono a un clic di distanza."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Open it to connect a calendar, customise your booking page, and share your link. It disappears once every step is done."
+msgstr ""
+"Aprila per collegare un calendario, personalizzare la tua pagina di "
+"prenotazione e condividere il tuo link. Scompare quando tutti i passaggi "
+"sono completati."
+
+#: lib/tymeslot/onboarding/dashboard_tour.ex
+#, elixir-autogen, elixir-format
+msgid "Your setup checklist"
+msgstr "La tua lista di configurazione"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Add a holiday on the availability page and those days stop being offered, across every schedule and every meeting type, without a blocking event in any calendar you have connected. Give the first and last day a time when you leave mid-afternoon or come back mid-morning. Bookings already in your diary keep their times, and you are shown which ones before you save. Nobody booking you sees why the days are closed."
+msgstr "Aggiungi un'assenza dalla pagina Disponibilità e quei giorni smettono di essere offerti, su ogni programma e ogni tipo di riunione, senza un evento bloccante in nessun calendario collegato. Assegna un orario al primo e all'ultimo giorno se parti a metà pomeriggio o torni a metà mattina. Le prenotazioni già fissate mantengono il loro orario e ti vengono mostrate prima di salvare. Chi ti prenota non vede perché quei giorni sono chiusi."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Close the days you are away"
+msgstr "Chiudi i giorni in cui sei assente"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Meet on Jitsi, kMeet or Nextcloud Talk"
+msgstr "Incontri su Jitsi, kMeet o Nextcloud Talk"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point the scheduler at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
+msgstr "Tre nuovi provider video si aggiungono a Zoom, Google Meet, Teams e MiroTalk nel selettore delle integrazioni. Indica a the scheduler il tuo Jitsi o Nextcloud e ogni prenotazione ottiene una stanza tutta sua: una conversazione Talk tiene chiusa la sala d'attesa fino all'inizio della riunione, si sposta quando riprogrammi e viene eliminata quando annulli. kMeet non richiede alcuna configurazione."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "A meeting type can now offer several places to meet: in person at an address, a video call or a phone call. The person booking picks the one that suits them, and can change it when they reschedule. Offer more than one video service and they choose which one the meeting runs on."
+msgstr "Un tipo di riunione ora può offrire più luoghi d'incontro: di persona a un indirizzo, una videochiamata o una telefonata. Chi prenota sceglie quello più adatto e può cambiarlo quando riprogramma. Offri più di un servizio video e sceglie anche su quale si svolge la riunione."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Let people choose where you meet"
+msgstr "Lascia scegliere dove incontrarvi"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Host webinars, workshops and classes"
+msgstr "Organizza webinar, workshop e corsi"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Turn any meeting type into a group session. Set how many people can join and each slot stays open until it's full, so one booking page can run your webinar, workshop, class or office hours. Everyone books themselves in, gets their own confirmation and calendar invite, and can cancel or reschedule without asking you."
+msgstr "Trasforma qualsiasi tipo di riunione in una sessione di gruppo. Imposta quante persone possono partecipare e ogni orario resta aperto finché non è pieno, così una sola pagina di prenotazione gestisce il tuo webinar, workshop, corso o ricevimento. Ognuno si prenota da sé, riceve la sua conferma e l'invito nel calendario, e può annullare o spostare senza chiedere a te."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Two new booking page themes: Folio and Paper"
+msgstr "Due nuovi temi per la pagina di prenotazione: Folio e Paper"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Folio introduces you before anyone picks a time: a cover image, your portrait, headline and bio, in serif type on one continuous page. Paper does the opposite: one calm card in the colour palette you choose, light or dark, and the time and details on a single screen. Open the Theme page to preview either on your own booking page before you switch."
+msgstr "Folio ti presenta prima ancora che qualcuno scelga un orario: immagine di copertina, il tuo ritratto, titolo e biografia, in caratteri con grazie su un'unica pagina continua. Paper fa l'opposto: una scheda sobria nella tavolozza di colori che preferisci, chiara o scura, con orario e dettagli in una sola schermata. Apri la pagina Tema per vedere l'anteprima di entrambi sulla tua pagina di prenotazione prima di cambiare."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Polls that invite, confirm and keep you posted"
+msgstr "Sondaggi che invitano, confermano e ti tengono al corrente"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "A poll can be open, so anyone with the link asks for a voting link by email, or invite-only. You can be emailed as votes arrive. After sending you can change the deadline, add times, resend an invitation and remove people; reminders go to invited people who haven't voted. The meeting a poll confirms is yours: everyone on it is a guest, and only you can move or cancel it."
+msgstr "Un sondaggio può essere aperto, e allora chiunque abbia il link richiede un link di voto via email, oppure solo su invito. Puoi ricevere un'email a ogni nuovo voto. Dopo l'invio puoi cambiare la scadenza, aggiungere orari, reinviare un invito e rimuovere persone; i promemoria vanno agli invitati che non hanno ancora votato. La riunione che un sondaggio conferma è tua: tutti i partecipanti sono ospiti e solo tu puoi spostarla o annullarla."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler now speaks Spanish"
+msgstr "the scheduler ora parla spagnolo"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Your dashboard, booking pages and every email are now available in Spanish. the scheduler follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
+msgstr "La tua dashboard, le pagine di prenotazione e tutte le email sono ora disponibili in spagnolo. the scheduler segue la lingua del tuo browser, oppure puoi sceglierne una tu nelle Impostazioni dell'account. Anche chi prenota con te vede le pagine di prenotazione e le conferme nella propria lingua."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Book a whole course of sessions at once"
+msgstr "Prenota un intero ciclo di sessioni in una volta"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Clients can now book a series in one go: the same time every week or month, or a set of sessions at times they choose. Each session is a normal booking with its own reminders and links, and a series can be paid upfront. Turn it on for each meeting type, under Series."
+msgstr "I clienti possono ora prenotare una serie in un'unica volta: alla stessa ora ogni settimana o ogni mese, oppure più sessioni negli orari che scelgono loro. Ogni sessione è una normale prenotazione, con i suoi promemoria e i suoi link, e la serie può essere pagata in anticipo. Attivala per ogni tipo di riunione, in Serie."
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "Your dashboard calendar, redesigned"
+msgstr "Il calendario della dashboard, ridisegnato"
+
+#: lib/tymeslot/announcements/catalog.ex
+#, elixir-autogen, elixir-format
+msgid "We've redesigned the calendar from the ground up: a fresh look, a clearer layout with more room for your week, and quicker ways to plan, create and change your meetings. Have a look around, or read the docs for a tour of everything that's new."
+msgstr "Abbiamo ridisegnato il calendario da zero: un aspetto nuovo, un layout più chiaro con più spazio per la tua settimana e modi più rapidi per pianificare, creare e modificare le tue riunioni. Dai un'occhiata o leggi la documentazione per scoprire tutte le novità."

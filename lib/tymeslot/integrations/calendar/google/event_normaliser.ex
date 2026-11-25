@@ -1,0 +1,222 @@
+defmodule Tymeslot.Integrations.Calendar.Google.EventNormaliser do
+  @moduledoc """
+  Converts raw Google Calendar API event payloads into normalised `CalendarEvent` structs.
+
+  Handles field mapping, datetime parsing, visibility/transparency/status inference,
+  attendee normalisation, recurrence rules, and the scheduler-origin fingerprint detection.
+  """
+
+  require Logger
+
+  alias Tymeslot.Integrations.Calendar.Attendee
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Integrations.Calendar.EventColour
+  alias Tymeslot.Integrations.Calendar.InvalidEventReport
+  alias Tymeslot.Integrations.Calendar.Recurrence.RRule
+  alias Tymeslot.Timezones
+
+  @spec normalise_events(list(map()), map()) :: {:ok, list(CalendarEvent.t())}
+  def normalise_events(raw_events, context) do
+    events =
+      raw_events
+      |> Enum.reduce([], fn raw, acc ->
+        case build_calendar_event(raw, context) do
+          {:ok, event} ->
+            [event | acc]
+
+          {:error, reason} ->
+            Logger.warning("Skipping invalid Google calendar event",
+              reason: reason,
+              event_id: raw["id"],
+              calendar_integration_id: context.calendar_integration_id
+            )
+
+            InvalidEventReport.record(:google, context, raw["id"], reason)
+
+            acc
+        end
+      end)
+      |> Enum.reverse()
+
+    {:ok, events}
+  end
+
+  @doc """
+  The uid a Google event is cached under.
+
+  Sync asks Google for single events, so a recurring series arrives as its
+  instances, and every instance carries the series' `iCalUID`. The cache is
+  keyed on the uid, so an instance is cached as `<iCalUID>_<original start>`:
+  the UTC stamp `YYYYMMDDTHHMMSSZ`, or `YYYYMMDD` for an all-day series, the
+  same shape Google puts on the instance id. An instance without an original
+  start falls back to its own id, which is unique too. Anything else keeps its
+  `iCalUID`.
+  """
+  @spec cache_uid(map()) :: String.t() | nil
+  def cache_uid(%{"recurringEventId" => series_id} = raw) when is_binary(series_id) do
+    case original_start_stamp(raw["originalStartTime"]) do
+      nil -> raw["id"]
+      stamp -> "#{raw["iCalUID"] || series_id}_#{stamp}"
+    end
+  end
+
+  def cache_uid(raw), do: raw["iCalUID"] || raw["id"]
+
+  # `DateTime.from_iso8601/1` already returns the instant in UTC.
+  defp original_start_stamp(%{"dateTime" => value}) when is_binary(value) do
+    case DateTime.from_iso8601(value) do
+      {:ok, datetime, _offset} -> Calendar.strftime(datetime, "%Y%m%dT%H%M%SZ")
+      {:error, _reason} -> nil
+    end
+  end
+
+  defp original_start_stamp(%{"date" => value}) when is_binary(value) do
+    case Date.from_iso8601(value) do
+      {:ok, date} -> Calendar.strftime(date, "%Y%m%d")
+      {:error, _reason} -> nil
+    end
+  end
+
+  defp original_start_stamp(_other), do: nil
+
+  defp build_calendar_event(raw, context) do
+    attrs =
+      %{
+        uid: cache_uid(raw),
+        provider: :google,
+        calendar_integration_id: context.calendar_integration_id,
+        provider_calendar_id: context.provider_calendar_id,
+        provider_event_id: raw["id"],
+        recurring_event_id: raw["recurringEventId"],
+        synced_at: context.synced_at,
+        summary: raw["summary"],
+        description: raw["description"],
+        location: raw["location"],
+        visibility: map_visibility(raw["visibility"]),
+        transparency: map_transparency(raw["transparency"]),
+        status: raw |> effective_status() |> map_status(),
+        organiser: map_organiser(raw["organizer"]),
+        attendees: map_attendees(raw["attendees"]),
+        reminders: map_reminders(raw["reminders"]),
+        colour: EventColour.from_google_color_id(raw["colorId"]),
+        etag: raw["etag"],
+        recurrence_rule: RRule.from_lines(raw["recurrence"]),
+        provider_metadata: Map.put(raw, "recurringEventId", raw["recurringEventId"]),
+        created_by_tymeslot:
+          get_in(raw, ["extendedProperties", "private", "createdBy"]) == "tymeslot"
+      }
+      |> Map.merge(parse_timing(raw))
+      |> maybe_put_timezone(raw)
+
+    CalendarEvent.new(attrs)
+  end
+
+  defp map_visibility("public"), do: :public
+  defp map_visibility("private"), do: :private
+  defp map_visibility("confidential"), do: :confidential
+  defp map_visibility(_other), do: nil
+
+  defp map_transparency("transparent"), do: :transparent
+  defp map_transparency(_other), do: :opaque
+
+  @doc """
+  The event's status as it bears on the connected account: Google's own
+  `status`, except that an invitation the account itself declined (its
+  attendee entry carries `"self" => true`) is `"declined"`, which does not
+  block time. Google reports a declined invitation as `confirmed`, since the
+  event itself still goes ahead for everyone else. Shared by the cache
+  (`normalise_events/2`) and the live availability read (`Google.Provider`).
+  """
+  @spec effective_status(map()) :: String.t() | nil
+  def effective_status(%{"status" => "cancelled"}), do: "cancelled"
+
+  def effective_status(raw) do
+    if self_declined?(raw["attendees"]), do: "declined", else: raw["status"]
+  end
+
+  defp self_declined?(attendees) when is_list(attendees) do
+    Enum.any?(attendees, &match?(%{"self" => true, "responseStatus" => "declined"}, &1))
+  end
+
+  defp self_declined?(_attendees), do: false
+
+  defp map_status("confirmed"), do: :confirmed
+  defp map_status("tentative"), do: :tentative
+  defp map_status("cancelled"), do: :cancelled
+  defp map_status("declined"), do: :declined
+  defp map_status(_other), do: :confirmed
+
+  defp map_organiser(nil), do: nil
+
+  defp map_organiser(organiser) do
+    %{email: organiser["email"], display_name: organiser["displayName"]}
+  end
+
+  defp map_attendees(nil), do: []
+
+  defp map_attendees(attendees) when is_list(attendees) do
+    Enum.map(attendees, fn a ->
+      Attendee.new(
+        email: a["email"],
+        display_name: a["displayName"],
+        response_status: map_response_status(a["responseStatus"]),
+        optional: a["optional"] || false
+      )
+    end)
+  end
+
+  defp map_response_status("accepted"), do: :accepted
+  defp map_response_status("declined"), do: :declined
+  defp map_response_status("tentative"), do: :tentative
+  defp map_response_status("needsAction"), do: :needs_action
+  defp map_response_status(_other), do: :needs_action
+
+  defp map_reminders(%{"overrides" => overrides}) when is_list(overrides) do
+    Enum.map(overrides, fn r ->
+      %{method: map_reminder_method(r["method"]), minutes_before: r["minutes"]}
+    end)
+  end
+
+  defp map_reminders(_other), do: []
+
+  defp map_reminder_method("email"), do: :email
+  defp map_reminder_method("popup"), do: :popup
+  defp map_reminder_method("sms"), do: :sms
+  defp map_reminder_method(_other), do: :popup
+
+  defp parse_timing(%{"start" => %{"date" => start_date}, "end" => %{"date" => end_date}}) do
+    with {:ok, sd} <- Date.from_iso8601(start_date),
+         {:ok, ed} <- Date.from_iso8601(end_date) do
+      %{all_day: true, start_date: sd, end_date: ed}
+    else
+      _error -> %{all_day: true, start_date: nil, end_date: nil}
+    end
+  end
+
+  defp parse_timing(%{
+         "start" => %{"dateTime" => start_dt},
+         "end" => %{"dateTime" => end_dt}
+       }) do
+    with {:ok, s, _offset} <- DateTime.from_iso8601(start_dt),
+         {:ok, e, _offset} <- DateTime.from_iso8601(end_dt) do
+      %{
+        all_day: false,
+        start_at: DateTime.shift_zone!(s, "Etc/UTC"),
+        end_at: DateTime.shift_zone!(e, "Etc/UTC")
+      }
+    else
+      _error -> %{all_day: false, start_at: nil, end_at: nil}
+    end
+  end
+
+  defp parse_timing(_other), do: %{all_day: false, start_at: nil, end_at: nil}
+
+  defp maybe_put_timezone(attrs, %{"start" => %{"timeZone" => tz}}) do
+    case Timezones.sanitize(tz) do
+      nil -> attrs
+      clean -> Map.put(attrs, :timezone, clean)
+    end
+  end
+
+  defp maybe_put_timezone(attrs, _raw), do: attrs
+end

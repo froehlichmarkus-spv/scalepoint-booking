@@ -1,0 +1,131 @@
+defmodule TymeslotWeb.Themes.Paper.OnboardingPreview do
+  @moduledoc """
+  Paper in the onboarding wizard, the shape of its first screen: one light
+  card in two panes, the organiser's introduction on the left (the shared
+  header, left-aligned) and a rule, then on the right the chosen day marked
+  in the palette's primary colour as Paper marks a choice, that day's times
+  with its busy blocks between them, and one solid Book button in the
+  palette's primary colour. On a phone the panes stack, as Paper's page
+  does on a narrow card: the introduction above its rule, the day and its
+  times across the full width below, the times in columns as Paper's own
+  slot grid lays them out.
+  """
+  use Phoenix.Component
+
+  import TymeslotWeb.OnboardingLive.PreviewParts,
+    only: [book_button: 1, card_style: 1, color: 3, tint: 2]
+
+  alias TymeslotWeb.OnboardingLive.PreviewWeek
+
+  @doc "Draws the `:thumbnail` or `:card` variant; see `Behaviour.onboarding_preview/1`."
+  @spec render(map()) :: Phoenix.LiveView.Rendered.t()
+  def render(%{variant: :thumbnail} = assigns), do: thumbnail(assigns)
+  def render(%{variant: :card} = assigns), do: card(assigns)
+
+  attr :primary, :string, required: true
+
+  @spec thumbnail(map()) :: Phoenix.LiveView.Rendered.t()
+  def thumbnail(assigns) do
+    ~H"""
+    <div
+      class="aspect-[4/3] w-full rounded-token-lg bg-tymeslot-100 p-2 flex items-center justify-center overflow-hidden"
+      data-preview="paper"
+    >
+      <div class="w-full h-full rounded-token-md bg-white border border-tymeslot-200 p-1.5 grid grid-cols-[2fr_3fr]">
+        <div class="flex flex-col items-start gap-1 pr-1.5 border-r border-tymeslot-200">
+          <span class="w-3 h-3 rounded-full bg-tymeslot-200" />
+          <span class="h-1.5 w-full rounded-full bg-tymeslot-300" />
+          <span class="h-1 w-2/3 rounded-full bg-tymeslot-200" />
+        </div>
+        <div class="pl-1.5 flex flex-col gap-1">
+          <div class="flex flex-col rounded-token-sm border border-tymeslot-200 overflow-hidden">
+            <span
+              :for={row <- 0..2}
+              class={["h-2.5", row > 0 && "border-t border-tymeslot-200"]}
+              style={
+                if(row == 0,
+                  do: "border-left: 2px solid #{@primary}; background: #{tint(@primary, 8)};",
+                  else: nil
+                )
+              }
+              data-preview-part="type"
+            />
+          </div>
+          <span class="self-end h-2 w-1/3 rounded-token-sm" style={"background: #{@primary};"} />
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  attr :colors, :map, required: true
+  attr :view, :map, required: true, doc: "the week, from `PreviewWeek.view/3`"
+  attr :highlight, :list, default: []
+  slot :header, required: true
+
+  @spec card(map()) :: Phoenix.LiveView.Rendered.t()
+  def card(assigns) do
+    assigns =
+      assign(assigns,
+        primary: color(assigns.colors, :primary, "#07819e"),
+        edge: edge(assigns.colors)
+      )
+
+    ~H"""
+    <div
+      class="rounded-token-xl p-4 border grid grid-cols-[minmax(0,5fr)_minmax(0,6fr)] max-sm:grid-cols-1"
+      style={card_style(@colors) <> "border-color: #{@edge};"}
+      data-preview="paper"
+    >
+      <div
+        class="min-w-0 pr-3 border-r max-sm:pr-0 max-sm:border-r-0 flex flex-col items-start gap-2 text-left [&_p]:text-left"
+        style={"border-color: #{@edge};"}
+        data-preview-part="intro"
+      >
+        {render_slot(@header)}
+      </div>
+      <PreviewWeek.calendar_area
+        colors={@colors}
+        highlight={@highlight}
+        class="min-w-0 pl-3 max-sm:pl-0 max-sm:pt-1 flex flex-col gap-2"
+        data-preview-part="types"
+      >
+        <%!-- The chosen day, marked as Paper marks a chosen choice --%>
+        <div
+          class="flex flex-col gap-0.5 px-2 py-1.5 rounded-token-md border text-left"
+          style={"border-color: #{@edge};border-left: 2px solid #{@primary};background: #{tint(@primary, 6)};"}
+          data-preview-part="day"
+        >
+          <span class="text-token-xs font-semibold">{@view.heading}</span>
+          <%!-- Kept in every state, so the times below never move --%>
+          <span
+            class="block h-4 text-token-2xs"
+            style={"color: #{color(@colors, :text_secondary, "#475569")};"}
+          >
+            {@view.day_note}
+          </span>
+        </div>
+        <PreviewWeek.times
+          view={@view}
+          colors={@colors}
+          layout={:rows}
+          limit={5}
+          phone_limit={8}
+          class="flex flex-col gap-1.5 max-sm:grid max-sm:grid-cols-2"
+          highlight={@highlight}
+          meeting_variant={:plain}
+        />
+        <.book_button
+          class="w-full py-2 rounded-token-lg font-semibold text-white text-token-sm"
+          style={"background: #{@primary};"}
+        />
+      </PreviewWeek.calendar_area>
+    </div>
+    """
+  end
+
+  # The card's edge, the rule and the list's lines: the text colour at 12%,
+  # as Paper's own lines are, so they follow a dark card instead of staying
+  # a light grey.
+  defp edge(colors), do: tint(color(colors, :text, "#111111"), 12)
+end

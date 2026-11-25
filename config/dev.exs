@@ -1,0 +1,171 @@
+import Config
+
+# Configure environment
+config :tymeslot, environment: :dev
+
+# Enable the pseudo-localisation locale in dev. Visit any page with
+# `?locale=pseudo` to render every translated string as an accented, bracketed
+# look-alike — un-wrapped literals show up plain. Never enabled outside dev.
+config :tymeslot, :pseudo_locale_enabled, true
+
+# Configure upload directory for development
+config :tymeslot, :upload_directory, Path.expand("../uploads", __DIR__)
+
+# Generated URLs (email links, OAuth redirect URIs) come from the endpoint's
+# :url config, so a dev server reached through a reverse proxy must know the
+# domain the browser actually used. These read the same variables runtime.exs
+# reads in production; unset, they give http://localhost:PORT.
+port = String.to_integer(System.get_env("PORT") || "4000")
+host = System.get_env("PHX_HOST") || "localhost"
+url_scheme = System.get_env("URL_SCHEME") || "http"
+
+# As in runtime.exs, a TLS scheme means the proxy terminates on the standard
+# port, so generated links carry no port suffix. Direct access instead needs the
+# listen port to appear in the URL, which is the default path here.
+url_port = if url_scheme == "https", do: 443, else: port
+
+# One Tailwind watcher per booking-page theme (see theme_stylesheets.exs).
+{theme_stylesheets, _binding} = Code.eval_file("theme_stylesheets.exs", __DIR__)
+
+config :tymeslot, TymeslotWeb.Endpoint,
+  http: [ip: {127, 0, 0, 1}, port: port],
+  url: [host: host, port: url_port, scheme: url_scheme],
+  # The proxied origin has to be allowed too, or the LiveView socket is rejected
+  # under the very domain PHX_HOST just enabled. Deduplicated so the default case
+  # yields just the two localhost entries.
+  check_origin:
+    Enum.uniq([
+      "#{url_scheme}://#{host}:#{url_port}",
+      "http://localhost:#{port}",
+      "http://127.0.0.1:#{port}"
+    ]),
+  code_reloader: true,
+  debug_errors: true,
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") ||
+      "1H+dLz1eQCL1mH8vjh5SJUR2Z5QULWP9bH3j8+BwnBSfS9J74akhHrGFpjezqJqd",
+  live_view: [signing_salt: "dev_liveview_signing_salt"],
+  session_signing_salt: "dev_session_signing_salt",
+  # One watcher per esbuild and tailwind profile: anything built only by
+  # `mix assets.build` is stale in the browser the moment its source is edited,
+  # and missing outright in a checkout that has never run the build. The route
+  # bundles are the sharp edge, since every dashboard, auth and booking page
+  # loads one and it is what connects the LiveSocket.
+  #
+  # Watcher lists are deep-merged by key across the config chain, so the SaaS
+  # overlay's dev.exs adds to this list rather than replacing it. The corollary
+  # is that every key here must stay distinct from the SaaS ones
+  # (`esbuild_saas`, `tailwind_saas`, `tailwind_marketing`): a collision
+  # silently drops one side's watcher. The theme watchers are `tailwind_<key>`,
+  # one per theme directory, so a theme key must not be `tymeslot` (Core's own
+  # Tailwind profile), `saas` or `marketing`.
+  #
+  # `--sourcemap=inline` belongs only here. `embed.js` and the iframe embed are
+  # served to third-party sites in production, so their deploy builds stay bare.
+  watchers:
+    [
+      esbuild: {Esbuild, :install_and_run, [:tymeslot, ~w(--sourcemap=inline --watch)]},
+      esbuild_bundles: {Esbuild, :install_and_run, [:bundles, ~w(--sourcemap=inline --watch)]},
+      esbuild_embed: {Esbuild, :install_and_run, [:embed, ~w(--sourcemap=inline --watch)]},
+      esbuild_iframe_embed:
+        {Esbuild, :install_and_run, [:iframe_embed, ~w(--sourcemap=inline --watch)]},
+      tailwind: {Tailwind, :install_and_run, [:tymeslot, ~w(--watch)]}
+    ] ++
+      for(
+        key <- theme_stylesheets,
+        do: {:"tailwind_#{key}", {Tailwind, :install_and_run, [String.to_atom(key), ~w(--watch)]}}
+      ),
+  # A project that depends on Core and adds its own patterns has to restate
+  # this list, because a list value replaces rather than merges across config
+  # files. Keep any such copy in step when these patterns change.
+  live_reload: [
+    patterns: [
+      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
+      ~r"priv/gettext/.*(po)$",
+      ~r"lib/tymeslot_web/(controllers|live|components)/.*(ex|heex)$"
+    ]
+  ]
+
+# Data-at-rest encryption key, decoupled from SECRET_KEY_BASE. Dev defaults to the
+# legacy SECRET_KEY_BASE-derived key (like a fresh self-host that has not set the
+# variable); set DATA_ENCRYPTION_KEY (e.g. in env.sh) to exercise the decoupled
+# key. There is deliberately no hardcoded default: a fixed dev key would be
+# silently overridden the moment you set your own, stranding credentials already
+# written under it. Production supplies the key via runtime.exs.
+config :tymeslot, Tymeslot.Security.Encryption,
+  data_encryption_key: System.get_env("DATA_ENCRYPTION_KEY"),
+  data_encryption_keys: System.get_env("DATA_ENCRYPTION_KEYS")
+
+# Enable dev routes for dashboard and mailbox
+config :tymeslot, dev_routes: true
+
+# Show metadata fields in development logs for observability
+config :logger, :console,
+  format: "[$level] $message $metadata\n",
+  metadata: [:request_id, :user_id, :correlation_id, :event, :domain, :reason]
+
+# Set a higher stacktrace during development
+config :phoenix, :stacktrace_depth, 20
+
+# Initialize plugs at runtime for faster development compilation
+config :phoenix, :plug_init_mode, :runtime
+
+config :phoenix_live_view,
+  debug_heex_annotations: true,
+  enable_expensive_runtime_checks: true
+
+# Configure the database. DEV_DB_POOL_SIZE lowers the pool when several dev
+# servers share one Postgres and would together exceed its max_connections.
+config :tymeslot, Tymeslot.Repo,
+  username: "postgres",
+  password: "postgres",
+  hostname: "localhost",
+  database: "tymeslot_dev#{System.get_env("DB_SUFFIX")}",
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: String.to_integer(System.get_env("DEV_DB_POOL_SIZE") || "80")
+
+# Configure Oban for development
+# Queue definitions in config.exs are loaded at runtime by application.ex
+# This allows SaaS to extend Core queues via :oban_additional_queues config
+config :tymeslot, Oban,
+  repo: Tymeslot.Repo,
+  pruner: [max_age: {7, :days}],
+  # Matches production: a shorter window here would exercise a rescue the
+  # deployed system never performs. See `Tymeslot.Infrastructure.ObanRescue`.
+  lifeline: [rescue_after: {6, :hours}],
+  # The crontab itself is `:oban_crontab` in config.exs, shared with
+  # production; `Tymeslot.Infrastructure.ObanCron.extend/1` fills it in at
+  # startup.
+  cron: []
+
+# Enable booking analytics in development so the feature is exercisable locally.
+config :tymeslot, :booking_analytics_enabled, true
+
+# Opt-in dev calendar stub: bypasses real CalDAV/Google/Outlook and computes
+# availability against a controllable, in-memory busy set — handy for booking-UI
+# and scheduling-theme work. Adjust it live from IEx (block dates, add busy
+# periods) via Tymeslot.Dev.Calendar. Left unset, dev uses the real calendar so
+# genuine sync can be exercised.
+#
+#   * DEV_CALENDAR=1       → starts with a realistic recurring weekly pattern.
+#   * DEV_EMPTY_CALENDAR=1 → starts empty (every slot free).
+cond do
+  System.get_env("DEV_CALENDAR") in ~w(1 true) ->
+    config :tymeslot, :calendar_module, Tymeslot.Dev.Calendar
+    config :tymeslot, :dev_calendar_enabled, true
+    config :tymeslot, :dev_calendar_default_pattern, :default
+
+  System.get_env("DEV_EMPTY_CALENDAR") in ~w(1 true) ->
+    config :tymeslot, :calendar_module, Tymeslot.Dev.Calendar
+    config :tymeslot, :dev_calendar_enabled, true
+    config :tymeslot, :dev_calendar_default_pattern, :empty
+
+  true ->
+    :ok
+end
+
+# Compile-time gate for the /dev/* routes in TymeslotWeb.Router. A config flag
+# rather than Mix.env(): when Core is consumed as a path dependency, Mix.env()
+# inside the dep evaluates to the dep's own environment, not the parent's.
+config :tymeslot, dev_routes: true

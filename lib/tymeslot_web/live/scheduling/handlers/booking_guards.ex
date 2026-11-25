@@ -1,0 +1,242 @@
+defmodule TymeslotWeb.Live.Scheduling.Handlers.BookingGuards do
+  @moduledoc """
+  The abuse gates a public booking submission must clear before it reaches the
+  booking domain.
+
+  Booking is unauthenticated and creates records, sends mail and can take
+  payment, so it is the most attractive endpoint in the product to abuse. Five
+  independent defences guard it, each covering a gap the others leave:
+
+    * **Honeypot** — a hidden `website` field no human fills in. Checked before
+      anything else because it is free, and answered with a *fake success* so a
+      bot cannot tell a tripped honeypot from a real booking and adapt.
+    * **Duplicate lock** — a per-session flag stopping a double-clicked form
+      from creating two meetings.
+    * **Per-IP rate limit** — the general flood defence.
+    * **reCAPTCHA** — scripted submissions that pace themselves under the IP
+      limit.
+    * **Per-recipient rate limit** — keyed on the attendee's email, this is the
+      one that survives an attacker rotating source IPs to bomb a single
+      mailbox with confirmation mail. It runs on the *validated* address, so it
+      must come after form validation.
+
+  Both rate limits are skipped for a verified owner preview, which creates
+  nothing to be limited; see `preview_submission?/1` for why the weaker
+  `:theme_preview` claim does not qualify.
+
+  ## Why they are composed here
+
+  `run/3` applies them in one place and in a fixed order. Spread across a
+  caller's `with` chain, a new submission path is one forgotten clause away
+  from being unprotected, and the ordering constraints above are invisible.
+
+  Every failure exits through `release_submission/1`. The duplicate lock is
+  claimed before the later gates run, so a branch that clears only
+  `:submitting` leaves `:submission_processed` set and wedges the form: every
+  retry in that session is refused as "already being processed" until the
+  booker reloads the page.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  import Phoenix.Component, only: [assign: 3]
+
+  alias Tymeslot.Infrastructure.Security.RecaptchaHelpers
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.Security.SecurityLogger
+  alias TymeslotWeb.Helpers.ClientIP
+  alias TymeslotWeb.Live.Scheduling.PreviewMode
+  alias TymeslotWeb.Live.Shared.Flash
+
+  require Logger
+
+  @type socket :: Phoenix.LiveView.Socket.t()
+  @type result :: {:ok, socket()} | {:error, socket()}
+
+  @doc """
+  Runs every gate that applies once the form itself has validated.
+
+  `sanitized_params` supplies the validated attendee address for the
+  per-recipient limit; `raw_params` carries the reCAPTCHA token, which is not
+  part of the booking form spec and so does not survive sanitisation.
+  """
+  @spec run(socket(), map(), map()) :: result()
+  def run(socket, sanitized_params, raw_params) do
+    with {:ok, socket} <- check_duplicate_submission(socket),
+         {:ok, socket} <- check_rate_limit(socket),
+         :ok <- verify_recaptcha(socket, raw_params) do
+      check_recipient_rate_limit(socket, sanitized_params)
+    end
+  end
+
+  @doc """
+  Logs the honeypot hit and returns the socket for a simulated success.
+
+  The caller reports success to the bot. Telling it the truth would let it
+  discover the field and skip it next time. The socket carries what the
+  confirmation step shows a real booker (the submitted name and email, no
+  answers), so the caller can move to that step exactly as a real booking
+  does.
+  """
+  @spec handle_honeypot(socket(), map()) :: socket()
+  def handle_honeypot(socket, params) do
+    SecurityLogger.log_security_event("booking_honeypot_triggered", %{
+      ip_address: ClientIP.get(socket),
+      user_agent: ClientIP.get_user_agent(socket)
+    })
+
+    Logger.info("Honeypot triggered in booking form - simulating success")
+
+    socket
+    |> assign(:submitting, false)
+    |> assign(:name, string_param(params, "name"))
+    |> assign(:email, string_param(params, "email"))
+    |> assign(:custom_fields_snapshot, [])
+    |> assign(:custom_field_answers, %{})
+    |> assign(:guest_emails, socket.assigns[:guest_emails] || [])
+  end
+
+  defp string_param(params, key) do
+    case Map.get(params, key) do
+      value when is_binary(value) -> String.trim(value)
+      _other -> ""
+    end
+  end
+
+  @doc """
+  Ends an in-flight submission attempt.
+
+  Clears the spinner *and* releases the duplicate-submission lock. Both flags
+  must move together; route every non-success exit through here rather than
+  assigning them by hand.
+  """
+  @spec release_submission(socket()) :: socket()
+  def release_submission(socket) do
+    socket
+    |> assign(:submitting, false)
+    |> assign(:submission_processed, false)
+  end
+
+  defp check_duplicate_submission(socket) do
+    if socket.assigns[:submission_processed] do
+      Logger.warning("Duplicate submission attempt detected")
+
+      socket =
+        Flash.put_flash(
+          socket,
+          :warning,
+          dgettext("booking", "Your booking is already being processed. Please wait...")
+        )
+
+      {:error, socket}
+    else
+      socket =
+        socket
+        |> assign(:submission_processed, true)
+        |> assign(:submitting, true)
+
+      {:ok, socket}
+    end
+  end
+
+  # An owner preview persists nothing — no meeting, no mail, no calendar event
+  # — so charging it to the public allowance means an organiser testing their
+  # own page locks real visitors out of booking it.
+  #
+  # Keyed on `:owner_preview`, never `:theme_preview`. Only the former requires
+  # a signed, owner-bound token; the latter is a bare `?preview=true` anyone can
+  # type, and exempting it would hand every attacker a one-parameter bypass of
+  # the limit. An unbacked claim is refused later, but it still costs an
+  # outbound reCAPTCHA verification, so it stays rate-limited.
+  defp preview_submission?(socket), do: PreviewMode.owner_preview?(socket)
+
+  defp check_rate_limit(socket) do
+    if preview_submission?(socket) do
+      {:ok, socket}
+    else
+      enforce_rate_limit(socket)
+    end
+  end
+
+  defp enforce_rate_limit(socket) do
+    client_ip = ClientIP.get(socket)
+
+    case RateLimiter.check(:booking_submit, client_ip) do
+      :ok -> {:ok, socket}
+      {:error, :rate_limited, _message} -> {:error, too_many_attempts(socket)}
+    end
+  end
+
+  defp check_recipient_rate_limit(socket, %{"email" => email})
+       when is_binary(email) and email != "" do
+    if preview_submission?(socket) do
+      {:ok, socket}
+    else
+      enforce_recipient_rate_limit(socket, email)
+    end
+  end
+
+  defp check_recipient_rate_limit(socket, _params), do: {:ok, socket}
+
+  defp enforce_recipient_rate_limit(socket, email) do
+    case RateLimiter.check(:booking_recipient, email) do
+      :ok ->
+        {:ok, socket}
+
+      {:error, :rate_limited, _message} ->
+        Logger.warning("Booking recipient rate limit exceeded",
+          operation: "booking",
+          limit_type: "recipient"
+        )
+
+        {:error, too_many_attempts(socket)}
+    end
+  end
+
+  # Deliberately the same wording for the per-IP and per-recipient limits: a
+  # distinguishable message would tell an attacker which limit they hit and so
+  # which axis to vary.
+  defp too_many_attempts(socket) do
+    socket
+    |> release_submission()
+    |> Flash.put_flash(
+      :error,
+      dgettext("booking", "Too many booking attempts. Please try again later.")
+    )
+  end
+
+  defp verify_recaptcha(socket, raw_params) do
+    metadata = %{
+      ip: ClientIP.get(socket),
+      user_agent: ClientIP.get_user_agent(socket)
+    }
+
+    token = Map.get(raw_params, "g-recaptcha-response", "")
+
+    case RecaptchaHelpers.verify(:booking, token, metadata) do
+      :ok -> :ok
+      {:error, reason} -> {:error, recaptcha_error(socket, reason)}
+    end
+  end
+
+  defp recaptcha_error(socket, :recaptcha_failed) do
+    socket
+    |> release_submission()
+    |> Flash.put_flash(
+      :error,
+      dgettext("booking", "Security verification failed. Please try again.")
+    )
+  end
+
+  defp recaptcha_error(socket, :recaptcha_script_blocked) do
+    socket
+    |> release_submission()
+    |> Flash.put_flash(
+      :error,
+      dgettext(
+        "booking",
+        "Security verification is currently unavailable. This may be caused by JavaScript being disabled, browser privacy extensions (Privacy Badger, uBlock Origin, etc.), or network security policies. Please adjust your settings or contact support if the problem persists."
+      )
+    )
+  end
+end

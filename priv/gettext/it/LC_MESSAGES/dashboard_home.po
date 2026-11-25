@@ -1,0 +1,262 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/tymeslot_web/live/dashboard/agenda_timeline.ex
+#, elixir-autogen, elixir-format
+msgid "%{hours}h %{mins}m free"
+msgstr "%{hours}h %{mins}m liberi"
+
+#: lib/tymeslot_web/live/dashboard/agenda_timeline.ex
+#, elixir-autogen, elixir-format
+msgid "%{hours}h free"
+msgstr "%{hours}h liberi"
+
+#: lib/tymeslot_web/live/dashboard/agenda_timeline.ex
+#, elixir-autogen, elixir-format
+msgid "%{minutes}m free"
+msgstr "%{minutes}m liberi"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "+%{count} more"
+msgid_plural "+%{count} more"
+msgstr[0] "+%{count} altro"
+msgstr[1] "+%{count} altri"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/source_pill.ex
+#, elixir-autogen, elixir-format
+msgid "Booking"
+msgstr "Prenotazione"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/source_pill.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar"
+msgstr "Calendario"
+
+#: lib/tymeslot_web/live/dashboard/agenda_detail_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Colour"
+msgstr "Colore"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a calendar to see your whole schedule here"
+msgstr "Collega un calendario per vedere qui la tua intera agenda"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview_component.ex
+#, elixir-autogen, elixir-format
+msgid "Couldn't save that colour. Please try again."
+msgstr "Impossibile salvare quel colore. Riprova."
+
+#: lib/tymeslot_web/live/dashboard/agenda_detail_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Default"
+msgstr "Predefinito"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Here's an overview of your scheduling setup and recent activity."
+msgstr "Ecco una panoramica della tua configurazione di pianificazione e delle attività recenti."
+
+#: lib/tymeslot_web/live/dashboard_live.ex
+#, elixir-autogen, elixir-format
+msgid "Invalid redirect URL"
+msgstr "URL di reindirizzamento non valido"
+
+#: lib/tymeslot_web/live/dashboard_live.ex
+#, elixir-autogen, elixir-format
+msgid "Meeting payments require an upgraded plan."
+msgstr "I pagamenti delle riunioni richiedono un piano superiore."
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Now"
+msgstr "Ora"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Today"
+msgstr "Oggi"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Tomorrow"
+msgstr "Domani"
+
+#: lib/tymeslot_web/live/dashboard/calendar_up_next_strip.ex
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Up next"
+msgstr "Prossimo"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "View calendar"
+msgstr "Visualizza calendario"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome"
+msgstr "Benvenuto"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome back"
+msgstr "Bentornato"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Your day"
+msgstr "La tua giornata"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview_formatters.ex
+#, elixir-autogen, elixir-format
+msgid "in %{days}d"
+msgstr "tra %{days}g"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview_formatters.ex
+#, elixir-autogen, elixir-format
+msgid "in %{hours}h"
+msgstr "tra %{hours}h"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview_formatters.ex
+#, elixir-autogen, elixir-format
+msgid "in %{minutes}m"
+msgstr "tra %{minutes}m"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview_formatters.ex
+#, elixir-autogen, elixir-format
+msgid "now"
+msgstr "ora"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "then"
+msgstr "poi"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "today"
+msgstr "oggi"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Nothing on your plate today or tomorrow"
+msgstr "Niente in programma oggi o domani"
+
+#: lib/tymeslot/agenda.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} participant"
+msgid_plural "%{count} participants"
+msgstr[0] "%{count} partecipante"
+msgstr[1] "%{count} partecipanti"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "A few recommended steps. Tick off the ones you don't need."
+msgstr "Alcuni passaggi consigliati. Spunta quelli che non ti servono."
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Add a headline and a short bio"
+msgstr "Aggiungi un titolo e una breve biografia"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Add a video provider"
+msgstr "Aggiungi un provider video"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Add it to your website"
+msgstr "Aggiungila al tuo sito web"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Add photo"
+msgstr "Aggiungi foto"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Add your photo"
+msgstr "Aggiungi la tua foto"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Auto-add links to online meetings"
+msgstr "Aggiungi automaticamente i link alle riunioni online"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Connect"
+msgstr "Collega"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a calendar"
+msgstr "Collega un calendario"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Dismiss setup checklist"
+msgstr "Nascondi la checklist di configurazione"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Done"
+msgstr "Fatto"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Finish setting up"
+msgstr "Completa la configurazione"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Introduce yourself"
+msgstr "Presentati"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Let guests see who they're meeting"
+msgstr "Fai vedere agli ospiti chi incontreranno"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Let visitors book without leaving your site"
+msgstr "I visitatori prenotano senza lasciare il tuo sito"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Mark %{title} as done"
+msgstr "Segna «%{title}» come completato"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Mark %{title} as not done"
+msgstr "Segna «%{title}» come non completato"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Set up"
+msgstr "Configura"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Write"
+msgstr "Scrivi"
+
+#: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
+#, elixir-autogen, elixir-format
+msgid "Your booking page can't take bookings without one"
+msgstr "Senza un calendario la tua pagina di prenotazione non può accettare prenotazioni"

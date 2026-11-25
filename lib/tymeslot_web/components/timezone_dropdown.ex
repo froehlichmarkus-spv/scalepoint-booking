@@ -1,0 +1,195 @@
+defmodule TymeslotWeb.Components.TimezoneDropdown do
+  @moduledoc """
+  Shared timezone dropdown component with flag support and search functionality.
+  Used across onboarding and settings pages with configurable styling and event handling.
+  """
+
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  use TymeslotWeb.Components.CoreComponents
+
+  alias Tymeslot.Profiles
+  alias Tymeslot.Timezones
+  alias TymeslotWeb.Themes.Shared.TimezoneHelpers
+
+  attr :profile, :map, required: true
+  attr :timezone_options, :list, default: []
+  attr :timezone_dropdown_open, :boolean, default: false
+  attr :timezone_search, :string, default: ""
+  attr :target, :any, default: nil, doc: "LiveComponent target for phx-target attribute"
+
+  attr :safe_flags, :boolean,
+    default: false,
+    doc: "Whether to use safe flag rendering (for onboarding)"
+
+  attr :class, :string, default: "", doc: "Additional CSS classes for the container"
+
+  attr :show_label, :boolean,
+    default: true,
+    doc: "Whether to show the visual label; off where a heading above already names the field"
+
+  attr :show_help, :boolean,
+    default: true,
+    doc: "Whether to show the line under the picker saying what the timezone is used for"
+
+  attr :inline, :boolean,
+    default: false,
+    doc: """
+    Opens the list in the page flow under the field instead of floating over the
+    content above it, so the page grows to hold it (and can scroll it clear of a
+    bar stuck to the bottom of the screen)
+    """
+
+  attr :field_name, :string,
+    default: nil,
+    doc: "When set, a hidden input posts the timezone under this name, for use inside a form"
+
+  @spec timezone_dropdown(map()) :: Phoenix.LiveView.Rendered.t()
+  def timezone_dropdown(assigns) do
+    ~H"""
+    <div class={["relative", @class]}>
+      <input
+        :if={@field_name}
+        type="hidden"
+        name={@field_name}
+        value={Profiles.timezone(@profile)}
+      />
+      <%!-- Visual label only: it names no control (the trigger below carries its
+           own accessible name), so it must not be a <label> element. --%>
+      <div :if={@show_label} class="label">
+        <div class="flex items-center gap-2">
+          <.icon name="hero-clock" class="w-4 h-4" />
+          {dgettext("common", "Your Timezone")}
+        </div>
+      </div>
+
+      <.dropdown
+        id="timezone-dropdown"
+        open={@timezone_dropdown_open}
+        on_toggle="toggle_timezone_dropdown"
+        on_close="close_timezone_dropdown"
+        target={@target}
+        position={:top_start}
+        unstyled={@inline}
+        panel_attrs={[{"data-nav-clearance-box", true}]}
+        role="dialog"
+        panel_label={dgettext("common", "Select timezone")}
+        trigger_class="group relative cursor-pointer z-50 w-full text-left"
+        class={"max-h-64 brand-card overflow-hidden " <> if(@inline, do: "mt-1", else: "right-0")}
+      >
+        <:trigger>
+          <span class="sr-only">{dgettext("common", "Your Timezone")}:</span>
+          <div class="input">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <%= if country_code = Timezones.country_code(Profiles.timezone(@profile)) do %>
+                  <.timezone_flag
+                    country_code={country_code}
+                    safe_mode={@safe_flags}
+                    class="w-6 h-4 shrink-0 rounded-sm shadow-sm"
+                  />
+                <% end %>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-tymeslot-800 truncate">
+                    {Timezones.format(Profiles.timezone(@profile))}
+                  </div>
+                  <div class="text-xs mt-1 text-tymeslot-600">
+                    {TimezoneHelpers.format_local_time(Profiles.timezone(@profile))} {dgettext(
+                      "common",
+                      "local time"
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-3">
+                <div class="text-sm px-3 py-1.5 rounded-full bg-tymeslot-100 text-tymeslot-700 font-medium">
+                  {get_timezone_offset(Profiles.timezone(@profile))}
+                </div>
+                <.icon
+                  name="hero-chevron-down"
+                  class={"w-4 h-4 transition-transform duration-200 text-tymeslot-500 #{if @timezone_dropdown_open, do: "rotate-180", else: "rotate-0"}"}
+                />
+              </div>
+            </div>
+          </div>
+        </:trigger>
+        <:panel>
+          <div class="p-3 border-b border-white/20">
+            <div class="relative">
+              <%!-- raw-input: borderless search box inside the dropdown panel with a magnifier overlay, not a labelled form field --%>
+              <input
+                id="timezone-search"
+                type="text"
+                phx-keyup="search_timezone"
+                phx-target={@target}
+                name="value"
+                form="timezone-search-detached"
+                value={@timezone_search || ""}
+                placeholder={dgettext("common", "Search cities, countries, or timezones...")}
+                aria-label={dgettext("common", "Search timezones")}
+                class="w-full px-4 py-2 rounded-token-lg text-token-sm border-0 pr-10 focus:outline-hidden focus:ring-2 focus:ring-turquoise-400/30 bg-white/90 text-tymeslot-800"
+                autocomplete="off"
+                phx-hook="AutoFocus"
+              />
+              <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <.icon name="hero-magnifying-glass" class="w-4 h-4 text-tymeslot-500" />
+              </div>
+            </div>
+          </div>
+          <div class="max-h-48 overflow-y-auto">
+            <div class="p-1">
+              <%= for {label, value, offset} <- Timezones.search(@timezone_search || "") do %>
+                <button
+                  type="button"
+                  phx-click="change_timezone"
+                  phx-value-timezone={value}
+                  phx-target={@target}
+                  class="w-full text-left px-3 py-2.5 text-sm rounded-lg cursor-pointer transition-all duration-200 hover:bg-cyan-50 hover:shadow-sm focus-visible:bg-cyan-50 border border-transparent hover:border-cyan-200"
+                >
+                  <span class="flex items-center gap-3 flex-1 min-w-0">
+                    <%= if country_code = Timezones.country_code(value) do %>
+                      <.timezone_flag
+                        country_code={country_code}
+                        safe_mode={@safe_flags}
+                        class="w-5 h-3 shrink-0 rounded-sm shadow-sm"
+                      />
+                    <% end %>
+                    <span class="block flex-1 min-w-0">
+                      <span class="block font-medium truncate text-tymeslot-800">{label}</span>
+                      <span class="block text-xs mt-0.5 text-tymeslot-600">
+                        {TimezoneHelpers.format_local_time(value)} {dgettext("common", "local time")} • {offset}
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              <% end %>
+            </div>
+          </div>
+        </:panel>
+      </.dropdown>
+
+      <p :if={@show_help} class="mt-2 text-sm text-tymeslot-600">
+        {dgettext("common", "This timezone will be used for your availability and scheduling.")}
+      </p>
+    </div>
+    """
+  end
+
+  # Private components and helper functions
+
+  defp timezone_flag(assigns) do
+    # Use safe flag component that handles ID conflicts
+    ~H"""
+    <TymeslotWeb.Components.FlagHelpers.safe_flag
+      country_code={@country_code}
+      class={@class}
+      show_fallback={not @safe_mode}
+    />
+    """
+  end
+
+  defp get_timezone_offset(timezone) do
+    Timezones.utc_offset(timezone)
+  end
+end

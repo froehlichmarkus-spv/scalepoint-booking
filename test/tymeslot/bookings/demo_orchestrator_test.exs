@@ -1,0 +1,168 @@
+defmodule Tymeslot.Bookings.DemoOrchestratorTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :bookings
+
+  alias Tymeslot.Bookings.DemoOrchestrator
+  import Tymeslot.Factory
+
+  describe "submit_booking/2" do
+    test "returns ok and mock meeting for valid params" do
+      user = insert(:user)
+      insert(:profile, user: user, full_name: "Test Organizer")
+
+      params = %{
+        meeting_params: %{
+          organizer_user_id: user.id,
+          duration: 30,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "America/New_York"
+        },
+        form_data: %{
+          "name" => "John Doe",
+          "email" => "john@example.com",
+          "phone" => "1234567890",
+          "company" => "ACME Corp",
+          "message" => "Hello"
+        }
+      }
+
+      assert {:ok, meeting} = DemoOrchestrator.submit_booking(params)
+      assert meeting.attendee_name == "John Doe"
+      assert meeting.organizer_user_id == user.id
+      assert meeting.organizer_name == "Test Organizer"
+      assert meeting.status == :confirmed
+      assert meeting.duration == 30
+      assert meeting.attendee_email == "john@example.com"
+    end
+
+    test "mocks status confirmed when the meeting type does not require approval" do
+      user = insert(:user)
+      insert(:profile, user: user, full_name: "Test Organizer")
+
+      params = %{
+        meeting_params: %{
+          organizer_user_id: user.id,
+          duration: 30,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "America/New_York",
+          requires_approval: false
+        },
+        form_data: %{"name" => "John Doe", "email" => "john@example.com"}
+      }
+
+      assert {:ok, meeting} = DemoOrchestrator.submit_booking(params)
+      assert meeting.status == :confirmed
+    end
+
+    test "mocks status awaiting_approval for a preview of a gated meeting type" do
+      user = insert(:user)
+      insert(:profile, user: user, full_name: "Test Organizer")
+
+      params = %{
+        meeting_params: %{
+          organizer_user_id: user.id,
+          duration: 30,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "America/New_York",
+          requires_approval: true
+        },
+        form_data: %{"name" => "John Doe", "email" => "john@example.com"}
+      }
+
+      assert {:ok, meeting} = DemoOrchestrator.submit_booking(params)
+      assert meeting.status == :awaiting_approval
+    end
+
+    test "returns error for invalid duration" do
+      user = insert(:user)
+
+      params = %{
+        meeting_params: %{
+          organizer_user_id: user.id,
+          duration: -5,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "America/New_York"
+        }
+      }
+
+      assert {:error, :invalid_duration} = DemoOrchestrator.submit_booking(params)
+    end
+
+    test "returns error for missing organizer" do
+      params = %{
+        meeting_params: %{
+          organizer_user_id: 12_345,
+          duration: 30,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "America/New_York"
+        },
+        form_data: %{
+          "name" => "John Doe",
+          "email" => "john@example.com"
+        }
+      }
+
+      assert {:error, :organizer_not_found} = DemoOrchestrator.submit_booking(params)
+    end
+
+    test "handles different duration formats" do
+      user = insert(:user)
+      insert(:profile, user: user, full_name: "Test Organizer")
+
+      base_params = %{
+        meeting_params: %{
+          organizer_user_id: user.id,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "America/New_York"
+        },
+        form_data: %{"name" => "John Doe", "email" => "john@example.com"}
+      }
+
+      # Test string duration "15min"
+      params = put_in(base_params, [:meeting_params, :duration], "15min")
+      assert {:ok, meeting} = DemoOrchestrator.submit_booking(params)
+      assert meeting.duration == 15
+
+      # Test string duration "45 m"
+      params = put_in(base_params, [:meeting_params, :duration], "45 m")
+      assert {:ok, meeting} = DemoOrchestrator.submit_booking(params)
+      assert meeting.duration == 45
+    end
+  end
+
+  describe "submit_booking/2 title" do
+    defp demo_title(organizer_locale) do
+      user = insert(:user, locale: organizer_locale)
+      insert(:profile, user: user)
+
+      params = %{
+        meeting_params: %{
+          organizer_user_id: user.id,
+          duration: 30,
+          date: "2026-01-10",
+          time: "10:00",
+          user_timezone: "UTC"
+        },
+        form_data: %{"name" => "Jane Doe", "email" => "jane@example.com"}
+      }
+
+      assert {:ok, meeting} = DemoOrchestrator.submit_booking(params)
+      meeting.title
+    end
+
+    test "renders the title in the organiser's language" do
+      assert demo_title("de") == "Termin mit Jane Doe"
+    end
+
+    test "keeps the English title for an English-speaking organiser" do
+      assert demo_title("en") == "Meeting with Jane Doe"
+    end
+  end
+end

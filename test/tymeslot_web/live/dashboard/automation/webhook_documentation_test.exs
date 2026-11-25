@@ -1,0 +1,46 @@
+defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentationTest do
+  use TymeslotWeb.ConnCase, async: true
+
+  @moduletag :utils
+
+  import Phoenix.LiveViewTest
+
+  alias Tymeslot.Notifications.EventTypes
+  alias TymeslotWeb.Dashboard.Automation.WebhookDocumentation
+
+  describe "webhook_documentation/1" do
+    test "renders documentation" do
+      assigns = %{}
+      html = render_component(&WebhookDocumentation.webhook_documentation/1, assigns)
+      assert html =~ "Webhook Integration Guide"
+      assert html =~ "meeting.created"
+    end
+
+    test "lists every event a webhook can subscribe to" do
+      html = render_component(&WebhookDocumentation.webhook_documentation/1, %{})
+
+      for event <- EventTypes.all() do
+        assert html =~
+                 "<code class=\"text-token-sm font-black text-tymeslot-900\">#{event}</code>"
+      end
+
+      assert html =~ "Triggers once when you decline a series request"
+    end
+
+    test "documents the delivery id header that lets receivers discard duplicates" do
+      html = render_component(&WebhookDocumentation.webhook_documentation/1, %{})
+
+      assert html =~ "X-Tymeslot-Delivery-Id"
+      assert html =~ "the same on every retry of one delivery"
+    end
+
+    test "documents how to verify the request signature" do
+      html = render_component(&WebhookDocumentation.webhook_documentation/1, %{})
+
+      assert html =~ "X-Tymeslot-Signature"
+
+      assert html =~
+               "Compute the HMAC-SHA256 of the timestamp, a full stop and the raw request body"
+    end
+  end
+end

@@ -1,0 +1,255 @@
+defmodule Tymeslot.Bookings.RescheduleLocation do
+  @moduledoc """
+  Where a rescheduled meeting is held, when the booker picks somewhere new.
+
+  A meeting type offering several locations lets the booker choose one when
+  booking, and the reschedule form offers the same choice again, opened on the
+  location the meeting already has. Most reschedules leave it alone, and then
+  this module changes nothing.
+
+  ## Changing the location is not just a column update
+
+  The location decides whether the meeting has a provider-side video room, and
+  on which integration. So a change is resolved in two halves:
+
+    * `attributes/3` is the write. It returns the location fields to merge
+      into the reschedule's update, and, whenever the new location is not on
+      the integration that owns the current room, blanks every room field in
+      the same write. The meeting then never advertises a join link for a
+      place it is no longer held, even for the moment before the provider
+      catches up.
+
+    * `release_abandoned_room/2` and `create_room/2` are the provider side,
+      run after the write commits. They read the change off the meeting's
+      before and after states rather than being told about it, so they cannot
+      disagree with what was actually persisted.
+
+  In both directions the rule is the same: the old room is deleted
+  (`Tymeslot.Workers.VideoSyncWorker.release/1`), and a room is created on the
+  new integration where there is one (`Tymeslot.Workers.VideoRoomWorker`).
+  Moving between two options on the *same* integration keeps the room, whose
+  times the ordinary reschedule sync already moves.
+
+  A new room also takes over the reschedule's announcement, exactly as a new
+  booking's room takes over its confirmation: the email is the attendee's one
+  message about the move, and sent before the room exists it would carry no
+  join link.
+
+  ## The booker submits an id, never a location
+
+  As on a new booking, everything the choice means is re-derived from the
+  host's own meeting type (`MeetingTypes.resolve_location/2`). Unlike a new
+  booking, an id the meeting type does not offer is ignored rather than
+  resolved to the first option: a reschedule already has a location, and a
+  stale or forged id must not move it anywhere. The same goes for a venue:
+  within the meeting's own option, only a venue the option offers, picked
+  explicitly, moves the meeting. Anything else keeps it where it is, even
+  when its venue has since been deleted or dropped from the option. Choosing
+  another venue within an in-person option never touches a video room.
+  """
+
+  require Logger
+
+  alias Tymeslot.ContentTranslations.AttendeeTexts
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Meetings.MeetingSchema, as: Meeting
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Workers.{VideoRoomWorker, VideoSyncWorker}
+
+  # Everything `Tymeslot.Meetings.VideoRooms` writes when it attaches a room,
+  # bar the Teams uid rewrite: the uid is the meeting's calendar identity from
+  # then on, and must survive the room.
+  @detached_room %{
+    meeting_url: nil,
+    video_room_id: nil,
+    video_provider: nil,
+    organizer_video_url: nil,
+    attendee_video_url: nil,
+    video_room_enabled: false,
+    video_room_created_at: nil,
+    video_room_expires_at: nil
+  }
+
+  @doc """
+  The location attributes a reschedule writes, or `%{}` when it keeps the
+  meeting where it is. They carry the attendees' copies of the booking's
+  texts (`attendee_texts`), every locale's location moved to the new one
+  (`AttendeeTexts.relocated/4`), nil when nothing in them is translated.
+
+  `params` carries the booker's `:location_option_id` and, for a phone option
+  that asks for it, `:location_phone`, for a video option offering several
+  providers, `:location_video_integration_id`, or for an in-person option
+  offering several venues, `:location_venue_id`. An ad-hoc meeting (no
+  `meeting_type_id`) never changes location: the meeting type a reschedule
+  resolves for it is matched by duration, and its locations were never the
+  ones this meeting was booked against.
+  """
+  @spec attributes(Meeting.t(), map() | nil, map()) :: map()
+  def attributes(%Meeting{meeting_type_id: nil}, _meeting_type, _params), do: %{}
+  def attributes(%Meeting{}, nil, _params), do: %{}
+
+  def attributes(%Meeting{} = meeting, meeting_type, params) do
+    with %{} = choice <- choice(meeting, meeting_type, params),
+         resolution = MeetingTypes.resolve_location(meeting_type, choice),
+         false <- stays?(meeting, resolution, Map.get(params, :location_venue_id)) do
+      meeting
+      |> changes(resolution)
+      |> with_attendee_texts(meeting, meeting_type, choice)
+    else
+      _keeps_location -> %{}
+    end
+  end
+
+  @doc """
+  Enqueues deletion of the provider room a reschedule detached, if it did.
+  """
+  @spec release_abandoned_room(Meeting.t(), Meeting.t()) :: :ok
+  def release_abandoned_room(%Meeting{video_room_id: room_id}, %Meeting{video_room_id: room_id}),
+    do: :ok
+
+  def release_abandoned_room(%Meeting{}, %Meeting{video_room_id: nil}), do: :ok
+
+  def release_abandoned_room(%Meeting{}, %Meeting{video_room_id: room_id} = original) do
+    case VideoSyncWorker.release(original) do
+      {:ok, _status} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to enqueue release of a video room left behind by a reschedule",
+          meeting_id: original.id,
+          provider: original.video_provider,
+          video_room_id: room_id,
+          reason: LogFormat.reason(reason)
+        )
+
+        :ok
+    end
+  end
+
+  @doc """
+  Schedules a room for a confirmed meeting a reschedule left on a video
+  integration without one, handing it the reschedule's announcement.
+
+  That is a meeting the reschedule moved onto a new video integration, and
+  equally one whose room was still on its way when the reschedule came: an
+  earlier job owes the announcement of the time it was booked or rescheduled
+  to, which this reschedule makes stale, so that job drops it
+  (`Tymeslot.Workers.VideoRoom.Announcement.deliver/3`). Sent from here, the
+  email would go out before the room exists and carry no link, so it is
+  handed to a job of its own; whichever job creates the room, the other finds
+  it attached and announces with the link.
+
+  `opts` are passed on to the reschedule emails the job sends
+  (`moved_by: :host`, as `Events.meeting_rescheduled/3` takes them).
+
+  Returns `:scheduled` when the room's job now owns the announcement, and
+  `:not_scheduled` when the caller still has to send it.
+
+  Only a confirmed meeting gets one here. A booking still held for approval,
+  or not yet paid for, is given its room by the path that confirms it, exactly
+  as a new booking is.
+  """
+  @spec create_room(Meeting.t(), Meeting.t(), keyword()) :: :scheduled | :not_scheduled
+  def create_room(updated, original, opts \\ [])
+
+  def create_room(
+        %Meeting{status: :confirmed, video_room_id: nil, video_integration_id: id} = updated,
+        %Meeting{} = original,
+        opts
+      )
+      when is_integer(id) do
+    case VideoRoomWorker.schedule_video_room_creation_with_reschedule_announcement(
+           updated,
+           original,
+           opts
+         ) do
+      :ok ->
+        :scheduled
+
+      {:error, reason} ->
+        # `VideoRoomRecoveryScanWorker` finds confirmed meetings missing the
+        # room their integration promises, so the room is a delay, not a loss.
+        # The announcement cannot wait for that sweep.
+        Logger.warning("Failed to schedule a video room for a rescheduled meeting",
+          meeting_id: updated.id,
+          reason: LogFormat.reason(reason)
+        )
+
+        :not_scheduled
+    end
+  end
+
+  def create_room(%Meeting{}, %Meeting{}, _opts), do: :not_scheduled
+
+  defp choice(%Meeting{} = meeting, meeting_type, %{location_option_id: option_id} = params)
+       when is_binary(option_id) do
+    if Enum.any?(MeetingTypes.location_options(meeting_type), &(&1.id == option_id)) do
+      %{
+        option_id: option_id,
+        phone: Map.get(params, :location_phone),
+        video_integration_id: Map.get(params, :location_video_integration_id),
+        venue_id: Map.get(params, :location_venue_id),
+        current_venue_id: meeting.venue_id
+      }
+    end
+  end
+
+  defp choice(_meeting, _meeting_type, _params), do: nil
+
+  # The attendees' copies of the location move with the original, in the
+  # same write: left alone, it would keep showing the old place in their
+  # emails, calendar entry and meeting pages (`AttendeeTexts.text/3`).
+  defp with_attendee_texts(changes, meeting, meeting_type, choice) do
+    Map.put(
+      changes,
+      :attendee_texts,
+      AttendeeTexts.relocated(meeting, meeting_type, changes, choice)
+    )
+  end
+
+  # The same option with the same number, on the same provider, is the
+  # booker leaving the picker where it opened: a time-only reschedule, which
+  # never moves the meeting. Rewriting it would still not be a no-op: a video
+  # meeting's `location` holds its join URL, and an in-person one the venue
+  # as it read when booked, which re-resolving would replace. That holds even
+  # when the meeting's venue has since been deleted or dropped from the
+  # option, where re-resolving would land on another venue the booker never
+  # chose. Only a venue the booker picked, which the option offers and which
+  # is not the meeting's own, is a move within the option; so is a different
+  # provider, and both fall through to `changes/2`.
+  defp stays?(
+         %Meeting{location_option_id: id, attendee_phone: phone, video_integration_id: video_id} =
+           meeting,
+         %{location_option_id: id, attendee_phone: phone, video_integration_id: video_id} =
+           resolution,
+         submitted_venue_id
+       ),
+       do:
+         not venue_picked?(resolution, submitted_venue_id) or
+           resolution.venue_id == meeting.venue_id
+
+  defp stays?(_meeting, _resolution, _submitted_venue_id), do: false
+
+  # `resolve_location/2` places the meeting at the submitted venue exactly
+  # when the option offers it, so the resolved venue being the submitted one
+  # is the booker having picked it.
+  defp venue_picked?(%{venue_id: venue_id}, venue_id) when is_integer(venue_id), do: true
+
+  defp venue_picked?(%{venue_id: venue_id}, submitted)
+       when is_integer(venue_id) and is_binary(submitted),
+       do: Integer.parse(submitted) == {venue_id, ""}
+
+  defp venue_picked?(_resolution, _submitted), do: false
+
+  # A different option on the integration that already owns the room: the
+  # room serves the new option as well as it served the old one.
+  defp changes(
+         %Meeting{video_integration_id: id} = meeting,
+         %{video_integration_id: id} = resolution
+       )
+       when is_integer(id) do
+    if meeting.video_room_id, do: Map.delete(resolution, :location), else: resolution
+  end
+
+  defp changes(%Meeting{}, resolution), do: Map.merge(resolution, @detached_room)
+end

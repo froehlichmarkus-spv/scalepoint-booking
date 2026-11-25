@@ -1,0 +1,459 @@
+defmodule TymeslotWeb.Dashboard.MeetingSettings.MeetingTypeForm.FixedDatesSection do
+  @moduledoc """
+  Stateless function component for the meeting-type form's fixed dates
+  (`Tymeslot.MeetingTypes.FixedDates`), shown under group bookings.
+
+  A toggle switches the type from the times its availability schedule
+  offers to dates its host chooses. What those are depends on group
+  bookings:
+
+    * on a one-to-one type, the exact times the host offers
+      (`Tymeslot.MeetingTypes.OfferedTimes`), listed with a row to add one
+      and a button to remove each. They are not meetings, so nothing asks
+      first, and the toggle can be turned off at any time: the times are
+      kept, unused, until it is turned on again. Events go to
+      `OfferedTimeHandlers`.
+    * on a group type, the sessions it plans. While upcoming dates are
+      planned the toggle cannot be turned off: they would stay on the
+      calendar and in people's diaries with nothing on the booking page to
+      explain them, so the host cancels them first.
+
+  For a group type, the planned dates, each with its seats and when registration
+  closes, and a row to plan another: a date, a time and an optional close
+  of registration, all in the host's own time zone. An upcoming date is
+  edited in place: moving it takes everyone booked on it along and tells
+  them, and its registration close can move at any time up to its start.
+  Cancelling a date with people booked on it asks first, and tells them
+  through the same cancel path a group meeting always uses. Dates can only be planned on a saved
+  type, since each one is a meeting of it.
+
+  Events go to the parent `MeetingTypeForm` (`@myself`), which hands them to
+  `SessionHandlers`.
+  """
+
+  use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias TymeslotWeb.Components.CoreComponents.Buttons
+  alias TymeslotWeb.Themes.Shared.LocalizationHelpers
+
+  attr :fixed_dates, :boolean, required: true
+  attr :group, :boolean, required: true, doc: "whether group bookings are on"
+  attr :is_edit, :boolean, required: true
+  attr :offered_times, :list, default: [], doc: "`OfferedTimeHandlers.rows/1`"
+  attr :new_offered_time, :map, default: %{}
+  attr :offered_time_error, :string, default: nil
+
+  attr :offered_time_notice, :string,
+    default: nil,
+    doc: "`SessionHandlers.clock_change_notice/2` for the time just added"
+
+  attr :sessions, :list, default: [], doc: "`SessionHandlers.rows/1`"
+  attr :timezone, :string, required: true
+  attr :new_session, :map, default: %{}
+  attr :session_error, :string, default: nil
+
+  attr :session_notice, :string,
+    default: nil,
+    doc: "`SessionHandlers.clock_change_notice/2` for the date just planned or moved"
+
+  attr :confirming_session_id, :string, default: nil
+
+  attr :editing_session, :map,
+    default: nil,
+    doc: "the date being edited: `%{id, input, error}`, `input` as the form posts it"
+
+  attr :form_id, :string, required: true
+  attr :myself, :any, required: true
+
+  @spec fixed_dates_section(map()) :: Phoenix.LiveView.Rendered.t()
+  def fixed_dates_section(assigns) do
+    assigns =
+      assign(assigns, :upcoming?, assigns.group and Enum.any?(assigns.sessions, &(not &1.past?)))
+
+    ~H"""
+    <section class="space-y-4" data-testid="fixed-dates-section">
+      <.setting_row
+        id={"fixed-dates-toggle-#{@form_id}"}
+        label={dgettext("dashboard_meeting_fixed_dates", "Offer fixed dates only")}
+        description={
+          dgettext(
+            "dashboard_meeting_fixed_dates",
+            "Instead of times from the availability schedule, bookers choose from dates you set. With group bookings, each date is a session on your calendar at once. Without them, each is a time one person can book, as long as your calendar is free then."
+          )
+        }
+        checked={@fixed_dates}
+        disabled={@fixed_dates and @upcoming?}
+        on_change="toggle_fixed_dates"
+        target={@myself}
+      >
+        <:disabled_reason>
+          {dgettext("dashboard_meeting_fixed_dates", "Cancel the planned dates to turn this off.")}
+        </:disabled_reason>
+      </.setting_row>
+
+      <p
+        :if={@fixed_dates and not @is_edit}
+        class="text-token-sm text-tymeslot-600"
+        data-testid="fixed-dates-create-first"
+      >
+        {dgettext("dashboard_meeting_fixed_dates", "Create the meeting type to plan its dates.")}
+      </p>
+
+      <.offered_times_editor
+        :if={@fixed_dates and @is_edit and not @group}
+        offered_times={@offered_times}
+        timezone={@timezone}
+        new_offered_time={@new_offered_time}
+        error={@offered_time_error}
+        notice={@offered_time_notice}
+        form_id={@form_id}
+        myself={@myself}
+      />
+
+      <div :if={@fixed_dates and @is_edit and @group} class="space-y-3">
+        <p class="text-token-sm text-tymeslot-600">
+          {dgettext("dashboard_meeting_fixed_dates", "Times are in your time zone, %{timezone}.",
+            timezone: @timezone
+          )}
+        </p>
+
+        <p
+          :if={@sessions == []}
+          class="text-token-sm text-tymeslot-500 italic"
+          data-testid="no-sessions"
+        >
+          {dgettext("dashboard_meeting_fixed_dates", "No dates planned yet.")}
+        </p>
+
+        <ul :if={@sessions != []} class="space-y-2">
+          <li
+            :for={session <- @sessions}
+            class={[
+              "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-token-xl border border-tymeslot-100 bg-white px-3 py-2 text-token-sm",
+              session.past? && "opacity-60"
+            ]}
+            data-testid="planned-session"
+          >
+            <span class="font-semibold text-tymeslot-800">
+              {LocalizationHelpers.format_meeting_datetime(session.start_time, @timezone)}
+            </span>
+            <span class="text-tymeslot-600">
+              {dgettext("dashboard_meeting_fixed_dates", "%{taken} of %{capacity} seats taken",
+                taken: session.seats_taken,
+                capacity: session.capacity
+              )}
+            </span>
+            <span
+              :if={session.registration_closes_at && session.open?}
+              class="text-tymeslot-600"
+            >
+              {dgettext("dashboard_meeting_fixed_dates", "registration until %{datetime}",
+                datetime:
+                  LocalizationHelpers.format_meeting_datetime(
+                    session.registration_closes_at,
+                    @timezone
+                  )
+              )}
+            </span>
+            <span
+              :if={not session.past? and not session.open?}
+              class="font-medium text-amber-700"
+              data-testid="session-registration-closed"
+            >
+              {dgettext("dashboard_meeting_fixed_dates", "registration closed")}
+            </span>
+
+            <%= cond do %>
+              <% session.past? -> %>
+              <% @editing_session && @editing_session.id == session.id -> %>
+                <.session_editor session={session} editing={@editing_session} myself={@myself} />
+              <% @confirming_session_id == session.id -> %>
+                <span class="w-full text-token-sm text-red-700" role="alert">
+                  {dngettext(
+                    "dashboard_meeting_fixed_dates",
+                    "Cancel this date? %{count} person is booked and will be told.",
+                    "Cancel this date? %{count} people are booked and will be told.",
+                    session.participants,
+                    count: session.participants
+                  )}
+                </span>
+                <.action_button
+                  size={:sm}
+                  variant={:danger}
+                  phx-click="cancel_session"
+                  phx-value-id={session.id}
+                  phx-target={@myself}
+                  data-testid="confirm-cancel-session"
+                >
+                  {dgettext("dashboard_meeting_fixed_dates", "Cancel date")}
+                </.action_button>
+                <.action_button
+                  size={:sm}
+                  variant={:ghost}
+                  phx-click="keep_session"
+                  phx-target={@myself}
+                >
+                  {dgettext("dashboard_meeting_fixed_dates", "Keep it")}
+                </.action_button>
+              <% true -> %>
+                <Buttons.icon_button
+                  icon="hero-pencil-square"
+                  size={:sm}
+                  class="ml-auto"
+                  label={dgettext("dashboard_meeting_fixed_dates", "Edit this date")}
+                  phx-click="edit_session"
+                  phx-value-id={session.id}
+                  phx-target={@myself}
+                  data-testid="edit-session-button"
+                />
+                <Buttons.icon_button
+                  icon="hero-x-mark"
+                  variant={:danger}
+                  size={:sm}
+                  label={dgettext("dashboard_meeting_fixed_dates", "Cancel this date")}
+                  phx-click="remove_session"
+                  phx-value-id={session.id}
+                  phx-target={@myself}
+                  data-testid="remove-session"
+                />
+            <% end %>
+          </li>
+        </ul>
+
+        <.clock_change_notice notice={@session_notice} testid="session-clock-change" />
+
+        <div class="flex flex-wrap items-end gap-3" data-testid="new-session">
+          <.date_picker
+            id={"new-session-date-#{@form_id}"}
+            name="session[date]"
+            label={dgettext("dashboard_meeting_fixed_dates", "Date")}
+            value={Map.get(@new_session, "date", "")}
+            phx-change="update_session_input"
+            phx-target={@myself}
+          />
+          <.time_picker
+            id={"new-session-time-#{@form_id}"}
+            name="session[time]"
+            label={dgettext("dashboard_meeting_fixed_dates", "Time")}
+            value={Map.get(@new_session, "time", "")}
+            phx-change="update_session_input"
+            phx-target={@myself}
+          />
+          <.datetime_picker
+            id={"new-session-closes-#{@form_id}"}
+            name="session[closes_at]"
+            label={dgettext("dashboard_meeting_fixed_dates", "Registration closes (optional)")}
+            value={Map.get(@new_session, "closes_at", "")}
+            phx-change="update_session_input"
+            phx-target={@myself}
+          />
+          <.action_button
+            size={:sm}
+            phx-click="add_session"
+            phx-target={@myself}
+            data-testid="add-session"
+          >
+            {dgettext("dashboard_meeting_fixed_dates", "Add date")}
+          </.action_button>
+        </div>
+        <p :if={@session_error} class="form-error" data-testid="session-error">
+          {@session_error}
+        </p>
+      </div>
+    </section>
+    """
+  end
+
+  attr :offered_times, :list, required: true
+  attr :timezone, :string, required: true
+  attr :new_offered_time, :map, required: true
+  attr :error, :string, default: nil
+  attr :notice, :string, default: nil
+  attr :form_id, :string, required: true
+  attr :myself, :any, required: true
+
+  # A one-to-one type's offered times: each start, removable at once (a
+  # booking of one is its own meeting and is not touched), and a row to add
+  # another.
+  defp offered_times_editor(assigns) do
+    ~H"""
+    <div class="space-y-3" data-testid="offered-times">
+      <p class="text-token-sm text-tymeslot-600">
+        {dgettext(
+          "dashboard_meeting_fixed_dates",
+          "Times are in your time zone, %{timezone}. A booked time stops being offered, and is offered again if that booking is cancelled.",
+          timezone: @timezone
+        )}
+      </p>
+
+      <p
+        :if={@offered_times == []}
+        class="text-token-sm text-tymeslot-500 italic"
+        data-testid="no-offered-times"
+      >
+        {dgettext("dashboard_meeting_fixed_dates", "No times offered yet.")}
+      </p>
+
+      <ul :if={@offered_times != []} class="space-y-2">
+        <li
+          :for={offered_time <- @offered_times}
+          class={[
+            "flex items-center gap-3 rounded-token-xl border border-tymeslot-100 bg-white px-3 py-2 text-token-sm",
+            offered_time.past? && "opacity-60"
+          ]}
+          data-testid="offered-time"
+        >
+          <span class="font-semibold text-tymeslot-800">
+            {LocalizationHelpers.format_meeting_datetime(offered_time.starts_at, @timezone)}
+          </span>
+          <span
+            :if={offered_time.status in [:too_soon, :too_far]}
+            class="font-medium text-amber-700"
+            data-testid="offered-time-out-of-reach"
+          >
+            {out_of_reach_label(offered_time.status)}
+          </span>
+          <Buttons.icon_button
+            :if={not offered_time.past?}
+            icon="hero-x-mark"
+            variant={:danger}
+            size={:sm}
+            class="ml-auto"
+            label={dgettext("dashboard_meeting_fixed_dates", "Remove this time")}
+            phx-click="remove_offered_time"
+            phx-value-id={offered_time.id}
+            phx-target={@myself}
+            data-testid="remove-offered-time"
+          />
+        </li>
+      </ul>
+
+      <.clock_change_notice notice={@notice} testid="offered-time-clock-change" />
+
+      <div class="flex flex-wrap items-end gap-3" data-testid="new-offered-time">
+        <.date_picker
+          id={"new-offered-time-date-#{@form_id}"}
+          name="offered_time[date]"
+          label={dgettext("dashboard_meeting_fixed_dates", "Date")}
+          value={Map.get(@new_offered_time, "date", "")}
+          phx-change="update_offered_time_input"
+          phx-target={@myself}
+        />
+        <.time_picker
+          id={"new-offered-time-time-#{@form_id}"}
+          name="offered_time[time]"
+          label={dgettext("dashboard_meeting_fixed_dates", "Time")}
+          value={Map.get(@new_offered_time, "time", "")}
+          phx-change="update_offered_time_input"
+          phx-target={@myself}
+        />
+        <.action_button
+          size={:sm}
+          phx-click="add_offered_time"
+          phx-target={@myself}
+          data-testid="add-offered-time"
+        >
+          {dgettext("dashboard_meeting_fixed_dates", "Add time")}
+        </.action_button>
+      </div>
+      <p :if={@error} class="form-error" data-testid="offered-time-error">{@error}</p>
+    </div>
+    """
+  end
+
+  attr :notice, :string, default: nil
+  attr :testid, :string, required: true
+
+  # A time just saved other than as typed, because a clock change skips or
+  # repeats it: saved anyway, and said so under the list showing it.
+  defp clock_change_notice(assigns) do
+    ~H"""
+    <p
+      :if={@notice}
+      class="flex items-start gap-1.5 text-token-sm font-medium text-amber-700"
+      role="status"
+      data-testid={@testid}
+    >
+      <.icon name="hero-information-circle" class="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{@notice}</span>
+    </p>
+    """
+  end
+
+  # Why an upcoming offered time cannot be booked yet, or any longer.
+  defp out_of_reach_label(:too_soon),
+    do: dgettext("dashboard_meeting_fixed_dates", "inside the minimum notice")
+
+  defp out_of_reach_label(:too_far),
+    do: dgettext("dashboard_meeting_fixed_dates", "beyond the booking window")
+
+  attr :session, :map, required: true
+  attr :editing, :map, required: true
+  attr :myself, :any, required: true
+
+  # One planned date opened for editing: its date, time and registration
+  # close, saved together. Moving it tells everyone booked on it.
+  defp session_editor(assigns) do
+    ~H"""
+    <div class="flex w-full flex-wrap items-end gap-2" data-testid="edit-session">
+      <.date_picker
+        id={"edit-session-date-#{@session.id}"}
+        name="session_edit[date]"
+        label={dgettext("dashboard_meeting_fixed_dates", "Date")}
+        value={@editing.input["date"]}
+        phx-change="update_session_edit"
+        phx-target={@myself}
+      />
+      <.time_picker
+        id={"edit-session-time-#{@session.id}"}
+        name="session_edit[time]"
+        label={dgettext("dashboard_meeting_fixed_dates", "Time")}
+        value={@editing.input["time"]}
+        phx-change="update_session_edit"
+        phx-target={@myself}
+      />
+      <.datetime_picker
+        id={"edit-session-closes_at-#{@session.id}"}
+        name="session_edit[closes_at]"
+        label={dgettext("dashboard_meeting_fixed_dates", "Registration closes")}
+        value={@editing.input["closes_at"]}
+        phx-change="update_session_edit"
+        phx-target={@myself}
+      />
+      <.action_button
+        size={:sm}
+        phx-click="save_session_edit"
+        phx-target={@myself}
+        data-testid="save-session-edit"
+      >
+        {dgettext("dashboard_meeting_fixed_dates", "Save")}
+      </.action_button>
+      <.action_button
+        size={:sm}
+        variant={:ghost}
+        phx-click="discard_session_edit"
+        phx-target={@myself}
+      >
+        {dgettext("dashboard_meeting_fixed_dates", "Cancel")}
+      </.action_button>
+      <p class="w-full text-token-xs text-tymeslot-500">
+        {dgettext(
+          "dashboard_meeting_fixed_dates",
+          "Leave the registration close empty to take sign-ups until the start. A time already past closes registration now."
+        )}
+        <span :if={@session.participants > 0}>
+          {dngettext(
+            "dashboard_meeting_fixed_dates",
+            "Moving the date emails the %{count} person booked on it the new time.",
+            "Moving the date emails the %{count} people booked on it the new time.",
+            @session.participants,
+            count: @session.participants
+          )}
+        </span>
+      </p>
+      <p :if={@editing.error} class="form-error w-full" role="alert">{@editing.error}</p>
+    </div>
+    """
+  end
+end

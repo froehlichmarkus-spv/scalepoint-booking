@@ -1,0 +1,324 @@
+defmodule TymeslotWeb.Dashboard.ThemeSettings.BookingTextFormTest do
+  use TymeslotWeb.LiveCase, async: true
+
+  @moduledoc """
+  The form is the only place an organiser learns that one heading replaces a
+  different sentence in each theme, and the only guard against publishing a
+  half-filled introduction. Both are behaviour, not decoration.
+
+  It also has no save button, so the switch and the text fields each have to
+  persist on their own; a change that silently stops writing would otherwise
+  look identical to one that works.
+  """
+  @moduletag :themes
+  @moduletag :live
+
+  import Ecto.Changeset, only: [change: 2]
+  import Tymeslot.DashboardTestHelpers
+
+  alias Tymeslot.Factory
+  alias Tymeslot.Repo
+
+  setup :setup_dashboard_user_with_theme
+
+  setup %{profile: profile} do
+    profile = profile |> change(%{username: "text-owner", full_name: "Sarah"}) |> Repo.update!()
+    {:ok, profile: profile}
+  end
+
+  describe "the form" do
+    test "offers the customisation, switched off, on the theme page", %{conn: conn} do
+      {:ok, view, html} = live(conn, ~p"/dashboard/pages")
+
+      assert html =~ "Booking Page Text"
+      assert html =~ "Use my own wording"
+      assert html =~ ~s(aria-checked="false")
+      # A blank required line is reported by the form, not blocked by the browser.
+      assert has_element?(view, "#booking-text-form-form[novalidate]")
+    end
+
+    test "shows the fields greyed out rather than hidden while switched off", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/pages")
+
+      # Present but inert: the organiser can read what the switch controls
+      # without turning it on, and a disabled input posts nothing.
+      assert html =~ "Your heading replaces:"
+      assert html =~ "disabled"
+    end
+
+    test "names the other themes' defaults, not only the current theme's", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/pages")
+
+      # A single heading displaces a different sentence in each theme, so the
+      # organiser has to be shown every one.
+      assert html =~ "Arrange a meeting"
+      assert html =~ "Schedule with Sarah"
+      assert html =~ "your current theme"
+    end
+  end
+
+  describe "the switch" do
+    test "seeds the fields from the defaults so switching on is immediately valid", %{
+      conn: conn,
+      profile: profile
+    } do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      toggle(view)
+
+      saved = Repo.reload!(profile)
+      assert saved.booking_text_enabled
+      # The current theme's default heading, not another theme's.
+      assert saved.booking_heading == "Arrange a meeting"
+      assert saved.booking_greeting == "Hi! I'm Sarah."
+      assert saved.booking_instruction == "Pick an option to get started."
+    end
+
+    test "seeds the current theme's own voice where it has one", %{
+      conn: conn,
+      profile: profile
+    } do
+      # The fixture theme's voice words all three of the form's fields.
+      profile |> change(%{booking_theme: "99"}) |> Repo.update!()
+      {:ok, view, html} = live(conn, ~p"/dashboard/pages")
+
+      assert html =~ ~s(placeholder="Book a time")
+      # The greeting and instruction placeholders are the shared wording; the
+      # voice's own lines are what the fields are seeded with.
+      assert html =~ ~s(placeholder="Hi! I&#39;m Sarah.")
+      assert html =~ ~s(placeholder="Pick an option to get started.")
+
+      toggle(view)
+
+      saved = Repo.reload!(profile)
+      assert saved.booking_heading == "Book a time"
+      assert saved.booking_greeting == "Hello, Sarah here."
+      assert saved.booking_instruction == "Choose a meeting to start."
+    end
+
+    # Switching on must not put a line back on a page whose voice leaves it
+    # unsaid: Paper greets nobody, so the greeting is seeded blank.
+    test "keeps Paper's greeting blank, showing the shared wording only as a placeholder", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile |> change(%{booking_theme: "3"}) |> Repo.update!()
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      html = toggle(view)
+
+      saved = Repo.reload!(profile)
+      assert saved.booking_text_enabled
+      assert saved.booking_heading == "Book a meeting with Sarah"
+      assert saved.booking_greeting == nil
+      assert saved.booking_instruction == "Select a meeting type"
+      assert html =~ ~s(placeholder="Hi! I&#39;m Sarah.")
+    end
+
+    test "keeps Folio's instruction blank, as its voice gives no instruction label", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile |> change(%{booking_theme: "4"}) |> Repo.update!()
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      toggle(view)
+
+      saved = Repo.reload!(profile)
+      assert saved.booking_text_enabled
+      assert saved.booking_heading == "Ways to work with me"
+      assert saved.booking_instruction == nil
+    end
+
+    test "lets Paper's organiser clear a greeting, which the booking page then leaves out", %{
+      conn: conn,
+      user: user,
+      profile: profile
+    } do
+      # A calendar is what makes the booking page ready to show its overview.
+      Factory.insert(:calendar_integration, user: user, is_active: true)
+
+      profile
+      |> change(%{
+        booking_theme: "3",
+        booking_text_enabled: true,
+        booking_heading: "Book a meeting with Sarah",
+        booking_greeting: "Hi! I'm Sarah.",
+        booking_instruction: "Select a meeting type"
+      })
+      |> Repo.update!()
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      html =
+        edit(view, %{
+          "booking_text_enabled" => "true",
+          "booking_heading" => "Book a meeting with Sarah",
+          "booking_greeting" => "",
+          "booking_instruction" => "Select a meeting type"
+        })
+
+      assert html =~ "All changes saved"
+      assert Repo.reload!(profile).booking_greeting == nil
+
+      # The page the dashboard's live preview shows.
+      [preview_path] =
+        html
+        |> LazyHTML.from_fragment()
+        |> LazyHTML.query("iframe[title='Booking page preview']")
+        |> LazyHTML.attribute("src")
+
+      {:ok, page, _html} = live(conn, preview_path)
+      assert has_element?(page, ".paper-intro__instruction", "Select a meeting type")
+      refute has_element?(page, ".paper-intro__greeting")
+      refute render(page) =~ "Hi! I&#39;m Sarah."
+    end
+
+    test "switching off resets the wording to the built-in defaults", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile = enable_with_wording(profile)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      toggle(view)
+
+      saved = Repo.reload!(profile)
+      refute saved.booking_text_enabled
+      # Cleared, not parked: a stale heading must not survive in the database,
+      # or the booking page would silently resurrect it on the next switch-on.
+      assert is_nil(saved.booking_heading)
+      assert is_nil(saved.booking_greeting)
+      assert is_nil(saved.booking_instruction)
+    end
+
+    test "reports the save rather than leaving the switch unexplained", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      assert toggle(view) =~ "All changes saved"
+    end
+  end
+
+  describe "autosaving the wording" do
+    test "persists a change without any submit", %{conn: conn, profile: profile} do
+      profile = enable_with_wording(profile)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      html = edit(view, %{"booking_heading" => "Ready to grow your business?"})
+
+      assert html =~ "All changes saved"
+      assert Repo.reload!(profile).booking_heading == "Ready to grow your business?"
+    end
+
+    test "refuses to publish a half-filled introduction", %{conn: conn, profile: profile} do
+      profile = enable_with_wording(profile)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      edit(view, %{"booking_heading" => ""})
+
+      # The last good wording stands; a blank must not reach the public page.
+      assert Repo.reload!(profile).booking_heading == "Ready to grow your business?"
+    end
+
+    test "treats a field emptied mid-edit as in progress, not as an error", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile = enable_with_wording(profile)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      # Autosave fires as soon as the debounce elapses, which is while the
+      # organiser is still retyping. Painting the field red at that moment reads
+      # as a fault rather than an unfinished sentence.
+      html = edit(view, %{"booking_heading" => ""})
+
+      assert html =~ "Complete the form to save"
+      refute html =~ "can&#39;t be blank"
+      assert Repo.reload!(profile).booking_heading == "Ready to grow your business?"
+    end
+
+    test "still shows a real validation failure in red, cap bypass included", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile = enable_with_wording(profile)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      # A cap breach is not work in progress, so it must not be softened into
+      # the same quiet "in progress" state as a blank field.
+      html = edit(view, %{"booking_heading" => String.duplicate("a", 61)})
+
+      assert html =~ "should be at most 60 character"
+      assert html =~ "Unsaved changes"
+      assert Repo.reload!(profile).booking_heading == "Ready to grow your business?"
+    end
+  end
+
+  describe "sanitisation at the save boundary" do
+    # Malformed encoding cannot be exercised here: Plug rejects invalid UTF-8 on
+    # urlencoded params before the handler runs. That branch is covered directly
+    # in `Tymeslot.Profiles.BookingTextInputValidationTest`.
+    test "keeps punctuation that a stricter sanitiser would strip", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile = enable_with_wording(profile)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/pages")
+
+      edit(view, %{"booking_heading" => "Let's talk -- properly"})
+
+      assert Repo.reload!(profile).booking_heading == "Let's talk -- properly"
+    end
+  end
+
+  describe "the preview" do
+    test "frames the organiser's own booking page", %{conn: conn} do
+      {:ok, _view, html} = live(conn, ~p"/dashboard/pages")
+
+      assert html =~ ~s(<iframe)
+      assert html =~ "/text-owner?"
+      # Preview display mode, so the framed page pins CSP frame-ancestors to
+      # 'self' rather than refusing to render inside the dashboard.
+      assert html =~ "preview=true"
+    end
+
+    test "offers no frame until the booking page has a username", %{
+      conn: conn,
+      profile: profile
+    } do
+      profile |> change(%{username: nil}) |> Repo.update!()
+
+      {:ok, _view, html} = live(conn, ~p"/dashboard/pages")
+
+      assert html =~ "No preview yet"
+      refute html =~ ~s(<iframe)
+    end
+  end
+
+  defp enable_with_wording(profile) do
+    profile
+    |> change(%{
+      booking_text_enabled: true,
+      booking_heading: "Ready to grow your business?",
+      booking_greeting: "I am Sarah.",
+      booking_instruction: "Choose a session."
+    })
+    |> Repo.update!()
+  end
+
+  defp toggle(view) do
+    view |> element("#booking-text-form-enabled") |> render_click()
+  end
+
+  defp edit(view, params) do
+    view
+    |> form("#booking-text-form form", profile_schema: params)
+    |> render_change()
+  end
+end

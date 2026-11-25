@@ -1,0 +1,136 @@
+defmodule TymeslotWeb.Themes.Quill.Scheduling.Components.CustomQuestionsComponent do
+  @moduledoc """
+  Quill-themed renderer for the custom-questions step. One question per
+  page, glassmorphism card chrome, numeric "N of M" progress indicator
+  (hidden when there is exactly one question).
+
+  Receives the shared `Engine` state via assigns and bubbles events back
+  to the parent LiveView as `{:step_event, :questions, …}`.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  use TymeslotWeb.Components.CoreComponents
+
+  alias TymeslotWeb.Themes.Shared.CustomQuestions.Events
+  alias TymeslotWeb.Themes.Shared.CustomQuestions.Inputs.Renderer, as: InputRenderer
+  alias TymeslotWeb.Themes.Shared.Journey.Components, as: JourneyComponents
+  alias TymeslotWeb.Themes.Shared.Journey.Runtime
+  alias TymeslotWeb.Themes.Shared.StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate update(assigns, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate handle_event(event, params, socket), to: Events
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns =
+      assign(assigns,
+        navigable_steps: Runtime.navigable_steps(assigns),
+        step_numbers: Runtime.step_numbers(assigns)
+      )
+
+    assigns = Events.assign_render_state(assigns)
+
+    ~H"""
+    <div
+      class="container quill-container flex-1"
+      data-locale={@locale}
+      id={assigns[:moment] && "#{assigns[:moment]}-step"}
+      data-moment={assigns[:moment]}
+      data-moment-state={assigns[:moment_state]}
+    >
+      <.page_layout
+        show_steps={true}
+        navigable_steps={@navigable_steps}
+        step_numbers={@step_numbers}
+        current_step={3}
+        slug={@duration}
+        username_context={@username_context}
+      >
+        <div class="stack">
+          <div class="flex-1 flex items-center justify-center px-4 py-4">
+            <div class="w-full">
+              <.glass_morphism_card
+                class="booker-card custom-questions-card"
+                data-testid="booker-card"
+              >
+                <div class="booking-card-body">
+                  <%= if @total > 1 do %>
+                    <p class="text-quill-secondary text-sm mb-2 custom-questions-progress">
+                      {dgettext("booking", "Question %{n} of %{m}", n: @index + 1, m: @total)}
+                    </p>
+                  <% end %>
+
+                  <JourneyComponents.moment_heading
+                    tag="h1"
+                    moment={assigns[:moment]}
+                    moment_state={assigns[:moment_state]}
+                    focus={assigns[:journey_focus]}
+                    class="section-header booking-heading booking-heading-wrapper"
+                  >
+                    {@definition["label"]}
+                  </JourneyComponents.moment_heading>
+
+                  <%= if @definition["help_text"] do %>
+                    <p class="text-quill-secondary mb-2">{@definition["help_text"]}</p>
+                  <% end %>
+
+                  <%!-- Not in an embed: the browser refuses autofocus inside a
+                        cross-origin frame and logs an error for the attempt. --%>
+                  <InputRenderer.render
+                    definition={@definition}
+                    value={@value}
+                    myself={@myself}
+                    autofocus={!assigns[:embedded]}
+                  />
+
+                  <%= if @error do %>
+                    <p class="form-field__error">{@error}</p>
+                  <% end %>
+
+                  <div class="booking-actions">
+                    <.action_button
+                      type="button"
+                      phx-click="back_step"
+                      phx-target={@myself}
+                      data-intent="back"
+                      variant={:secondary}
+                      class="flex-1"
+                    >
+                      <span class="custom-question-cta-nowrap">
+                        <.icon name="hero-arrow-left" class="inline-icon" />
+                        {dgettext("booking", "Back")}
+                      </span>
+                    </.action_button>
+
+                    <.action_button
+                      type="button"
+                      phx-click="next_step"
+                      phx-target={@myself}
+                      data-intent="continue"
+                      class="flex-1"
+                    >
+                      <span class="custom-question-cta-nowrap">
+                        <%= if @last? do %>
+                          {dgettext("booking", "Continue")}
+                          <.icon name="hero-arrow-right" class="inline-icon" />
+                        <% else %>
+                          {dgettext("booking", "Next")}
+                          <.icon name="hero-arrow-right" class="inline-icon" />
+                        <% end %>
+                      </span>
+                    </.action_button>
+                  </div>
+                </div>
+              </.glass_morphism_card>
+            </div>
+          </div>
+        </div>
+      </.page_layout>
+    </div>
+    """
+  end
+end

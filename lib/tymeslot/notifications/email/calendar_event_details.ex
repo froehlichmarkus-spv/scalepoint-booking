@@ -1,0 +1,430 @@
+defmodule Tymeslot.Notifications.Email.CalendarEventDetails do
+  @moduledoc """
+  Builds what the calendar invitation and event update emails say about an
+  event: its timing, and for an update the list of changes to announce.
+
+  ## Timed and all-day events
+
+  The two carry different fields and the emails have to read the right ones.
+  A timed event has `start_at`/`end_at` instants and a duration in minutes; an
+  all-day event has `start_date` and an exclusive `end_date` (the iCal
+  convention, see `Tymeslot.CalendarGrid.AllDay`) and no clock time at all.
+  Every details map carries `:all_day` so the templates can dispatch on it,
+  plus the fields of whichever representation applies:
+
+    * timed: `:start_time`, `:end_time`, `:duration` (minutes), `:date`
+    * all-day: `:start_date`, `:end_date` (exclusive), `:last_date`
+      (inclusive, for display), `:date`; `:start_time`, `:end_time` and
+      `:duration` are `nil`
+
+  ## First notifications
+
+  An event that has never been notified has no recorded baseline, so the job
+  carries `"first_notification" => true` and no `before_*` values. There is
+  nothing to compare against, so the change list states every populated field
+  as it is now, with `nil` where the previous value would go, and the
+  template renders it as the event's current details rather than a diff. The
+  time is always part of that list, so a first notification never comes out
+  empty. Jobs enqueued before the flag existed have no such key and diff
+  exactly as they always did.
+
+  ## The organiser's clock and language
+
+  These emails go to people the organiser added to an event on their own
+  calendar, whose language and timezone are unknown. Both emails are written
+  as the organiser sees the event: every time is shown in the organiser's
+  timezone (`:timezone`), the date is that day in their timezone, and the
+  email is in the organiser's language (`:attendee_locale`, the key the
+  templates read for their recipient). The ICS attachment carries the
+  instants themselves, so calendars still place the event correctly.
+  """
+
+  alias Tymeslot.CalendarGrid.AllDay
+  alias Tymeslot.CalendarGrid.EventVideo
+  alias Tymeslot.Emails.RecipientLocale
+  alias Tymeslot.Meetings.AttendeeNotifications.SeriesIdentity
+  alias Tymeslot.Profiles
+
+  @typedoc "One announced change: the field, its previous value (nil when unknown) and its current one."
+  @type change :: {:title | :location | :description | :video_link | :time, term(), term()}
+
+  @doc """
+  Invitation details from the job args of a `send_calendar_invitation` job,
+  for an organiser loaded with their profile
+  (`Tymeslot.Auth.get_user_with_profile/1`), which names them and gives the
+  timezone the event is stated in.
+  `:method` is `:cancel` for a cancellation (`:request` otherwise, and for a
+  job enqueued before the method was read), `:series` whether that
+  cancellation takes every occurrence of a recurring event, and `:removed`
+  whether it is the recipient's removal from an event that goes ahead.
+  `:ical_uid` and `:other_entries` are the entries in the guest's calendar
+  the attachment changes, when they are not the event's own
+  (`Tymeslot.Meetings.AttendeeNotifications.SeriesIdentity`).
+  """
+  @spec invitation_details(map(), map()) :: {:ok, map()} | {:error, String.t()}
+  def invitation_details(user, args) do
+    with {:ok, timing} <- invitation_timing(args) do
+      {:ok,
+       timing
+       |> in_organiser_view(user)
+       |> Map.merge(%{
+         event_title: args["event_title"],
+         event_uid: args["event_uid"],
+         ical_uid: args["ical_uid"],
+         other_entries: SeriesIdentity.from_arg(args["other_entries"]),
+         location: args["event_location"],
+         video_link: args["event_video_link"],
+         description: args["event_description"],
+         recurrence_rule: args["event_recurrence_rule"],
+         organizer_name: organiser_name(user),
+         organizer_email: user.email,
+         organizer_user_id: user.id,
+         method: parse_method(args["method"]),
+         sequence: args["sequence"],
+         series: args["event_series"] == true,
+         removed: args["event_removed"] == true
+       })}
+    end
+  end
+
+  @doc """
+  The changes an update notification announces, diffed from the job's
+  `before_*` args against the cached event, or stated outright for a first
+  notification (see the moduledoc).
+  """
+  @spec changes(map(), map()) :: [change()]
+  def changes(current_event, args) do
+    if first_notification?(args) do
+      current_details(current_event)
+    else
+      []
+      |> maybe_add_change(:title, args["before_title"], current_event.summary)
+      |> maybe_add_change(:location, args["before_location"], current_event.location)
+      |> maybe_add_change(
+        :description,
+        EventVideo.without_join_lines(args["before_description"]),
+        EventVideo.without_join_lines(current_event.description)
+      )
+      |> maybe_add_video_change(args, video_link(current_event))
+      |> maybe_add_time_change(args, current_event)
+    end
+  end
+
+  @doc "Whether the job announces an event whose previous state was never recorded."
+  @spec first_notification?(map()) :: boolean()
+  def first_notification?(%{"first_notification" => true}), do: true
+  def first_notification?(_args), do: false
+
+  @doc """
+  The event a job carries as the update left it (see
+  `Tymeslot.Emails.EmailScheduler.CalendarScheduler.schedule_event_update_notification/1`),
+  in the shape of a cached event, so the update is described exactly as one
+  read from the cache would be. `{:error, :no_timing}` when its timing does
+  not parse.
+  """
+  @spec snapshot_event(map()) :: {:ok, map()} | {:error, :no_timing}
+  def snapshot_event(snapshot) do
+    event = %{
+      uid: snapshot["uid"],
+      summary: snapshot["summary"],
+      location: snapshot["location"],
+      description: snapshot["description"],
+      video_link: snapshot["video_link"],
+      all_day: snapshot["all_day"] == true,
+      start_at: snapshot_datetime(snapshot["start_at"]),
+      end_at: snapshot_datetime(snapshot["end_at"]),
+      start_date: snapshot_date(snapshot["start_date"]),
+      end_date: snapshot_date(snapshot["end_date"])
+    }
+
+    case moment(event) do
+      {:ok, _moment} -> {:ok, event}
+      :error -> {:error, :no_timing}
+    end
+  end
+
+  defp snapshot_datetime(iso) do
+    case parse_datetime(iso) do
+      {:ok, datetime} -> datetime
+      {:error, _invalid} -> nil
+    end
+  end
+
+  defp snapshot_date(iso) do
+    case parse_date(iso) do
+      {:ok, date} -> date
+      {:error, _invalid} -> nil
+    end
+  end
+
+  @doc """
+  Update details for the cached event, for an organiser loaded as for
+  `invitation_details/2`. `{:error, :no_timing}` for a row that
+  carries neither representation's fields, which nothing can describe.
+  `:series` is `:all` or `:following` for the update of a whole series or
+  of its occurrences from the edited one on, `nil` for one event.
+  `:ical_uid` and `:other_entries` are as on `invitation_details/2`.
+  """
+  @spec update_details(map(), map(), [change()], map()) :: {:ok, map()} | {:error, :no_timing}
+  def update_details(user, current_event, changes, args) do
+    with {:ok, timing} <- event_timing(current_event) do
+      view = in_organiser_view(timing, user)
+
+      {:ok,
+       Map.merge(view, %{
+         event_title: current_event.summary,
+         event_uid: current_event.uid,
+         ical_uid: args["ical_uid"],
+         other_entries: SeriesIdentity.from_arg(args["other_entries"]),
+         location: current_event.location,
+         video_link: video_link(current_event),
+         description: current_event.description,
+         organizer_name: organiser_name(user),
+         organizer_email: user.email,
+         organizer_user_id: user.id,
+         changes: Enum.map(changes, &change_in_zone(&1, view.timezone)),
+         first_notification: first_notification?(args),
+         method: parse_method(args["method"]),
+         sequence: args["sequence"],
+         series: parse_series(args["series"])
+       })}
+    end
+  end
+
+  defp invitation_timing(%{"event_all_day" => true} = args) do
+    with {:ok, start_date} <- parse_date(args["event_start_date"]),
+         {:ok, end_date} <- parse_date(args["event_end_date"]) do
+      {:ok, all_day_timing(start_date, end_date)}
+    end
+  end
+
+  defp invitation_timing(args) do
+    with {:ok, start_time} <- parse_datetime(args["event_start_at"]),
+         {:ok, end_time} <- parse_datetime(args["event_end_at"]) do
+      {:ok, timed_timing(start_time, end_time)}
+    end
+  end
+
+  defp event_timing(%{
+         all_day: true,
+         start_date: %Date{} = start_date,
+         end_date: %Date{} = end_date
+       }),
+       do: {:ok, all_day_timing(start_date, end_date)}
+
+  defp event_timing(%{start_at: %DateTime{} = start_at, end_at: %DateTime{} = end_at}),
+    do: {:ok, timed_timing(start_at, end_at)}
+
+  defp event_timing(_event), do: {:error, :no_timing}
+
+  defp timed_timing(start_time, end_time) do
+    %{
+      all_day: false,
+      start_time: start_time,
+      end_time: end_time,
+      date: DateTime.to_date(start_time),
+      duration: DateTime.diff(end_time, start_time, :minute),
+      start_date: nil,
+      end_date: nil,
+      last_date: nil
+    }
+  end
+
+  # What the guest knows the organiser by, as a booking's emails name them:
+  # the name on their profile, then the one their account was created with
+  # (`Profiles.user_display_name/1`), and only then their address. An account
+  # made with an email and a password has no name of its own, so reading
+  # `user.name` alone named nearly every organiser by their address.
+  defp organiser_name(user), do: Profiles.user_display_name(user) || user.email
+
+  # A timed event's instants shifted into the organiser's timezone, with the
+  # date taken there, so an event at 00:30 in Berlin is not announced on the
+  # day before. An all-day event has dates only and is left as it is. The
+  # zone and the language are read from the user as loaded, profile included,
+  # so one email job reads the organiser once.
+  defp in_organiser_view(timing, user) do
+    timezone = Profiles.timezone(Map.get(user, :profile))
+
+    timing
+    |> shift_timing(timezone)
+    |> Map.merge(%{
+      timezone: timezone,
+      attendee_locale: RecipientLocale.locale_for(user)
+    })
+  end
+
+  defp shift_timing(%{all_day: false, start_time: start_time, end_time: end_time} = timing, zone) do
+    start_time = in_zone(start_time, zone)
+
+    %{
+      timing
+      | start_time: start_time,
+        end_time: in_zone(end_time, zone),
+        date: DateTime.to_date(start_time)
+    }
+  end
+
+  defp shift_timing(timing, _zone), do: timing
+
+  defp change_in_zone({:time, before, current}, zone),
+    do: {:time, moment_in_zone(before, zone), moment_in_zone(current, zone)}
+
+  defp change_in_zone(change, _zone), do: change
+
+  defp moment_in_zone({start_at, end_at}, zone),
+    do: {in_zone(start_at, zone), in_zone(end_at, zone)}
+
+  defp moment_in_zone(moment, zone), do: in_zone(moment, zone)
+
+  defp in_zone(%DateTime{} = datetime, zone) do
+    case DateTime.shift_zone(datetime, zone) do
+      {:ok, shifted} -> shifted
+      {:error, _reason} -> datetime
+    end
+  end
+
+  defp in_zone(other, _zone), do: other
+
+  defp all_day_timing(start_date, end_date) do
+    %{
+      all_day: true,
+      start_time: nil,
+      end_time: nil,
+      date: start_date,
+      duration: nil,
+      start_date: start_date,
+      end_date: end_date,
+      last_date: AllDay.last_day(start_date, end_date)
+    }
+  end
+
+  # An all-day event's job can carry nil timestamps. A nil is read as a
+  # malformed value and the job is discarded, without raising through retries.
+  defp parse_datetime(iso) when is_binary(iso) do
+    case DateTime.from_iso8601(iso) do
+      {:ok, dt, _offset} -> {:ok, dt}
+      {:error, _reason} -> {:error, "Invalid datetime: #{iso}"}
+    end
+  end
+
+  defp parse_datetime(other), do: {:error, "Invalid datetime: #{inspect(other)}"}
+
+  defp parse_date(iso) when is_binary(iso) do
+    case Date.from_iso8601(iso) do
+      {:ok, date} -> {:ok, date}
+      {:error, _reason} -> {:error, "Invalid datetime: #{iso}"}
+    end
+  end
+
+  defp parse_date(other), do: {:error, "Invalid datetime: #{inspect(other)}"}
+
+  defp current_details(current_event) do
+    fields =
+      for {field, current} <- [
+            title: current_event.summary,
+            location: current_event.location,
+            description: EventVideo.without_join_lines(current_event.description),
+            video_link: video_link(current_event)
+          ],
+          normalise_blank(current) != nil,
+          do: {field, nil, current}
+
+    case moment(current_event) do
+      {:ok, current} -> [{:time, nil, display_moment(current)} | fields]
+      :error -> fields
+    end
+  end
+
+  defp maybe_add_change(changes, field, before_val, current_val) do
+    if normalise_blank(before_val) != normalise_blank(current_val) do
+      [{field, before_val, current_val} | changes]
+    else
+      changes
+    end
+  end
+
+  # The join link travels in its own field, so a new room reads as a new
+  # link rather than as an edit of the description it is written into. A
+  # job enqueued before the previous link was recorded carries no
+  # `before_video_link` key and announces no video change. A baseline records
+  # no link as "", which is read as none.
+  defp maybe_add_video_change(changes, %{"before_video_link" => before}, current),
+    do: maybe_add_change(changes, :video_link, normalise_blank(before), current)
+
+  defp maybe_add_video_change(changes, _args, _current), do: changes
+
+  defp video_link(event), do: Map.get(event, :video_link)
+
+  # Compares whichever representation each side carries, so an event moved to
+  # other days, retimed, or toggled between all-day and timed all read as a
+  # time change. A job without a usable `before` pair (a baseline recorded
+  # before its timing was, or before all-day dates were) announces none.
+  defp maybe_add_time_change(changes, args, current_event) do
+    with {:ok, before} <- before_moment(args),
+         {:ok, current} <- moment(current_event),
+         false <- same_moment?(before, current) do
+      [{:time, display_moment(before), display_moment(current)} | changes]
+    else
+      _unchanged_or_unknown -> changes
+    end
+  end
+
+  defp before_moment(%{"before_start_at" => start_at, "before_end_at" => end_at})
+       when is_binary(start_at) and is_binary(end_at) do
+    with {:ok, start_dt, _offset} <- DateTime.from_iso8601(start_at),
+         {:ok, end_dt, _offset} <- DateTime.from_iso8601(end_at) do
+      {:ok, {:timed, start_dt, end_dt}}
+    else
+      _invalid -> :error
+    end
+  end
+
+  defp before_moment(%{"before_start_date" => start_date, "before_end_date" => end_date})
+       when is_binary(start_date) and is_binary(end_date) do
+    with {:ok, start_d} <- Date.from_iso8601(start_date),
+         {:ok, end_d} <- Date.from_iso8601(end_date) do
+      {:ok, {:all_day, start_d, end_d}}
+    else
+      _invalid -> :error
+    end
+  end
+
+  defp before_moment(_args), do: :error
+
+  defp moment(%{all_day: true, start_date: %Date{} = start_date, end_date: %Date{} = end_date}),
+    do: {:ok, {:all_day, start_date, end_date}}
+
+  defp moment(%{start_at: %DateTime{} = start_at, end_at: %DateTime{} = end_at}),
+    do: {:ok, {:timed, start_at, end_at}}
+
+  defp moment(_event), do: :error
+
+  defp same_moment?({:timed, start_a, end_a}, {:timed, start_b, end_b}),
+    do: DateTime.compare(start_a, start_b) == :eq and DateTime.compare(end_a, end_b) == :eq
+
+  defp same_moment?({:all_day, start_a, end_a}, {:all_day, start_b, end_b}),
+    do: Date.compare(start_a, start_b) == :eq and Date.compare(end_a, end_b) == :eq
+
+  defp same_moment?(_before, _current), do: false
+
+  # What the email shows for a moment: a timed event's start and end, so a
+  # change of the end alone is visible, an all-day event's inclusive range
+  # of days.
+  defp display_moment({:timed, start_at, end_at}), do: {start_at, end_at}
+
+  defp display_moment({:all_day, start_date, end_date}),
+    do: Date.range(start_date, AllDay.last_day(start_date, end_date))
+
+  # How much of a series the update changed: `nil` for one event.
+  defp parse_series("all"), do: :all
+  defp parse_series("following"), do: :following
+  defp parse_series(_one_event), do: nil
+
+  defp parse_method("cancel"), do: :cancel
+  defp parse_method("request"), do: :request
+  defp parse_method(_other), do: :request
+
+  defp normalise_blank(nil), do: nil
+  defp normalise_blank(""), do: nil
+  defp normalise_blank(val), do: val
+end

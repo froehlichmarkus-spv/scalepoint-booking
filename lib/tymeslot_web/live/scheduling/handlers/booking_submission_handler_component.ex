@@ -1,0 +1,586 @@
+defmodule TymeslotWeb.Live.Scheduling.Handlers.BookingSubmissionHandlerComponent do
+  @moduledoc """
+  Specialized handler for booking submission operations in scheduling themes.
+
+  This handler provides common booking submission functionality that can be used across
+  different themes, eliminating code duplication while maintaining theme independence.
+
+  ## Usage
+
+      alias TymeslotWeb.Live.Scheduling.Handlers.BookingSubmissionHandlerComponent
+
+      # In your theme's handle_info callback:
+      def handle_info({:step_event, :booking, :submit, data}, socket) do
+        case BookingSubmissionHandlerComponent.submit_booking(socket, data) do
+          {:ok, updated_socket} -> {:noreply, updated_socket}
+          {:redirect, updated_socket} -> {:noreply, updated_socket}
+          {:awaiting_payment, updated_socket} -> {:noreply, updated_socket}
+          {:honeypot, updated_socket} -> {:noreply, updated_socket}
+          {:slot_taken, updated_socket} -> {:noreply, updated_socket}
+          {:series_unavailable, updated_socket} -> {:noreply, updated_socket}
+          {:error, error_socket} -> {:noreply, error_socket}
+        end
+      end
+
+  ## Available Functions
+
+  - `submit_booking/2` - Process booking submission with orchestrator
+  - `check_duplicate_submission/1` - Check for duplicate submissions
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  import Phoenix.Component, only: [assign: 3]
+
+  alias Phoenix.Component
+  alias Phoenix.LiveView
+  alias Tymeslot.BookingPages
+  alias Tymeslot.Bookings.DemoOrchestrator
+  alias Tymeslot.Bookings.Errors
+  alias Tymeslot.CustomFields
+  alias Tymeslot.Demo
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.MeetingPayments
+  alias Tymeslot.Meetings
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.Meetings.SeatView
+  alias Tymeslot.Security.Honeypot
+  alias Tymeslot.Security.InputProcessor
+  alias TymeslotWeb.Live.Scheduling.AvailabilityHelpers
+  alias TymeslotWeb.Live.Scheduling.BookingConfig
+  alias TymeslotWeb.Live.Scheduling.Handlers.BookingErrorMessage
+  alias TymeslotWeb.Live.Scheduling.Handlers.BookingGuards
+  alias TymeslotWeb.Live.Scheduling.PreviewMode
+  alias TymeslotWeb.Live.Shared.Flash
+  alias TymeslotWeb.Themes.Shared.BookingLocation
+  alias TymeslotWeb.Themes.Shared.Journey.Facts.Series
+  alias TymeslotWeb.Themes.Shared.VerificationResend
+
+  require Logger
+
+  # Refusals the booking flow makes as designed; not failures worth an error log.
+  @expected_refusals [:invitation_required, :invitation_unavailable, :slot_taken]
+
+  @doc """
+  Submits a booking using the booking orchestrator.
+
+  This function:
+  1. Validates the form data
+  2. Checks for duplicate submissions
+  3. Calls the booking orchestrator
+  4. Handles success/error responses
+
+  Returns:
+    * `{:ok, socket}` — booking confirmed, theme should advance to confirmation
+    * `{:redirect, socket}` — paid booking awaiting payment, socket already
+      carries an external redirect to the Stripe Checkout URL (top-level
+      booker only — Stripe blocks framing, so this branch never fires
+      from inside an embed iframe)
+    * `{:awaiting_payment, socket}` — paid booking inside an embed iframe;
+      the socket has been told to open Stripe Checkout in a new tab and
+      carries the meeting + checkout URL for the in-iframe wait screen
+    * `{:slot_taken, socket}` — the chosen slot was booked by someone else
+      between selection and submit; the caller should return the booker to
+      the schedule step with a fresh slot list rather than strand them on
+      the form with the now-invalid slot
+    * `{:series_unavailable, socket}` — sessions of a series could not be
+      booked; the socket's series moment already names them
+      (`Journey.Facts.Series.merge_lost/2`) and checks the series again, and
+      the caller should return the booker to it
+    * `{:honeypot, socket}` — the hidden honeypot field was filled in; the
+      socket looks like a success so a bot cannot tell it was caught
+    * `{:error, socket}` — validation or persistence failure
+
+  A booked series is `{:ok, socket}` too, with `:series` and
+  `:series_meetings` assigned and the booker's first session standing for
+  the booking.
+
+  ## Examples
+
+      case BookingSubmissionHandlerComponent.submit_booking(socket, booking_params) do
+        {:ok, updated_socket} -> {:noreply, updated_socket}
+        {:redirect, redirect_socket} -> {:noreply, redirect_socket}
+        {:awaiting_payment, awaiting_socket} -> {:noreply, awaiting_socket}
+        {:honeypot, honeypot_socket} -> {:noreply, honeypot_socket}
+        {:slot_taken, retry_socket} -> {:noreply, retry_socket}
+        {:series_unavailable, series_socket} -> {:noreply, series_socket}
+        {:error, error_socket} -> {:noreply, error_socket}
+      end
+  """
+  @spec submit_booking(Phoenix.LiveView.Socket.t(), map()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+          | {:redirect, Phoenix.LiveView.Socket.t()}
+          | {:awaiting_payment, Phoenix.LiveView.Socket.t()}
+          | {:honeypot, Phoenix.LiveView.Socket.t()}
+          | {:slot_taken, Phoenix.LiveView.Socket.t()}
+          | {:series_unavailable, Phoenix.LiveView.Socket.t()}
+          | {:error, Phoenix.LiveView.Socket.t()}
+  def submit_booking(socket, booking_params) do
+    Logger.info("Submit event triggered for booking form")
+
+    # The cheapest gate, checked before validation: a tripped honeypot means
+    # nothing else about the submission is worth processing.
+    if Honeypot.tripped?(booking_params) do
+      {:honeypot, BookingGuards.handle_honeypot(socket, booking_params)}
+    else
+      socket = assign(socket, :refused_questions, refused_questions(socket))
+
+      case InputProcessor.validate_form(booking_params, BookingConfig.booking_field_spec()) do
+        {:ok, sanitized_params} ->
+          Logger.info("Form validation passed, proceeding to booking")
+          validate_and_submit(socket, sanitized_params, booking_params)
+
+        {:error, errors} ->
+          Logger.warning("Form validation failed", errors: LogFormat.reason(errors))
+
+          socket =
+            socket
+            |> assign(:form, Component.to_form(booking_params))
+            |> assign(:validation_errors, errors)
+            |> Flash.put_flash(:error, dgettext("booking", "Please correct the errors below."))
+
+          {:error, socket}
+      end
+    end
+  end
+
+  # Handles successful booking creation: records the meeting on the socket
+  # for the confirmation step. A real booking puts no flash: the
+  # confirmation step is the feedback, and a toast would cover its heading
+  # on phones and in embeds. A demo booking keeps one, because the
+  # confirmation step says a confirmation email was sent and a demo sends
+  # none.
+  @spec handle_booking_success(Phoenix.LiveView.Socket.t(), map(), map(), module()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  defp handle_booking_success(socket, meeting, validated_data, orchestrator) do
+    socket =
+      socket
+      |> assign(:submitting, false)
+      |> assign_booked_identity(meeting, orchestrator)
+      |> assign(:meeting_status, meeting.status)
+      |> assign(:verification_deadline_at, Map.get(meeting, :verification_deadline_at))
+      |> VerificationResend.remember(meeting)
+      |> BookingLocation.assign_booked(meeting)
+      |> assign(:name, validated_data["name"])
+      |> assign(:email, validated_data["email"])
+      |> assign(:custom_fields_snapshot, Map.get(validated_data, "custom_fields_snapshot", []))
+      |> assign(:custom_field_answers, Map.get(validated_data, "custom_field_answers", %{}))
+      |> assign(:guest_emails, socket.assigns[:guest_emails] || [])
+      |> put_demo_flash()
+
+    {:ok, socket}
+  end
+
+  defp put_demo_flash(socket) do
+    if Demo.demo_mode?(socket) do
+      Flash.put_flash(socket, :info, demo_success_message(socket.assigns[:is_rescheduling]))
+    else
+      socket
+    end
+  end
+
+  defp demo_success_message(true) do
+    dgettext(
+      "booking",
+      "Demo: Meeting rescheduled successfully! (Using the app, you would receive a confirmation email)"
+    )
+  end
+
+  defp demo_success_message(_not_rescheduling) do
+    dgettext(
+      "booking",
+      "Demo: Booking submitted successfully! (Using the app, you would receive a confirmation email)"
+    )
+  end
+
+  # A seat on a group meeting is the booker's own booking: its calendar file
+  # is the seat's, under its management token. The meeting uid of a group
+  # meeting names the shared slot, which a booker must never be handed: it
+  # opens the slot's public cancel and reschedule pages.
+  #
+  # A simulated booking (`DemoOrchestrator`) stores no meeting, so there is
+  # no calendar file to download and the confirmation offers none.
+  defp assign_booked_identity(socket, _meeting, DemoOrchestrator) do
+    socket
+    |> assign(:meeting_uid, nil)
+    |> assign(:seat_calendar_url, nil)
+  end
+
+  defp assign_booked_identity(socket, meeting, _orchestrator) do
+    {meeting_uid, seat_calendar_url} =
+      case Meetings.booker_calendar(meeting) do
+        {:meeting, uid} -> {uid, nil}
+        {:seat, url} -> {nil, url}
+        :none -> {nil, nil}
+      end
+
+    socket
+    |> assign(:meeting_uid, meeting_uid)
+    |> assign(:seat_calendar_url, seat_calendar_url)
+  end
+
+  # Handles booking submission errors: updates the socket with the
+  # appropriate error message and state.
+  @spec handle_booking_error(Phoenix.LiveView.Socket.t(), Errors.classified_error()) ::
+          {:error, Phoenix.LiveView.Socket.t()}
+  defp handle_booking_error(socket, reason) do
+    socket =
+      socket
+      |> BookingGuards.release_submission()
+      |> Flash.put_flash(:error, BookingErrorMessage.message(reason))
+
+    log_booking_error(reason)
+
+    {:error, socket}
+  end
+
+  # A refusal because the organiser's calendars could not all be read is the
+  # check working as meant; `CalendarCheck` has already logged its cause.
+  defp log_booking_error(:availability_unverifiable),
+    do: Logger.info("Booking refused: the organiser's availability could not be verified")
+
+  defp log_booking_error(reason) when reason in @expected_refusals,
+    do: Logger.info("Booking refused", reason: LogFormat.reason(reason))
+
+  defp log_booking_error(reason),
+    do: Logger.error("Failed to create meeting appointment", reason: LogFormat.reason(reason))
+
+  # Private functions
+
+  # The questions this submit refuses, by id. Kept apart from
+  # `:validation_errors`, which the form's own validation replaces on every
+  # change, so a screen that shows the questions beside the form names each
+  # one until its answer is put right (`CustomQuestions.Events.all_questions/1`),
+  # whether or not the form's own fields failed too.
+  defp refused_questions(socket) do
+    case socket.assigns[:engine] do
+      %{definitions: definitions, answers: answers} ->
+        case CustomFields.validate_answers(definitions, answers) do
+          {:ok, _answers} -> MapSet.new()
+          {:error, errors} -> errors |> Map.keys() |> MapSet.new()
+        end
+
+      _no_engine ->
+        MapSet.new()
+    end
+  end
+
+  defp validate_and_submit(socket, sanitized_params, booking_params) do
+    engine = socket.assigns[:engine]
+    snapshot = if engine, do: engine.definitions, else: []
+    raw_answers = if engine, do: engine.answers, else: %{}
+
+    with {:ok, custom_answers} <- CustomFields.validate_answers(snapshot, raw_answers),
+         {:ok, socket} <- BookingGuards.run(socket, sanitized_params, booking_params) do
+      enriched_params =
+        sanitized_params
+        |> Map.put("custom_fields_snapshot", snapshot)
+        |> Map.put("custom_field_answers", custom_answers)
+
+      process_booking_submission(socket, enriched_params)
+    else
+      {:error, field_errors} when is_map(field_errors) and not is_struct(field_errors) ->
+        Logger.warning("Custom field validation failed", errors: LogFormat.reason(field_errors))
+
+        socket =
+          socket
+          |> assign(:validation_errors, %{custom_fields: field_errors})
+          |> Flash.put_flash(:error, dgettext("booking", "Please correct the errors below."))
+
+        {:error, socket}
+
+      {:error, socket} ->
+        {:error, socket}
+    end
+  end
+
+  defp process_booking_submission(socket, sanitized_params) do
+    form = Component.to_form(sanitized_params)
+
+    # A series an earlier submission booked is not this one's: a single
+    # booking after it must not confirm its sessions.
+    socket =
+      socket
+      |> assign(:form, form)
+      |> Series.forget_booked()
+
+    params = %{
+      form_data: sanitized_params,
+      meeting_params:
+        Map.merge(
+          build_meeting_params(socket, sanitized_params),
+          socket.assigns[:tracking] || %{}
+        )
+    }
+
+    opts = [
+      is_rescheduling: socket.assigns[:is_rescheduling] || false,
+      reschedule_uid: socket.assigns[:reschedule_meeting_uid],
+      reschedule_seat_token: socket.assigns[:reschedule_seat_token],
+      organizer_user_id: socket.assigns[:organizer_user_id]
+    ]
+
+    case booking_orchestrator(socket) do
+      :preview_without_valid_token ->
+        handle_expired_preview(socket)
+
+      orchestrator ->
+        handle_submit_result(
+          socket,
+          orchestrator.submit_booking(params, opts),
+          sanitized_params,
+          orchestrator
+        )
+    end
+  end
+
+  defp handle_submit_result(socket, result, sanitized_params, orchestrator) do
+    case result do
+      {:ok, :payment_required, %{meeting: meeting, checkout_url: url} = held} ->
+        socket
+        |> assign_series(held)
+        |> handle_payment_required(meeting, url, sanitized_params)
+
+      {:ok, %{series: _series, meetings: [_first | _rest]} = booked} ->
+        handle_series_success(socket, booked, sanitized_params, orchestrator)
+
+      {:ok, meeting} ->
+        handle_booking_success(socket, meeting, sanitized_params, orchestrator)
+
+      {:error, {:occurrences_unavailable, occurrences}} ->
+        handle_series_unavailable(socket, occurrences)
+
+      {:error, :slot_taken} ->
+        handle_slot_taken(socket)
+
+      {:error, :booking_limit_reached} ->
+        handle_booking_limit_reached(socket)
+
+      {:error, reason} ->
+        handle_booking_error(socket, reason)
+    end
+  end
+
+  # A booked series is confirmed through its first session, as the booker
+  # holds it: their seat on a group type's session. The confirmation lists
+  # every session from `:series_meetings`.
+  defp handle_series_success(socket, booked, sanitized_params, orchestrator) do
+    [first | _rest] = booked.meetings
+
+    first =
+      case Enum.find(booked[:participants] || [], &(&1.meeting_id == first.id)) do
+        nil -> first
+        seat -> SeatView.at_event(first, seat)
+      end
+
+    socket
+    |> assign_series(booked)
+    |> handle_booking_success(first, sanitized_params, orchestrator)
+  end
+
+  defp assign_series(socket, %{series: series, meetings: meetings}),
+    do: socket |> assign(:series, series) |> assign(:series_meetings, meetings)
+
+  defp assign_series(socket, _single), do: socket
+
+  # Sessions of the series were taken between the check and the submit. The
+  # series moment names them and checks the series again; the caller returns
+  # the booker there.
+  defp handle_series_unavailable(socket, occurrences) do
+    Logger.info("Series refused: sessions no longer available",
+      count: length(occurrences)
+    )
+
+    socket =
+      socket
+      |> BookingGuards.release_submission()
+      |> Series.merge_lost(occurrences)
+
+    {:series_unavailable, socket}
+  end
+
+  defp handle_expired_preview(socket) do
+    # Log it. A blocked submission produces no meeting row, no email and no
+    # exception, so without this line the only trace is a flash the visitor
+    # sees and nobody else does.
+    Logger.warning("Booking blocked: preview claimed without a valid owner token",
+      organizer_user_id: socket.assigns[:organizer_user_id],
+      theme_id: socket.assigns[:theme_id]
+    )
+
+    socket =
+      socket
+      |> BookingGuards.release_submission()
+      |> Flash.put_flash(
+        :error,
+        dgettext("booking", "Preview session expired. Reload the page to continue.")
+      )
+
+    {:error, socket}
+  end
+
+  # The slot was booked out from under this attendee between selecting it and
+  # submitting (the server-side conflict check correctly refused the double
+  # booking). The domain layer signals this with the semantic `:slot_taken`
+  # atom (see `Tymeslot.Bookings.Orchestrator.submit_booking/2`) rather than a
+  # display string, so this routing decision never depends on copy text. Stop
+  # the in-flight submission and hand back a `:slot_taken` tuple so the flow
+  # returns the booker to the schedule step with refreshed availability —
+  # never leave them stranded on the form re-submitting a dead slot.
+  defp handle_slot_taken(socket) do
+    socket =
+      socket
+      |> BookingGuards.release_submission()
+      |> Flash.put_flash(
+        :error,
+        BookingErrorMessage.voiced(:slot_taken, socket.assigns[:theme_id])
+      )
+
+    {:slot_taken, socket}
+  end
+
+  # A capped day is stale-page territory just like a sniped slot, so reuse
+  # the `:slot_taken` bounce tuple — the flow returns the booker to the
+  # schedule step with refreshed availability, where capped days now render
+  # unavailable. Only the flash copy differs.
+  defp handle_booking_limit_reached(socket) do
+    socket =
+      socket
+      |> assign(:submitting, false)
+      |> assign(:submission_processed, false)
+      |> Flash.put_flash(:error, BookingErrorMessage.message(:booking_limit_reached))
+
+    {:slot_taken, socket}
+  end
+
+  # Selects the booking orchestrator based on the current preview state.
+  #
+  # Three cases:
+  #
+  #   1. `:owner_preview` true — the token was verified and bound to this page's
+  #      owner. Simulate via DemoOrchestrator: no DB row, email, or calendar
+  #      event.
+  #
+  #   2. `:theme_preview` true but `:owner_preview` false — the URL claimed a
+  #      preview (`?preview=`), so the owner believes they are in a simulation,
+  #      but no valid owner-bound token backed the claim or it expired during
+  #      the session. Persisting a real booking here would be invisible to the
+  #      owner. Fail closed: return `:preview_without_valid_token` so the caller
+  #      blocks the submission with an explicit error.
+  #
+  #      The claim must therefore only ever come from a parameter a visitor
+  #      cannot trip over by accident (`?preview=`, never `?theme=`, which any
+  #      visitor's URL may carry); `PreviewMode.claimed?/1` alone owns that
+  #      rule.
+  #
+  #   3. Neither flag set — a normal public booking; dispatch to the real
+  #      (or SaaS-demo-mode) orchestrator.
+  defp booking_orchestrator(socket) do
+    cond do
+      PreviewMode.owner_preview?(socket) -> DemoOrchestrator
+      socket.assigns[:theme_preview] -> :preview_without_valid_token
+      true -> Demo.get_orchestrator(socket)
+    end
+  end
+
+  defp build_meeting_params(socket, sanitized_params) do
+    params = %{
+      date: socket.assigns.selected_date,
+      time: socket.assigns.selected_time,
+      duration: AvailabilityHelpers.duration_minutes(socket),
+      user_timezone: socket.assigns.user_timezone,
+      organizer_user_id: socket.assigns.organizer_user_id,
+      meeting_type_id: get_meeting_type_id(socket),
+      booking_page_id: BookingPages.page_id(socket.assigns[:organizer_profile]),
+      requires_approval: Approval.required?(socket.assigns[:meeting_type]),
+      attendee_locale:
+        socket.assigns[:locale] || Application.get_env(:tymeslot, :locales)[:default] || "en",
+      # Always true for public booking flow
+      with_video_room: true,
+      custom_fields_snapshot: Map.get(sanitized_params, "custom_fields_snapshot", []),
+      custom_field_answers: Map.get(sanitized_params, "custom_field_answers", %{}),
+      guest_emails: socket.assigns[:guest_emails] || [],
+      # Only the chosen option's id travels, with the provider picked within a
+      # video option or the venue picked within an in-person one. What they
+      # mean is re-derived from the host's own meeting type in
+      # `Bookings.Policy`, so a forged id resolves to a location, a provider or
+      # a venue the host already offers.
+      location_option_id: BookingLocation.submitted_option_id(socket.assigns),
+      location_phone: socket.assigns[:location_phone],
+      location_video_integration_id: BookingLocation.submitted_video_id(socket.assigns),
+      location_venue_id: BookingLocation.submitted_venue_id(socket.assigns),
+      invitation_id: invitation_id(socket.assigns[:invitation])
+    }
+
+    put_series(params, Series.request(socket.assigns))
+  end
+
+  # Only a series travels as `:series`: a single session's params stay as
+  # they always were. A series takes no guests, so any the booker added
+  # before choosing one (the field then hides) are left behind.
+  defp put_series(params, nil), do: params
+
+  defp put_series(params, series),
+    do: Map.merge(params, %{series: series, guest_emails: []})
+
+  # The invitation the entry gate let this booking in on, if any.
+  defp invitation_id(%{id: id}), do: id
+  defp invitation_id(nil), do: nil
+
+  defp handle_payment_required(socket, meeting, url, sanitized_params) do
+    if socket.assigns[:embedded] do
+      handle_payment_required_embedded(socket, meeting, url, sanitized_params)
+    else
+      handle_payment_required_top_level(socket, url)
+    end
+  end
+
+  defp handle_payment_required_top_level(socket, url) do
+    Logger.info("Booking redirecting to Stripe Checkout for payment", checkout_url: url)
+
+    socket =
+      socket
+      |> assign(:submitting, false)
+      |> LiveView.redirect(external: url)
+
+    {:redirect, socket}
+  end
+
+  # Stripe Checkout cannot render inside an iframe, so embedded bookers
+  # open Checkout in a new tab and stay on a "complete in new tab" screen.
+  # The iframe LiveView subscribes to `meeting_payment:<id>` and flips to
+  # the confirmation view when the webhook broadcasts `:paid`, or back to
+  # the booking form on `:expired`.
+  defp handle_payment_required_embedded(socket, meeting, url, sanitized_params) do
+    Logger.info("Embedded booking awaiting payment in new tab",
+      meeting_id: meeting.id,
+      checkout_url: url
+    )
+
+    if LiveView.connected?(socket) do
+      Phoenix.PubSub.subscribe(Tymeslot.PubSub, MeetingPayments.payment_topic(meeting.id))
+    end
+
+    # Seed the custom-answer assigns now so the confirmation view can render
+    # when the `:paid` webhook flips this socket to `:confirmation` — that
+    # transition carries no params, unlike the synchronous success path.
+    socket =
+      socket
+      |> assign(:submitting, false)
+      |> assign(:awaiting_payment_meeting, meeting)
+      |> assign(:awaiting_payment_checkout_url, url)
+      |> assign(:custom_fields_snapshot, Map.get(sanitized_params, "custom_fields_snapshot", []))
+      |> assign(:custom_field_answers, Map.get(sanitized_params, "custom_field_answers", %{}))
+      |> assign(:guest_emails, socket.assigns[:guest_emails] || [])
+      |> LiveView.push_event("payment_redirect_open_tab", %{url: url})
+
+    {:awaiting_payment, socket}
+  end
+
+  defp get_meeting_type_id(socket) do
+    case socket.assigns[:meeting_type] do
+      %{id: id} -> id
+      _other -> nil
+    end
+  end
+end

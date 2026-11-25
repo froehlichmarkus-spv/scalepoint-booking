@@ -1,0 +1,108 @@
+{
+  "key": "scalepoint",
+  "enabled": true,
+  "default": true,
+  "house_brand": true,
+  "layout": "sales_room",
+  "name": "ScalePoint Ventures",
+  "product_label": "ScalePoint Booking",
+  "sender_name": "ScalePoint Ventures",
+  "sender_email": "booking@scalepoint-ventures.com",
+  "sender_email_env": "SPV_SENDER_EMAIL",
+  "sender_name_env": "SPV_SENDER_NAME",
+  "name_env": "SPV_BRAND_NAME",
+  "footer": "ScalePoint Ventures",
+  "footer_env": "SPV_FOOTER",
+  "powered_by": "Powered by ScalePoint Booking",
+  "logo": "/images/brand/scalepoint-logo.png",
+  "chrome_logo": "/images/brand/scalepoint-booking.svg",
+  "favicon": "/favicon.ico",
+  "portrait": true,
+  "accent": "#469189",
+  "colors": {
+    "canvas": "#111E32",
+    "card": "#F3F5F7",
+    "card_text": "#111E32",
+    "text": "#F3F5F7",
+    "muted": "#B7C3D4",
+    "accent": "#59C0B6",
+    "accent_strong": "#469189"
+  },
+  "fonts": {
+    "body": "Inter",
+    "heading": "DM Serif Display"
+  },
+  "hosts": ["book.scalepoint-ventures.com"],
+  "username": "markus",
+  "owner_email": "markus@scalepoint-ventures.com",
+  "owner_name": "Markus Fröhlich",
+  "timezone": "Europe/Berlin",
+  "role": "Founder & Senior Strategic Lead",
+  "company": "ScalePoint Ventures Oy",
+  "legal": {
+    "notice": "https://scalepoint-ventures.com/en/legal-notice",
+    "privacy": "https://scalepoint-ventures.com/en/privacy"
+  },
+  "links": [
+    {"label": "LinkedIn", "url": "https://www.linkedin.com/in/froehlichm/"},
+    {"label": "markus-froehlich.com", "url": "https://markus-froehlich.com/en"},
+    {"label": "scalepoint-ventures.com", "url": "https://scalepoint-ventures.com"}
+  ],
+  "copy": {
+    "en": {
+      "hero": "Strategy grounded in reality. Execution built in.",
+      "bio": "Markus Fröhlich works with companies that need a strategy they can run: new revenue, a sharper offer, and the operating rhythm behind both."
+    },
+    "de": {
+      "hero": "Strategie, die zur Realität passt. Umsetzung inklusive.",
+      "bio": "Markus Fröhlich arbeitet mit Unternehmen, die eine Strategie brauchen, die sich auch umsetzen lässt: neues Geschäft, ein schärferes Angebot und der Rhythmus dahinter."
+    }
+  },
+  "services": [
+    {"title": "Strategy", "text": "Where to play, what to sell, and which bets are worth the next quarter."},
+    {"title": "Execution", "text": "The offer, the motion, and the operating rhythm that turn a plan into revenue."},
+    {"title": "Growth", "text": "Brand, demand, and a sales system a team can run without the founder in every deal."},
+    {"title": "Capital", "text": "Investor readiness, and a story of the business grounded in how it actually works."}
+  ],
+  "availability": {
+    "days": {
+      "1": ["09:00", "16:00"],
+      "2": ["09:00", "16:00"],
+      "3": ["09:00", "16:00"],
+      "4": ["09:00", "16:00"],
+      "5": ["09:00", "12:00"]
+    },
+    "closed": [6, 7],
+    "buffer_before": 15,
+    "buffer_after": 15,
+    "min_notice_hours": 24
+  },
+  "events": [
+    {
+      "name": "Introductory Conversation",
+      "slug": "intro",
+      "minutes": 30,
+      "private": false,
+      "description": "A first conversation about where the business is and what a serious next step would be.",
+      "questions": ["What is the conversation about?", "Company or project"]
+    },
+    {
+      "name": "Investment Conversation",
+      "slug": "investment",
+      "minutes": 30,
+      "private": false,
+      "description": "For investors and founders who want a direct conversation about the business.",
+      "questions": ["Fund, firm, or company", "What do you want to cover?"]
+    },
+    {
+      "name": "Follow-up Conversation",
+      "slug": "follow-up",
+      "minutes": 45,
+      "private": true,
+      "description": "A longer follow-up, shared by link only.",
+      "questions": ["What should we pick up from last time?"]
+    }
+  ],
+  "notify_email": "markus@scalepoint-ventures.com",
+  "webhook_url_env": "OUTREACH_WEBHOOK_URL"
+}

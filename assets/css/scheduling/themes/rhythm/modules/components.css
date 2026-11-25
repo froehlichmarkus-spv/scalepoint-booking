@@ -1,0 +1,342 @@
+/* Reusable UI Components */
+
+/* ============================================
+   ICON UTILITIES
+   ============================================ */
+
+/* Icon sizing utilities */
+.icon-sm {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+/* Hero icon specific (for Heroicons) */
+.hero-icon {
+  display: inline-block;
+  color: var(--theme-text);
+}
+
+.hero-icon--md {
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+/* ============================================
+   FLAG UTILITIES
+   ============================================ */
+
+/* A timezone with no flag of its own shows the globe fallback, dimmed. The
+   fallback is the only flag rendered as a <span>. */
+span.timezone-flag,
+span.tz-picker__option-flag {
+  opacity: 0.6;
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+/* .loading-spinner and @keyframes spin — in shared/utilities.css */
+
+/* ============================================
+   CALENDAR ERROR STATES
+   ============================================ */
+
+.calendar-error-inline {
+  font-size: var(--theme-font-size-xs);
+  color: var(--theme-warning);
+  background: var(--surface-dark-medium);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.calendar-error-inline svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+
+/* Base Button Styles */
+.submit-button,
+.prev-button,
+.next-button,
+.action-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background var(--transition-smooth), border-color var(--transition-smooth), transform var(--transition-smooth);
+  border-radius: var(--radius-md);
+  font-family: var(--theme-font-family);
+}
+
+/* Primary Button (Submit & Action Primary) */
+.submit-button,
+.action-button-primary {
+  padding: var(--button-padding-y) var(--button-padding-x);
+  background: var(--theme-primary-solid);
+  color: var(--theme-on-primary);
+  border: var(--border-width-thin) solid var(--theme-primary-solid);
+}
+
+.submit-button:hover,
+.action-button-primary:hover {
+  background: var(--theme-primary-solid-hover);
+  border-color: var(--theme-primary-solid-hover);
+  transform: translateY(-1px);
+}
+
+/* Action button specific (larger, with shadow) */
+.action-button-primary {
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-lg);
+  border: none;
+  box-shadow: var(--shadow-primary-sm);
+}
+
+.action-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary-md);
+}
+
+/* Action button variants */
+.action-button-primary.action-button-success {
+  background: linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%);
+  box-shadow: var(--shadow-success-sm);
+}
+
+.action-button-primary.action-button-success:hover {
+  box-shadow: var(--shadow-success-md);
+}
+
+.action-button-primary.action-button-danger {
+  background: linear-gradient(135deg, var(--theme-danger) 0%, var(--theme-danger-dark) 100%);
+  box-shadow: var(--shadow-danger-sm);
+}
+
+.action-button-primary.action-button-danger:hover {
+  box-shadow: var(--shadow-danger-md);
+}
+
+/* The secondary variant sits on the glass card, not on the primary fill, so
+   it takes the card's text colour; without it the primary's on-primary ink
+   is dark on dark. */
+.action-button-primary.action-button-secondary {
+  background: var(--surface-light);
+  border: var(--border-width-thin) solid var(--border-medium);
+  color: var(--theme-text);
+  backdrop-filter: blur(10px);
+  box-shadow: none;
+}
+
+.action-button-primary.action-button-secondary:hover {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+.action-button-primary.action-button-full-width {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Secondary Buttons (Prev/Next Navigation) */
+.prev-button,
+.next-button {
+  padding: var(--button-padding-y-sm) var(--button-padding-x-sm);
+  background: var(--surface-light);
+  border: var(--border-width-thin) solid var(--border-medium);
+  color: var(--theme-text);
+}
+
+.prev-button:hover,
+.next-button:hover {
+  background: var(--surface-medium);
+  border-color: var(--theme-primary);
+  transform: translateY(-1px);
+}
+
+/* Disabled button states */
+.prev-button:disabled,
+.next-button:disabled,
+.prev-button.disabled,
+.next-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.prev-button:disabled:hover,
+.next-button:disabled:hover,
+.prev-button.disabled:hover,
+.next-button.disabled:hover {
+  background: var(--surface-light);
+  border-color: var(--border-medium);
+  transform: none;
+}
+
+/* Loading States */
+.slot-list__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  color: var(--theme-text-secondary);
+}
+
+.slot-list__empty,
+.slot-list__prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) var(--space-lg);
+  color: var(--theme-text-secondary);
+  text-align: center;
+  gap: var(--space-sm);
+}
+
+.slot-list__empty p,
+.slot-list__prompt p {
+  margin: 0;
+}
+
+/* Error States - Unified Pattern */
+.theme-error,
+.slot-list__error {
+  padding: var(--space-lg);
+  background: var(--theme-error-bg);
+  border: var(--border-width-thin) solid var(--theme-error-border);
+  border-radius: var(--radius-md);
+  color: var(--theme-error-light);
+  text-align: center;
+}
+
+/* Mobile-specific component optimizations */
+@container scheduling (max-width: 479px) {
+  /* Duration grid - single column on mobile */
+  .duration-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+  }
+
+  .duration-card {
+    min-height: var(--min-touch-target);
+  }
+
+  .duration-button {
+    padding: var(--space-sm);
+    min-height: var(--min-touch-target);
+  }
+
+  /* Ensure buttons are large enough for touch */
+  .submit-button,
+  .action-button-primary {
+    padding: var(--space-md) var(--space-xl);
+    min-height: var(--min-touch-target);
+    width: 100%;
+  }
+
+  .prev-button,
+  .next-button {
+    padding: var(--space-sm) var(--space-md);
+    min-height: var(--min-touch-target);
+    flex: 1;
+  }
+
+  /* Loading and error states */
+  .slot-list__loading {
+    padding: var(--space-2xl) var(--space-lg);
+  }
+
+  .slot-list__error,
+  .theme-error {
+    padding: var(--space-md);
+  }
+}
+
+/* Tablet-specific component optimizations */
+@container scheduling (min-width: 480px) and (max-width: 767px) {
+  .submit-button,
+  .action-button-primary,
+  .prev-button,
+  .next-button {
+    min-height: var(--min-touch-target);
+  }
+}
+
+/* Short screens — compact duration grid */
+@media (max-height: 600px) {
+  :where(html:not([data-embedded])) {
+    .duration-grid {
+      grid-template-columns: minmax(0, 1fr);
+      margin-top: var(--space-sm);
+    }
+
+    .duration-button {
+      padding: var(--space-sm);
+    }
+
+    .duration-description {
+      display: none;
+    }
+  }
+}
+
+/* Very short screens — aggressive compaction */
+@media (max-height: 500px) {
+  :where(html:not([data-embedded])) {
+    .duration-button {
+      padding: var(--space-xs);
+    }
+
+    .duration-card {
+      border-radius: var(--radius-md);
+    }
+
+    .action-button-primary,
+    .submit-button,
+    .next-button,
+    .prev-button {
+      padding: var(--space-xs) var(--space-md);
+      font-size: var(--theme-font-size-sm);
+    }
+  }
+}
+
+/* Extremely short screens */
+@media (max-height: 400px) {
+  :where(html:not([data-embedded])) {
+    .duration-grid {
+      gap: var(--space-3xs);
+    }
+  }
+}
+
+/* Performance Optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .duration-card,
+  .calendar-day,
+  .slot-list__slot,
+  .prev-button,
+  .next-button,
+  .submit-button,
+  .action-button-primary {
+    transition: none;
+  }
+
+  .success-badge {
+    animation: none;
+  }
+}

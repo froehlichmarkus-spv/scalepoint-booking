@@ -1,0 +1,190 @@
+defmodule Tymeslot.Bookings.Orchestrator do
+  @moduledoc """
+  Orchestrates the booking flow for the web layer.
+
+  This module acts as a bridge between the web layer (LiveViews) and the domain layer,
+  delegating business logic to appropriate domain modules.
+  """
+
+  @behaviour Tymeslot.Bookings.Submitter
+
+  alias Tymeslot.Bookings.{Create, Errors, Policy, Refusal, RescheduleSeat, Submitter}
+  alias Tymeslot.BookingSeries
+  alias Tymeslot.Meetings
+  alias Tymeslot.Meetings.MeetingQueries
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.SeatView
+
+  require Refusal
+
+  @typedoc "Parameters for `submit_booking/2`."
+  @type booking_submission_params :: %{
+          optional(:form_data) => %{String.t() => term()},
+          optional(:meeting_params) => map()
+        }
+
+  @doc """
+  Orchestrates the complete booking submission flow including:
+  - Form validation
+  - Rate limiting (if client IP provided)
+  - Meeting creation or rescheduling
+
+  `meeting_params` with a `:series` books a series of sessions
+  (`Tymeslot.BookingSeries.book/3`) unless the submission is a reschedule.
+
+  Returns:
+    * `{:ok, %{series: series, meetings: meetings, participants: seats}}` for
+      a series, `seats` being the booker's seats on a group type's sessions
+    * `{:error, {:occurrences_unavailable, occurrences}}` when sessions of a
+      series cannot be booked, with only those sessions
+    * `{:ok, meeting}` for free bookings (confirmed); for a seat on a group
+      meeting, booked or moved, the meeting as that seat
+      (`Tymeslot.Meetings.SeatView`)
+    * `{:ok, :payment_required, %{meeting: meeting, checkout_url: url}}` when
+      the meeting type requires payment — caller should redirect the
+      attendee to the Stripe Checkout URL. For a paid series the map also
+      carries `series` and `meetings`, and `meeting` is its first session,
+      whose payment topic and pages the series' checkout reports on
+    * `{:error, reason}` on validation or persistence failure, where
+      `reason` is either a semantic atom classified by the domain layer
+      (`Tymeslot.Bookings.Errors.classified_error/0`, e.g. `:slot_taken`,
+      `:meeting_type_inactive`, `:meeting_not_found`, or a refusal such as
+      `{:too_soon, hours}`), passed through unchanged — this module never
+      manufactures display copy, that is the web layer's job. Any other
+      shape collapses to the generic `:booking_failed` atom.
+  """
+  @impl Submitter
+  @spec submit_booking(booking_submission_params(), keyword()) ::
+          {:ok, term()}
+          | {:ok, :payment_required, %{meeting: map(), checkout_url: String.t()}}
+          | {:error, Errors.classified_error()}
+  def submit_booking(params, opts \\ []) do
+    %{
+      form_data: form_data,
+      meeting_params: meeting_params,
+      is_rescheduling: is_rescheduling,
+      reschedule_uid: reschedule_uid,
+      reschedule_seat_token: reschedule_seat_token,
+      organizer_user_id: organizer_user_id
+    } = normalize_params(params, opts)
+
+    case submit_action(
+           reschedule_seat_token,
+           is_rescheduling,
+           reschedule_uid,
+           meeting_params,
+           form_data,
+           organizer_user_id
+         ) do
+      {:ok, :payment_required, _payload} = payment_tuple ->
+        payment_tuple
+
+      {:ok, meeting} ->
+        {:ok, meeting}
+
+      {:error, reason} when is_atom(reason) or Refusal.is_refusal(reason) ->
+        {:error, reason}
+
+      {:error, {:occurrences_unavailable, _occurrences}} = unavailable ->
+        unavailable
+
+      {:error, _reason} ->
+        {:error, :booking_failed}
+    end
+  end
+
+  @doc """
+  Fetches a meeting by UID and validates it is eligible for rescheduling by
+  its booker: one its host manages is refused with `:managed_by_host`, as
+  the reschedule it would start can only be refused on submit.
+
+  The `organizer_user_id` is required. The lookup is scoped to that owner,
+  preventing IDOR pre-fill of attendee PII from the public booking form.
+  """
+  @spec get_meeting_for_reschedule(String.t(), integer()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Errors.classified_error()}
+  def get_meeting_for_reschedule(meeting_uid, organizer_user_id)
+      when is_integer(organizer_user_id) do
+    with {:ok, meeting} <-
+           MeetingQueries.get_meeting_by_uid_for_attendee(meeting_uid, organizer_user_id),
+         :ok <- Policy.can_reschedule_meeting?(meeting),
+         :ok <- Policy.can_booker_move_meeting?(meeting) do
+      {:ok, meeting}
+    else
+      {:error, :not_found} -> {:error, :meeting_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Private functions
+
+  defp normalize_params(params, opts) do
+    %{
+      form_data: Map.get(params, :form_data, %{}),
+      meeting_params: Map.get(params, :meeting_params, %{}),
+      is_rescheduling: Keyword.get(opts, :is_rescheduling, false),
+      reschedule_uid: Keyword.get(opts, :reschedule_uid),
+      reschedule_seat_token: Keyword.get(opts, :reschedule_seat_token),
+      organizer_user_id: Keyword.get(opts, :organizer_user_id)
+    }
+  end
+
+  # A seat token takes precedence: the visitor followed a participant
+  # reschedule link, so the submission moves their seat instead of creating
+  # a booking. The token authorises the move; the page's organiser must
+  # still be the seat's, since the new time was picked from their schedule.
+  defp submit_action(seat_token, _rescheduling?, _uid, meeting_params, _form_data, org_id)
+       when is_binary(seat_token) do
+    case RescheduleSeat.execute(seat_token, meeting_params, org_id) do
+      {:ok, %{meeting: meeting, participant: participant}} ->
+        {:ok, SeatView.at_event(meeting, participant)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp submit_action(_seat_token, true, uid, meeting_params, _form_data, org_id),
+    do: reschedule_meeting(uid, meeting_params, org_id)
+
+  # A series is booked as a whole; a reschedule moves one of its sessions
+  # like any other meeting.
+  defp submit_action(_seat_token, false, _uid, %{series: series} = meeting_params, form_data, _id)
+       when is_map(series),
+       do:
+         BookingSeries.book(meeting_params, form_data,
+           with_video_room: meeting_params[:with_video_room] == true
+         )
+
+  defp submit_action(_seat_token, false, _uid, meeting_params, form_data, _org_id),
+    do: create_meeting(meeting_params, form_data)
+
+  defp create_meeting(meeting_params, sanitized_data) do
+    result =
+      Create.execute(meeting_params, sanitized_data,
+        with_video_room: meeting_params[:with_video_room] == true
+      )
+
+    as_booked_seat(result, sanitized_data)
+  end
+
+  # A booking on a group meeting type returns the shared slot; the booker's
+  # booking is their seat on it, so that is what the booking page is handed.
+  # A seat already gone again by now leaves the slot, which the page then
+  # offers nothing from (`Meetings.booker_calendar/1`).
+  defp as_booked_seat({:ok, %MeetingSchema{} = meeting} = result, form_data) do
+    if Meetings.group?(meeting),
+      do: {:ok, SeatView.for_booker(meeting, form_data["email"]) || meeting},
+      else: result
+  end
+
+  defp as_booked_seat(result, _form_data), do: result
+
+  defp reschedule_meeting(_meeting_uid, _meeting_params, nil),
+    do: {:error, :meeting_not_found}
+
+  defp reschedule_meeting(meeting_uid, meeting_params, organizer_user_id)
+       when is_integer(organizer_user_id) do
+    Meetings.reschedule_meeting(meeting_uid, meeting_params, organizer_user_id)
+  end
+end

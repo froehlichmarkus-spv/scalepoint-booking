@@ -1,0 +1,210 @@
+defmodule Tymeslot.Emails.Shared.Meeting.Hero do
+  @moduledoc """
+  The typographic hero block for meeting emails.
+
+  Leads with the date set in display type, the time immediately beneath, and a
+  compact metadata grid (type, duration, location) under a hairline, so a
+  meeting reads like a moment, not a form.
+  """
+
+  alias Tymeslot.Emails.Shared.{Formatting, Sanitise, Stack, Styles}
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  @type meeting_details :: %{
+          required(:date) => Date.t() | DateTime.t(),
+          required(:start_time) => DateTime.t() | nil,
+          required(:duration) => integer() | nil,
+          optional(:all_day) => boolean(),
+          optional(:last_date) => Date.t() | nil,
+          optional(:location) => String.t() | nil,
+          optional(:location_type) => atom() | nil,
+          optional(:audience) => :host | :guest,
+          optional(:meeting_type) => String.t() | nil,
+          optional(:event_title) => String.t() | nil,
+          optional(:time_format) => String.t() | nil,
+          optional(:booking_page_name) => String.t() | nil,
+          optional(atom()) => term()
+        }
+
+  @doc """
+  The hero meeting block, rendered in the recipient's locale.
+
+  An all-day event (`all_day: true`, with `:date` its first day and
+  `:last_date` its inclusive last day) has no clock time or duration in
+  minutes, so the time line says "All day" and the duration counts days.
+
+  A calendar event, which has a title rather than a meeting type, passes
+  `:event_title` instead of `:meeting_type`, and the row is labelled as the
+  event.
+
+  A host's copy of a booking made through one of their booking pages
+  (`:booking_page_name`) names the page under the meeting type.
+  """
+  @spec meeting_details_table(meeting_details(), String.t()) :: String.t()
+  def meeting_details_table(details, locale) do
+    Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
+      weekday = Formatting.format_weekday(details.date, locale)
+      date_line = Formatting.format_date(details.date, locale)
+      time_line = Formatting.format_meeting_time(details, locale) || dgettext("emails", "TBD")
+      duration = Formatting.format_meeting_duration(details, locale)
+      location = Formatting.format_location(details)
+      location_note = Formatting.location_note(details)
+      title_row = title_row(details)
+
+      Stack.spaced("""
+      <mj-section
+        background-color="#{Styles.canvas_soft()}"
+        border-radius="#{Styles.card_radius()}"
+        padding="26px 26px 22px 26px"
+        css-class="mobile-card email-canvas-soft hero-card"
+      >
+        <mj-column>
+          #{hero_eyebrow(weekday)}
+          #{hero_date(date_line)}
+          #{hero_time(time_line)}
+          #{hero_divider()}
+          #{hero_meta_grid(title_row, duration, location, location_note)}
+        </mj-column>
+      </mj-section>
+      """)
+    end)
+  end
+
+  defp hero_eyebrow(weekday) do
+    safe_weekday = Sanitise.sanitize_for_email(weekday)
+
+    """
+    <mj-text
+      font-size="11px"
+      font-weight="700"
+      color="#{Styles.ink_muted()}"
+      letter-spacing="0.16em"
+      text-transform="uppercase"
+      padding="0 0 10px 0"
+      align="left"
+      css-class="mobile-eyebrow email-ink-muted"
+    >
+      #{safe_weekday}
+    </mj-text>
+    """
+  end
+
+  defp hero_date(date_line) do
+    safe = Sanitise.sanitize_for_email(date_line)
+
+    """
+    <mj-text
+      font-size="#{Styles.font_size(:hero)}"
+      font-weight="800"
+      color="#{Styles.ink()}"
+      letter-spacing="-0.028em"
+      line-height="1.05"
+      padding="0"
+      align="left"
+      css-class="mobile-display email-ink"
+    >
+      #{safe}
+    </mj-text>
+    """
+  end
+
+  defp hero_time(time_line) do
+    safe_time = Sanitise.sanitize_for_email(time_line)
+
+    """
+    <mj-text
+      font-size="15px"
+      color="#{Styles.ink_muted()}"
+      padding="8px 0 0 0"
+      line-height="1.5"
+      align="left"
+      css-class="mobile-text email-ink-muted"
+    >
+      #{safe_time}
+    </mj-text>
+    """
+  end
+
+  defp hero_divider do
+    """
+    <mj-divider
+      border-color="#{Styles.hairline()}"
+      border-width="1px"
+      padding="18px 0 14px 0"
+    />
+    """
+  end
+
+  defp title_row(%{event_title: title}) when is_binary(title) and title != "",
+    do: hero_meta_row(dgettext("emails", "Event"), title, border_bottom: true)
+
+  defp title_row(%{meeting_type: type} = details) when is_binary(type),
+    do:
+      hero_meta_row(dgettext("emails", "Meeting type"), type,
+        border_bottom: true,
+        note: Formatting.booked_through(details)
+      )
+
+  defp title_row(_details), do: ""
+
+  defp hero_meta_grid(title_row, duration, location, location_note) do
+    """
+    #{title_row}
+    <mj-table padding="0">
+      <tr>
+        <td style="vertical-align: top; padding: 12px 12px 0 0; width: 50%;">
+          #{hero_meta_label(dgettext("emails", "Duration"))}
+          #{hero_meta_value(duration)}
+        </td>
+        <td style="vertical-align: top; padding: 12px 0 0 12px; width: 50%;">
+          #{hero_meta_label(dgettext("emails", "Location"))}
+          #{hero_meta_value(location)}
+          #{hero_meta_note(location_note)}
+        </td>
+      </tr>
+    </mj-table>
+    """
+  end
+
+  defp hero_meta_note(nil), do: ""
+
+  defp hero_meta_note(note) do
+    safe = Sanitise.sanitize_for_email(note)
+
+    ~s(<div class="email-ink-muted" style="font-size: 13px; color: #{Styles.ink_muted()}; line-height: 1.4; padding-top: 4px;">#{safe}</div>)
+  end
+
+  defp hero_meta_row(label, value, opts) do
+    safe_value = Sanitise.sanitize_for_email(value)
+
+    border =
+      if Keyword.get(opts, :border_bottom, false),
+        do: "border-bottom: 1px solid #{Styles.hairline()};",
+        else: ""
+
+    """
+    <mj-table padding="0" css-class="email-hairline-table">
+      <tr class="email-hairline-row">
+        <td class="email-hairline-row" style="padding: 0 0 12px 0; #{border}">
+          #{hero_meta_label(label)}
+          <div class="email-ink" style="font-size: 15px; font-weight: 600; color: #{Styles.ink()}; line-height: 1.4;">#{safe_value}</div>
+          #{hero_meta_note(Keyword.get(opts, :note))}
+        </td>
+      </tr>
+    </mj-table>
+    """
+  end
+
+  defp hero_meta_label(label) do
+    safe = Sanitise.sanitize_for_email(label)
+
+    ~s(<div class="email-ink-muted" style="font-size: 11px; font-weight: 700; color: #{Styles.ink_muted()}; letter-spacing: 0.1em; text-transform: uppercase; padding-bottom: 4px;">#{safe}</div>)
+  end
+
+  defp hero_meta_value(value) do
+    safe = Sanitise.sanitize_for_email(value)
+
+    ~s(<div class="email-ink" style="font-size: 15px; font-weight: 600; color: #{Styles.ink()}; line-height: 1.4;">#{safe}</div>)
+  end
+end

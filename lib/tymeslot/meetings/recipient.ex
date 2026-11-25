@@ -1,0 +1,212 @@
+defmodule Tymeslot.Meetings.Recipient do
+  @moduledoc """
+  A normalised "person on this meeting" for notification purposes.
+
+  Solo meetings carry their attendee on the meeting row (`attendee_*`
+  columns); group meetings carry one live `meeting_participants` row per
+  booker. This struct unifies the two shapes so notification code (emails,
+  ICS attachments, reminders) can iterate people without caring which shape
+  the meeting has.
+
+  `as_seen_by/2` is the inverse direction: it projects a recipient back onto
+  the meeting's `attendee_*` fields, so the existing email templates and the
+  ICS generator all render the right person without any template changes. For
+  participant recipients the cancel and reschedule URLs are replaced with the
+  participant's tokenised seat URLs, and the calendar identity
+  (`calendar_uid`, `ical_sequence`) with the seat's own: each seat is its own
+  event in the participant's calendar.
+
+  The overlay is always a `%MeetingSchema{}`, never a plain map: code
+  downstream pattern-matches on the struct (`BookingRequestLocation.type/1`
+  among others) and silently falls through to a default on anything else.
+  It is a view, not a row, and is never written back.
+  """
+
+  alias Tymeslot.Locales
+  alias Tymeslot.Meetings.GuestSchema
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.ParticipantQueries
+  alias Tymeslot.Meetings.ParticipantSchema
+  alias Tymeslot.Utils.UrlBuilder
+
+  @enforce_keys [:kind, :email]
+  defstruct [
+    :kind,
+    :name,
+    :email,
+    :phone,
+    :company,
+    :message,
+    :timezone,
+    :locale,
+    :custom_field_answers,
+    :participant_id,
+    :management_token,
+    :calendar_uid,
+    :ical_sequence,
+    :notified_end_time
+  ]
+
+  @type t :: %__MODULE__{
+          kind: :attendee | :participant,
+          name: String.t() | nil,
+          email: String.t(),
+          phone: String.t() | nil,
+          company: String.t() | nil,
+          message: String.t() | nil,
+          timezone: String.t() | nil,
+          locale: String.t(),
+          custom_field_answers: map(),
+          participant_id: binary() | nil,
+          management_token: String.t() | nil,
+          calendar_uid: String.t() | nil,
+          ical_sequence: non_neg_integer() | nil,
+          notified_end_time: DateTime.t() | nil
+        }
+
+  @doc """
+  Everyone on the meeting who should receive attendee-facing notifications.
+
+  A group meeting (`MeetingSchema.group?/1`) returns one recipient per live
+  participant, and `[]` once they have all cancelled: its people are its
+  participant rows, never its `attendee_*` fields. A solo meeting returns a
+  single recipient built from its `attendee_*` fields (or `[]` if it has no
+  attendee email). A meeting the host manages (`HostManaged.managed?/1`)
+  returns `[]`: it has no booker, and the person in its attendee fields is a
+  guest, told with the other guests.
+  """
+  @spec for_meeting(MeetingSchema.t()) :: [t()]
+  def for_meeting(%MeetingSchema{} = meeting) do
+    if MeetingSchema.group?(meeting) do
+      meeting.id
+      |> ParticipantQueries.list_live_for_meeting()
+      |> Enum.map(&from_participant/1)
+    else
+      attendee_recipients(meeting)
+    end
+  end
+
+  @doc """
+  The meeting as the given participant sees it: their own details in the
+  `attendee_*` fields, and their tokenised seat URLs.
+
+  Shorthand for `as_seen_by/2` composed with `from_participant/1`, for callers
+  that hold a participant row rather than a recipient.
+  """
+  @spec meeting_as_seen_by(MeetingSchema.t(), ParticipantSchema.t()) :: MeetingSchema.t()
+  def meeting_as_seen_by(%MeetingSchema{} = meeting, %ParticipantSchema{} = participant),
+    do: as_seen_by(meeting, from_participant(participant))
+
+  @doc "Builds a recipient from a participant row (live or cancelled)."
+  @spec from_participant(ParticipantSchema.t()) :: t()
+  def from_participant(%ParticipantSchema{} = participant) do
+    %__MODULE__{
+      kind: :participant,
+      name: participant.name,
+      email: participant.email,
+      phone: participant.phone,
+      company: participant.company,
+      message: participant.message,
+      timezone: participant.timezone,
+      locale: Locales.acceptable(participant.locale) || Locales.booking_default_locale(),
+      custom_field_answers: participant.custom_field_answers || %{},
+      participant_id: participant.id,
+      management_token: participant.management_token,
+      calendar_uid: ParticipantSchema.calendar_uid(participant),
+      ical_sequence: ParticipantSchema.invitation_sequence(participant),
+      notified_end_time: participant.notified_end_time
+    }
+  end
+
+  @doc """
+  The meeting as the given recipient sees it.
+
+  `:attendee` recipients see the meeting unchanged. `:participant`
+  recipients see their own data in the `attendee_*` fields, their
+  tokenised seat URLs in `cancel_url`/`reschedule_url`, and their seat's own
+  calendar identity in `calendar_uid`/`ical_sequence`.
+  """
+  @spec as_seen_by(MeetingSchema.t(), t()) :: MeetingSchema.t()
+  def as_seen_by(%MeetingSchema{} = meeting, %__MODULE__{kind: :attendee}), do: meeting
+
+  def as_seen_by(%MeetingSchema{} = meeting, %__MODULE__{kind: :participant} = recipient),
+    do: struct!(meeting, overlay(recipient))
+
+  defp overlay(recipient) do
+    urls = seat_urls(recipient.management_token)
+
+    %{
+      attendee_name: recipient.name,
+      attendee_email: recipient.email,
+      attendee_phone: recipient.phone,
+      attendee_company: recipient.company,
+      attendee_message: recipient.message,
+      attendee_timezone: recipient.timezone,
+      attendee_locale: recipient.locale,
+      custom_field_answers: recipient.custom_field_answers,
+      cancel_url: urls.cancel_url,
+      reschedule_url: urls.reschedule_url,
+      calendar_uid: recipient.calendar_uid,
+      ical_sequence: recipient.ical_sequence
+    }
+  end
+
+  @doc """
+  The meeting as one of its guests reads it: in the guest's own language and
+  timezone where they have one, and in the attendee's otherwise.
+
+  Only a guest who came with a language and timezone carries them (a poll
+  participant the host confirmed the meeting for); a guest added on an
+  ordinary booking has neither and reads the meeting exactly as its attendee
+  does. `meeting` may already be a participant's view (`as_seen_by/2`), for a
+  group-booking guest, whose fallback is then that participant's.
+
+  Every guest email is built from this view, so this is the one place a
+  guest's language and timezone are resolved.
+  """
+  @spec as_seen_by_guest(MeetingSchema.t(), GuestSchema.t()) :: MeetingSchema.t()
+  def as_seen_by_guest(%MeetingSchema{} = meeting, %GuestSchema{} = guest) do
+    struct!(meeting,
+      attendee_locale: guest.locale || meeting.attendee_locale,
+      attendee_timezone: guest.timezone || meeting.attendee_timezone
+    )
+  end
+
+  @doc """
+  The public URL of a seat's own calendar file
+  (`Tymeslot.Meetings.seat_calendar_export/1`), beside the seat-management
+  links its participant's emails carry.
+  """
+  @spec seat_calendar_url(String.t()) :: String.t()
+  def seat_calendar_url(token) when is_binary(token), do: seat_url(token, "calendar.ics")
+
+  # The public seat-management links carried by a participant's own emails.
+  defp seat_urls(token) when is_binary(token) do
+    %{
+      cancel_url: seat_url(token, "cancel"),
+      reschedule_url: seat_url(token, "reschedule")
+    }
+  end
+
+  defp seat_url(token, action), do: UrlBuilder.base_url() <> "/seat/#{token}/#{action}"
+
+  defp attendee_recipients(%MeetingSchema{attendee_email: email}) when email in [nil, ""], do: []
+  defp attendee_recipients(%MeetingSchema{managed_by_host: true}), do: []
+
+  defp attendee_recipients(meeting) do
+    [
+      %__MODULE__{
+        kind: :attendee,
+        name: meeting.attendee_name,
+        email: meeting.attendee_email,
+        phone: meeting.attendee_phone,
+        company: meeting.attendee_company,
+        message: meeting.attendee_message,
+        timezone: meeting.attendee_timezone,
+        locale: meeting.attendee_locale,
+        custom_field_answers: meeting.custom_field_answers,
+        notified_end_time: meeting.notified_end_time
+      }
+    ]
+  end
+end

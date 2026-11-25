@@ -1,0 +1,236 @@
+defmodule Tymeslot.Emails.Templates.CalendarSyncError do
+  @moduledoc """
+  MJML template for calendar sync error notification sent to the calendar owner.
+
+  Addressed to the meeting's organiser (the instance's sender address when
+  the meeting has none) and rendered in their locale, resolved from
+  `organizer_user_id`.
+  """
+
+  alias Swoosh.Email
+  alias Tymeslot.Emails.RecipientLocale
+  alias Tymeslot.MeetingTypes
+
+  alias Tymeslot.Emails.Shared.{
+    Callouts,
+    Formatting,
+    MeetingComponents,
+    MjmlEmail,
+    Styles,
+    TemplateHelper,
+    Text
+  }
+
+  alias Tymeslot.Utils.DateTimeUtils
+
+  alias Tymeslot.Emails.HostClock
+  alias Tymeslot.Infrastructure.Logging.EmailMasker
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Infrastructure.Logging.Redactor
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  # A sync failure the user needs to act on.
+  @intent :alert
+
+  # The failures `describe_error/1` puts in words, and their stored names:
+  # the email is sent from a job, whose JSON args turn an atom into a string.
+  @described [
+    :refused,
+    :calendar_event_not_updatable,
+    :not_found,
+    :server_error,
+    :network_error,
+    :malformed_response
+  ]
+  @by_stored_name Map.new(@described, &{Atom.to_string(&1), &1})
+
+  # The longest provider message kept, in a job's args and in the email.
+  @max_reason_bytes 2_048
+
+  @type meeting_map :: %{
+          required(:start_time) => DateTime.t(),
+          required(:organizer_email) => String.t() | nil,
+          required(:organizer_name) => String.t() | nil,
+          required(:duration) => integer(),
+          required(:location) => String.t() | nil,
+          optional(:organizer_user_id) => term(),
+          optional(atom()) => term()
+        }
+
+  @doc """
+  The email to the meeting's organiser, in their locale, computing their
+  local start time only once for both parts.
+  """
+  @spec render(meeting_map(), any()) :: Email.t()
+  def render(meeting, error_reason) do
+    RecipientLocale.with_user_id_locale(Map.get(meeting, :organizer_user_id), fn ->
+      error_details = error_reason |> restore_reason() |> describe_error()
+      locale = Gettext.get_locale(TymeslotWeb.Gettext)
+      clock = HostClock.for_meeting(meeting, locale)
+      owner_start_time = DateTimeUtils.convert_to_timezone(meeting.start_time, clock.timezone)
+
+      MjmlEmail.base_email()
+      |> Email.to(recipient(meeting))
+      |> Email.subject(
+        dgettext("emails_integrations", "⚠️ Calendar Sync Error - Manual Action Required")
+      )
+      |> Email.html_body(
+        do_render_html(error_details, {owner_start_time, clock}, meeting, locale)
+      )
+      |> Email.text_body(
+        do_render_text(error_details, {owner_start_time, clock}, meeting, locale)
+      )
+    end)
+  end
+
+  @doc """
+  The address the email goes to: the meeting's organiser, or the instance's
+  sender address when the meeting has none.
+  """
+  @spec recipient_email(meeting_map()) :: String.t()
+  def recipient_email(meeting),
+    do: meeting.organizer_email || Application.get_env(:tymeslot, :email)[:from_email]
+
+  defp recipient(meeting) do
+    {meeting.organizer_name || dgettext("emails_integrations", "Calendar Owner"),
+     recipient_email(meeting)}
+  end
+
+  defp do_render_html(error_details, {owner_start_time, clock}, meeting, locale) do
+    mjml_content = """
+    #{Callouts.alert_box(:cancelled,
+    dgettext("emails_integrations", "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in the scheduler and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar."),
+    title: dgettext("emails_integrations", "Calendar Sync Error"))}
+
+    #{Text.title_section(dgettext("emails_integrations", "Meeting Details"))}
+    #{MeetingComponents.meeting_details_table(%{date: owner_start_time, start_time: owner_start_time, duration: meeting.duration, location: place(meeting), time_format: clock.time_format}, locale)}
+
+    #{Text.divider()}
+
+    #{Text.title_section(dgettext("emails_integrations", "Error Details"))}
+
+    #{Callouts.alert_box(:cancelled, error_details, title: dgettext("emails_integrations", "Error"))}
+
+    #{Text.title_section(dgettext("emails_integrations", "Action Required"))}
+
+    <mj-text color="#{Styles.ink_soft()}">
+      #{dgettext("emails_integrations", "Please manually add this meeting to your calendar to ensure you don't miss it. Both you and the attendee have already received your confirmation emails - this is purely a technical calendar sync issue that doesn't affect the booking itself.")}
+    </mj-text>
+
+    #{Callouts.alert_box(:alert, dgettext("emails_integrations", "Common causes:"), items: common_causes())}
+
+    #{Text.system_footer_note(dgettext("emails_integrations", "This is an automated system notification. Please check your calendar sync settings if this issue persists."))}
+    """
+
+    TemplateHelper.compile_system_template(
+      mjml_content,
+      dgettext("emails_integrations", "Calendar Sync Error"),
+      dgettext("emails_integrations", "A meeting could not be added to your calendar."),
+      intent: @intent,
+      eyebrow: dgettext("emails_integrations", "Action required"),
+      stage_title: dgettext("emails_integrations", "Calendar didn't sync"),
+      stage_subtitle:
+        dgettext(
+          "emails_integrations",
+          "The booking is safe - but please add it to your calendar manually."
+        )
+    )
+  end
+
+  defp do_render_text(error_details, {owner_start_time, clock}, meeting, locale) do
+    """
+    #{dgettext("emails_integrations", "Calendar Sync Error - Manual Action Required")}
+
+    #{dgettext("emails_integrations", "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in the scheduler and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar.")}
+
+    #{dgettext("emails_integrations", "MEETING DETAILS:")}
+    #{dgettext("emails_integrations", "Date:")} #{Formatting.format_date(owner_start_time, locale)}
+    #{dgettext("emails_integrations", "Time:")} #{Formatting.format_time(owner_start_time, locale, clock.time_format)}
+    #{dgettext("emails_integrations", "Duration:")} #{Formatting.format_duration(meeting.duration, locale)}
+    #{dgettext("emails_integrations", "Location:")} #{place(meeting) || dgettext("emails_integrations", "Not specified")}
+
+    #{dgettext("emails_integrations", "ERROR DETAILS:")}
+    #{error_details}
+
+    #{dgettext("emails_integrations", "ACTION REQUIRED:")}
+    #{dgettext("emails_integrations", "Please manually add this meeting to your calendar to ensure you don't miss it. Both you and the attendee have already received your confirmation emails - this is purely a technical calendar sync issue that doesn't affect the booking itself.")}
+
+    #{common_causes_text()}
+
+    #{dgettext("emails_integrations", "This is an automated system notification. Please check your calendar sync settings if this issue persists.")}
+    """
+  end
+
+  # The error categories the calendar write path hands this email, in the
+  # owner's words. Anything else (a provider's own message, an unforeseen
+  # term) is shown as it came.
+  defp describe_error(:refused),
+    do:
+      dgettext(
+        "emails_integrations",
+        "Your calendar declined to add this event. The calendar may be read-only, or the event was rejected by the calendar service."
+      )
+
+  defp describe_error(:calendar_event_not_updatable),
+    do:
+      dgettext(
+        "emails_integrations",
+        "The event exists in your calendar but could not be updated, so it may still show the old details."
+      )
+
+  defp describe_error(:not_found),
+    do:
+      dgettext(
+        "emails_integrations",
+        "The calendar this event should go to could not be found."
+      )
+
+  defp describe_error(error) when error in [:server_error, :network_error, :malformed_response],
+    do:
+      dgettext(
+        "emails_integrations",
+        "Your calendar service could not be reached or did not answer properly, even after several attempts."
+      )
+
+  defp describe_error(error), do: TemplateHelper.format_error_reason(error)
+
+  @doc """
+  `error_reason` as an email job stores it, for `render/2` to read back: a
+  failure this email describes in words by its name, anything else as text
+  with addresses and credentials masked and its length bounded, since a
+  provider's error can quote a response body.
+  """
+  @spec storable_reason(term()) :: String.t()
+  def storable_reason(reason) when reason in @described, do: Atom.to_string(reason)
+
+  def storable_reason(reason) when is_binary(reason),
+    do: reason |> EmailMasker.mask_emails() |> Redactor.redact_and_truncate(@max_reason_bytes)
+
+  def storable_reason(reason), do: LogFormat.reason(reason)
+
+  defp restore_reason(reason) when is_binary(reason), do: Map.get(@by_stored_name, reason, reason)
+  defp restore_reason(reason), do: reason
+
+  # The four causes are one list translated once, then laid out by whichever body
+  # needs them. Keeping them as separate msgids from the surrounding prose means
+  # a translator never has to reproduce list markup by hand.
+  defp common_causes do
+    [
+      dgettext("emails_integrations", "CalDAV server temporarily unavailable"),
+      dgettext("emails_integrations", "Network connectivity issues"),
+      dgettext("emails_integrations", "Calendar permissions or authentication problems"),
+      dgettext("emails_integrations", "Maximum retries exceeded")
+    ]
+  end
+
+  defp common_causes_text do
+    causes = Enum.map_join(common_causes(), "\n- ", & &1)
+    "#{dgettext("emails_integrations", "Common causes:")}\n- #{causes}"
+  end
+
+  # A default location label ("In person") in the organiser's language; a
+  # venue or the host's own text as written.
+  defp place(meeting),
+    do: MeetingTypes.display_location(meeting.location, Map.get(meeting, :location_kind))
+end

@@ -1,0 +1,215 @@
+defmodule TymeslotWeb.GuestRsvpHTML do
+  @moduledoc """
+  Renders the public guest-RSVP pages: pre-confirmation landing, success, and error states.
+  """
+
+  use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias TymeslotWeb.Components.Shared.TokenPage
+  alias TymeslotWeb.Helpers.MeetingTimeFormat
+
+  @doc "Landing page shown before the guest submits their RSVP (GET step)."
+  attr :meeting, :map, required: true
+  attr :timezone, :string, default: nil
+  attr :status, :string, required: true
+  attr :token, :string, required: true
+  attr :response, :string, required: true
+
+  @spec confirm(map()) :: Phoenix.LiveView.Rendered.t()
+  def confirm(assigns) do
+    ~H"""
+    <% accepting? = @status == :accepted %>
+    <TokenPage.shell legal_links={assigns[:legal_links]}>
+      <.rsvp_badge accepted?={accepting?} />
+
+      <h1 class="mt-6 text-token-2xl font-bold text-tymeslot-800">
+        {if accepting?,
+          do: dgettext("booking_manage", "You're about to accept"),
+          else: dgettext("booking_manage", "You're about to decline")}
+      </h1>
+
+      <p class="mt-2 text-token-base text-tymeslot-600">
+        {if accepting? do
+          dgettext("booking_manage", "Confirm to let %{name} know you'll be attending.",
+            name: @meeting.organizer_name
+          )
+        else
+          dgettext("booking_manage", "Confirm to let %{name} know you can't make it.",
+            name: @meeting.organizer_name
+          )
+        end}
+      </p>
+
+      <.meeting_summary meeting={@meeting} timezone={@timezone} />
+
+      <.form for={%{}} action={~p"/guest/#{@token}/#{@response}"} class="mt-6" novalidate>
+        <.action_button
+          type="submit"
+          variant={if accepting?, do: :primary, else: :secondary}
+          class="w-full"
+        >
+          {if accepting?,
+            do: dgettext("booking_manage", "Confirm attendance"),
+            else: dgettext("booking_manage", "Confirm decline")}
+        </.action_button>
+      </.form>
+    </TokenPage.shell>
+    """
+  end
+
+  @doc "Shown after a guest successfully accepts or declines their invitation."
+  attr :meeting, :map, required: true
+  attr :timezone, :string, default: nil
+  attr :status, :string, required: true
+  attr :token, :string, required: true
+
+  @spec confirmation(map()) :: Phoenix.LiveView.Rendered.t()
+  def confirmation(assigns) do
+    ~H"""
+    <% accepted? = @status == :accepted %>
+    <TokenPage.shell legal_links={assigns[:legal_links]}>
+      <.rsvp_badge accepted?={accepted?} />
+
+      <h1 class="mt-6 text-token-2xl font-bold text-tymeslot-800">
+        {if accepted?,
+          do: dgettext("booking_manage", "You're going!"),
+          else: dgettext("booking_manage", "You've declined")}
+      </h1>
+
+      <p class="mt-2 text-token-base text-tymeslot-600">
+        {if accepted? do
+          dgettext("booking_manage", "Your response has been sent to %{name}.",
+            name: @meeting.organizer_name
+          )
+        else
+          dgettext("booking_manage", "We've let %{name} know you can't make it.",
+            name: @meeting.organizer_name
+          )
+        end}
+      </p>
+
+      <.meeting_summary meeting={@meeting} timezone={@timezone} />
+
+      <p class="mt-6 text-token-sm text-tymeslot-500">
+        {if accepted?,
+          do: dgettext("booking_manage", "Changed your mind?"),
+          else: dgettext("booking_manage", "Able to make it after all?")}
+        <.link
+          href={~p"/guest/#{@token}/#{if accepted?, do: "decline", else: "accept"}"}
+          class="font-medium text-turquoise-600 underline"
+        >
+          {if accepted?,
+            do: dgettext("booking_manage", "Decline instead"),
+            else: dgettext("booking_manage", "Accept instead")}
+        </.link>
+      </p>
+    </TokenPage.shell>
+    """
+  end
+
+  @doc "Shown when the meeting behind a valid link no longer takes responses."
+  @spec closed(map()) :: Phoenix.LiveView.Rendered.t()
+  def closed(assigns) do
+    ~H"""
+    <TokenPage.shell legal_links={assigns[:legal_links]}>
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-token-full bg-tymeslot-100 text-tymeslot-500">
+        <.icon name="hero-calendar-days" class="h-9 w-9" />
+      </div>
+      <h1 class="mt-6 text-token-2xl font-bold text-tymeslot-800">
+        {dgettext("booking_manage", "This meeting is no longer taking responses")}
+      </h1>
+      <p class="mt-2 text-token-base text-tymeslot-600">
+        {dgettext(
+          "booking_manage",
+          "The meeting has already taken place, or it was cancelled or not confirmed. Please contact the meeting host."
+        )}
+      </p>
+    </TokenPage.shell>
+    """
+  end
+
+  @doc """
+  Shown to a guest of a group booking who declined, gave their seat back, and
+  now answers yes while no seat is free.
+  """
+  @spec full(map()) :: Phoenix.LiveView.Rendered.t()
+  def full(assigns) do
+    ~H"""
+    <TokenPage.shell legal_links={assigns[:legal_links]}>
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-token-full bg-tymeslot-100 text-tymeslot-500">
+        <.icon name="hero-user-group" class="h-9 w-9" />
+      </div>
+      <h1 class="mt-6 text-token-2xl font-bold text-tymeslot-800">
+        {dgettext("booking_manage", "This meeting is now fully booked")}
+      </h1>
+      <p class="mt-2 text-token-base text-tymeslot-600">
+        {dgettext(
+          "booking_manage",
+          "Your seat was given to someone else after you declined. Your answer stays as it was; please contact the person who invited you or the meeting host."
+        )}
+      </p>
+    </TokenPage.shell>
+    """
+  end
+
+  @doc "Shown when the RSVP token is missing or invalid."
+  @spec invalid(map()) :: Phoenix.LiveView.Rendered.t()
+  def invalid(assigns) do
+    ~H"""
+    <TokenPage.shell legal_links={assigns[:legal_links]}>
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-token-full bg-tymeslot-100 text-tymeslot-500">
+        <.icon name="hero-link-slash" class="h-9 w-9" />
+      </div>
+      <h1 class="mt-6 text-token-2xl font-bold text-tymeslot-800">
+        {dgettext("booking_manage", "This link is not valid")}
+      </h1>
+      <p class="mt-2 text-token-base text-tymeslot-600">
+        {dgettext(
+          "booking_manage",
+          "We couldn't find an invitation for this link. Please check that you copied the whole link from your email, or contact the meeting host."
+        )}
+      </p>
+    </TokenPage.shell>
+    """
+  end
+
+  @doc "Shown when the visitor has made too many requests in a short window."
+  @spec too_many_requests(map()) :: Phoenix.LiveView.Rendered.t()
+  def too_many_requests(assigns), do: TokenPage.too_many_requests(assigns)
+
+  # Status icon: a tick for accepting, a cross for declining.
+  attr :accepted?, :boolean, required: true
+
+  defp rsvp_badge(assigns) do
+    ~H"""
+    <div class={[
+      "mx-auto flex h-16 w-16 items-center justify-center rounded-token-full",
+      @accepted? && "bg-green-100 text-green-600",
+      !@accepted? && "bg-amber-100 text-amber-600"
+    ]}>
+      <.icon name={if @accepted?, do: "hero-check-circle", else: "hero-x-circle"} class="h-9 w-9" />
+    </div>
+    """
+  end
+
+  # The meeting's title, time and host.
+  attr :meeting, :map, required: true
+  attr :timezone, :string, default: nil
+
+  defp meeting_summary(assigns) do
+    ~H"""
+    <div class="mt-6 space-y-2 rounded-token-xl bg-tymeslot-50 p-5 text-left">
+      <p class="text-token-base font-semibold text-tymeslot-800">{@meeting.title}</p>
+      <p class="flex items-center gap-2 text-token-sm text-tymeslot-600">
+        <.icon name="hero-calendar-mini" class="h-4 w-4 text-turquoise-500" />
+        {MeetingTimeFormat.format_when(@meeting, @timezone)}
+      </p>
+      <p class="flex items-center gap-2 text-token-sm text-tymeslot-600">
+        <.icon name="hero-user-mini" class="h-4 w-4 text-turquoise-500" />
+        {dgettext("booking_manage", "Hosted by %{name}", name: @meeting.organizer_name)}
+      </p>
+    </div>
+    """
+  end
+end

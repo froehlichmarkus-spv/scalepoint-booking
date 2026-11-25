@@ -1,0 +1,150 @@
+defmodule TymeslotWeb.Themes.Core.ErrorBoundary do
+  @moduledoc """
+  Provides error boundary functionality for theme isolation.
+
+  This module ensures that errors in theme code don't crash the entire
+  application, providing graceful degradation and error reporting.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  require Logger
+
+  alias Phoenix.Component
+  alias Tymeslot.Infrastructure.ErrorTracking
+
+  @type error_context :: %{
+          theme_id: String.t(),
+          function: atom(),
+          args: list(),
+          error: term(),
+          stacktrace: list()
+        }
+
+  @doc """
+  Wraps a LiveView callback to handle theme errors gracefully.
+  """
+  @spec wrap_callback(String.t(), module(), :mount, list()) :: {:ok, Phoenix.LiveView.Socket.t()}
+  def wrap_callback(theme_id, module, :mount, [params, session, socket]) do
+    call_with_fallback(theme_id, module, :mount, [params, session, socket], fn context ->
+      {:ok, assign_error(socket, context)}
+    end)
+  end
+
+  @spec wrap_callback(String.t(), module(), :handle_params, list()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def wrap_callback(theme_id, module, :handle_params, [params, url, socket]) do
+    call_with_fallback(theme_id, module, :handle_params, [params, url, socket], fn context ->
+      {:noreply, assign_error(socket, context)}
+    end)
+  end
+
+  @spec wrap_callback(String.t(), module(), :handle_event, list()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def wrap_callback(theme_id, module, :handle_event, [event, params, socket]) do
+    call_with_fallback(theme_id, module, :handle_event, [event, params, socket], fn context ->
+      {:noreply, assign_error(socket, context)}
+    end)
+  end
+
+  @spec wrap_callback(String.t(), module(), :handle_info, list()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def wrap_callback(theme_id, module, :handle_info, [msg, socket]) do
+    call_with_fallback(theme_id, module, :handle_info, [msg, socket], fn context ->
+      {:noreply, assign_error(socket, context)}
+    end)
+  end
+
+  @spec wrap_callback(String.t(), module(), :handle_async, list()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def wrap_callback(theme_id, module, :handle_async, [name, result, socket]) do
+    call_with_fallback(theme_id, module, :handle_async, [name, result, socket], fn context ->
+      {:noreply, assign_error(socket, context)}
+    end)
+  end
+
+  # Private functions
+
+  defp call_with_fallback(theme_id, module, function, args, fallback_fn) do
+    apply(module, function, args)
+  rescue
+    error ->
+      stacktrace = __STACKTRACE__
+      context = build_error_context(theme_id, function, args, error, stacktrace)
+      log_theme_error(context)
+      fallback_fn.(context)
+  catch
+    kind, error ->
+      stacktrace = __STACKTRACE__
+      context = build_error_context(theme_id, function, args, {kind, error}, stacktrace)
+      log_theme_error(context)
+      fallback_fn.(context)
+  end
+
+  defp build_error_context(theme_id, function, args, error, stacktrace) do
+    %{
+      theme_id: theme_id,
+      function: function,
+      args: sanitize_args(args),
+      error: error,
+      stacktrace: stacktrace,
+      timestamp: DateTime.utc_now()
+    }
+  end
+
+  defp sanitize_args(args) do
+    # Remove sensitive data from args for logging
+    Enum.map(args, fn
+      %Phoenix.LiveView.Socket{} -> "%Socket{...}"
+      %{} = map when map_size(map) > 10 -> "%{...#{map_size(map)} keys...}"
+      arg -> arg
+    end)
+  end
+
+  defp log_theme_error(context) do
+    ErrorTracking.report_error(context.error, context.stacktrace, %{
+      theme_id: context.theme_id,
+      function: context.function
+    })
+
+    if Application.get_env(:tymeslot, :debug_theme_errors, false) do
+      Logger.error("Theme error stacktrace",
+        stacktrace: Exception.format_stacktrace(context.stacktrace)
+      )
+    end
+  end
+
+  defp assign_error(socket, context) do
+    socket
+    |> Component.assign(:theme_error, context)
+    |> Component.assign(:theme_error_message, format_error(context))
+  end
+
+  @doc """
+  The message the error card shows the visitor for an error context, in the
+  current locale. The technical detail goes to the error tracker instead.
+  """
+  @spec format_error(map()) :: String.t()
+  def format_error(%{function: :mount}), do: load_failed_message()
+
+  def format_error(%{function: :handle_params}),
+    do: dgettext("booking", "This step could not be opened. Please try again.")
+
+  def format_error(%{function: :handle_event}),
+    do: dgettext("booking", "Your last action could not be completed. Please try again.")
+
+  def format_error(%{function: function}) when function in [:handle_info, :handle_async],
+    do: dgettext("booking", "This page could not be updated. Please try again.")
+
+  def format_error(_context),
+    do: dgettext("booking", "Something went wrong on this page. Please try again.")
+
+  @doc """
+  The message the error card shows when the page could not be built at all:
+  a theme that failed to mount or render, or a theme context that could not
+  be resolved.
+  """
+  @spec load_failed_message() :: String.t()
+  def load_failed_message,
+    do: dgettext("booking", "This page could not be loaded. Please try again.")
+end

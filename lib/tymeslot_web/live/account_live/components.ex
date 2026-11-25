@@ -1,0 +1,335 @@
+defmodule TymeslotWeb.AccountLive.Components do
+  @moduledoc """
+  UI components for the Account Settings LiveView.
+  Provides reusable components for email and password management.
+  """
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  import TymeslotWeb.AccountLive.Forms
+  import TymeslotWeb.Components.CoreComponents.Buttons
+  import TymeslotWeb.Components.CoreComponents.Icons
+  import TymeslotWeb.Components.CoreComponents.Tooltip
+  import TymeslotWeb.Components.FlagHelpers
+  alias TymeslotWeb.AccountLive.Helpers
+  alias TymeslotWeb.Helpers.TimeAgo
+
+  @doc """
+  Renders the security header with icon and title.
+  """
+  # No assigns used in this component - purely static HTML
+  @spec security_header(map) :: Phoenix.LiveView.Rendered.t()
+  def security_header(assigns) do
+    ~H"""
+    <div class="flex items-center mb-8">
+      <div class="text-tymeslot-600 mr-3">
+        <.icon name="hero-shield-check" class="w-8 h-8" />
+      </div>
+      <h1 class="text-3xl font-bold text-tymeslot-800">{dgettext("account", "Account Security")}</h1>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders the email settings card with form.
+  """
+  attr :current_user, :map, required: true
+  attr :is_social_user, :boolean, required: true
+  attr :show_email_form, :boolean, required: true
+  attr :email_form_errors, :map, required: true
+  attr :saving_email, :boolean, required: true
+
+  @spec email_card(map) :: Phoenix.LiveView.Rendered.t()
+  def email_card(assigns) do
+    ~H"""
+    <div class={card_classes(@is_social_user)}>
+      <.card_header
+        title={dgettext("account", "Email Address")}
+        current_value={@current_user.email}
+        pending_email={@current_user.pending_email}
+        is_social={@is_social_user}
+        provider={@current_user.provider}
+        show_form={@show_email_form}
+        toggle_event="toggle_email_form"
+        button_text={
+          if @show_email_form,
+            do: dgettext("account", "Cancel"),
+            else: dgettext("account", "Change Email")
+        }
+      />
+
+      <%= if @current_user.pending_email do %>
+        <.pending_email_notice
+          pending_email={@current_user.pending_email}
+          email_change_sent_at={@current_user.email_change_sent_at}
+        />
+      <% end %>
+
+      <%= if @show_email_form do %>
+        <.email_form errors={@email_form_errors} saving={@saving_email} />
+      <% end %>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders the password settings card with form.
+  """
+  attr :current_user, :map, required: true
+  attr :is_social_user, :boolean, required: true
+  attr :show_password_form, :boolean, required: true
+  attr :password_form_errors, :map, required: true
+  attr :saving_password, :boolean, required: true
+
+  @spec password_card(map) :: Phoenix.LiveView.Rendered.t()
+  def password_card(assigns) do
+    ~H"""
+    <div class={card_classes(@is_social_user)}>
+      <.card_header
+        title={dgettext("account", "Password")}
+        is_social={@is_social_user}
+        provider={@current_user.provider}
+        show_form={@show_password_form}
+        toggle_event="toggle_password_form"
+        button_text={
+          if @show_password_form,
+            do: dgettext("account", "Cancel"),
+            else: dgettext("account", "Change Password")
+        }
+        subtitle={
+          if @is_social_user do
+            dgettext("account", "Authentication is managed through %{provider}",
+              provider: String.capitalize(@current_user.provider)
+            )
+          else
+            dgettext("account", "Last changed: %{last_changed}",
+              last_changed: Helpers.format_last_password_change(@current_user)
+            )
+          end
+        }
+        description={
+          if @is_social_user do
+            dgettext("account", "Password authentication is not available for social login accounts")
+          else
+            nil
+          end
+        }
+      />
+
+      <%= if @show_password_form do %>
+        <.password_form errors={@password_form_errors} saving={@saving_password} />
+      <% end %>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders the interface-language preference card as a row of flag buttons. Each
+  button auto-saves the chosen locale on click (`phx-click="change_language"`)
+  and immediately highlights as active; the Automatic button clears the
+  preference so the dashboard follows the browser/session locale.
+  """
+  attr :current_user, :map, required: true
+  attr :supported_locales, :list, required: true
+
+  @spec language_card(map) :: Phoenix.LiveView.Rendered.t()
+  def language_card(assigns) do
+    ~H"""
+    <div class={card_classes(false)}>
+      <div class="mb-4">
+        <h3 class="text-lg font-medium text-tymeslot-800">{dgettext("account", "Language")}</h3>
+        <p class="text-sm text-tymeslot-600 mt-1">
+          {dgettext(
+            "account",
+            "Choose the language for your dashboard. Automatic follows your browser's preference."
+          )}
+        </p>
+      </div>
+      <div
+        class="flex flex-wrap items-center gap-3"
+        role="group"
+        aria-label={dgettext("account", "Interface language")}
+      >
+        <.tooltip
+          :let={tip}
+          id="language-automatic-tip"
+          text={
+            dgettext("account", "Follow your browser's language setting instead of a fixed choice.")
+          }
+        >
+          <button
+            type="button"
+            phx-click="change_language"
+            phx-value-locale=""
+            aria-pressed={is_nil(@current_user.locale)}
+            aria-describedby={tip}
+            class={[
+              "btn-tag-selector btn-tag-selector-primary inline-flex items-center gap-2",
+              is_nil(@current_user.locale) && "btn-tag-selector-primary--active"
+            ]}
+          >
+            <.icon name="hero-globe-alt" class="w-4 h-4" />
+            {dgettext("account", "Automatic")}
+          </button>
+        </.tooltip>
+        <button
+          :for={locale <- @supported_locales}
+          type="button"
+          phx-click="change_language"
+          phx-value-locale={locale.code}
+          aria-pressed={@current_user.locale == locale.code}
+          class={[
+            "btn-tag-selector btn-tag-selector-primary inline-flex items-center gap-2",
+            @current_user.locale == locale.code && "btn-tag-selector-primary--active"
+          ]}
+        >
+          <.locale_flag locale={locale.code} class="w-5 h-4" />
+          {locale.name}
+        </button>
+      </div>
+    </div>
+    """
+  end
+
+  attr :title, :string, required: true
+  attr :is_social, :boolean, required: true
+  attr :provider, :string, default: nil
+  attr :toggle_event, :string, required: true
+  attr :button_text, :string, required: true
+  attr :current_value, :string, default: nil
+  attr :pending_email, :string, default: nil
+  attr :subtitle, :string, default: nil
+  attr :description, :string, default: nil
+  attr :show_form, :boolean, required: true
+
+  @spec card_header(map) :: Phoenix.LiveView.Rendered.t()
+  defp card_header(assigns) do
+    ~H"""
+    <div class="flex items-center justify-between gap-4 mb-4">
+      <%!-- min-w-0 lets this column shrink below its widest word, and the
+           addresses break anywhere, so a long email wraps instead of pushing
+           the action button off a narrow screen. --%>
+      <div class="min-w-0">
+        <h3 class="text-lg font-medium text-tymeslot-800">{@title}</h3>
+        <%= if @current_value do %>
+          <p class="text-sm text-tymeslot-600 mt-1">
+            {dgettext("account", "Current email:")}
+            <span class="font-medium text-tymeslot-800 break-all">{@current_value}</span>
+          </p>
+        <% end %>
+        <%= if @pending_email do %>
+          <p class="text-sm text-amber-600 mt-1">
+            {dgettext("account", "Pending change to:")}
+            <span class="font-medium break-all">{@pending_email}</span>
+          </p>
+        <% end %>
+        <%= if @subtitle do %>
+          <p class="text-sm text-tymeslot-600 mt-1">{@subtitle}</p>
+        <% end %>
+        <%= if @description do %>
+          <p class="text-sm text-tymeslot-500 mt-2">{@description}</p>
+        <% end %>
+      </div>
+      <.card_toggle_button
+        is_social={@is_social}
+        provider={@provider}
+        toggle_event={@toggle_event}
+        button_text={@button_text}
+      />
+    </div>
+    """
+  end
+
+  @doc """
+  Renders an action button with optional disabled state and tooltip.
+  """
+  attr :toggle_event, :string, required: true
+  attr :button_text, :string, required: true
+  attr :is_social, :boolean, required: true
+  attr :provider, :string, default: nil
+
+  @spec card_toggle_button(map) :: Phoenix.LiveView.Rendered.t()
+  def card_toggle_button(assigns) do
+    ~H"""
+    <div class="shrink-0">
+      <.action_button
+        id={"#{@toggle_event}-button"}
+        phx-click={@toggle_event}
+        size={:sm}
+        disabled={@is_social}
+        tooltip={
+          @is_social &&
+            dgettext("account", "Managed by %{provider}", provider: String.capitalize(@provider))
+        }
+      >
+        {@button_text}
+      </.action_button>
+    </div>
+    """
+  end
+
+  attr :pending_email, :string, required: true
+  attr :email_change_sent_at, :any, default: nil
+
+  @spec pending_email_notice(map) :: Phoenix.LiveView.Rendered.t()
+  defp pending_email_notice(assigns) do
+    ~H"""
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+      <div class="flex items-start">
+        <div class="shrink-0">
+          <.icon name="hero-exclamation-triangle-mini" class="h-5 w-5 text-amber-400" />
+        </div>
+        <div class="ml-3 flex-1 min-w-0">
+          <h3 class="text-sm font-medium text-amber-800">
+            {dgettext("account", "Email Change Pending")}
+          </h3>
+          <div class="mt-2 text-sm text-amber-700">
+            <p>
+              {dgettext("account", "A verification email has been sent to")}
+              <strong class="break-all">{@pending_email}</strong>
+            </p>
+            <%= if @email_change_sent_at do %>
+              <p class="mt-1 text-xs text-amber-600">
+                {sent_ago(@email_change_sent_at)}
+              </p>
+            <% end %>
+          </div>
+          <div class="mt-3">
+            <button
+              phx-click="cancel_email_change"
+              class="text-sm font-medium text-amber-600 hover:text-amber-500"
+            >
+              {dgettext("account", "Cancel email change")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Private helper functions
+  defp sent_ago(sent_at) do
+    case TimeAgo.since(sent_at) do
+      :just_now ->
+        dgettext("account", "Sent just now")
+
+      {:minutes, count} ->
+        dngettext("account", "Sent %{count} minute ago", "Sent %{count} minutes ago", count)
+
+      {:hours, count} ->
+        dngettext("account", "Sent %{count} hour ago", "Sent %{count} hours ago", count)
+
+      {:days, count} ->
+        dngettext("account", "Sent %{count} day ago", "Sent %{count} days ago", count)
+    end
+  end
+
+  defp card_classes(is_social) do
+    if is_social do
+      "card-glass card-glass-disabled"
+    else
+      "card-glass"
+    end
+  end
+end

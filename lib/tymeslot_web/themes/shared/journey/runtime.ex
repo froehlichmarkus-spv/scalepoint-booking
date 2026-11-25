@@ -1,0 +1,585 @@
+defmodule TymeslotWeb.Themes.Shared.Journey.Runtime do
+  @moduledoc """
+  The engine every theme's booking runs on: the parts of the flow that are
+  no one fact's. The journey is `socket.assigns.journey`, which
+  `SchedulingLive` assigns on mount.
+
+  `handle_step_event/4` routes a step component's `{:step_event, moment,
+  event, data}`, in this order:
+
+    1. `next_step` and `back_step` from the current moment go to the
+       navigator's `continue/2` and `back/2`;
+    2. `schedule_another` from the confirmation starts the booking again
+       (`restart/1`);
+    3. an ambient event (`Journey.Ambient`: the timezone picker's) is
+       accepted from every visible moment, never from an outcome;
+    4. an event a fact owns goes to that fact's `handle/3` when the moment
+       it came from is visible (`Navigator.visible/2`) and collects the
+       fact, this booking needs the owner (`required?/1`), every fact the
+       owner `requires/1` is known, and, when the moment is not the current
+       one, the owner may be revisited (`revisitable?/1`); when such an
+       event changes the owner's value, the facts depending on it are
+       forgotten (`clear/2`), so the page moves back to them;
+    5. anything else is `:unhandled`, which `SchedulingLive` logs and drops.
+
+  A theme's own `theme:<name>` events never reach this module. With
+  `Navigators.Paged` only the current moment is visible, so a canonical event
+  sent from another step is dropped. A page without a journey (the meeting and
+  poll pages the same LiveView serves) handles none of them, and its step
+  indicator moves nothing.
+
+  `transition_to/3` shows a moment or an outcome: it sets `:current_state`
+  and, for a moment, opens it (`open_moment/3`: its `defaults:`, then
+  `enter/2` of each collected fact the booking requires, with `params`, the
+  URL's or `%{}` for a move inside the page) and lets the navigator settle
+  (`settle/1`). The navigators and `BookingFlow` move through it. A fact's
+  or an ambient event settles too, and when that moves `:current_state` on to
+  a moment after the one the event came from, the new current moment
+  becomes `:journey_focus`. Next, Back and the step indicator do the same
+  for every navigator, in either direction: a move that makes another
+  moment current makes it `:journey_focus`. Nothing sets it on page load
+  or on a reconnect, which mounts afresh. `clear/2` forgets facts and
+  those depending on them. `navigate_to_step/2` is the step indicator's
+  click, handed to the navigator's `go_to/3`.
+
+  A fact whose prerequisite its own moment collects is entered once that
+  prerequisite is known (`enter_ready/1`, after every step event), so one
+  paged moment can pick the time and then open the details. On a declared
+  journey the address then follows the facts (`follow_url/1`).
+  """
+
+  import Phoenix.Component, only: [assign: 2, assign: 3]
+
+  alias Phoenix.LiveView.Socket
+  alias Tymeslot.MeetingPayments
+  alias TymeslotWeb.Themes.Shared.ChoicesInUrl
+  alias TymeslotWeb.Themes.Shared.GuestBooking
+  alias TymeslotWeb.Themes.Shared.Journey
+  alias TymeslotWeb.Themes.Shared.Journey.Ambient
+  alias TymeslotWeb.Themes.Shared.Journey.Moment
+  alias TymeslotWeb.Themes.Shared.Journey.Progress
+  alias TymeslotWeb.Themes.Shared.ReschedulePin
+  alias TymeslotWeb.Themes.Shared.VerificationResend
+
+  @type reply :: {:noreply, Socket.t()}
+
+  @doc """
+  Handles an event a step component bubbled up from `moment_key`.
+
+  Returns `:unhandled` for an event the booking does not take from there, so
+  the LiveView can log and drop it.
+  """
+  @spec handle_step_event(Socket.t(), atom(), atom(), term()) :: reply() | :unhandled
+  def handle_step_event(%Socket{assigns: %{journey: journey}} = socket, moment_key, event, data) do
+    reply =
+      cond do
+        navigation?(journey, socket.assigns, moment_key, event) ->
+          focus_on_move(navigate(journey, socket, event), socket)
+
+        restart?(socket.assigns, moment_key, event) ->
+          {:noreply, restart(socket)}
+
+        event in Ambient.events() ->
+          ambient_event(journey, socket, moment_key, event, data)
+
+        true ->
+          fact_event(journey, socket, moment_key, event, data)
+      end
+
+    enter_ready_after(reply)
+  end
+
+  def handle_step_event(_socket, _moment_key, _event, _data), do: :unhandled
+
+  @doc """
+  Shows the moment or outcome `key`. A moment is opened (`open_moment/3`),
+  then the navigator settles what the booking now reaches (`settle/1`).
+  The confirmation means the booking was made, so the details typed for it
+  (`:form`) are dropped there rather than carried into the next booking.
+  """
+  @spec transition_to(Socket.t(), atom(), map()) :: Socket.t()
+  def transition_to(socket, :confirmation, _params),
+    do: assign(socket, current_state: :confirmation, form: nil)
+
+  def transition_to(socket, key, params) do
+    socket = assign(socket, :current_state, key)
+
+    case Journey.moment(socket.assigns.journey, key) do
+      %Moment{} = moment -> socket |> open_moment(moment, params) |> settle()
+      nil -> socket
+    end
+  end
+
+  @doc """
+  Shows `moment`: applies its `defaults:` to each defaulted fact not yet
+  known (the fact's `default/2`), runs `enter/2` of each fact it collects
+  that the booking requires, with `params` (the URL parameters on arrival,
+  `%{}` inside the page), and records the moment in `:journey_opened`, so a
+  navigator showing several moments enters each once while it stays shown.
+  A fact waiting on a prerequisite that the same moment collects and that
+  is not yet known (the attendee beside the slot on one screen) is not
+  entered here but put off, with `params`, until `enter_ready/1` finds its
+  prerequisites known.
+  """
+  @spec open_moment(Socket.t(), Moment.t(), map()) :: Socket.t()
+  def open_moment(socket, %Moment{} = moment, params) do
+    facts = Journey.facts()
+
+    socket
+    |> apply_defaults(moment, facts)
+    |> forget_deferred(moment.key)
+    |> enter_facts(moment, params, facts)
+    |> then(&assign(&1, :journey_opened, MapSet.put(opened(&1), moment.key)))
+  end
+
+  @doc """
+  Enters each fact a visible moment put off (`open_moment/3`) whose
+  prerequisites are now all known, with the parameters its moment opened
+  with. Runs after every step event, so a time picked on a screen that also
+  asks for the details opens the details' form and token.
+  """
+  @spec enter_ready(Socket.t()) :: Socket.t()
+  def enter_ready(%Socket{assigns: %{journey: %Journey{navigator: navigator} = journey}} = socket) do
+    visible =
+      MapSet.new(navigator.visible(journey, socket.assigns), fn {moment, _state} ->
+        moment.key
+      end)
+
+    socket
+    |> deferred()
+    |> Enum.filter(fn {{moment_key, fact_key}, _params} ->
+      MapSet.member?(visible, moment_key) and ready?(Journey.fact!(fact_key), socket.assigns)
+    end)
+    |> Enum.reduce(socket, fn {{_moment_key, fact_key} = entry, params}, acc ->
+      fact = Journey.fact!(fact_key)
+
+      acc
+      |> assign(:journey_deferred, Map.delete(deferred(acc), entry))
+      |> fact.enter(params)
+    end)
+  end
+
+  def enter_ready(socket), do: socket
+
+  @doc """
+  Brings each fact up to date (`Fact.refresh/1`) that a shown moment
+  collects, has entered and the booking requires: a moment that opened
+  stays entered while it is shown, so what it derived from a fact above it
+  (the series' sessions from the time picked) follows that fact here.
+  Runs after every step event, before `enter_ready/1`.
+  """
+  @spec refresh_shown(Socket.t()) :: Socket.t()
+  def refresh_shown(
+        %Socket{assigns: %{journey: %Journey{navigator: navigator} = journey}} = socket
+      ) do
+    put_off = MapSet.new(Map.keys(deferred(socket)))
+
+    navigator.visible(journey, socket.assigns)
+    |> Enum.filter(fn {moment, _state} -> MapSet.member?(opened(socket), moment.key) end)
+    |> Enum.flat_map(fn {moment, _state} -> Enum.map(moment.collects, &{moment.key, &1}) end)
+    |> Enum.reject(&MapSet.member?(put_off, &1))
+    |> Enum.map(fn {_moment_key, fact_key} -> Journey.fact!(fact_key) end)
+    |> Enum.uniq()
+    |> Enum.reduce(socket, fn fact, acc ->
+      if function_exported?(fact, :refresh, 1) and fact.required?(acc.assigns),
+        do: fact.refresh(acc),
+        else: acc
+    end)
+  end
+
+  def refresh_shown(socket), do: socket
+
+  @doc """
+  On a journey whose address follows its facts (`url: :facts`), moves the
+  address with them through `ChoicesInUrl.sync/1`, the one writer of a
+  booking page's address (`PathHandlers.facts_address/1`), replacing the
+  history entry, so the browser's Back leaves the page. A socket already
+  redirecting or patching, any other journey, and a page not yet connected
+  keep their address.
+  """
+  @spec follow_url(Socket.t()) :: Socket.t()
+  def follow_url(%Socket{assigns: %{journey: %Journey{url: :facts}}} = socket),
+    do: ChoicesInUrl.sync(socket)
+
+  def follow_url(socket), do: socket
+
+  defp ready?(fact, assigns),
+    do: Enum.all?(fact.requires(assigns), &Journey.fact!(&1).known?(assigns))
+
+  @doc """
+  Forgets `keys` and every fact depending on them for this booking
+  (`Progress.dependents/3`), through each fact's `clear/1`.
+  """
+  @spec clear(Socket.t(), [atom()]) :: Socket.t()
+  def clear(socket, keys) do
+    facts = Journey.facts()
+
+    keys
+    |> Enum.flat_map(&Progress.dependents(&1, socket.assigns, facts))
+    |> Enum.uniq()
+    |> Enum.reduce(socket, fn key, acc ->
+      fact = Map.fetch!(facts, key)
+
+      if Code.ensure_loaded?(fact) and function_exported?(fact, :clear, 1),
+        do: fact.clear(acc),
+        else: acc
+    end)
+  end
+
+  @doc """
+  Lets the journey's navigator reveal what the booking reaches now
+  (`Navigator.settle/2`); the socket unchanged for a navigator without one.
+  """
+  @spec settle(Socket.t()) :: Socket.t()
+  def settle(%Socket{assigns: %{journey: %Journey{navigator: navigator} = journey}} = socket) do
+    if Code.ensure_loaded?(navigator) and function_exported?(navigator, :settle, 2),
+      do: navigator.settle(journey, socket),
+      else: socket
+  end
+
+  def settle(socket), do: socket
+
+  @doc """
+  Resumes on the moment the URL names (`params["step"]`), through the
+  navigator's `resume/4`; the socket unchanged without one, without a
+  `step`, or on a page already navigating elsewhere.
+  """
+  @spec resume(Socket.t(), map()) :: Socket.t()
+  def resume(
+        %Socket{redirected: nil, assigns: %{journey: %Journey{navigator: navigator} = journey}} =
+          socket,
+        %{"step" => step} = params
+      )
+      when is_binary(step) do
+    if Code.ensure_loaded?(navigator) and function_exported?(navigator, :resume, 4),
+      do: navigator.resume(journey, socket, step, params),
+      else: socket
+  end
+
+  def resume(socket, _params), do: socket
+
+  @doc """
+  Starts the booking again, in place: the confirmation's "Schedule another
+  meeting". It keeps the meeting type and forgets every fact depending on
+  it (the time, the answers, the booking just made). A booker who came
+  through the overview, or whose booking names no meeting type (a
+  confirmation reached by its own address), returns to the journey's
+  opening moment, as a visit to the overview would; any other
+  (a private or direct link, a reschedule) to the moment a meeting type's
+  own link opens on, for the same meeting type, so the organiser's other
+  types stay hidden.
+  """
+  # The flow restarts here without navigating, so the reschedule context has
+  # to be dropped explicitly or the next submit moves the meeting that was
+  # just moved (see `ReschedulePin.abandon/1`). The day and time belong to
+  # the booking just made: kept, the schedule step would reopen the calendar
+  # on them, with a time that is no longer free. The answers are the last
+  # booker's, and the booking's `meeting_uid` would leave the attendee
+  # known, so the next booking's details moment would open as done; what
+  # its payment took is that booking's too (`:paid_payment`). The form
+  # goes too: the details moment carries what was typed into it while the
+  # page stays on one booking (`StepEntry`), never into the next. A
+  # reschedule still named in the URL is patched out of it, to the route the
+  # booking starts again on, so a reload does not start the move over. That
+  # route is also the one the language switch now rebuilds (`:entry_action`).
+  @spec restart(Socket.t()) :: Socket.t()
+  def restart(socket) do
+    journey = socket.assigns.journey
+    route = restart_route(socket.assigns)
+    opening = journey.navigator.entry(journey, route, socket.assigns)
+
+    socket
+    |> clear(Progress.dependents(:meeting_type, socket.assigns) -- [:meeting_type])
+    |> forget_payment_wait()
+    |> VerificationResend.forget()
+    |> GuestBooking.assign_defaults()
+    |> ReschedulePin.abandon()
+    |> assign(selected_date: nil, selected_time: nil, form: nil, paid_payment: nil)
+    |> assign(
+      journey_opened: MapSet.new(),
+      entry_action: route,
+      entered_via_overview: route == :overview
+    )
+    |> transition_to(opening, %{})
+    |> ReschedulePin.drop_from_url(route)
+  end
+
+  @doc """
+  Forgets a paid booking's payment wait: the meeting it waited on and its
+  checkout link, and the page's subscription to that meeting's payment
+  broadcasts, so a repeated broadcast for it cannot move a later booking.
+  """
+  @spec forget_payment_wait(Socket.t()) :: Socket.t()
+  def forget_payment_wait(socket) do
+    case socket.assigns[:awaiting_payment_meeting] do
+      %{id: id} -> Phoenix.PubSub.unsubscribe(Tymeslot.PubSub, MeetingPayments.payment_topic(id))
+      _none -> :ok
+    end
+
+    assign(socket, awaiting_payment_meeting: nil, awaiting_payment_checkout_url: nil)
+  end
+
+  @doc """
+  Handles a click on the step indicator: the navigator decides where it may
+  go (`Navigator.go_to/3`).
+  """
+  # `step` is guarded to a binary: a crafted socket push can deliver a
+  # non-binary payload, which `Integer.parse/1` has no clause for.
+  @spec navigate_to_step(Socket.t(), map()) :: reply()
+  def navigate_to_step(%Socket{assigns: %{journey: journey}} = socket, %{"step" => step})
+      when is_binary(step),
+      do: focus_on_move(journey.navigator.go_to(journey, socket, step), socket)
+
+  def navigate_to_step(socket, _params), do: {:noreply, socket}
+
+  @doc """
+  The step numbers the step indicator may offer as clickable: those its
+  `navigate_to_step` would move to (`Navigator.can_go_to?/3`). None on a
+  page without a journey, or whose navigator has no numbered steps.
+  """
+  @spec navigable_steps(map()) :: [pos_integer()]
+  def navigable_steps(%{journey: %Journey{navigator: navigator} = journey} = assigns) do
+    if Code.ensure_loaded?(navigator) and function_exported?(navigator, :can_go_to?, 3),
+      do: Enum.filter(1..length(journey.moments)//1, &navigator.can_go_to?(journey, assigns, &1)),
+      else: []
+  end
+
+  def navigable_steps(_assigns), do: []
+
+  @doc """
+  The step number of each moment the booking needs, by moment key, for a
+  step indicator whose steps are not the journey's moments one for one (one
+  that shows the length choice under the same step as the meeting type).
+  Empty on a page without a journey, or whose navigator numbers no steps.
+  """
+  @spec step_numbers(map()) :: %{atom() => pos_integer()}
+  def step_numbers(%{journey: %Journey{navigator: navigator} = journey} = assigns) do
+    if Code.ensure_loaded?(navigator) and function_exported?(navigator, :step_numbers, 2),
+      do: navigator.step_numbers(journey, assigns),
+      else: %{}
+  end
+
+  def step_numbers(_assigns), do: %{}
+
+  defp navigation?(journey, assigns, moment_key, event) do
+    event in [:next_step, :back_step] and moment_key == assigns[:current_state] and
+      Journey.moment(journey, moment_key) != nil
+  end
+
+  defp navigate(journey, socket, :next_step), do: journey.navigator.continue(journey, socket)
+  defp navigate(journey, socket, :back_step), do: journey.navigator.back(journey, socket)
+
+  # Next, Back and the step indicator are the visitor's own moves: whatever
+  # the navigator, one that makes another moment current sends the focus to
+  # it (its `Journey.Components.moment_heading/1`), forward or back. A move
+  # refused, or one that stays inside the moment (the questions wizard's
+  # next question), leaves the focus on the control just pressed.
+  defp focus_on_move({:noreply, socket}, before) do
+    now = socket.assigns[:current_state]
+
+    if now == before.assigns[:current_state],
+      do: {:noreply, socket},
+      else: {:noreply, assign(socket, :journey_focus, now)}
+  end
+
+  # The route whose entry the booking starts again on: the overview, or the
+  # meeting type's own link (`/:username/:slug`, live action `:schedule`),
+  # so a restart opens where a fresh visit by the same way in would. A
+  # booking with no meeting type known (a confirmation reached by its own
+  # address) starts on the overview, since a type's link needs a type.
+  defp restart_route(%{entered_via_overview: true}), do: :overview
+
+  defp restart_route(assigns) do
+    if Journey.fact!(:meeting_type).known?(assigns), do: :schedule, else: :overview
+  end
+
+  defp restart?(assigns, moment_key, event) do
+    event == :schedule_another and moment_key == :confirmation and
+      assigns[:current_state] == :confirmation
+  end
+
+  defp ambient_event(journey, socket, moment_key, event, data) do
+    case visible_moment(journey, socket.assigns, moment_key) do
+      {:ok, _moment, _state} ->
+        socket |> Ambient.handle(event, data) |> after_event(journey, moment_key)
+
+      :none ->
+        :unhandled
+    end
+  end
+
+  defp fact_event(journey, socket, moment_key, event, data) do
+    case owner(journey, socket.assigns, moment_key, event) do
+      {:ok, fact, :current} ->
+        socket |> fact.handle(event, data) |> after_event(journey, moment_key)
+
+      {:ok, fact, _answered} ->
+        socket
+        |> fact.handle(event, data)
+        |> forget_dependents(fact, socket)
+        |> after_event(journey, moment_key)
+
+      :none ->
+        :unhandled
+    end
+  end
+
+  # A fact answered earlier changed: what the booking built on its old value
+  # (a time picked for another meeting type's length, the details form opened
+  # for it) is forgotten, so settling moves the page back to the first moment
+  # still to complete. The fact itself keeps its new value.
+  # A fact may keep them through a change of its own (a known series counted
+  # again keeps the details opened for it, `Fact.keeps_dependents?/2`).
+  defp forget_dependents({:noreply, socket}, fact, before) do
+    if changed?(fact, before, socket) and not keeps_dependents?(fact, before, socket) do
+      key = fact.key()
+      {:noreply, clear(socket, Progress.dependents(key, socket.assigns) -- [key])}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  defp forget_dependents(other, _fact, _before), do: other
+
+  defp keeps_dependents?(fact, before, socket),
+    do:
+      function_exported?(fact, :keeps_dependents?, 2) and
+        fact.keeps_dependents?(before.assigns, socket.assigns)
+
+  # What a fact holds is what its `clear/1` resets, so it changed when one of
+  # those assigns did. Comparing them, rather than taking every event as a
+  # change, keeps a click on the meeting type already chosen from forgetting
+  # the time. A fact without `clear/1` cannot be forgotten, nor read as
+  # changed.
+  defp changed?(fact, before, socket) do
+    if Code.ensure_loaded?(fact) and function_exported?(fact, :clear, 1) do
+      (held(fact, before) ++ held(fact, socket))
+      |> Enum.uniq()
+      |> Enum.any?(&(Map.get(before.assigns, &1) != Map.get(socket.assigns, &1)))
+    else
+      false
+    end
+  end
+
+  defp held(fact, socket) do
+    assigns = socket.assigns
+    cleared = fact.clear(socket).assigns
+
+    for key <- Enum.uniq(Map.keys(assigns) ++ Map.keys(cleared)),
+        key != :__changed__,
+        Map.get(assigns, key) != Map.get(cleared, key),
+        do: key
+  end
+
+  defp apply_defaults(socket, %Moment{defaults: defaults}, facts) do
+    Enum.reduce(defaults || [], socket, fn {key, strategy}, acc ->
+      fact = Map.fetch!(facts, key)
+      if fact.known?(acc.assigns), do: acc, else: fact.default(acc, strategy)
+    end)
+  end
+
+  defp enter_facts(socket, %Moment{key: moment_key, collects: collects}, params, facts) do
+    Enum.reduce(collects, socket, fn key, acc ->
+      fact = Map.fetch!(facts, key)
+
+      cond do
+        # A fact that refuses the entry has already sent the visitor away, and
+        # a socket can only be redirected once.
+        acc.redirected -> acc
+        not fact.required?(acc.assigns) -> acc
+        waits_in_moment?(fact, collects, acc.assigns) -> defer(acc, moment_key, key, params)
+        true -> fact.enter(acc, params)
+      end
+    end)
+  end
+
+  # A prerequisite the same moment still has to collect puts the fact off: the
+  # attendee beside the slot on one screen is entered once the time is picked.
+  # A prerequisite another moment collects does not: that entry runs as it
+  # always did, redirect included (a `/book` link with no day and time).
+  defp waits_in_moment?(fact, collects, assigns) do
+    Enum.any?(fact.requires(assigns), fn required ->
+      required in collects and not Journey.fact!(required).known?(assigns)
+    end)
+  end
+
+  defp defer(socket, moment_key, fact_key, params),
+    do:
+      assign(
+        socket,
+        :journey_deferred,
+        Map.put(deferred(socket), {moment_key, fact_key}, params)
+      )
+
+  # A moment opening again decides afresh what it puts off.
+  defp forget_deferred(socket, moment_key) do
+    kept = Map.reject(deferred(socket), fn {{key, _fact}, _params} -> key == moment_key end)
+    assign(socket, :journey_deferred, kept)
+  end
+
+  defp deferred(socket), do: socket.assigns[:journey_deferred] || %{}
+
+  defp enter_ready_after({:noreply, socket}),
+    do: {:noreply, socket |> refresh_shown() |> enter_ready() |> follow_url()}
+
+  defp enter_ready_after(other), do: other
+
+  defp opened(socket), do: socket.assigns[:journey_opened] || MapSet.new()
+
+  # A navigator that reveals moments by itself moves the focus to the moment
+  # an event made current, when that moment comes after the one the event
+  # was sent from: the visitor is sent on to what is next. One that comes
+  # back to the sender's moment, or stops above it (another day picked while
+  # the details were open, which closes them), leaves the focus where the
+  # visitor is, on the control just pressed. A navigator that does not
+  # reveal moments leaves `:current_state` alone, and so the assigns.
+  defp after_event({:noreply, socket}, journey, moment_key) do
+    before = socket.assigns[:current_state]
+    settled = settle(socket)
+    now = settled.assigns[:current_state]
+
+    if now != before and position(journey, now) > position(journey, moment_key),
+      do: {:noreply, assign(settled, :journey_focus, now)},
+      else: {:noreply, settled}
+  end
+
+  defp after_event(other, _journey, _moment_key), do: other
+
+  # A moment's place in the journey; an outcome comes after every moment.
+  defp position(%Journey{moments: moments}, key),
+    do: Enum.find_index(moments, &(&1.key == key)) || length(moments)
+
+  # The fact owning `event` among those `moment_key` collects, when that
+  # moment is on screen, this booking needs the owner, and every fact the
+  # owner needs is known. From a moment already answered (a page showing
+  # several) the owner must also be one the booker may revisit, so a crafted
+  # event cannot change what Back and Edit refuse to reopen: the meeting type
+  # of a direct or private link.
+  defp owner(journey, assigns, moment_key, event) do
+    with {:ok, moment, state} <- visible_moment(journey, assigns, moment_key),
+         {:ok, fact} <- owning_fact(moment, event),
+         true <- fact.required?(assigns),
+         true <- Enum.all?(fact.requires(assigns), &Journey.fact!(&1).known?(assigns)),
+         true <- state == :current or fact.revisitable?(assigns) do
+      {:ok, fact, state}
+    else
+      _refused -> :none
+    end
+  end
+
+  defp visible_moment(journey, assigns, moment_key) do
+    visible = journey.navigator.visible(journey, assigns)
+
+    case Enum.find(visible, fn {moment, _state} -> moment.key == moment_key end) do
+      {moment, state} -> {:ok, moment, state}
+      nil -> :none
+    end
+  end
+
+  defp owning_fact(moment, event) do
+    case Enum.find(Enum.map(moment.collects, &Journey.fact!/1), &(event in &1.events())) do
+      nil -> :none
+      fact -> {:ok, fact}
+    end
+  end
+end

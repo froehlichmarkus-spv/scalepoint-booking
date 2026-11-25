@@ -1,0 +1,666 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: cs\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar reconnected"
+msgstr "Kalendář byl znovu připojen"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Cancel"
+msgstr "Zrušit"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Confirm or update the server URL and credentials for this integration. You'll be able to review and adjust the synced calendars on the next step."
+msgstr "Potvrďte nebo aktualizujte adresu serveru a přihlašovací údaje této integrace. V dalším kroku si budete moci synchronizované kalendáře zkontrolovat a upravit."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "Connect any CalDAV-compatible server"
+msgstr "Připojte libovolný server kompatibilní s CalDAV"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Could not save: %{reason}"
+msgstr "Nepodařilo se uložit: %{reason}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/live/onboarding_live/calendar_handlers.ex
+#, elixir-autogen, elixir-format
+msgid "Could not sign in with those credentials"
+msgstr "S těmito přihlašovacími údaji se nepodařilo přihlásit"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Done"
+msgstr "Hotovo"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your server URL and credentials to discover calendars."
+msgstr "Zadejte adresu serveru a přihlašovací údaje pro vyhledání kalendářů."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Integration Name"
+msgstr "Název integrace"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/live/onboarding_live/calendar_handlers.ex
+#, elixir-autogen, elixir-format
+msgid "Integration not found"
+msgstr "Integrace nebyla nalezena"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Invalid calendar ID"
+msgstr "Neplatné ID kalendáře"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "Lightweight CalDAV server integration"
+msgstr "Nenáročná integrace se serverem CalDAV"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Manage calendars"
+msgstr "Spravovat kalendáře"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Apple iCloud"
+msgstr "Můj Apple iCloud"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Apple iCloud Calendar"
+msgstr "Můj kalendář Apple iCloud"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Baikal"
+msgstr "Můj Baikal"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Baikal Calendar"
+msgstr "Můj kalendář Baikal"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My CalDAV"
+msgstr "Můj CalDAV"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My CalDAV Calendar"
+msgstr "Můj kalendář CalDAV"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Nextcloud"
+msgstr "Můj Nextcloud"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Nextcloud Calendar"
+msgstr "Můj kalendář Nextcloud"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Radicale"
+msgstr "Můj Radicale"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Radicale Calendar"
+msgstr "Můj kalendář Radicale"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Zimbra"
+msgstr "Moje Zimbra"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Zimbra Calendar"
+msgstr "Můj kalendář Zimbra"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My mailbox.org"
+msgstr "Můj mailbox.org"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "My mailbox.org Calendar"
+msgstr "Můj kalendář mailbox.org"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "No calendars found. Try refreshing the integration."
+msgstr "Nebyly nalezeny žádné kalendáře. Zkuste integraci obnovit."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "No calendars were discovered. Double-check your credentials or try again."
+msgstr "Nepodařilo se najít žádné kalendáře. Zkontrolujte přihlašovací údaje nebo to zkuste znovu."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "PHP-based CalDAV/CardDAV server"
+msgstr "Server CalDAV/CardDAV založený na PHP"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Password / App Password"
+msgstr "Heslo / heslo pro aplikaci"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Please select at least one calendar to sync."
+msgstr "Vyberte prosím alespoň jeden kalendář k synchronizaci."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Primary"
+msgstr "Hlavní"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Reconnect"
+msgstr "Připojit znovu"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Reconnect %{name}"
+msgstr "Připojit znovu: %{name}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Save selection"
+msgstr "Uložit výběr"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Saving..."
+msgstr "Ukládání…"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Select calendars to sync:"
+msgstr "Vyberte kalendáře k synchronizaci:"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Select the calendars you want to sync for availability checks."
+msgstr "Vyberte kalendáře, které chcete synchronizovat pro kontrolu dostupnosti."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "Server URL"
+msgstr "Adresa serveru"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Session expired. Please start the reconnect process again."
+msgstr "Platnost relace vypršela. Spusťte prosím opětovné připojení od začátku."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Settings → Security"
+msgstr "Settings → Security (Nastavení → Zabezpečení)"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Sign-In and Security → App-Specific Passwords"
+msgstr "Přihlášení a zabezpečení → Hesla pro konkrétní aplikace"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Something went wrong. Please try again."
+msgstr "Došlo k chybě. Zkuste to prosím znovu."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "Sync calendars from your Apple iCloud account"
+msgstr "Synchronizujte kalendáře z účtu Apple iCloud"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "Sync calendars from your Nextcloud server"
+msgstr "Synchronizujte kalendáře ze serveru Nextcloud"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "Sync calendars from your Zimbra server"
+msgstr "Synchronizujte kalendáře ze serveru Zimbra"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "Sync calendars from your mailbox.org account"
+msgstr "Synchronizujte kalendáře z účtu mailbox.org"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Testing..."
+msgstr "Testování…"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Unnamed Calendar"
+msgstr "Nepojmenovaný kalendář"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "Username"
+msgstr "Uživatelské jméno"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "app-specific password"
+msgstr "heslo pro konkrétní aplikaci"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "My Calendar"
+msgstr "Můj kalendář"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "Password"
+msgstr "Heslo"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "This server address is fixed for this provider"
+msgstr "Tato adresa serveru je pro tohoto poskytovatele pevně daná"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Discover calendars"
+msgstr "Vyhledat kalendáře"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Discovering..."
+msgstr "Vyhledávání…"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://baikal.example.com/dav.php"
+msgstr "https://baikal.example.com/dav.php"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://caldav.example.com"
+msgstr "https://caldav.example.com"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://cloud.example.com"
+msgstr "https://cloud.example.com"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "https://example.com/remote.php/dav"
+msgstr "https://example.com/remote.php/dav"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://mail.example.com"
+msgstr "https://mail.example.com"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
+#, elixir-autogen, elixir-format
+msgid "https://radicale.example.com:5232"
+msgstr "https://radicale.example.com:5232"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "If you have two-factor authentication enabled, generate an application-specific password under %{location} on mailbox.org and use that here instead of your regular password."
+msgstr "Pokud máte zapnuté dvoufázové ověření, vygenerujte na mailbox.org v části %{location} heslo pro konkrétní aplikaci a zadejte je zde místo svého běžného hesla."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "iCloud will not accept your Apple ID password here. Generate an %{app_specific_password} at %{link} under %{location}, then enter it below with your Apple ID email."
+msgstr "iCloud zde heslo k účtu Apple nepřijme. Na %{link} v části %{location} vygenerujte %{app_specific_password} a níže je zadejte spolu s e-mailovou adresou účtu Apple."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Select the calendars you want to sync for availability checks. Calendars you previously synced are already ticked - untick to stop syncing them, or tick new calendars to add them."
+msgstr "Vyberte kalendáře, které chcete synchronizovat pro kontrolu dostupnosti. Dříve synchronizované kalendáře jsou už zaškrtnuté – zrušením zaškrtnutí synchronizaci ukončíte, zaškrtnutím nových kalendářů je přidáte."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar subscription"
+msgstr "Odběr kalendáře"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Feed URL"
+msgstr "Adresa kanálu"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "My subscribed calendar"
+msgstr "Můj odebíraný kalendář"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Paste the feed link your calendar gives you when you publish a calendar: Google's secret address in iCal format, Outlook's published calendar link, or any .ics URL. We check it for busy time only, and never write to it."
+msgstr "Vložte odkaz na kanál, který vám kalendář nabídne při publikování kalendáře: tajnou adresu Google ve formátu iCal, odkaz na publikovaný kalendář ze služby Outlook nebo libovolnou adresu .ics. Kontrolujeme v něm pouze obsazený čas a nikdy do něj nezapisujeme."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Subscribe"
+msgstr "Odebírat"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Subscribe to a published calendar feed"
+msgstr "Odebírejte publikovaný kanál kalendáře"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Subscribing..."
+msgstr "Přidávání odběru…"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Colour"
+msgstr "Barva"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "How this calendar's events are shown in your the scheduler calendar."
+msgstr "Takto se události z tohoto kalendáře zobrazují ve vašem kalendáři Tymeslot."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "Name"
+msgstr "Název"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Rename"
+msgstr "Přejmenovat"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "EWS endpoint URL"
+msgstr "Adresa koncového bodu EWS"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your EWS endpoint and credentials to discover the mailbox's calendars."
+msgstr "Zadejte koncový bod EWS a přihlašovací údaje pro vyhledání kalendářů poštovní schránky."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Leave this on unless your server presents a self-signed certificate. Turning it off means the connection can no longer prove which server it reached."
+msgstr "Tuto možnost nechte zapnutou, pokud váš server nepoužívá certifikát podepsaný sám sebou. Po vypnutí už spojení nedokáže prokázat, k jakému serveru se připojilo."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Mailbox address"
+msgstr "Adresa poštovní schránky"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Microsoft Exchange"
+msgstr "Microsoft Exchange"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Exchange"
+msgstr "Můj Exchange"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "My Exchange Calendar"
+msgstr "Můj kalendář Exchange"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Select calendars to show on your dashboard:"
+msgstr "Vyberte kalendáře, které se zobrazí na nástěnce:"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "The mailbox address is the one your busy time is read from. It is often the same as your username, but on a server you sign in to with a domain login it is not."
+msgstr "Adresa poštovní schránky je ta, ze které se načítá váš obsazený čas. Často je shodná s vaším uživatelským jménem, ale na serveru, kam se přihlašujete doménovým účtem, shodná není."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "This choice controls what appears on your dashboard only. Exchange reports busy time for the whole mailbox, so every meeting in it blocks your availability whether or not its calendar is selected here."
+msgstr "Tato volba určuje pouze to, co se zobrazí na nástěnce. Exchange hlásí obsazený čas celé poštovní schránky, takže každá schůzka v ní blokuje vaši dostupnost bez ohledu na to, zda je její kalendář zde vybraný."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Verify the server's TLS certificate"
+msgstr "Ověřovat certifikát TLS serveru"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "name@example.com or DOMAIN\\user"
+msgstr "name@example.com nebo DOMAIN\\user"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "Sync busy time and bookings with an on-premises Exchange Server"
+msgstr "Synchronizujte obsazený čas a rezervace s místním serverem Exchange"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
+#, elixir-autogen, elixir-format
+msgid "This mailbox is read from and written to: it blocks the times you're already busy, and confirmed bookings are added to the calendar you choose as your booking destination. Exchange does not report which calendars your account may write to, so if you choose one it cannot write to, the first booking sent there fails."
+msgstr "Tato schránka se čte i zapisuje: blokuje časy, které už máte obsazené, a potvrzené rezervace se přidávají do kalendáře, který zvolíte jako cíl pro rezervace. Exchange neuvádí, do kterých kalendářů může váš účet zapisovat, takže pokud zvolíte kalendář, do něhož zapisovat nelze, první rezervace odeslaná do něj selže."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "App password"
+msgstr "Heslo pro aplikaci"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Create an app password in Nextcloud under %{location} and enter it below together with your login name. A login password stops working here once two-factor authentication is switched on."
+msgstr "Ve službě Nextcloud si v části %{location} vytvořte heslo pro aplikaci a zadejte je níže spolu se svým přihlašovacím jménem. Heslo pro přihlášení zde přestane fungovat, jakmile zapnete dvoufázové ověření."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Personal settings → Security"
+msgstr "Osobní nastavení → Zabezpečení"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Block"
+msgstr "Blokovat"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Block times on my booking page when this calendar is busy"
+msgstr "Blokovat časy na mé rezervační stránce, když je v tomto kalendáři obsazeno"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Booking calendar"
+msgstr "Rezervační kalendář"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times only"
+msgstr "Jen obsazené časy"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
+msgstr "Vyberte, které kalendáře the scheduler používá a které z nich blokují časy na vaší rezervační stránce."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Don't block"
+msgstr "Neblokovat"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Exchange reports busy times for your main calendar only."
+msgstr "Exchange hlásí obsazené časy jen pro váš hlavní kalendář."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Exchange reports busy times for your whole mailbox from your main calendar, so this choice works whether or not the calendar is shown."
+msgstr "Exchange hlásí obsazené časy celé vaší poštovní schránky prostřednictvím hlavního kalendáře, takže tato volba funguje bez ohledu na to, zda je kalendář zobrazen."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Off"
+msgstr "Vypnuto"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "On"
+msgstr "Zapnuto"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Read-only"
+msgstr "Jen pro čtení"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
+msgstr "Sdíleno s vámi jen jako obsazené časy. the scheduler může tyto časy blokovat, ale nemůže zobrazit události."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Show and block"
+msgstr "Zobrazit a blokovat"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Show only"
+msgstr "Jen zobrazit"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar stays read-only: bookings are never written to it. Choose another calendar as your booking destination."
+msgstr "Tento kalendář zůstává jen pro čtení: rezervace se do něj nikdy nezapisují. Jako cíl rezervací zvolte jiný kalendář."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Your booking calendar always blocks your availability."
+msgstr "Rezervační kalendář vždy blokuje vaši dostupnost."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "%{used} of %{count} calendar in use, %{blocking} blocking your availability"
+msgid_plural "%{used} of %{count} calendars in use, %{blocking} blocking your availability"
+msgstr[0] "Používané kalendáře: %{used} z %{count}, z toho blokující vaši dostupnost: %{blocking}"
+msgstr[1] "Používané kalendáře: %{used} z %{count}, z toho blokující vaši dostupnost: %{blocking}"
+msgstr[2] "Používané kalendáře: %{used} z %{count}, z toho blokující vaši dostupnost: %{blocking}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times block"
+msgstr "Blokuje obsazené časy"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times of %{calendar}"
+msgstr "Obsazené časy kalendáře %{calendar}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Exchange reports busy times for your whole mailbox, and they block your booking page. Refresh this connection to list your main calendar and choose there whether they do."
+msgstr "Exchange hlásí obsazené časy celé vaší poštovní schránky a ty blokují vaši rezervační stránku. Obnovte toto připojení, aby se v seznamu objevil váš hlavní kalendář, a tam zvolte, zda mají blokovat."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Show %{calendar} on your calendar"
+msgstr "Zobrazit kalendář %{calendar} ve vašem kalendáři"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "This folder's events are shown only; busy times come from your whole mailbox."
+msgstr "Události této složky se jen zobrazují; obsazené časy pocházejí z celé vaší poštovní schránky."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Use of %{calendar}"
+msgstr "Použití kalendáře %{calendar}"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Whole mailbox"
+msgstr "Celá poštovní schránka"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Count every event as busy"
+msgstr "Počítat každou událost jako obsazenou"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
+#, elixir-autogen, elixir-format
+msgid "Holiday and school-holiday calendars mark their events as free, so they would block nothing. With this on, every event in the feed blocks the time, however it is marked."
+msgstr ""
+"Kalendáře svátků a prázdnin označují své události jako volné, takže by nic neblokovaly. Když je tato volba zapnutá, každá událost ve zdroji blokuje čas bez ohledu na to, jak je označená."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "If you revoked the old app-specific password or changed your Apple ID password since connecting, the old one will not work again: generate a new one and enter it here."
+msgstr "Pokud bylo staré heslo pro konkrétní aplikaci od připojení zrušeno nebo se změnilo heslo k účtu Apple, staré heslo už fungovat nebude: vygenerujte nové a zadejte ho sem."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Keep this password for as long as you use Tymeslot. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
+msgstr "Toto heslo si ponechte po celou dobu, kdy the scheduler používáte. Jeho zrušení nebo změna hesla k účtu Apple odpojí iCloud a vaše rezervační stránka pak nebude nabízet žádné termíny, dokud iCloud znovu nepřipojíte."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your Apple ID email and that password below."
+msgstr "Níže zadejte e-mail svého účtu Apple a toto heslo."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Open your Apple Account"
+msgstr "Otevřete svůj účet Apple"
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Under Sign-In and Security, choose App-Specific Passwords and create one."
+msgstr "V části Přihlášení a zabezpečení vyberte Hesla pro konkrétní aplikace a vygenerujte nové heslo."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "iCloud needs an app-specific password, not your Apple ID password."
+msgstr "iCloud vyžaduje heslo pro konkrétní aplikaci, ne heslo k účtu Apple."

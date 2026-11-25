@@ -1,0 +1,443 @@
+## "msgid"s in this file come from POT (.pot) files.
+###
+### Do not add, change, or remove "msgid"s manually here as
+### they're tied to the ones in the corresponding POT file
+### (with the same domain).
+###
+### Use "mix gettext.extract --merge" or "mix gettext.merge"
+### to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{shown} and %{count} more"
+msgid_plural "%{shown} and %{count} more"
+msgstr[0] "%{shown} e %{count} altro"
+msgstr[1] "%{shown} e altri %{count}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "%{successes} refreshed, %{failures} failed: %{detail}"
+msgstr "%{successes} aggiornati, %{failures} non riusciti: %{detail}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "A calendar integration with this configuration already exists"
+msgstr "Esiste già un'integrazione di calendario con questa configurazione"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Active for Conflict Checking"
+msgstr "Attivi per il controllo dei conflitti"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "All calendar refreshes failed."
+msgstr "Aggiornamento di tutti i calendari non riuscito."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "All calendars refreshed successfully"
+msgstr "Tutti i calendari sono stati aggiornati con successo"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "CalDAV servers"
+msgstr "Server CalDAV"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar integration added successfully"
+msgstr "Integrazione del calendario aggiunta con successo"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar status updated"
+msgstr "Stato del calendario aggiornato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Configuration form not available for this provider."
+msgstr "Modulo di configurazione non disponibile per questo provider."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a calendar"
+msgstr "Collega un calendario"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
+msgstr "Collega un calendario in modo che the scheduler possa leggere la tua disponibilità ed evitare che vengano prenotate riunioni quando sei già occupato."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Connection issues"
+msgstr "Problemi di connessione"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Connection test failed: %{reason}"
+msgstr "Test di connessione non riuscito: %{reason}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Disable feed"
+msgstr "Disattiva il feed"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Enable free/busy feed"
+msgstr "Attiva il feed libero/occupato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to update selection"
+msgstr "Impossibile aggiornare la selezione"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to update status: %{reason}"
+msgstr "Impossibile aggiornare lo stato: %{reason}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Free/busy feed"
+msgstr "Feed libero/occupato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Healthy"
+msgstr "Funzionante"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Integration not found"
+msgstr "Integrazione non trovata"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Invalid calendar ID"
+msgstr "ID calendario non valido"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Invalid request"
+msgstr "Richiesta non valida"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Manage calendars"
+msgstr "Gestisci i calendari"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "No calendars connected yet"
+msgstr "Nessun calendario collegato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Not a Google Calendar"
+msgstr "Non è un calendario Google"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Paused"
+msgstr "In pausa"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Paused Calendars"
+msgstr "Calendari in pausa"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Reconnect"
+msgstr "Ricollega"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Reconnect integration"
+msgstr "Ricollega l'integrazione"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Refresh All"
+msgstr "Aggiorna tutti"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Refresh process failed unexpectedly."
+msgstr "Il processo di aggiornamento si è interrotto in modo imprevisto."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Refreshing..."
+msgstr "Aggiornamento in corso..."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Regenerate link"
+msgstr "Rigenera il link"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "Share a read-only link that publishes when you're busy (not the event details) as a standard iCalendar feed, so other calendar systems can overlay your availability."
+msgstr "Condividi un link di sola lettura che pubblica quando sei occupato (non i dettagli degli eventi) come feed iCalendar standard, così altri sistemi di calendario possono sovrapporre la tua disponibilità."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Sync your availability to prevent double bookings."
+msgstr "Sincronizza la tua disponibilità per evitare doppie prenotazioni."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "These calendars are currently ignored during conflict checking."
+msgstr "Questi calendari sono attualmente ignorati durante il controllo dei conflitti."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar integration is no longer available."
+msgstr "Questa integrazione del calendario non è più disponibile."
+
+#: lib/tymeslot/integrations/calendar/creation.ex
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Unsupported provider"
+msgstr "Provider non supportato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Upgrade"
+msgstr "Aggiorna"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Upgrade Google Calendar permissions"
+msgstr "Aggiorna le autorizzazioni di Google Calendar"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
+#, elixir-autogen, elixir-format
+msgid "We'll check these calendars to prevent double bookings automatically."
+msgstr "Controlleremo questi calendari per evitare automaticamente le doppie prenotazioni."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "books into %{calendar}"
+msgstr "salva le prenotazioni in %{calendar}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#: lib/tymeslot_web/live/onboarding_live/calendar_handlers.ex
+#, elixir-autogen, elixir-format
+msgid "Cannot reactivate - another active integration already uses this account"
+msgstr "Impossibile riattivare: un'altra integrazione attiva utilizza già questo account"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "booking target can no longer accept bookings"
+msgstr "il calendario di destinazione non accetta più prenotazioni"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar subscriptions"
+msgstr "Abbonamenti ai calendari"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Other"
+msgstr "Altro"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Read-only"
+msgstr "Sola lettura"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
+#, elixir-autogen, elixir-format
+msgid "Something went wrong. Please try again."
+msgstr "Qualcosa è andato storto. Riprova."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar renamed"
+msgstr "Calendario rinominato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to rename calendar"
+msgstr "Impossibile rinominare il calendario"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Failed to update colour"
+msgstr "Impossibile aggiornare il colore"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Rename, recolour, and choose which calendars sync"
+msgstr "Rinomina, cambia colore e scegli quali calendari sincronizzare"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/provider_picker.ex
+#, elixir-autogen, elixir-format
+msgid "Exchange servers"
+msgstr "Server Exchange"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "read-only, blocks time but takes no bookings"
+msgstr "di sola lettura, blocca gli orari ma non accetta prenotazioni"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "checks %{selected} of %{count} calendar for conflicts"
+msgid_plural "checks %{selected} of %{count} calendars for conflicts"
+msgstr[0] "controlla i conflitti su %{selected} di %{count} calendario"
+msgstr[1] "controlla i conflitti su %{selected} di %{count} calendari"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Delete"
+msgstr "Elimina"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Delete %{name}"
+msgstr "Elimina %{name}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
+#, elixir-autogen, elixir-format
+msgid "1 change made here was not saved to this calendar."
+msgid_plural "%{count} changes made here were not saved to this calendar."
+msgstr[0] "%{count} modifica fatta qui non è stata salvata in questo calendario."
+msgstr[1] "%{count} modifiche fatte qui non sono state salvate in questo calendario."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Could not retry the changes. Please try again."
+msgstr "Impossibile inviare di nuovo le modifiche. Riprova."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Retry changes"
+msgstr "Invia di nuovo le modifiche"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Send the changes this calendar's server refused to it again"
+msgstr "Invia di nuovo le modifiche rifiutate dal server di questo calendario"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Sending the changes again. This calendar will update shortly."
+msgstr "Invio delle modifiche in corso. Questo calendario si aggiornerà a breve."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
+#, elixir-autogen, elixir-format
+msgid "1 change made here was not saved to this calendar. Last error: %{error}"
+msgid_plural "%{count} changes made here were not saved to this calendar. Last error: %{error}"
+msgstr[0] "%{count} modifica fatta qui non è stata salvata in questo calendario. Ultimo errore: %{error}"
+msgstr[1] "%{count} modifiche fatte qui non sono state salvate in questo calendario. Ultimo errore: %{error}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Last synced %{count} day ago"
+msgid_plural "Last synced %{count} days ago"
+msgstr[0] "Ultima sincronizzazione %{count} giorno fa"
+msgstr[1] "Ultima sincronizzazione %{count} giorni fa"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Last synced %{count} hour ago"
+msgid_plural "Last synced %{count} hours ago"
+msgstr[0] "Ultima sincronizzazione %{count} ora fa"
+msgstr[1] "Ultima sincronizzazione %{count} ore fa"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Last synced %{count} minute ago"
+msgid_plural "Last synced %{count} minutes ago"
+msgstr[0] "Ultima sincronizzazione %{count} minuto fa"
+msgstr[1] "Ultima sincronizzazione %{count} minuti fa"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Last synced just now"
+msgstr "Ultima sincronizzazione poco fa"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
+msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
+msgstr[0] "%{count} calendario non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo: %{calendars}"
+msgstr[1] "%{count} calendari non sono più presenti sul tuo server di calendario, quindi the scheduler ha smesso di usarli: %{calendars}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Dismiss"
+msgstr "Ignora"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "Dismiss the notice about calendars no longer on the server"
+msgstr "Ignora l'avviso sui calendari non più presenti sul server"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
+#, elixir-autogen, elixir-format
+msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
+msgstr "Il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi the scheduler ha smesso di usarlo."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
+#, elixir-autogen, elixir-format
+msgid "Block"
+msgstr "Blocca"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
+#, elixir-autogen, elixir-format
+msgid "Don't block"
+msgstr "Non bloccare"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Your booking calendar always blocks your availability."
+msgstr "Il tuo calendario di prenotazione blocca sempre la tua disponibilità."
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times of %{calendar}"
+msgstr "Orari occupati di %{calendar}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
+#, elixir-autogen, elixir-format
+msgid "Block the time of every event in this feed, also those it marks as free"
+msgstr ""
+"Blocca l'orario di ogni evento di questo feed, anche di quelli segnati come liberi"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Events this calendar marks as free no longer block time"
+msgstr ""
+"Gli eventi che questo calendario segna come liberi non bloccano più l'orario"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
+#, elixir-autogen, elixir-format
+msgid "Every event busy"
+msgstr "Ogni evento occupato"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Every event in this calendar now blocks time"
+msgstr "Ogni evento di questo calendario ora blocca l'orario"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#, elixir-autogen, elixir-format
+msgid "read-only, every event blocks time, also those marked free"
+msgstr ""
+"di sola lettura, ogni evento blocca l'orario, anche quelli segnati come liberi"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
+#, elixir-autogen, elixir-format
+msgid "Turn on Block to use this: a calendar that doesn't block busy times has nothing for it to change"
+msgstr "Scegli «Blocca» per usare questa opzione: su un calendario che non blocca gli orari occupati non ha nulla da cambiare"

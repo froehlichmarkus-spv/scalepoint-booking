@@ -1,0 +1,226 @@
+/* Time Slots Component
+   Quill's treatment of the slot list; the shared structure is in
+   shared/components/slot-list.css. Base styles + container queries + height
+   queries. Container context: .glass-morphism-card (container-name:
+   scheduling). */
+
+/* ===== Base Styles ===== */
+
+.slot-list {
+  flex: 1;
+  margin-top: var(--space-xs);
+}
+
+/* Was `font-bold text-glass-primary` on the heading. */
+.slot-list__heading {
+  font-weight: var(--font-weight-bold);
+  color: var(--theme-text);
+}
+
+.slot-list__body {
+  overflow-x: hidden;
+  height: 100%;
+  flex: 1;
+}
+
+/* Was `space-y-3 pr-2` on the loaded list. */
+.slot-list__groups {
+  padding-right: 0.5rem;
+}
+
+.slot-list__groups > :where(:not(:last-child)) {
+  margin-block-end: 0.75rem;
+}
+
+/* Was `h-full flex items-center justify-center`, and `text-quill-secondary
+   text-sm` on the line inside. */
+.slot-list__prompt {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-list__prompt p {
+  color: var(--text-opacity-low);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+/* Time Slot Buttons — touch-friendly layout */
+.slot-list__slot {
+  width: 100%;
+  padding: var(--time-slot-padding);
+  background: var(--surface-very-light);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+  border: var(--border-width-thin) solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--theme-font-size-sm);
+  transition: var(--transition-normal);
+  white-space: nowrap;
+  min-height: var(--time-slot-min-height);
+}
+
+/* Not on the selected slot: this rule would outrank --selected (a class and
+   a pseudo-class against a class), and a hovered or just-tapped selected slot
+   lost its filled ground under its on-primary text. */
+.slot-list__slot:hover:not(.slot-list__slot--selected) {
+  background: var(--surface-medium-light);
+  /* Full white on the lighter hover glass, where the palette's text colour
+     dipped just under 4.5:1. */
+  color: var(--text-opacity-full);
+  border-color: var(--border-strong);
+  box-shadow:
+    var(--shadow-md),
+    var(--inset-highlight-subtle);
+}
+
+.slot-list__slot--selected {
+  background: linear-gradient(135deg, var(--theme-primary-solid) 0%, var(--theme-primary-solid-hover) 100%);
+  border-color: var(--theme-primary-solid);
+  color: var(--theme-on-primary);
+  font-weight: var(--font-weight-semibold);
+  box-shadow:
+    var(--shadow-primary-sm),
+    var(--inset-highlight-strong),
+    var(--selected-ring);
+}
+
+.slot-list__slot--selected:hover {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.slot-list__slot:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Time Period Labels (Morning, Afternoon, Evening). The size, weight and
+   spacing were `text-xs font-semibold mb-2 px-1` on the template. */
+.slot-list__period-label {
+  color: var(--text-opacity-medium-low);
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: 0.5rem;
+  padding-inline: 0.25rem;
+}
+
+/* ===== Container Queries ===== */
+
+/* Narrow container — compact slots, let page scroll */
+@container scheduling (max-width: 399px) {
+  .slot-list__slot {
+    font-size: var(--theme-font-size-xs);
+    padding: var(--time-slot-padding-sm);
+    min-height: var(--time-slot-min-height-sm);
+  }
+
+  .slot-list__body {
+    overflow-y: visible;
+    height: auto;
+    max-height: none;
+  }
+
+  .action-button,
+  .slot-list__slot,
+  .calendar-day {
+    min-height: var(--min-touch-target);
+  }
+}
+
+/* Medium container — scrollable slots */
+@container scheduling (min-width: 600px) {
+  .slot-list__body {
+    overflow-y: auto;
+    min-height: 150px;
+  }
+}
+
+/* Large container — desktop spacing, internal scroll */
+@container scheduling (min-width: 768px) {
+  .slot-list {
+    margin-top: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .slot-list__slot {
+    font-size: var(--theme-font-size-sm);
+    padding: var(--time-slot-padding-lg);
+    min-height: var(--time-slot-min-height-sm);
+  }
+
+  /* The shorter time above suits a mouse; a phone on its side is this
+     wide too, so under a finger a time stays a full touch target. */
+  @media (pointer: coarse) {
+    .slot-list__slot {
+      min-height: var(--min-touch-target);
+    }
+  }
+
+  .slot-list__body {
+    flex: 1;
+    min-height: 150px;
+    overflow-y: auto;
+  }
+}
+
+/* ===== Height & Aspect Queries ===== */
+/* Viewport height has no container-query equivalent, so these stay as @media. */
+
+@media (max-height: 500px) {
+  :where(html:not([data-embedded])) {
+    .slot-list__body {
+      max-height: 150px;
+      overflow-y: auto;
+    }
+  }
+}
+
+@media (max-height: 400px) {
+  :where(html:not([data-embedded])) {
+    .slot-list__body {
+      max-height: 120px;
+    }
+  }
+}
+
+/* ===== Two-Tier Hour Picker ===== */
+/* Only reached when the meeting type offers starts on a grid finer than its
+   own duration. The minute grid deliberately has no max-height: the schedule
+   step is a viewport-locked app shell with exactly one internal scroll region
+   (see base.css), and a second scrollable box nested inside it breaks that
+   contract at short heights. */
+
+.slot-list__slot--hour {
+  gap: var(--space-2xs);
+}
+
+/* The open hour has to be unmistakable. The minute drawer renders beneath the
+   whole row rather than beneath the button that opened it, so its position
+   says nothing about which hour it belongs to; the button's own state is the
+   only thing that does. Kept distinct from --selected (a filled primary
+   gradient) because both can be on screen at once, on different hours. */
+.slot-list__slot--expanded {
+  background: var(--surface-medium-light);
+  border-color: var(--theme-primary);
+  /* The page's text colour, not the primary: a palette's primary need not
+     read as text on the card. The primary edge and ring carry the state. */
+  color: var(--theme-text);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--shadow-primary-sm), inset 0 0 0 var(--border-width-thin) var(--theme-primary);
+}
+
+/* A contained drawer rather than a left rule. The rule sat at the row's left
+   edge, which is the first hour in the row and not the open one, so it
+   pointed at the wrong button whenever the open hour was not first. */
+.slot-list__grid--minutes {
+  padding: var(--space-xs);
+  background: var(--surface-very-light);
+  border: var(--border-width-thin) solid var(--border-light);
+  border-radius: var(--radius-md);
+}

@@ -1,0 +1,407 @@
+defmodule Tymeslot.CalendarGridTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :calendar
+
+  alias Tymeslot.CalendarGrid
+  alias Tymeslot.Integrations.Calendar.EventColour
+
+  describe "integration_colour_classes/1" do
+    test "returns empty map for empty list" do
+      assert CalendarGrid.integration_colour_classes([]) == %{}
+    end
+
+    test "assigns the first rotation class to a single integration" do
+      result = CalendarGrid.integration_colour_classes([%{id: 42, colour: nil}])
+      assert result == %{42 => "bg-calendar-1"}
+    end
+
+    test "assigns rotation classes by sorted id, not input order" do
+      integrations = [%{id: 30, colour: nil}, %{id: 10, colour: nil}, %{id: 20, colour: nil}]
+      result = CalendarGrid.integration_colour_classes(integrations)
+
+      assert result == %{
+               10 => "bg-calendar-1",
+               20 => "bg-calendar-2",
+               30 => "bg-calendar-3"
+             }
+    end
+
+    test "wraps the rotation once the classes run out" do
+      integrations = Enum.map(1..10, &%{id: &1, colour: nil})
+      result = CalendarGrid.integration_colour_classes(integrations)
+
+      assert result[1] == "bg-calendar-1"
+      assert result[8] == "bg-calendar-8"
+      assert result[9] == "bg-calendar-1"
+      assert result[10] == "bg-calendar-2"
+    end
+
+    test "a chosen colour wins over the rotation" do
+      integrations = [%{id: 10, colour: nil}, %{id: 20, colour: "peacock"}]
+      result = CalendarGrid.integration_colour_classes(integrations)
+
+      assert result[20] == EventColour.tailwind_class("peacock")
+      refute result[20] == "bg-calendar-2"
+    end
+
+    test "a chosen colour does not shift the rotation for the others" do
+      unpicked = [%{id: 10, colour: nil}, %{id: 20, colour: nil}, %{id: 30, colour: nil}]
+      picked = [%{id: 10, colour: nil}, %{id: 20, colour: "grape"}, %{id: 30, colour: nil}]
+
+      assert CalendarGrid.integration_colour_classes(unpicked)[30] ==
+               CalendarGrid.integration_colour_classes(picked)[30]
+    end
+
+    test "an unrecognised stored colour paints neutral rather than crashing" do
+      result = CalendarGrid.integration_colour_classes([%{id: 10, colour: "burnt-sienna"}])
+      assert result[10] == EventColour.fallback_class()
+    end
+
+    test "a blank stored colour falls back to the rotation" do
+      result = CalendarGrid.integration_colour_classes([%{id: 10, colour: ""}])
+      assert result[10] == "bg-calendar-1"
+    end
+
+    test "an integration map without the colour key still rotates" do
+      result = CalendarGrid.integration_colour_classes([%{id: 10}])
+      assert result[10] == "bg-calendar-1"
+    end
+  end
+
+  describe "list_events_for_range/3" do
+    setup do
+      integration = insert(:calendar_integration)
+      %{integration: integration}
+    end
+
+    test "returns events within the time range", %{integration: integration} do
+      event =
+        insert(:provider_calendar_event,
+          calendar_integration: integration,
+          start_at: ~U[2026-03-15 10:00:00Z],
+          end_at: ~U[2026-03-15 11:00:00Z]
+        )
+
+      result =
+        CalendarGrid.list_events_for_range(
+          [integration.id],
+          ~U[2026-03-15 00:00:00Z],
+          ~U[2026-03-16 00:00:00Z]
+        )
+
+      assert [found] = result
+      assert found.id == event.id
+    end
+
+    test "excludes events outside the time range", %{integration: integration} do
+      insert(:provider_calendar_event,
+        calendar_integration: integration,
+        start_at: ~U[2026-03-10 10:00:00Z],
+        end_at: ~U[2026-03-10 11:00:00Z]
+      )
+
+      result =
+        CalendarGrid.list_events_for_range(
+          [integration.id],
+          ~U[2026-03-15 00:00:00Z],
+          ~U[2026-03-16 00:00:00Z]
+        )
+
+      assert result == []
+    end
+
+    test "excludes events from other integrations", %{integration: integration} do
+      other = insert(:calendar_integration)
+
+      insert(:provider_calendar_event,
+        calendar_integration: other,
+        start_at: ~U[2026-03-15 10:00:00Z],
+        end_at: ~U[2026-03-15 11:00:00Z]
+      )
+
+      result =
+        CalendarGrid.list_events_for_range(
+          [integration.id],
+          ~U[2026-03-15 00:00:00Z],
+          ~U[2026-03-16 00:00:00Z]
+        )
+
+      assert result == []
+    end
+
+    test "excludes events ending exactly at range start (strict boundary)", %{
+      integration: integration
+    } do
+      insert(:provider_calendar_event,
+        calendar_integration: integration,
+        start_at: ~U[2026-03-14 23:00:00Z],
+        end_at: ~U[2026-03-15 00:00:00Z]
+      )
+
+      result =
+        CalendarGrid.list_events_for_range(
+          [integration.id],
+          ~U[2026-03-15 00:00:00Z],
+          ~U[2026-03-16 00:00:00Z]
+        )
+
+      assert result == []
+    end
+
+    test "returns empty list when no events match", %{integration: integration} do
+      result =
+        CalendarGrid.list_events_for_range(
+          [integration.id],
+          ~U[2026-03-15 00:00:00Z],
+          ~U[2026-03-16 00:00:00Z]
+        )
+
+      assert result == []
+    end
+
+    test "returns empty list for empty integration IDs" do
+      result =
+        CalendarGrid.list_events_for_range(
+          [],
+          ~U[2026-03-15 00:00:00Z],
+          ~U[2026-03-16 00:00:00Z]
+        )
+
+      assert result == []
+    end
+
+    test "normalises string-keyed reminders round-tripped through JSONB", %{
+      integration: integration
+    } do
+      insert(:provider_calendar_event,
+        calendar_integration: integration,
+        start_at: ~U[2026-03-15 10:00:00Z],
+        end_at: ~U[2026-03-15 11:00:00Z],
+        reminders: [
+          %{"method" => "popup", "minutes_before" => 30},
+          %{"method" => "email", "minutes_before" => 1440}
+        ]
+      )
+
+      assert [found] =
+               CalendarGrid.list_events_for_range(
+                 [integration.id],
+                 ~U[2026-03-15 00:00:00Z],
+                 ~U[2026-03-16 00:00:00Z]
+               )
+
+      assert found.reminders == [
+               %{method: :popup, minutes_before: 30},
+               %{method: :email, minutes_before: 1440}
+             ]
+    end
+  end
+
+  describe "stale_integrations/1" do
+    test "returns integrations with nil last_external_sync_at" do
+      integration = %{
+        id: 1,
+        provider: "google",
+        caldav_sync_tier: nil,
+        last_external_sync_at: nil
+      }
+
+      assert [^integration] = CalendarGrid.stale_integrations([integration])
+    end
+
+    test "returns webhook provider stale after 30 minutes" do
+      stale_time = DateTime.add(DateTime.utc_now(), -31, :minute)
+
+      integration = %{
+        id: 1,
+        provider: "google",
+        caldav_sync_tier: nil,
+        last_external_sync_at: stale_time
+      }
+
+      assert [^integration] = CalendarGrid.stale_integrations([integration])
+    end
+
+    test "excludes webhook provider synced within 30 minutes" do
+      recent_time = DateTime.add(DateTime.utc_now(), -10, :minute)
+
+      integration = %{
+        id: 1,
+        provider: "google",
+        caldav_sync_tier: nil,
+        last_external_sync_at: recent_time
+      }
+
+      assert [] = CalendarGrid.stale_integrations([integration])
+    end
+
+    test "uses tier-aware thresholds for CalDAV providers" do
+      # Tier 1 (sync-token): 25 min threshold
+      fresh_t1 = %{
+        id: 1,
+        provider: "caldav",
+        caldav_sync_tier: 1,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -20, :minute)
+      }
+
+      assert [] = CalendarGrid.stale_integrations([fresh_t1])
+
+      stale_t1 = %{
+        id: 2,
+        provider: "caldav",
+        caldav_sync_tier: 1,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -30, :minute)
+      }
+
+      assert [^stale_t1] = CalendarGrid.stale_integrations([stale_t1])
+
+      # Tier 2 (CTag): 45 min threshold
+      fresh_t2 = %{
+        id: 3,
+        provider: "caldav",
+        caldav_sync_tier: 2,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -40, :minute)
+      }
+
+      assert [] = CalendarGrid.stale_integrations([fresh_t2])
+
+      stale_t2 = %{
+        id: 4,
+        provider: "caldav",
+        caldav_sync_tier: 2,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -50, :minute)
+      }
+
+      assert [^stale_t2] = CalendarGrid.stale_integrations([stale_t2])
+
+      # Tier 3 (full fetch): 90 min threshold
+      fresh_t3 = %{
+        id: 5,
+        provider: "caldav",
+        caldav_sync_tier: 3,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -80, :minute)
+      }
+
+      assert [] = CalendarGrid.stale_integrations([fresh_t3])
+
+      stale_t3 = %{
+        id: 6,
+        provider: "caldav",
+        caldav_sync_tier: 3,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -100, :minute)
+      }
+
+      assert [^stale_t3] = CalendarGrid.stale_integrations([stale_t3])
+    end
+
+    test "uses default threshold for CalDAV with nil tier" do
+      # nil tier uses 25 min default (same as Tier 1)
+      fresh = %{
+        id: 1,
+        provider: "caldav",
+        caldav_sync_tier: nil,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -20, :minute)
+      }
+
+      assert [] = CalendarGrid.stale_integrations([fresh])
+
+      stale = %{
+        id: 2,
+        provider: "caldav",
+        caldav_sync_tier: nil,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -30, :minute)
+      }
+
+      assert [^stale] = CalendarGrid.stale_integrations([stale])
+    end
+
+    test "uses 75-minute threshold for ics_url subscriptions" do
+      fresh = %{
+        id: 1,
+        provider: "ics_url",
+        caldav_sync_tier: nil,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -60, :minute)
+      }
+
+      assert [] = CalendarGrid.stale_integrations([fresh])
+
+      stale = %{
+        id: 2,
+        provider: "ics_url",
+        caldav_sync_tier: nil,
+        last_external_sync_at: DateTime.add(DateTime.utc_now(), -80, :minute)
+      }
+
+      assert [^stale] = CalendarGrid.stale_integrations([stale])
+    end
+
+    test "applies CalDAV thresholds to all CalDAV-based providers" do
+      recent = DateTime.add(DateTime.utc_now(), -10, :minute)
+
+      for provider <- ~w(caldav radicale nextcloud zimbra) do
+        integration = %{
+          id: 1,
+          provider: provider,
+          caldav_sync_tier: 1,
+          last_external_sync_at: recent
+        }
+
+        assert [] = CalendarGrid.stale_integrations([integration])
+      end
+    end
+
+    test "returns empty list when all integrations are fresh" do
+      recent = DateTime.add(DateTime.utc_now(), -5, :minute)
+
+      integrations = [
+        %{id: 1, provider: "google", caldav_sync_tier: nil, last_external_sync_at: recent},
+        %{id: 2, provider: "outlook", caldav_sync_tier: nil, last_external_sync_at: recent}
+      ]
+
+      assert [] = CalendarGrid.stale_integrations(integrations)
+    end
+
+    test "excludes Outlook pending initial setup from stale" do
+      # Outlook with no delta link and no sync: pending setup, not stale
+      pending = %{
+        id: 1,
+        provider: "outlook",
+        caldav_sync_tier: nil,
+        graph_delta_link: nil,
+        last_external_sync_at: nil
+      }
+
+      assert [] = CalendarGrid.stale_integrations([pending])
+    end
+
+    test "includes Outlook with delta link but nil sync as stale" do
+      # Has a delta link but no sync timestamp: something is wrong
+      broken = %{
+        id: 1,
+        provider: "outlook",
+        caldav_sync_tier: nil,
+        graph_delta_link: "https://graph.microsoft.com/v1.0/me/calendarView/delta?token=abc",
+        last_external_sync_at: nil
+      }
+
+      assert [^broken] = CalendarGrid.stale_integrations([broken])
+    end
+
+    test "filters mixed fresh and stale integrations" do
+      recent = DateTime.add(DateTime.utc_now(), -5, :minute)
+      stale_time = DateTime.add(DateTime.utc_now(), -60, :minute)
+
+      fresh = %{id: 1, provider: "google", caldav_sync_tier: nil, last_external_sync_at: recent}
+
+      stale = %{
+        id: 2,
+        provider: "outlook",
+        caldav_sync_tier: nil,
+        last_external_sync_at: stale_time
+      }
+
+      assert [^stale] = CalendarGrid.stale_integrations([fresh, stale])
+    end
+  end
+end

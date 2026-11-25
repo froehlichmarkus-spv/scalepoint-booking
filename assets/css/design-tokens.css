@@ -1,0 +1,81 @@
+/* ===================================
+   DESIGN TOKEN COMPONENTS
+   
+   These classes provide semantic component patterns
+   using the design tokens mapped through Tailwind.
+   =================================== */
+
+@layer components {
+  /* Token-based Typography - Use prefix to avoid conflicts.
+     Display headings balance their lines (no lone last word) and break a word
+     that is wider than the column instead of overflowing it, which long German
+     compounds otherwise do on a phone. Hyphenation is limited to phones, where
+     such words are the norm; wider, it would split words that fit whole. */
+  .display-xl {
+    @apply text-token-4xl sm:text-token-6xl lg:text-token-7xl font-black tracking-tight leading-[1.05] text-balance wrap-break-word max-sm:hyphens-auto;
+  }
+
+  .display-lg {
+    @apply text-token-4xl md:text-token-5xl font-black tracking-tight text-balance wrap-break-word max-sm:hyphens-auto;
+  }
+
+  .display-md {
+    @apply text-token-3xl md:text-token-4xl font-black tracking-tight text-balance wrap-break-word max-sm:hyphens-auto;
+  }
+
+  /* A dashboard page's h1 (section_header level 1): small enough on a phone
+     to stay on one line. */
+  .dashboard-title {
+    @apply text-token-2xl sm:text-token-3xl lg:text-token-4xl font-black tracking-tight;
+  }
+
+  /* Semantic Tag Components */
+  .tag-semantic {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-token-xl border-2 font-semibold text-token-sm transition-all duration-300;
+  }
+
+  .tag-semantic-turquoise {
+    @apply bg-turquoise-50 border-turquoise-200 text-turquoise-700;
+  }
+
+  /* Tag Selector Buttons (Quick selection patterns) */
+  .btn-tag-selector {
+    @apply inline-flex items-center px-4 py-2 rounded-token-xl text-token-sm font-black transition-all duration-300 border-2 bg-white text-tymeslot-500 border-tymeslot-100;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Color Variants for Selectors */
+  .btn-tag-selector-turquoise {
+    @apply hover:border-turquoise-100 hover:text-turquoise-600 hover:bg-tymeslot-50;
+  }
+  .btn-tag-selector-turquoise--active {
+    @apply bg-turquoise-50 text-turquoise-700 border-turquoise-200 shadow-sm;
+  }
+
+  /* Semantic Variants
+   * Mapping:
+   * - primary -> turquoise (brand primary actions, main interactive elements)
+   * - secondary -> cyan (secondary/alternative actions)
+   * - tertiary -> blue (tertiary/informational actions)
+   */
+  .btn-tag-selector-primary {
+    @apply hover:border-turquoise-100 hover:text-turquoise-600 hover:bg-tymeslot-50;
+  }
+  .btn-tag-selector-primary--active {
+    @apply bg-turquoise-50 text-turquoise-700 border-turquoise-200 shadow-sm;
+  }
+
+  .btn-tag-selector-secondary {
+    @apply hover:border-cyan-100 hover:text-cyan-600 hover:bg-tymeslot-50;
+  }
+  .btn-tag-selector-secondary--active {
+    @apply bg-cyan-50 text-cyan-700 border-cyan-200 shadow-sm;
+  }
+
+  .btn-tag-selector-tertiary {
+    @apply hover:border-blue-100 hover:text-blue-600 hover:bg-tymeslot-50;
+  }
+  .btn-tag-selector-tertiary--active {
+    @apply bg-blue-50 text-blue-700 border-blue-200 shadow-sm;
+  }
+}

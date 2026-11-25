@@ -1,0 +1,204 @@
+defmodule TymeslotWeb.Dashboard.VideoSettings.ComponentView do
+  @moduledoc """
+  Markup for the video integrations settings component.
+
+  Keeps `VideoSettingsComponent` focused on lifecycle and event routing, as
+  `CalendarSettings.ComponentView` does for `CalendarSettingsComponent`.
+  `settings/1` receives the component's assigns unchanged (its `render/1`
+  delegates straight to it), so LiveView change tracking is preserved.
+  """
+  use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias TymeslotWeb.Components.Dashboard.Integrations.Shared.DeleteIntegrationModal
+  alias TymeslotWeb.Components.Dashboard.Integrations.Shared.ProviderPickerModal
+  alias TymeslotWeb.Components.Dashboard.Integrations.Video.CustomConfig
+  alias TymeslotWeb.Components.Dashboard.Integrations.Video.EditVideoIntegrationModal
+  alias TymeslotWeb.Components.Dashboard.Integrations.Video.JitsiConfig
+  alias TymeslotWeb.Components.Dashboard.Integrations.Video.KmeetConfig
+  alias TymeslotWeb.Components.Dashboard.Integrations.Video.MirotalkConfig
+  alias TymeslotWeb.Components.Dashboard.Integrations.Video.NextcloudTalkConfig
+  alias TymeslotWeb.Dashboard.VideoSettings.Components
+  alias TymeslotWeb.Live.Dashboard.VideoSettings.ProviderPicker
+
+  @spec settings(map()) :: Phoenix.LiveView.Rendered.t()
+  def settings(assigns) do
+    ~H"""
+    <div class="space-y-10">
+      <%!-- The hub's tab names the panel, so it carries no title of its own.
+           With nothing connected, the empty state below carries the action. --%>
+      <div :if={@integrations != []} class="flex justify-end">
+        <.connect_button myself={@myself} />
+      </div>
+
+      <div>
+        <%!-- Connected Video Providers Section --%>
+        <%= if @integrations == [] do %>
+          <.empty_state
+            icon="hero-video-camera"
+            size={:lg}
+            data-testid="video-empty"
+            title={dgettext("dashboard_video", "No video providers connected yet")}
+            description={
+              dgettext(
+                "dashboard_video",
+                "Connect one so online meetings get a video link added automatically when they're booked."
+              )
+            }
+          >
+            <:action><.connect_button myself={@myself} /></:action>
+          </.empty_state>
+        <% else %>
+          <% {active_integrations, inactive_integrations} =
+            Enum.split_with(@integrations, & &1.is_active) %>
+          <% show_section_headers = active_integrations != [] and inactive_integrations != [] %>
+
+          <div class="space-y-6">
+            <%!-- Active Video Integrations --%>
+            <%= if active_integrations != [] do %>
+              <div class="space-y-3">
+                <%= if show_section_headers do %>
+                  <h2 class="text-token-lg font-semibold text-tymeslot-900">
+                    {dgettext("dashboard_video", "Active Video Integrations")}
+                  </h2>
+                <% end %>
+
+                <%= for integration <- active_integrations do %>
+                  <Components.video_connection_row
+                    integration={integration}
+                    testing_connection={@testing_connection}
+                    myself={@myself}
+                    health_state={Map.get(@health_states, integration.id)}
+                    heading_level={if show_section_headers, do: 3, else: 2}
+                  />
+                <% end %>
+              </div>
+            <% end %>
+
+            <%!-- Inactive Video Integrations --%>
+            <%= if inactive_integrations != [] do %>
+              <div class="space-y-3">
+                <%= if show_section_headers do %>
+                  <h2 class="text-token-lg font-semibold text-tymeslot-500">
+                    {dgettext("dashboard_video", "Inactive Video Integrations")}
+                  </h2>
+                <% end %>
+
+                <%= for integration <- inactive_integrations do %>
+                  <Components.video_connection_row
+                    integration={integration}
+                    testing_connection={@testing_connection}
+                    myself={@myself}
+                    health_state={Map.get(@health_states, integration.id)}
+                    heading_level={if show_section_headers, do: 3, else: 2}
+                  />
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <ProviderPickerModal.provider_picker_modal
+          id="video-provider-picker"
+          show={@show_picker}
+          title={dgettext("dashboard_video", "Connect a video provider")}
+          subtitle={
+            dgettext(
+              "dashboard_video",
+              "Add a video link to online meetings automatically when they're booked."
+            )
+          }
+          target={@myself}
+          on_cancel={JS.push("hide_picker", target: @myself)}
+          groups={ProviderPicker.groups(@available_video_providers, @integrations)}
+          config_active={@config_provider != nil}
+          back_event="back_to_providers"
+        >
+          <:config>
+            <.live_component
+              :if={@config_provider == "mirotalk"}
+              module={MirotalkConfig}
+              id="mirotalk-config"
+              target={@myself}
+              form_errors={@form_errors}
+              form_values={@form_values}
+              saving={@saving}
+            />
+            <.live_component
+              :if={@config_provider == "custom"}
+              module={CustomConfig}
+              id="custom-config"
+              target={@myself}
+              form_errors={@form_errors}
+              form_values={@form_values}
+              saving={@saving}
+            />
+            <.live_component
+              :if={@config_provider == "kmeet"}
+              module={KmeetConfig}
+              id="kmeet-config"
+              target={@myself}
+              form_errors={@form_errors}
+              form_values={@form_values}
+              saving={@saving}
+            />
+            <.live_component
+              :if={@config_provider == "jitsi"}
+              module={JitsiConfig}
+              id="jitsi-config"
+              target={@myself}
+              form_errors={@form_errors}
+              form_values={@form_values}
+              saving={@saving}
+            />
+            <.live_component
+              :if={@config_provider == "nextcloud_talk"}
+              module={NextcloudTalkConfig}
+              id="nextcloud-talk-config"
+              target={@myself}
+              form_errors={@form_errors}
+              form_values={@form_values}
+              saving={@saving}
+              nextcloud_calendars={@nextcloud_calendars}
+              copied_login={@copied_nextcloud_login}
+            />
+          </:config>
+        </ProviderPickerModal.provider_picker_modal>
+      </div>
+
+      <%!-- Edit Integration Modal --%>
+      <.live_component
+        module={EditVideoIntegrationModal}
+        id="edit-video-modal"
+        integrations={@integrations}
+        current_user={@current_user}
+      />
+
+      <%!-- Delete Confirmation Modal --%>
+      <.live_component
+        module={DeleteIntegrationModal}
+        id="delete-video-modal"
+        integration_type={:video}
+        current_user={@current_user}
+      />
+    </div>
+    """
+  end
+
+  # The header and the empty state offer the same action, so it is defined once.
+  attr :myself, :any, required: true
+
+  defp connect_button(assigns) do
+    ~H"""
+    <.action_button
+      size={:sm}
+      icon="hero-plus"
+      class="shrink-0"
+      phx-click="show_picker"
+      phx-target={@myself}
+    >
+      {dgettext("dashboard_video", "Connect a video provider")}
+    </.action_button>
+    """
+  end
+end

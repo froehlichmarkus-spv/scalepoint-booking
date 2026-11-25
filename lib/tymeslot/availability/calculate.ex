@@ -1,0 +1,470 @@
+defmodule Tymeslot.Availability.Calculate do
+  @moduledoc """
+  Main orchestrator for availability calculations.
+  Combines business hours, time slots, and conflict detection.
+  """
+
+  alias Tymeslot.Availability.{AvailabilityOverrideQueries, WeeklyAvailabilityQueries}
+  alias Tymeslot.Availability.{Conflicts, Events, Reach, SlotGrid, TimeSlots}
+  alias Tymeslot.Availability.TimeOffPeriodQueries
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Locales.WeekStart
+  alias Tymeslot.Utils.{DateTimeUtils, TimeRange}
+  alias Tymeslot.Validation.Constraints
+
+  @type availability_config :: %{
+          optional(:schedule_id) => pos_integer(),
+          optional(:max_advance_booking_days) => pos_integer(),
+          optional(:duration_minutes) => pos_integer(),
+          optional(:slot_interval_minutes) => pos_integer() | nil,
+          optional(:buffer_before_minutes) => non_neg_integer(),
+          optional(:buffer_after_minutes) => non_neg_integer(),
+          optional(:weekly_schedule) => list(term()),
+          optional(:overrides) => list(term()),
+          optional(:time_off) => list(term()),
+          optional(:fallback_availability_fn) => (Date.t() -> term()) | nil,
+          optional(:owner_timezone) => String.t(),
+          optional(:min_advance_hours) => non_neg_integer(),
+          optional(:limit_checker) => (DateTime.t() -> boolean()) | nil,
+          optional(:ignore_event_uids) => MapSet.t(String.t()),
+          optional(:limit_exempt_starts) => MapSet.t(integer()),
+          optional(:offered_starts) => [DateTime.t()]
+        }
+
+  @typedoc "The scheduling policy values an `availability_config` carries."
+  @type policy_values :: %{
+          buffer_before_minutes: non_neg_integer(),
+          buffer_after_minutes: non_neg_integer(),
+          min_advance_hours: non_neg_integer(),
+          max_advance_booking_days: pos_integer()
+        }
+
+  @type calendar_day :: %{
+          required(:date) => String.t(),
+          required(:day) => integer(),
+          required(:available) => boolean(),
+          required(:loading) => boolean(),
+          required(:past) => boolean(),
+          required(:today) => boolean(),
+          required(:current_month) => boolean()
+        }
+
+  # How many owner days either side of the booker's dates the schedule may be
+  # read for. A caller that prefetches for the engine pads by the same
+  # `Reach.owner_days/0`, or the engine misses what lies beyond.
+  defp owner_date_reach, do: Reach.owner_days()
+
+  @doc """
+  Calculates available time slots for a specific date: `available_starts/6`,
+  formatted as the display labels the web layer works with.
+
+  ## Parameters
+    - date: Date to check
+    - duration_minutes: Meeting duration in minutes
+    - user_timezone: Timezone of the user viewing availability
+    - owner_timezone: Timezone of the calendar owner
+    - events: List of existing events
+    - config: Optional configuration overrides. `config[:ignore_event_uids]`
+      lets a caller disregard specific blocking events for the one slot each
+      occupies (see `Tymeslot.Availability.Conflicts.filter_available_starts/5`
+      and `Tymeslot.Availability.GroupSlots`), without weakening buffer
+      protection around them for every other slot. `config[:limit_exempt_starts]`
+      (Unix seconds) names slot instants the booking limits do not apply to:
+      a seat on a live group slot adds no booking.
+
+  ## Returns
+    List of available time slot strings, each starting on `date`
+  """
+  @spec available_slots(
+          Date.t(),
+          integer(),
+          String.t(),
+          String.t(),
+          [CalendarEvent.t()],
+          availability_config()
+        ) :: {:ok, [String.t()]} | {:error, any()}
+  def available_slots(date, duration_minutes, user_timezone, owner_timezone, events, config) do
+    with {:ok, starts} <-
+           available_starts(date, duration_minutes, user_timezone, owner_timezone, events, config) do
+      {:ok, Enum.map(starts, &TimeSlots.format_datetime_slot/1)}
+    end
+  end
+
+  @doc """
+  The bookable starts on `date` (the booker's), as `DateTime`s in
+  `user_timezone`: the schedule's own (`SlotGrid.starts_for_date/5`) less those
+  that clash with `events` or break the notice, window or limit rules.
+
+  Every start is listed under the date it begins on, so `available_slots/6`
+  can hand the web layer bare labels and the booking path can rebuild the
+  instant from the date and the label.
+  """
+  @spec available_starts(
+          Date.t(),
+          integer(),
+          String.t(),
+          String.t(),
+          [CalendarEvent.t()],
+          availability_config()
+        ) :: {:ok, [DateTime.t()]} | {:error, any()}
+  def available_starts(date, duration_minutes, user_timezone, owner_timezone, events, config) do
+    duration_minutes = duration_minutes |> max(1) |> min(Reach.max_meeting_minutes())
+    schedule_id = Map.get(config, :schedule_id)
+
+    config =
+      prefetch_schedule_data(
+        config,
+        schedule_id,
+        Date.add(date, -owner_date_reach()),
+        Date.add(date, owner_date_reach())
+      )
+
+    with {:ok, starts} <-
+           SlotGrid.starts_for_date(date, duration_minutes, owner_timezone, user_timezone, config) do
+      events_in_user_tz =
+        events
+        |> Enum.filter(&CalendarEvent.blocking?/1)
+        |> Events.convert_events_to_timezone(owner_timezone, user_timezone)
+
+      {:ok,
+       Conflicts.filter_available_starts(
+         starts,
+         events_in_user_tz,
+         duration_minutes,
+         user_timezone,
+         config
+       )}
+    end
+  end
+
+  @doc """
+  Returns whether the schedule described by `config` offers a slot starting at
+  `start_datetime` on `date`.
+
+  The answer comes from `available_starts/6` with an empty event list, so a
+  booking cannot drift from the list the booking page rendered: calendar
+  conflicts stay the caller's business, the schedule's own windows and breaks
+  are this function's.
+
+  The comparison is by instant, so a start the display did not list under
+  `date` is refused, including one passed with the wrong date and the second
+  occurrence of a repeated fall-back hour.
+
+  Returns `{:error, reason}` — never a bare `false` — when the slot list is
+  itself unobtainable, so a caller can tell "not offered" apart from "could
+  not be determined" and choose to refuse rather than silently wave the
+  booking through on an unrelated failure.
+  """
+  @spec offers_slot(
+          Date.t(),
+          DateTime.t(),
+          pos_integer(),
+          String.t(),
+          String.t(),
+          availability_config()
+        ) :: {:ok, boolean()} | {:error, any()}
+  def offers_slot(date, start_datetime, duration_minutes, user_timezone, owner_timezone, config) do
+    with {:ok, starts} <-
+           available_starts(date, duration_minutes, user_timezone, owner_timezone, [], config) do
+      {:ok, Enum.any?(starts, &(DateTime.compare(&1, start_datetime) == :eq))}
+    end
+  end
+
+  @doc """
+  Gets availability status for an arbitrary date range.
+  Optimized for calendar display where visible dates may span multiple months.
+
+  ## Returns
+    Map of date strings to availability boolean
+  """
+  @spec range_availability(
+          Date.t(),
+          Date.t(),
+          String.t(),
+          String.t(),
+          [CalendarEvent.t()],
+          availability_config()
+        ) :: {:ok, %{String.t() => boolean()}}
+  def range_availability(
+        start_date,
+        end_date,
+        owner_timezone,
+        user_timezone,
+        events,
+        config
+      ) do
+    now = DateTimeUtils.now_in_timezone(user_timezone)
+    today = DateTime.to_date(now)
+
+    max_advance_booking_days = config_policy(config).max_advance_booking_days
+    max_booking_date = Date.add(today, max_advance_booking_days)
+    duration_minutes = config |> Map.get(:duration_minutes) |> Kernel.||(30)
+
+    blocking_events = Enum.filter(events, &CalendarEvent.blocking?/1)
+
+    events_in_user_tz =
+      Events.convert_events_to_timezone(blocking_events, owner_timezone, user_timezone)
+
+    schedule_id = Map.get(config, :schedule_id)
+
+    # Prefetch schedule data once for the entire range, padded by the owner
+    # days each booker date may read (`owner_date_reach/0`).
+    config =
+      config
+      |> Map.put(:duration_minutes, duration_minutes)
+      |> prefetch_schedule_data(
+        schedule_id,
+        Date.add(start_date, -owner_date_reach()),
+        Date.add(end_date, owner_date_reach())
+      )
+
+    availability_map =
+      Enum.reduce(Date.range(start_date, end_date), %{}, fn date, acc ->
+        is_outside_range =
+          Date.compare(date, today) == :lt or Date.compare(date, max_booking_date) == :gt
+
+        has_slots =
+          not is_outside_range and
+            Conflicts.date_has_slots_with_events?(
+              date,
+              owner_timezone,
+              user_timezone,
+              events_in_user_tz,
+              now,
+              config
+            )
+
+        Map.put(acc, Date.to_string(date), has_slots)
+      end)
+
+    {:ok, availability_map}
+  end
+
+  @doc """
+  Computes the 42-day display range for a calendar grid.
+
+  Returns `{start_date, end_date}` covering exactly the dates rendered by
+  `get_calendar_days/6` — a 6-week (42-day) window starting on the
+  `week_start` day at or before the first of the month.
+  """
+  @spec display_range(integer(), integer(), WeekStart.t()) :: {Date.t(), Date.t()}
+  def display_range(year, month, week_start) do
+    start_date = year |> Date.new!(month, 1) |> Date.beginning_of_week(week_start)
+    {start_date, Date.add(start_date, 41)}
+  end
+
+  @doc """
+  Gets calendar days for display in the UI.
+
+  Returns a list of day objects for calendar rendering, including
+  availability, current month status, and other display properties.
+
+  ## Parameters
+    - user_timezone: Timezone of the user viewing the calendar
+    - year: Year to display
+    - month: Month to display (1-12)
+    - week_start: `:monday` or `:sunday`, the grid's first column
+    - config: Configuration map with schedule_id, max_advance_booking_days, etc.
+    - availability_map: Optional map of date strings to boolean availability.
+      Can be:
+      - nil: Use business hours logic only (fast, but not conflict-aware)
+      - :loading: Mark all days as loading state
+      - %{}: Use real conflict-aware availability from the map
+  """
+  @spec get_calendar_days(
+          String.t(),
+          integer(),
+          integer(),
+          WeekStart.t(),
+          availability_config(),
+          %{String.t() => boolean()} | atom() | nil
+        ) :: [calendar_day()]
+  def get_calendar_days(user_timezone, year, month, week_start, config, availability_map \\ nil) do
+    now = DateTimeUtils.now_in_timezone(user_timezone)
+    today = DateTime.to_date(now)
+
+    {first_display_date, end_date} = display_range(year, month, week_start)
+
+    # Prefetch once for the whole grid, as `available_slots/6` and
+    # `range_availability/6` already do. Without it the per-day fallback runs an
+    # uncached override lookup and a weekly-availability lookup for every
+    # non-past day in the grid — up to 42 of each, from inside the template
+    # render of a public page. Padded by `owner_date_reach/0` at each end to
+    # match `available_slots/6` and `range_availability/6`, which also covers
+    # the fallback's own reads (from the day before each date up to its reach).
+    #
+    # Only the business-hours fallback (`availability_map` neither a map nor
+    # `:loading`) ever reads `weekly_schedule`/`overrides` back out of
+    # `config`, so skip the prefetch otherwise — this LiveComponent re-renders
+    # on every date and time click.
+    config =
+      if is_map(availability_map) or availability_map == :loading do
+        config
+      else
+        prefetch_schedule_data(
+          config,
+          Map.get(config, :schedule_id),
+          Date.add(first_display_date, -owner_date_reach()),
+          Date.add(end_date, owner_date_reach())
+        )
+      end
+
+    Enum.map(0..41, fn offset ->
+      date = Date.add(first_display_date, offset)
+      date_string = Date.to_string(date)
+
+      is_past = Date.compare(date, today) == :lt
+
+      {is_available, is_loading} =
+        determine_availability(date, date_string, today, now, availability_map, config)
+
+      %{
+        date: date_string,
+        day: date.day,
+        available: is_available,
+        loading: is_loading,
+        past: is_past,
+        today: date == today,
+        current_month: date.month == month
+      }
+    end)
+  end
+
+  @typedoc "Why a date/time selection is not yet good enough to advance on."
+  @type selection_error :: :date_required | :time_required | :selection_required
+
+  @doc """
+  Validates that both date and time have been selected for booking.
+
+  Returns a reason atom rather than copy: this is a public, multi-locale
+  booking page, and rendering an atom to user-facing text is the web layer's
+  responsibility (the same split `Tymeslot.Bookings.Errors` states).
+  """
+  @spec validate_time_selection(term(), term()) :: :ok | {:error, selection_error()}
+  def validate_time_selection(date, time) do
+    cond do
+      date in [nil, ""] -> {:error, :date_required}
+      time in [nil, ""] -> {:error, :time_required}
+      is_binary(date) and is_binary(time) -> :ok
+      true -> {:error, :selection_required}
+    end
+  end
+
+  @doc """
+  The scheduling policy values an `availability_config` carries, falling
+  back to `Tymeslot.Validation.Constraints.scheduling_policy_defaults/0` for any
+  the caller left out.
+
+  Callers build config from a resolved availability schedule. A config assembled
+  without one has to behave like a default schedule rather than carry a third
+  set of numbers of its own, because the offered slots and the booking-time
+  re-check read the policy through different paths and must not disagree.
+  """
+  @spec config_policy(availability_config()) :: policy_values()
+  def config_policy(config) do
+    defaults = Constraints.scheduling_policy_defaults()
+
+    %{
+      buffer_before_minutes:
+        Map.get(config, :buffer_before_minutes, defaults.buffer_before_minutes),
+      buffer_after_minutes: Map.get(config, :buffer_after_minutes, defaults.buffer_after_minutes),
+      min_advance_hours: Map.get(config, :min_advance_hours, defaults.min_advance_hours),
+      max_advance_booking_days:
+        Map.get(config, :max_advance_booking_days, defaults.advance_booking_days)
+    }
+  end
+
+  @doc """
+  The `{before, after}` buffer pair an `availability_config` carries, with the
+  same fallbacks as `config_policy/1`.
+
+  The display filter, the submit-time calendar check and the database conflict
+  check all read the pair through here, so none of them can keep a default of
+  its own.
+  """
+  @spec config_buffers(availability_config()) :: TimeRange.buffers()
+  def config_buffers(config) do
+    %{buffer_before_minutes: buffer_before, buffer_after_minutes: buffer_after} =
+      config_policy(config)
+
+    {buffer_before, buffer_after}
+  end
+
+  # Private functions
+
+  @doc """
+  Loads the schedule's weekly days, date overrides and time-off periods into
+  `config` once, so that per-date lookups read them from memory instead of the
+  database.
+
+  `BusinessHours` falls back to a query per date whenever the key is absent, so
+  any caller iterating dates has to prefetch or pay a round trip per day.
+  Existing keys win, so a caller that already has the data can pass it through.
+  """
+  @spec prefetch_schedule_data(availability_config(), integer() | nil, Date.t(), Date.t()) ::
+          availability_config()
+  def prefetch_schedule_data(config, nil, _start_date, _end_date), do: config
+
+  def prefetch_schedule_data(config, schedule_id, start_date, end_date) do
+    config
+    |> Map.put_new_lazy(:weekly_schedule, fn ->
+      WeeklyAvailabilityQueries.get_weekly_schedule_with_breaks(schedule_id)
+    end)
+    |> Map.put_new_lazy(:overrides, fn ->
+      AvailabilityOverrideQueries.get_overrides_by_schedule_and_date_range(
+        schedule_id,
+        start_date,
+        end_date
+      )
+    end)
+    |> Map.put_new_lazy(:time_off, fn ->
+      TimeOffPeriodQueries.list_for_schedule_in_range(schedule_id, start_date, end_date)
+    end)
+  end
+
+  defp determine_availability(date, date_string, today, now, availability_map, config) do
+    cond do
+      Date.compare(date, today) == :lt ->
+        {false, false}
+
+      availability_map == :loading ->
+        {false, true}
+
+      is_map(availability_map) ->
+        {Map.get(availability_map, date_string, false), false}
+
+      is_function(Map.get(config, :fallback_availability_fn), 1) ->
+        {config.fallback_availability_fn.(date), false}
+
+      true ->
+        {fallback_day_available?(date, today, now, config), false}
+    end
+  end
+
+  @doc """
+  Whether a date can be offered when no conflict-aware availability map has
+  been fetched yet.
+
+  This is the rule the calendar grid falls back to: the date offers at least
+  one slot from business hours, ignoring calendar events. It asks the same
+  slot generator `range_availability/6` does, with an empty event list, so
+  the booker's date is read through the owner's adjacent days (a Tokyo
+  Monday morning is a Los Angeles Sunday evening), and the minimum notice and
+  advance-booking window apply slot by slot. Public so the week strip answers
+  the same question the month grid does.
+  """
+  @spec day_bookable_by_business_hours?(Date.t(), String.t(), availability_config()) :: boolean()
+  def day_bookable_by_business_hours?(date, user_timezone, config) do
+    now = DateTimeUtils.now_in_timezone(user_timezone)
+    fallback_day_available?(date, DateTime.to_date(now), now, config)
+  end
+
+  defp fallback_day_available?(date, today, now, config) do
+    max_booking_date = Date.add(today, config_policy(config).max_advance_booking_days)
+    owner_timezone = Map.get(config, :owner_timezone, "Etc/UTC")
+    config = Map.put(config, :duration_minutes, Map.get(config, :duration_minutes) || 30)
+
+    Date.compare(date, today) != :lt and Date.compare(date, max_booking_date) != :gt and
+      Conflicts.date_has_slots_with_events?(date, owner_timezone, now.time_zone, [], now, config)
+  end
+end

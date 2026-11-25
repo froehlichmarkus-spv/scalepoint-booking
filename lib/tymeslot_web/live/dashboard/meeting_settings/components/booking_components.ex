@@ -1,0 +1,282 @@
+defmodule TymeslotWeb.Dashboard.MeetingSettings.Components.BookingComponents do
+  @moduledoc "Icon picker and booking destination components for meeting type forms."
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  use Phoenix.VerifiedRoutes,
+    endpoint: TymeslotWeb.Endpoint,
+    router: TymeslotWeb.Router,
+    statics: TymeslotWeb.static_paths()
+
+  alias Phoenix.LiveView.JS
+  alias Tymeslot.Integrations.Calendar.DisplayHelpers
+  alias Tymeslot.MeetingTypes.MeetingTypeSchema
+  alias TymeslotWeb.Dashboard.MeetingSettings.Helpers
+  alias TymeslotWeb.Live.Shared.FormValidationHelpers
+
+  use TymeslotWeb.Components.CoreComponents,
+    only: [icon: 1, pill: 1, spinner: 1, subsection_header: 1, tooltip: 1]
+
+  import TymeslotWeb.Components.Icons.ProviderIcon
+
+  @doc """
+  Picker for choosing a meeting type icon.
+  """
+  attr :selected_icon, :string, required: true
+  attr :form_errors, :map, required: true
+  attr :myself, :any, required: true
+
+  @spec icon_picker(map()) :: Phoenix.LiveView.Rendered.t()
+  def icon_picker(assigns) do
+    ~H"""
+    <section class="space-y-2">
+      <.subsection_header icon="hero-face-smile" title={dgettext("dashboard_meeting_form", "Icon")} />
+      <div class="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-14 lg:grid-cols-16 gap-1">
+        <%= for {icon_value, icon_name} <- MeetingTypeSchema.valid_icons_with_names() do %>
+          <.tooltip text={icon_name}>
+            <button
+              type="button"
+              phx-click={JS.push("select_icon", value: %{icon: icon_value}, target: @myself)}
+              aria-label={icon_name}
+              class={[
+                "relative rounded-token-md border-2 transition-colors duration-200 group",
+                "w-10 h-10 flex items-center justify-center overflow-hidden",
+                if(@selected_icon == icon_value,
+                  do:
+                    "bg-linear-to-br from-turquoise-50 to-turquoise-100 border-turquoise-500 shadow-md",
+                  else:
+                    "bg-white/50 border-tymeslot-300/50 hover:border-turquoise-400/50 hover:bg-white/70"
+                )
+              ]}
+              style="width: 40px; height: 40px; min-width: 40px; min-height: 40px; max-width: 40px; max-height: 40px;"
+            >
+              <%= if icon_value == "none" do %>
+                <.icon name="hero-x-mark" class="w-6 h-6 text-tymeslot-400" />
+              <% else %>
+                <.icon
+                  name={icon_value}
+                  class={
+                  "w-8 h-8 block " <>
+                    if(@selected_icon == icon_value,
+                      do: "text-turquoise-600",
+                      else: "text-tymeslot-500 group-hover:text-turquoise-500"
+                    )
+                }
+                />
+              <% end %>
+            </button>
+          </.tooltip>
+        <% end %>
+      </div>
+      <p class="mt-2 text-token-sm text-tymeslot-600">
+        {dgettext(
+          "dashboard_meeting_form",
+          "Choose an icon to represent this meeting type, or select \"No Icon\" for no visual indicator."
+        )}
+      </p>
+      <%= for error <- FormValidationHelpers.field_errors(@form_errors, :icon) do %>
+        <p class="form-error">{Helpers.format_errors(error)}</p>
+      <% end %>
+    </section>
+    """
+  end
+
+  @doc """
+  Section for selecting the booking destination calendar.
+  """
+  attr :calendar_integrations, :list, required: true
+  attr :selected_calendar_integration_id, :any, required: true
+  attr :refreshing_calendars, :boolean, required: true
+  attr :available_calendars, :list, required: true
+  attr :no_writable_calendars, :boolean, required: true
+  attr :target_calendar_status, :atom, default: :ok, values: [:ok, :read_only, :missing]
+  attr :selected_target_calendar_id, :any, required: true
+  attr :form_errors, :map, required: true
+  attr :myself, :any, required: true
+  attr :icon_size, :string, default: "compact", values: ["compact", "medium", "large", "mini"]
+
+  @spec booking_destination_section(map()) :: Phoenix.LiveView.Rendered.t()
+  def booking_destination_section(assigns) do
+    ~H"""
+    <section class="pt-4 border-t border-tymeslot-100">
+      <.subsection_header
+        icon="hero-calendar-days"
+        title={dgettext("dashboard_meeting_form", "Booking Destination")}
+        description={
+          dgettext(
+            "dashboard_meeting_form",
+            "Choose where new bookings for this meeting type should be created."
+          )
+        }
+        class="mb-4"
+      />
+
+      <div class="space-y-4">
+        <div>
+          <label class="label text-token-sm">
+            {dgettext("dashboard_meeting_form", "1. Select Calendar Account")}
+          </label>
+          <%= if @calendar_integrations == [] do %>
+            <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-token-lg">
+              <p class="text-token-sm text-yellow-700">
+                {dgettext("dashboard_meeting_form", "No calendar integrations configured.")}
+                <a
+                  href={~p"/dashboard/integrations?tab=calendars"}
+                  class="underline hover:text-yellow-800"
+                >
+                  {dgettext("dashboard_meeting_form", "Connect a calendar")}
+                </a>
+              </p>
+            </div>
+          <% else %>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              <%= for integration <- @calendar_integrations do %>
+                <%!-- native-title: repeats the integration name, which can truncate. --%>
+                <button
+                  type="button"
+                  disabled={@refreshing_calendars}
+                  phx-click={
+                    JS.push("select_calendar_integration",
+                      value: %{id: integration.id},
+                      target: @myself
+                    )
+                  }
+                  class={[
+                    "glass-selector h-20!",
+                    if(@selected_calendar_integration_id == integration.id,
+                      do: "glass-selector--active"
+                    ),
+                    if(not integration.is_active, do: "opacity-60"),
+                    if(@refreshing_calendars, do: "opacity-50 cursor-not-allowed")
+                  ]}
+                  title={integration.name}
+                >
+                  <div class="flex flex-col items-center justify-center space-y-1">
+                    <.provider_icon provider={integration.provider} size={@icon_size} />
+                    <span class="text-token-sm font-medium truncate max-w-full">
+                      {integration.name}
+                    </span>
+                    <.pill :if={not integration.is_active} tone={:warning}>
+                      {dgettext("dashboard_meeting_form", "Reconnect")}
+                    </.pill>
+                  </div>
+                </button>
+              <% end %>
+            </div>
+            <%= for error <- FormValidationHelpers.field_errors(@form_errors, :calendar_integration) do %>
+              <p class="form-error mt-2">{Helpers.format_errors(error)}</p>
+            <% end %>
+          <% end %>
+        </div>
+
+        <%= if @selected_calendar_integration_id do %>
+          <div class="animate-in fade-in slide-in-from-top-2 duration-300">
+            <label class="label text-token-sm">
+              {dgettext("dashboard_meeting_form", "2. Select Specific Calendar")}
+            </label>
+            <%!-- Suppressed when the account has no writable calendar at all:
+                  the notice below already says so, and says what to do about
+                  it, whereas "choose another calendar" would be impossible
+                  advice. --%>
+            <div
+              :if={@target_calendar_status != :ok and not @no_writable_calendars}
+              class="mb-2 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-token-lg"
+            >
+              <p class="text-token-sm text-yellow-700">
+                <%= if @target_calendar_status == :read_only do %>
+                  {dgettext(
+                    "dashboard_meeting_form",
+                    "The calendar this meeting type books into is now read-only. Choose another calendar."
+                  )}
+                <% else %>
+                  {dgettext(
+                    "dashboard_meeting_form",
+                    "The calendar this meeting type books into is no longer on this account. Choose another calendar."
+                  )}
+                <% end %>
+              </p>
+            </div>
+            <%= if @refreshing_calendars do %>
+              <div class="flex items-center space-x-2 p-4 bg-tymeslot-50 rounded-token-lg">
+                <.spinner class="h-4 w-4 text-turquoise-600" />
+                <span class="text-token-sm text-tymeslot-600 font-medium italic">
+                  {dgettext("dashboard_meeting_form", "Refreshing calendars...")}
+                </span>
+              </div>
+            <% else %>
+              <%= if @available_calendars == [] do %>
+                <%= if @no_writable_calendars do %>
+                  <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-token-lg">
+                    <p class="text-token-sm text-yellow-700">
+                      {dgettext(
+                        "dashboard_meeting_form",
+                        "None of the calendars you selected for this account can accept bookings."
+                      )}
+                      <a
+                        href={~p"/dashboard/integrations?tab=calendars"}
+                        class="underline hover:text-yellow-800"
+                      >
+                        {dgettext("dashboard_meeting_form", "Update your calendar selection")}
+                      </a>
+                      {dgettext("dashboard_meeting_form", "or choose a different account.")}
+                    </p>
+                  </div>
+                <% else %>
+                  <p class="text-token-sm text-tymeslot-500 italic">
+                    {dgettext("dashboard_meeting_form", "No calendars found for this account.")}
+                  </p>
+                <% end %>
+              <% else %>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <%= for cal <- @available_calendars do %>
+                    <button
+                      type="button"
+                      phx-click={
+                        JS.push("select_target_calendar",
+                          value: %{id: cal.id},
+                          target: @myself
+                        )
+                      }
+                      class={[
+                        "flex items-center p-3 rounded-token-lg border-2 transition-all text-left",
+                        if(@selected_target_calendar_id == cal.id,
+                          do: "bg-turquoise-50 border-turquoise-500 shadow-sm",
+                          else: "bg-white border-tymeslot-100 hover:border-turquoise-200"
+                        )
+                      ]}
+                    >
+                      <div class={[
+                        "w-4 h-4 rounded-token-full border-2 mr-3 flex items-center justify-center",
+                        if(@selected_target_calendar_id == cal.id,
+                          do: "border-turquoise-50 bg-turquoise-500",
+                          else: "border-tymeslot-300"
+                        )
+                      ]}>
+                        <%= if @selected_target_calendar_id == (cal.id) do %>
+                          <.icon name="hero-check-mini" class="w-2.5 h-2.5 text-white" />
+                        <% end %>
+                      </div>
+                      <span class={[
+                        "text-token-sm font-medium truncate",
+                        if(@selected_target_calendar_id == cal.id,
+                          do: "text-turquoise-900",
+                          else: "text-tymeslot-700"
+                        )
+                      ]}>
+                        {DisplayHelpers.extract_calendar_display_name(cal)}
+                      </span>
+                    </button>
+                  <% end %>
+                </div>
+                <%= for error <- FormValidationHelpers.field_errors(@form_errors, :target_calendar) do %>
+                  <p class="form-error mt-2">{Helpers.format_errors(error)}</p>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+    """
+  end
+end

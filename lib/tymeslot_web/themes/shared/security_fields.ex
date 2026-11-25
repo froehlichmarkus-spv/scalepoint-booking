@@ -1,0 +1,102 @@
+defmodule TymeslotWeb.Themes.Shared.SecurityFields do
+  @moduledoc """
+  Shared reCAPTCHA field components for booking forms.
+
+  The honeypot these forms also carry is
+  `TymeslotWeb.Components.CoreComponents.Forms.honeypot_field/1`, shared with every
+  other public form.
+  """
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Infrastructure.Security.RecaptchaHelpers
+
+  @doc """
+  Renders only the hidden reCAPTCHA token input (no notice).
+
+  Use this inside the booking `<.form>` when the privacy notice needs to be
+  positioned separately (e.g. below a sibling field). Pair with
+  `recaptcha_notice_block/1`.
+  """
+  attr :id_prefix, :string, required: true
+  attr :param_root, :string, required: true
+
+  @spec recaptcha_token_field(map()) :: Phoenix.LiveView.Rendered.t()
+  def recaptcha_token_field(assigns) do
+    ~H"""
+    <input
+      :if={RecaptchaHelpers.booking_active?()}
+      type="hidden"
+      name={"#{@param_root}[g-recaptcha-response]"}
+      id={"#{@id_prefix}-g-recaptcha-response"}
+      value=""
+    />
+    """
+  end
+
+  @doc """
+  Renders only the reCAPTCHA privacy notice (no hidden input).
+
+  Position this wherever the notice should appear in the layout; the token
+  input from `recaptcha_token_field/1` must still live inside the form.
+  Its inks are each theme's, through the `--recaptcha-notice-*` tokens
+  (`shared/components/booking-fields.css`).
+  """
+  @spec recaptcha_notice_block(map()) :: Phoenix.LiveView.Rendered.t()
+  def recaptcha_notice_block(assigns) do
+    ~H"""
+    <div
+      :if={RecaptchaHelpers.booking_active?()}
+      class="recaptcha-notice text-xs text-center"
+    >
+      {Phoenix.HTML.raw(recaptcha_notice())}
+    </div>
+    """
+  end
+
+  defp recaptcha_notice do
+    privacy_link =
+      ~s(<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" class="underline">) <>
+        dgettext("booking", "Privacy Policy") <> "</a>"
+
+    terms_link =
+      ~s(<a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" class="underline">) <>
+        dgettext("booking", "Terms of Service") <> "</a>"
+
+    dgettext(
+      "booking",
+      "This site is protected by reCAPTCHA and the Google %{privacy_link} and %{terms_link} apply.",
+      privacy_link: privacy_link,
+      terms_link: terms_link
+    )
+  end
+
+  @doc """
+  Returns map of reCAPTCHA data attributes for form element if active.
+
+  Use this on the form tag to enable reCAPTCHA v3 via the RecaptchaV3 hook.
+
+  ## Example
+
+      <.form
+        for={@form}
+        phx-submit="submit"
+        {recaptcha_form_attrs("booking_form", "booking")}
+      >
+  """
+  @spec recaptcha_form_attrs(String.t(), String.t()) :: map()
+  def recaptcha_form_attrs(action, param_root) do
+    if RecaptchaHelpers.booking_active?() do
+      %{
+        :"data-site-key" => RecaptchaHelpers.site_key(),
+        :"data-recaptcha-action" => action,
+        :"data-recaptcha-event" => "submit",
+        :"data-recaptcha-param-root" => param_root,
+        :"data-recaptcha-require-token" => "true",
+        :"phx-hook" => "RecaptchaV3"
+      }
+    else
+      %{}
+    end
+  end
+end

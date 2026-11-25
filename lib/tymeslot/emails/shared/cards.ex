@@ -1,0 +1,158 @@
+defmodule Tymeslot.Emails.Shared.Cards do
+  @moduledoc """
+  Content card and data-grid components for the scheduler emails.
+
+  Where `Callouts` draws the eye with a tinted background and an intent accent,
+  `Cards` lay out structured information — key/value tables, long-form
+  messages, compact info grids, and footer action rows. The surfaces sit on
+  the warm canvas; the typography does the heavy lifting.
+  """
+
+  alias Tymeslot.Emails.Shared.{Sanitise, Stack, Styles, Text}
+
+  @type contact_row :: %{
+          required(:label) => String.t(),
+          required(:value) => String.t() | {:safe, String.t()},
+          optional(:safe_html) => boolean()
+        }
+
+  @doc """
+  A titled card holding a block of already-prepared HTML — the lines of a
+  dispute or a restricted account, joined with `<br/>` by the caller.
+
+  Shared so every template that shows such a card uses the same padding and
+  spacing.
+  """
+  @spec details_card(String.t(), String.t()) :: String.t()
+  def details_card(title, body_html) do
+    """
+    #{Text.section_title(title)}
+    #{Stack.spaced("""
+      <mj-section
+        background-color="#{Styles.canvas_soft()}"
+        border-radius="#{Styles.card_radius()}"
+        padding="20px 26px"
+        css-class="mobile-card email-canvas-soft"
+      >
+        <mj-column>
+          <mj-text
+            font-size="15px"
+            color="#{Styles.text_color(:primary)}"
+            line-height="1.7"
+            align="left"
+          >
+            #{body_html}
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    """)}
+    """
+  end
+
+  @doc """
+  A contact details card. `row.value` is sanitised by default; pass
+  `{:safe, html}` or `%{safe_html: true, value: html}` to bypass.
+  """
+  @spec contact_details_card(String.t(), list(contact_row())) :: String.t()
+  def contact_details_card(title, rows) do
+    safe_title = Sanitise.sanitize_for_email(title)
+
+    table_rows =
+      Enum.map_join(rows, "\n", fn row ->
+        safe_label = Sanitise.sanitize_for_email(row.label)
+        safe_value = resolve_row_value(row)
+
+        """
+        <tr>
+          <td style="padding: 10px 12px 10px 0; font-size: 11px; font-weight: 700; color: #{Styles.ink_muted()}; letter-spacing: 0.1em; text-transform: uppercase; width: 110px; vertical-align: top; border-bottom: 1px solid #{Styles.border_color(:subtle)};">#{safe_label}</td>
+          <td style="padding: 10px 0; color: #{Styles.ink()}; font-size: 14px; font-weight: 500; vertical-align: top; border-bottom: 1px solid #{Styles.border_color(:subtle)};">#{safe_value}</td>
+        </tr>
+        """
+      end)
+
+    Stack.spaced("""
+    <mj-section
+      background-color="#{Styles.canvas_soft()}"
+      border-radius="#{Styles.card_radius()}"
+      padding="22px 24px"
+      css-class="mobile-card"
+    >
+      <mj-column>
+        <mj-text
+          font-size="11px"
+          font-weight="700"
+          color="#{Styles.ink_muted()}"
+          letter-spacing="0.14em"
+          text-transform="uppercase"
+          padding="0 0 12px 0"
+        >
+          #{safe_title}
+        </mj-text>
+        <mj-table>
+          #{table_rows}
+        </mj-table>
+      </mj-column>
+    </mj-section>
+    """)
+  end
+
+  @doc """
+  A message content card — tinted, with a small kicker title and the body
+  rendered as escaped text with line breaks preserved.
+  """
+  @spec message_content_card(String.t(), String.t()) :: String.t()
+  def message_content_card(title, message) do
+    safe_title = Sanitise.sanitize_for_email(title)
+    formatted = Sanitise.sanitize_multiline_for_email(message)
+
+    Stack.spaced("""
+    <mj-section
+      background-color="#{Styles.canvas_soft()}"
+      border-radius="#{Styles.card_radius()}"
+      padding="22px 24px"
+      css-class="mobile-card"
+    >
+      <mj-column>
+        <mj-text
+          font-size="11px"
+          font-weight="700"
+          color="#{Styles.ink_muted()}"
+          letter-spacing="0.14em"
+          text-transform="uppercase"
+          padding="0 0 12px 0"
+        >
+          #{safe_title}
+        </mj-text>
+        <mj-text
+          font-size="15px"
+          line-height="1.65"
+          color="#{Styles.ink_soft()}"
+          padding="0"
+          css-class="mobile-text"
+        >
+          #{formatted}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    """)
+  end
+
+  defp resolve_row_value(%{value: {:safe, html}}), do: html
+  defp resolve_row_value(%{value: value, safe_html: true}), do: value
+  defp resolve_row_value(%{value: value}), do: Sanitise.sanitize_for_email(value)
+
+  @doc """
+  The body of a `details_card/2` listing facts as label and value, one per
+  line, sanitised, with the first fact's value (an amount, say) in bold.
+  """
+  @spec facts_html([{String.t(), String.t()}, ...]) :: String.t()
+  def facts_html([{label, value} | rest]) do
+    first =
+      "#{Sanitise.sanitize_for_email(label)} <strong>#{Sanitise.sanitize_for_email(value)}</strong>"
+
+    Enum.join([first | Enum.map(rest, &fact_html/1)], "<br/>\n")
+  end
+
+  defp fact_html({label, value}),
+    do: "#{Sanitise.sanitize_for_email(label)} #{Sanitise.sanitize_for_email(value)}"
+end

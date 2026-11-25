@@ -1,0 +1,313 @@
+defmodule Tymeslot.MeetingTypes.FormMapper do
+  @moduledoc """
+  Turns meeting-type form input into schema attributes.
+
+  The form speaks in strings and UI state: a duration typed as text, a price in
+  major units, reminders that arrive as a list, a map or a JSON string
+  depending on how the client serialised them, and a location list the schema
+  turns into embeds. The schema wants integers, cents and normalised structs.
+  Everything needed to get from one to the other lives here, so the context can
+  compose a save without also owning the vocabulary of a particular form.
+
+  Money is the reason this is worth isolating. `build_attrs/3` turns a typed
+  price into the integer minor units that reach Stripe, through
+  `Tymeslot.MeetingPayments.Money.parse/2` and in the currency the host is
+  charged in; a second copy of that arithmetic elsewhere is exactly the kind
+  of drift that produces a charge off by a factor of a hundred.
+  """
+
+  alias Tymeslot.MeetingPayments
+  alias Tymeslot.MeetingPayments.Money
+  alias Tymeslot.MeetingTypes.ApprovalWindow
+  alias Tymeslot.MeetingTypes.InputValidation
+  alias Tymeslot.MeetingTypes.Reminders
+  alias Tymeslot.MeetingTypes.SeriesSettings
+  alias Tymeslot.Validation.Constraints
+
+  @typedoc "Why form input could not be mapped onto schema attributes."
+  @type error ::
+          :invalid_duration
+          | :invalid_max_participants
+          | :invalid_price
+          | :invalid_reminder_config
+          | :invalid_approval_window
+
+  @doc """
+  Builds schema attributes from raw form params and the form's UI state.
+
+  `custom_fields` and `locations` are only included when the params carry the
+  key, so a form that does not render the questions editor (or the locations
+  editor) cannot blank an existing list by omission.
+
+  `currency` is the one the price is typed in, the host's currency as
+  `payment_opts/1` resolves it.
+  """
+  @spec build_attrs(map(), map(), String.t()) :: {:ok, map()} | {:error, error()}
+  def build_attrs(params, ui_state, currency) do
+    with {:ok, duration_minutes} <- parse_duration(params["duration"]),
+         {:ok, reminder_config} <- normalize_reminder_config(params["reminder_config"]),
+         {:ok, payment} <- payment_attrs(params, currency),
+         {:ok, max_participants} <- parse_max_participants(params["max_participants"]),
+         {:ok, approval_window_hours} <- ApprovalWindow.parse(params["approval_window_hours"]) do
+      attrs = %{
+        name: params["name"],
+        duration_minutes: duration_minutes,
+        slot_interval_minutes: parse_optional_integer(params["slot_interval"]),
+        description: params["description"],
+        icon: ui_state.selected_icon,
+        approval_window_hours: approval_window_hours,
+        calendar_integration_id: blank_to_nil(params["calendar_integration_id"]),
+        availability_schedule_id: blank_to_nil(params["availability_schedule_id"]),
+        target_calendar_id: blank_to_nil(params["target_calendar_id"]),
+        reminder_config: reminder_config,
+        max_participants: max_participants
+      }
+
+      attrs =
+        attrs
+        |> Map.merge(toggles(params))
+        |> Map.merge(optional_integers(params))
+        |> Map.merge(seat_display(params))
+        |> maybe_put_custom_fields(params)
+        |> maybe_put_locations(params)
+        |> maybe_put_extra_lengths(params)
+        |> maybe_put_fixed_dates(params)
+        |> Map.merge(SeriesSettings.form_attrs(params))
+        |> Map.merge(payment)
+        |> unpaid_when_group()
+
+      {:ok, attrs}
+    end
+  end
+
+  @toggles ~w(is_active allow_guests requires_approval requires_email_verification)a
+
+  defp toggles(params),
+    do: Map.new(@toggles, &{&1, params[Atom.to_string(&1)] == "true"})
+
+  # Only a form that renders the fixed-dates toggle posts it, so an absent key
+  # leaves the stored setting alone rather than turning it off.
+  defp maybe_put_fixed_dates(attrs, %{"fixed_dates" => value}),
+    do: Map.put(attrs, :fixed_dates, value == "true")
+
+  defp maybe_put_fixed_dates(attrs, _params), do: attrs
+
+  # The booking page's spots display, and the guests one booking may bring.
+  # Only keys the form posted are set, so a caller that does not render these
+  # controls cannot reset them by omission. The threshold and the guest limit
+  # are posted blank when their option is off; the changeset validates their
+  # range.
+  defp seat_display(params) do
+    params
+    |> Map.take(["show_seat_availability", "last_spots_threshold", "max_guests_per_booking"])
+    |> Map.new(&seat_display_attr/1)
+  end
+
+  defp seat_display_attr({"show_seat_availability", value}),
+    do: {:show_seat_availability, value != "false"}
+
+  defp seat_display_attr({"last_spots_threshold", value}),
+    do: {:last_spots_threshold, parse_threshold(value)}
+
+  defp seat_display_attr({"max_guests_per_booking", value}),
+    do: {:max_guests_per_booking, parse_threshold(value)}
+
+  defp parse_threshold(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {count, ""} -> count
+      _blank_or_invalid -> nil
+    end
+  end
+
+  defp parse_threshold(_value), do: nil
+
+  # Payments and group bookings are mutually exclusive. A host who cannot take
+  # charges posts no payment fields at all (see `payment_attrs/1`), so turning
+  # group bookings on for a paid type has to switch the payment off here or
+  # the save is refused with no control left to fix it. The stored price is
+  # kept, exactly as it is while charges are unavailable.
+  defp unpaid_when_group(%{max_participants: limit} = attrs) when limit > 1,
+    do: Map.put(attrs, :payment_required, false)
+
+  defp unpaid_when_group(attrs), do: attrs
+
+  # A form that cannot render the payment controls does not post them, and an
+  # absent key is not a request to make the meeting type free. Both
+  # `MeetingTypeForm.Submission` and its hidden inputs omit the pair whenever
+  # the host cannot accept charges, so reading the absence as `false` cleared
+  # the stored price on the next unrelated save — a rename, a new duration —
+  # with nothing said to the host, who then had to re-enter every price after
+  # reconnecting Stripe. Same shape, and the same reason, as
+  # `maybe_put_custom_fields/2` below.
+  defp payment_attrs(params, currency) do
+    if Map.has_key?(params, "payment_required") do
+      payment_required = params["payment_required"] == "true"
+
+      case parse_price_cents(payment_required, params["price"], currency) do
+        {:ok, price_cents} ->
+          {:ok, %{payment_required: payment_required, price_cents: price_cents}}
+
+        {:error, _reason} = error ->
+          error
+      end
+    else
+      {:ok, %{}}
+    end
+  end
+
+  @doc """
+  Builds the payment-validation opts the schema changeset needs.
+
+  The schema must not reach into the payments domain itself, so the host's
+  charge capability, whether they may set a price, their default currency,
+  and the per-currency minimum are resolved here and threaded in as opts.
+  """
+  @spec payment_opts(integer()) :: keyword()
+  def payment_opts(user_id) do
+    currency = MeetingPayments.host_currency(user_id)
+
+    [
+      host_charges_enabled: MeetingPayments.charges_enabled_for_user?(user_id),
+      price_settable: MeetingPayments.price_settable?(user_id),
+      currency: currency,
+      currency_minimum_cents: MeetingPayments.currency_minimum_cents(currency)
+    ]
+  end
+
+  defp maybe_put_custom_fields(attrs, params) do
+    if Map.has_key?(params, "custom_fields") do
+      Map.put(attrs, :custom_fields, params["custom_fields"])
+    else
+      attrs
+    end
+  end
+
+  # Only when the params carry the key, like `custom_fields`: a caller that
+  # does not render the durations row cannot clear them by omission. Values
+  # that do not parse are dropped here; InputValidation has already refused
+  # them for the form.
+  defp maybe_put_extra_lengths(attrs, %{"extra_lengths" => extras}) do
+    minutes =
+      extras
+      |> InputValidation.extra_lengths_list()
+      |> Enum.flat_map(fn value ->
+        case Integer.parse(String.trim(value)) do
+          {minutes, ""} -> [minutes]
+          _other -> []
+        end
+      end)
+
+    Map.put(attrs, :extra_lengths_minutes, minutes)
+  end
+
+  defp maybe_put_extra_lengths(attrs, _params), do: attrs
+
+  # `allow_video` and `video_integration_id` are deliberately absent from the
+  # attributes above: the schema projects them from this list, so mapping them
+  # here as well would give the same two columns two authors.
+  defp maybe_put_locations(attrs, params) do
+    if Map.has_key?(params, "locations") do
+      Map.put(attrs, :locations, params["locations"])
+    else
+      attrs
+    end
+  end
+
+  defp parse_duration(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {duration, ""} -> {:ok, duration}
+      _other -> {:error, :invalid_duration}
+    end
+  end
+
+  defp parse_duration(_value), do: {:error, :invalid_duration}
+
+  # The booking limits and the scheduling-rule overrides, each param parsed
+  # with `parse_optional_integer/1`.
+  defp optional_integers(params) do
+    Map.new(
+      Constraints.booking_limit_fields() ++ Constraints.scheduling_policy_fields(),
+      &{&1, parse_optional_integer(params[Atom.to_string(&1)])}
+    )
+  end
+
+  # Blank means nil, which every optional number here reads as "inherit" or "no
+  # limit": the slot interval falls back to the duration, a booking limit to
+  # none, a scheduling rule to the schedule's. Out-of-range values are left to
+  # the changeset.
+  defp parse_optional_integer(value) when is_integer(value), do: value
+
+  defp parse_optional_integer(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {integer, ""} -> integer
+      _other -> nil
+    end
+  end
+
+  defp parse_optional_integer(_value), do: nil
+
+  # Converts the max-participants form param into an integer participant
+  # limit. Absent or blank means a solo type and stores 1 (the column
+  # default). Bad input yields `{:error, :invalid_max_participants}` so the
+  # form surfaces it the same way an invalid price does; the 1..999 range
+  # itself is enforced by the schema changeset.
+  defp parse_max_participants(nil), do: {:ok, 1}
+  defp parse_max_participants(""), do: {:ok, 1}
+
+  defp parse_max_participants(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {limit, ""} -> {:ok, limit}
+      _invalid -> {:error, :invalid_max_participants}
+    end
+  end
+
+  defp parse_max_participants(_value), do: {:error, :invalid_max_participants}
+
+  defp blank_to_nil(""), do: nil
+  defp blank_to_nil(value), do: value
+
+  # Converts the major-unit price string from the form into integer minor units.
+  # When payment is not required the price is irrelevant and stored as nil.
+  # Bad input yields `{:error, :invalid_price}` so the form surfaces it the
+  # same way an invalid duration does.
+  defp parse_price_cents(false, _price, _currency), do: {:ok, nil}
+  defp parse_price_cents(true, nil, _currency), do: {:ok, nil}
+  defp parse_price_cents(true, "", _currency), do: {:ok, nil}
+
+  defp parse_price_cents(true, price, currency) when is_binary(price) do
+    case Money.parse(price, currency) do
+      {:ok, _cents} = parsed -> parsed
+      {:error, :invalid_amount} -> {:error, :invalid_price}
+    end
+  end
+
+  defp parse_price_cents(true, _price, _currency), do: {:error, :invalid_price}
+
+  defp normalize_reminder_config(nil), do: {:ok, nil}
+  defp normalize_reminder_config(""), do: {:ok, nil}
+
+  defp normalize_reminder_config(reminders) when is_list(reminders) do
+    normalized = Enum.map(reminders, &Reminders.normalize_reminder_string_keys/1)
+
+    if Enum.any?(normalized, &match?({:error, _error_reason}, &1)) do
+      {:error, :invalid_reminder_config}
+    else
+      {:ok, Enum.map(normalized, fn {:ok, reminder} -> reminder end)}
+    end
+  end
+
+  defp normalize_reminder_config(reminders) when is_map(reminders) do
+    reminders
+    |> Map.values()
+    |> normalize_reminder_config()
+  end
+
+  defp normalize_reminder_config(reminders) when is_binary(reminders) do
+    case Jason.decode(reminders) do
+      {:ok, decoded} -> normalize_reminder_config(decoded)
+      {:error, _decode_error} -> {:error, :invalid_reminder_config}
+    end
+  end
+
+  defp normalize_reminder_config(_other), do: {:error, :invalid_reminder_config}
+end

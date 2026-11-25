@@ -1,0 +1,349 @@
+defmodule Tymeslot.Notifications.GuestNotifications do
+  @moduledoc """
+  Keeps a booking's guests informed when the booking changes after they were
+  invited.
+
+  A guest receives an invitation with RSVP links when a booking is confirmed
+  (`Tymeslot.Notifications.Email.MeetingEmails`). This module tells them
+  when the booking later changes:
+
+    * **Rescheduled** (`reset_for_new_time/1`, then `notify_rescheduled/4`
+      from the reschedule email job): every guest's answer and reminder
+      history is reset, since both applied to the previous time, and every
+      guest, including those who declined, gets a reschedule email with their
+      RSVP links and an updated calendar entry.
+    * **Rescheduled into the approval gate** (`reset_for_new_time/1`): no
+      email yet, since nobody has agreed to the new time; the answers and
+      reminder history are reset. Once the host approves the new time
+      (`notify_reapproved/4`, from the same job), the guests who had been
+      invited get the reschedule email. A request that was never approved has guests who were
+      never invited; the confirmation that follows its approval invites them
+      as usual.
+    * **Cancelled, declined or expired** (`notify_cancelled/3`): every guest gets
+      a cancellation email, but only for a booking that was ever confirmed. A
+      request that was never approved never invited anyone.
+
+  On a group meeting only the guests of participants still holding their seat
+  are written to (`GuestQueries.list_live_for_meeting/1`), and each guest's
+  email is rendered from their own participant's view of the meeting
+  (`with_inviter_details/4`): that participant's language, timezone and seat
+  calendar entry, not the slot row's.
+
+  Guest emails never fail the booking change that triggered them, nor undo the
+  host's and booker's emails. A failed send is logged and, for the reschedule
+  and cancellation notices, returned as `{:error, {:guest_emails_failed,
+  count}}`, so the email job retries; each guest's send is claimed on the job,
+  so the retry writes only to the guests who were missed.
+  """
+
+  @type result :: :ok | {:error, {:guest_emails_failed, pos_integer()}}
+
+  require Logger
+
+  alias Tymeslot.Bookings.MeetingLinks
+  alias Tymeslot.Emails.AppointmentBuilder
+  alias Tymeslot.Infrastructure.Config
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Meetings.GuestQueries
+  alias Tymeslot.Meetings.GuestSchema
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.ParticipantSchema
+  alias Tymeslot.Meetings.Recipient
+
+  @doc """
+  Sends every guest the reschedule email, declined ones included. Their
+  answers were reset when the booking moved (`reset_for_new_time/1`).
+
+  `content` is the reschedule payload built by
+  `Tymeslot.Emails.AppointmentBuilder.for_reschedule/2`, and `build` builds
+  the same payload for a guest's own view of the meeting
+  (`with_inviter_details/4`). `once` wraps each guest's send as in
+  `notify_cancelled/3`.
+  """
+  @spec notify_rescheduled(
+          map(),
+          map(),
+          (MeetingSchema.t() -> map()),
+          (String.t(), (-> term()) -> term())
+        ) :: result()
+  def notify_rescheduled(meeting, content, build, once \\ fn _key, send -> send.() end)
+
+  def notify_rescheduled(%{id: meeting_id} = meeting, content, build, once) do
+    meeting_id
+    |> GuestQueries.list_live_for_meeting()
+    |> send_reschedules(meeting, content, build, once)
+  end
+
+  @doc """
+  Resets the guests' answers and reminder history, which applied to the
+  booking's previous time: when it is rescheduled, and when a reschedule sends
+  it back into the approval gate. Nobody is emailed here: the reschedule
+  notice tells the guests (`notify_rescheduled/4`), or, for a booking held
+  for approval, the notice that follows the host's approval
+  (`notify_reapproved/4`).
+  """
+  @spec reset_for_new_time(map()) :: :ok
+  def reset_for_new_time(%{id: meeting_id}) do
+    GuestQueries.reset_for_new_time(meeting_id)
+    :ok
+  end
+
+  @doc """
+  Sends the reschedule email to the guests who had been invited, once the host
+  approves a booking that a reschedule sent back into the approval gate.
+
+  Only a booking that was confirmed before has invited guests, so for a first
+  approval this sends nothing and the confirmation invites the guests instead.
+  The previous time is no longer known at this point, so `details` (the
+  booking's payload) states the new time without it; `build` builds it for a
+  guest's own view, as in `notify_rescheduled/4`. `once` wraps each guest's
+  send as in `notify_cancelled/3`.
+  """
+  @spec notify_reapproved(
+          map(),
+          map(),
+          (MeetingSchema.t() -> map()),
+          (String.t(), (-> term()) -> term())
+        ) :: result()
+  def notify_reapproved(%{id: meeting_id} = meeting, details, build, once) do
+    meeting_id
+    |> GuestQueries.list_live_for_meeting()
+    |> Enum.reject(&is_nil(&1.confirmation_sent_at))
+    |> send_reschedules(meeting, details, build, once)
+  end
+
+  defp send_reschedules(guests, meeting, details, build, once) do
+    guests
+    |> with_inviter_details(meeting, details, build)
+    |> send_to_guests(meeting.id, "reschedule", fn guest, details ->
+      once.("reschedule:guest:#{guest.id}", fn ->
+        Config.email_service_module().send_guest_reschedule(guest.email, details)
+      end)
+    end)
+  end
+
+  @doc """
+  Sends each guest the cancellation email, for a booking that was confirmed at
+  some point and so had invited them. `appointment_details` is the payload of
+  `Tymeslot.Emails.AppointmentBuilder.from_meeting/1`.
+
+  `once` wraps each guest's send, given a key naming that guest and the send
+  itself. A job that must not mail a guest twice passes
+  `&Tymeslot.Workers.DeliveryClaims.once(job, &1, &2)`, so a rescued run
+  skips the guests already told and still reaches the rest.
+  """
+  @spec notify_cancelled(map(), map(), (String.t(), (-> term()) -> term())) :: result()
+  def notify_cancelled(meeting, appointment_details, once \\ fn _key, send -> send.() end)
+
+  def notify_cancelled(meeting, appointment_details, once) do
+    if ever_confirmed?(meeting),
+      do: send_cancellations(meeting, appointment_details, once),
+      else: :ok
+  end
+
+  defp send_cancellations(%{id: meeting_id} = meeting, appointment_details, once) do
+    meeting_id
+    |> GuestQueries.list_live_for_meeting()
+    |> with_inviter_details(meeting, appointment_details)
+    |> send_to_guests(meeting_id, "cancellation", fn guest, details ->
+      once.("cancellation:guest:#{guest.id}", fn ->
+        Config.email_service_module().send_guest_cancellation(guest.email, details)
+      end)
+    end)
+  end
+
+  @doc """
+  Sends each of `guests` of `meeting` the cancellation of the seat that
+  brought them, from `seat_details`, that seat's payload (its calendar entry,
+  its participant's language and timezone). Used when a participant cancels or moves their
+  seat while the meeting carries on: the meeting-level cancellation never
+  reaches these guests, since their seat is no longer live.
+
+  Only guests who were sent an invitation are told; one never invited has
+  nothing in their calendar to cancel. Declined guests are told like the
+  others, as on a cancelled booking: the entry may still be in their
+  calendar. `once` wraps each send as in `notify_cancelled/3`.
+  """
+  @spec notify_seat_cancelled(
+          map(),
+          [GuestSchema.t()],
+          map(),
+          (String.t(), (-> term()) -> term())
+        ) :: result()
+  def notify_seat_cancelled(%{id: meeting_id}, guests, seat_details, once) do
+    guests
+    |> Enum.reject(&is_nil(&1.confirmation_sent_at))
+    |> Enum.map(&{&1, seat_details})
+    |> send_to_guests(meeting_id, "seat cancellation", fn guest, details ->
+      once.("seat_cancellation:guest:#{guest.id}", fn ->
+        Config.email_service_module().send_guest_cancellation(guest.email, details)
+      end)
+    end)
+  end
+
+  @doc """
+  Pairs each guest with the payload their emails are rendered from.
+
+  A guest reads the meeting in their own view of it, built with `build`
+  (given the meeting as they see it, it returns the payload) once per
+  distinct view:
+
+    * a group-booking guest (`:participant` preloaded, as
+      `GuestQueries.list_live_for_meeting/1` and `list_for_reminder/3` return
+      them) through their own participant: that participant's locale and
+      timezone, and the seat's own calendar UID and revision, so the entry
+      in the guest's calendar is the same event as their participant's;
+    * a guest with a language or timezone of their own (one confirmed from a
+      poll) in that language and timezone
+      (`Tymeslot.Meetings.Recipient.as_seen_by_guest/2`).
+
+  Any other guest gets `fallback`, the meeting's own payload, which is what
+  `build` returns for the bare meeting.
+  """
+  @spec with_inviter_details([GuestSchema.t()], map(), map(), (MeetingSchema.t() -> map())) ::
+          [{GuestSchema.t(), map()}]
+  def with_inviter_details(guests, meeting, fallback, build \\ &AppointmentBuilder.from_meeting/1)
+
+  def with_inviter_details(guests, %MeetingSchema{} = meeting, fallback, build) do
+    views =
+      guests
+      |> Enum.group_by(&view_key(&1, meeting))
+      |> Map.delete(:meeting)
+      |> Map.new(fn {key, [guest | _same_view]} -> {key, build.(view(meeting, guest))} end)
+
+    Enum.map(guests, &{&1, Map.get(views, view_key(&1, meeting), fallback)})
+  end
+
+  def with_inviter_details(guests, _meeting, fallback, _build),
+    do: Enum.map(guests, &{&1, fallback})
+
+  # Guests sharing a key read the meeting identically, so their payload is
+  # built once; a guest whose language and timezone come out as the meeting's
+  # own reads it as the attendee does, and shares `fallback`.
+  #
+  # A group-booking guest is recognised by its preloaded participant. One with
+  # a `participant_id` but no participant loaded (the seat confirmation path
+  # lists them unpreloaded, and passes the participant's own payload as
+  # `fallback`) is read as a plain guest: with no language or timezone of its
+  # own it shares `fallback`, which is the seat's view. Were such a guest ever
+  # to carry its own language or timezone it would get the bare meeting's view
+  # in them instead and lose the seat's; it cannot today, since only a poll
+  # confirm writes them and a poll's guests belong to no participant.
+  # `notify_seat_cancelled/4` deliberately bypasses this: it sends every guest
+  # the cancelled seat's own details, built by the caller.
+  defp view_key(%{participant: %ParticipantSchema{id: participant_id}} = guest, _meeting),
+    do: {participant_id, guest.locale, guest.timezone}
+
+  defp view_key(guest, meeting) do
+    case {guest.locale || meeting.attendee_locale, guest.timezone || meeting.attendee_timezone} do
+      {locale, timezone}
+      when locale == meeting.attendee_locale and timezone == meeting.attendee_timezone ->
+        :meeting
+
+      {locale, timezone} ->
+        {nil, locale, timezone}
+    end
+  end
+
+  defp view(meeting, %{participant: %ParticipantSchema{} = participant} = guest) do
+    meeting
+    |> Recipient.meeting_as_seen_by(participant)
+    |> Recipient.as_seen_by_guest(guest)
+  end
+
+  defp view(meeting, guest), do: Recipient.as_seen_by_guest(meeting, guest)
+
+  @doc """
+  Tells the guests of a held request the host declined, or that expired, that
+  the booking is off. Only a request a reschedule sent back into the gate had
+  invited guests; `notify_cancelled/3` sends nothing for any other. `once`
+  wraps each guest's send as in `notify_cancelled/3`.
+  """
+  @spec notify_released(map(), (String.t(), (-> term()) -> term())) :: result()
+  def notify_released(%{first_announced_at: nil}, _once), do: :ok
+
+  def notify_released(meeting, once),
+    do: notify_cancelled(meeting, AppointmentBuilder.from_meeting(meeting), once)
+
+  # What the booker told the host and nobody else: their address, their
+  # message, their contact details, and their answers to the booking form
+  # (with the questions, so the guest's calendar entry does not list them
+  # unanswered). The booker's name stays, since a guest is told who arranged
+  # the meeting and the event title already carries it.
+  @booker_private_keys [
+    :attendee_email,
+    :attendee_message,
+    :attendee_phone,
+    :attendee_company,
+    :custom_field_answers,
+    :custom_fields_snapshot
+  ]
+
+  @doc """
+  The appointment details for one guest: the shared payload, less the booker's
+  private details, plus the guest's name, personal RSVP links, and who invited
+  them (`:guest_invited_by`, `:booker` or `:organizer`), which decides whom
+  their emails name.
+
+  Every guest email, and the calendar entry attached to it, is rendered from
+  this map, so nothing private to the booker can reach a guest through any of
+  them. The fields that make the guest's calendar entry the same event as the
+  booker's (`:uid`, the organiser, `:ical_sequence`) are kept as they are.
+
+  A group-booking guest was invited by their own participant, not by whoever
+  the meeting row names as its attendee, so when the guest arrives with its
+  participant loaded that participant is who the email says invited them.
+  """
+  @spec guest_details(map(), map()) :: map()
+  def guest_details(appointment_details, guest) do
+    urls = MeetingLinks.guest_rsvp_urls(guest.rsvp_token)
+
+    appointment_details
+    |> Map.drop(@booker_private_keys)
+    |> put_inviting_participant(guest)
+    |> Map.put(:guest_name, guest.name || guest.email)
+    |> Map.put(:guest_accept_url, urls.accept_url)
+    |> Map.put(:guest_decline_url, urls.decline_url)
+    |> Map.put(:guest_invited_by, GuestSchema.inviter(guest))
+  end
+
+  defp put_inviting_participant(details, %{participant: %ParticipantSchema{} = participant}),
+    do: Map.put(details, :attendee_name, participant.name || participant.email)
+
+  defp put_inviting_participant(details, _guest), do: details
+
+  # A group meeting is confirmed from its first seat and never passes through
+  # the announcement claim (each seat is announced on its own), so it carries
+  # no `first_announced_at` even though its guests were invited.
+  defp ever_confirmed?(%{first_announced_at: %DateTime{}}), do: true
+  defp ever_confirmed?(%MeetingSchema{} = meeting), do: MeetingSchema.group?(meeting)
+  defp ever_confirmed?(_meeting), do: false
+
+  # Every guest is tried, whatever became of the others. Returns
+  # `{:error, {:guest_emails_failed, count}}` when any of them failed, so a
+  # job whose sends are claimed per guest can retry and reach only those.
+  defp send_to_guests(guests_with_details, meeting_id, kind, send_fun) do
+    failed =
+      Enum.count(guests_with_details, fn {guest, appointment_details} ->
+        case send_fun.(guest, guest_details(appointment_details, guest)) do
+          {:ok, _result} ->
+            false
+
+          # Already sent by an earlier run of the same job (see `notify_cancelled/3`).
+          :ok ->
+            false
+
+          other ->
+            Logger.error("Guest email failed",
+              email_kind: kind,
+              meeting_id: meeting_id,
+              result: LogFormat.reason(other)
+            )
+
+            true
+        end
+      end)
+
+    if failed == 0, do: :ok, else: {:error, {:guest_emails_failed, failed}}
+  end
+end

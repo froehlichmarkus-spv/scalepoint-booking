@@ -1,0 +1,261 @@
+defmodule Tymeslot.Integrations.Calendar.Reconnection do
+  @moduledoc """
+  Business logic for reconnecting an existing CalDAV-family calendar
+  integration.
+
+  Reconnect is a unified two-phase flow regardless of whether the user is
+  rotating a password, swapping accounts, or coming back to add previously
+  unselected calendars:
+
+  1. `reconnect/3` runs discovery against the supplied credentials and
+     returns `{:ok, :needs_calendar_selection, payload}`. Discovery
+     implicitly validates the credentials.
+  2. `finalise_account_change/3` persists the new credentials and the
+     calendar selection chosen by the user.
+
+  The caller is responsible for pre-ticking the user's existing selections
+  (typically `integration.calendar_paths`) in the picker UI so a same-
+  account reconnect keeps the prior choices unless the user changes them.
+  """
+
+  alias Tymeslot.Integrations.Calendar.Blocking
+  alias Tymeslot.Integrations.Calendar.CalendarEntry
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationSchema
+  alias Tymeslot.Integrations.Calendar.Connection
+  alias Tymeslot.Integrations.Calendar.Management
+  alias Tymeslot.Integrations.Calendar.Orchestration.Workflows
+  alias Tymeslot.Integrations.Calendar.Selection
+  alias Tymeslot.Integrations.Calendar.Shared.PathUtils
+  alias Tymeslot.Utils.UriUtils
+
+  @type integration :: CalendarIntegrationSchema.t()
+  @type params :: %{optional(String.t()) => term()}
+
+  @type reconnect_ok ::
+          {:ok, :needs_calendar_selection, %{calendars: [map()], credentials: map()}}
+
+  @type reconnect_error ::
+          {:error, :invalid_credentials}
+          | {:error, {:changeset, Ecto.Changeset.t()}}
+          | {:error, term()}
+
+  @doc """
+  Reconnect an existing CalDAV-family integration.
+
+  Always runs discovery against the supplied credentials and returns the
+  full list of calendars so the caller can prompt the user to confirm or
+  adjust their selection. Discovery implicitly validates credentials —
+  an auth failure surfaces as `{:error, :invalid_credentials}`.
+
+  Options (keyword):
+    * `:discover` — `(provider, url, username, password -> {:ok, %{calendars: …, discovery_credentials: …}} | {:error, term()})`.
+      Defaults to `Workflows.discover_and_filter_calendars/6`, closed over this
+      integration's owner so the discovery is charged to them. The seam stays
+      arity-4 so callers injecting a double need not know about the actor.
+  """
+  @spec reconnect(integration(), params(), keyword()) :: reconnect_ok() | reconnect_error()
+  def reconnect(%CalendarIntegrationSchema{} = integration, params, opts \\ []) do
+    default_discover = fn provider, url, username, password ->
+      # Past the host breaker: a reconnect is how a server that recovered
+      # gets used again, and the breaker its outage opened would refuse it.
+      Workflows.discover_and_filter_calendars(
+        provider,
+        url,
+        username,
+        password,
+        integration.user_id,
+        skip_breaker: true
+      )
+    end
+
+    discover = Keyword.get(opts, :discover, default_discover)
+    apply_account_change(integration, params, discover)
+  end
+
+  @doc """
+  Starts `reconnect/3` for one of `user_id`'s own integrations, looked up by
+  id. An integration that is not theirs is `{:error, :not_found}`, so the id
+  can be taken from the browser.
+  """
+  @spec reconnect_for_user(pos_integer(), pos_integer(), params()) ::
+          reconnect_ok() | {:error, :not_found} | reconnect_error()
+  def reconnect_for_user(user_id, integration_id, params)
+      when is_integer(user_id) and is_integer(integration_id) and is_map(params) do
+    with {:ok, integration} <-
+           Management.get_calendar_integration(integration_id, user_id) do
+      reconnect(integration, params)
+    end
+  end
+
+  @doc """
+  Finishes the account-change branch for one of `user_id`'s own integrations,
+  scoped as `reconnect_for_user/3` is. See `finalise_account_change/3`.
+  """
+  @spec finalise_for_user(pos_integer(), pos_integer(), %{
+          required(:payload) => map(),
+          required(:selected_paths) => [String.t()]
+        }) ::
+          {:ok, integration()}
+          | {:error, :not_found}
+          | {:error, :no_calendars_selected}
+          | {:error, {:changeset, Ecto.Changeset.t()}}
+  def finalise_for_user(user_id, integration_id, %{payload: payload, selected_paths: paths})
+      when is_integer(user_id) and is_integer(integration_id) do
+    with {:ok, integration} <-
+           Management.get_calendar_integration(integration_id, user_id) do
+      finalise_account_change(integration, payload, paths)
+    end
+  end
+
+  @doc """
+  Reconnects one of `user_id`'s own CalDAV-family integrations in a single
+  step and switches it back on: for a flow with no calendar picker, such as
+  setup, where a paused calendar should simply work again.
+
+  Discovery checks the new credentials as `reconnect/3` does. The calendars
+  stay as they were chosen; when none of them is found any more, every
+  discovered calendar is chosen instead. A paused integration is then
+  reactivated, which is refused with `{:error, :duplicate_account}` when
+  another active integration already uses the same account. Takes the
+  options `reconnect/3` takes.
+  """
+  @spec reconnect_and_resume_for_user(pos_integer(), pos_integer(), params(), keyword()) ::
+          {:ok, integration()}
+          | {:error, :not_found | :duplicate_account | :no_calendars_selected}
+          | reconnect_error()
+  def reconnect_and_resume_for_user(user_id, integration_id, params, opts \\ [])
+      when is_integer(user_id) and is_integer(integration_id) and is_map(params) do
+    with {:ok, integration} <- Management.get_calendar_integration(integration_id, user_id),
+         {:ok, :needs_calendar_selection, payload} <- reconnect(integration, params, opts),
+         {:ok, updated} <-
+           finalise_account_change(integration, payload, kept_paths(integration, payload)) do
+      resume(updated)
+    end
+  end
+
+  defp kept_paths(%CalendarIntegrationSchema{calendar_paths: chosen}, %{calendars: calendars}) do
+    discovered = Enum.map(calendars, &CalendarEntry.normalize(&1).path)
+
+    case Enum.filter(discovered, fn path ->
+           Enum.any?(chosen, &UriUtils.uri_safe_match?(path, &1))
+         end) do
+      [] -> discovered
+      kept -> kept
+    end
+  end
+
+  defp resume(%CalendarIntegrationSchema{is_active: true} = integration), do: {:ok, integration}
+
+  defp resume(%CalendarIntegrationSchema{} = integration) do
+    case Management.reconnect_integration(integration, %{is_active: true}) do
+      {:ok, resumed} -> {:ok, resumed}
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, {:changeset, changeset}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Persist the new URL, credentials, and calendar selection picked by the
+  user. Returns `{:error, :no_calendars_selected}` if the selection is
+  empty.
+  """
+  @spec finalise_account_change(integration(), map(), [String.t()]) ::
+          {:ok, integration()}
+          | {:error, :no_calendars_selected}
+          | {:error, {:changeset, Ecto.Changeset.t()}}
+  def finalise_account_change(%CalendarIntegrationSchema{} = integration, payload, selected_paths) do
+    valid_paths = Enum.filter(selected_paths, fn p -> is_binary(p) and p != "" end)
+
+    if valid_paths == [] do
+      {:error, :no_calendars_selected}
+    else
+      do_finalise_account_change(integration, payload, valid_paths)
+    end
+  end
+
+  defp do_finalise_account_change(
+         %CalendarIntegrationSchema{} = integration,
+         payload,
+         selected_paths
+       ) do
+    %{credentials: creds, calendars: calendars} = payload
+
+    # The selection is the one just made.
+    calendar_list =
+      Enum.map(calendars, fn cal ->
+        entry = CalendarEntry.normalize(cal)
+        %{entry | selected: Enum.any?(selected_paths, &UriUtils.uri_safe_match?(entry.path, &1))}
+      end)
+
+    credential_attrs = %{
+      base_url:
+        creds
+        |> Map.get(:url)
+        |> to_string()
+        |> PathUtils.normalize_base_url(),
+      username: Map.get(creds, :username),
+      password: Map.get(creds, :password)
+    }
+
+    # A submitted path that matches no discovered calendar would persist an
+    # empty `calendar_paths` behind a successful "reconnected" flash, leaving
+    # the integration syncing nothing. Refuse on the derived selection, not on
+    # the submitted list, which was already checked by the caller.
+    if Selection.derive_selected_paths(calendar_list) == [] do
+      {:error, :no_calendars_selected}
+    else
+      persist_account_change(integration, calendar_list, credential_attrs)
+    end
+  end
+
+  # Whether each calendar blocks is carried over from the row as it stands
+  # under its lock, not from `integration`, read before it: reconnecting
+  # undoes neither the owner's choices nor one made in between. A booking
+  # calendar stays selected and blocking whatever was ticked
+  # (`Blocking.replace_selection/2`).
+  defp persist_account_change(integration, calendar_list, credential_attrs) do
+    build = fn stored ->
+      {Selection.carry_blocking_choices(calendar_list, stored.calendar_list), credential_attrs}
+    end
+
+    case Blocking.replace_selection(integration, build) do
+      # Discovery has just reached the server with these credentials, so a
+      # breaker its earlier failures opened is closed rather than left to
+      # refuse the reconnected integration until it times out.
+      {:ok, updated} ->
+        Connection.reset_host_breaker(updated)
+        {:ok, updated}
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        {:error, {:changeset, cs}}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
+    end
+  end
+
+  defp apply_account_change(%CalendarIntegrationSchema{provider: provider}, params, discover) do
+    case discover.(
+           provider,
+           Map.get(params, "url"),
+           Map.get(params, "username"),
+           Map.get(params, "password")
+         ) do
+      {:ok, %{calendars: calendars, discovery_credentials: credentials}} ->
+        {:ok, :needs_calendar_selection, %{calendars: calendars, credentials: credentials}}
+
+      # Discovery hands back `{category, message}`, with the category derived
+      # from the raw provider error before the message was localised. Branch
+      # on the category only: `message` is display text and, once translated,
+      # carries no English keywords left to match on.
+      {:error, {:auth, _message}} ->
+        {:error, :invalid_credentials}
+
+      {:error, {_category, message}} when is_binary(message) ->
+        {:error, message}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+end

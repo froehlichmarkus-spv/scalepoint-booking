@@ -1,0 +1,165 @@
+defmodule TymeslotWeb.Themes.Shared.BookingFlow do
+  @moduledoc """
+  Shared booking orchestration for all scheduling themes.
+  """
+
+  import Phoenix.Component, only: [assign: 3]
+
+  alias Phoenix.Component
+  alias Tymeslot.Security.InputProcessor
+  alias TymeslotWeb.Live.Scheduling.BookingConfig
+  alias TymeslotWeb.Live.Scheduling.Handlers.BookingSubmissionHandlerComponent
+  alias TymeslotWeb.Themes.Shared.BookingLocation
+  alias TymeslotWeb.Themes.Shared.Journey.Facts.Series
+  alias TymeslotWeb.Themes.Shared.Journey.Progress
+
+  @type transition_fun :: (Phoenix.LiveView.Socket.t(), atom(), map() ->
+                             Phoenix.LiveView.Socket.t())
+
+  @doc """
+  Handles booking submission from the LiveView.
+  This centralizes the validation and submission logic by delegating to
+  the shared BookingSubmissionHandlerComponent.
+
+  When the meeting type requires payment, the handler returns a socket that
+  is already configured to redirect to the Stripe Checkout URL — we forward
+  that socket without transitioning to the confirmation step so the
+  attendee leaves the booking flow for the hosted payment page.
+
+  When the booker is embedded inside an iframe (Stripe Checkout cannot
+  render in an iframe), the handler instead instructs the browser to open
+  Checkout in a new tab and we transition to the local `:awaiting_payment`
+  view; the LiveView subscribes to `meeting_payment:<id>` and flips back
+  to `:confirmation` on `:paid`, or on `:expired` to the moment collecting
+  the attendee (`Progress.moment_for(journey, :attendee)`, the classic
+  booking step).
+  """
+  @spec submit_booking(Phoenix.LiveView.Socket.t(), map(), transition_fun()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def submit_booking(socket, booking_params, transition_fun) do
+    # A series checked again after the booker changed it is booked once
+    # that check answers: the submit waits, disabled, until then.
+    if socket.assigns[:submitting] or Series.rechecking?(socket.assigns) do
+      {:noreply, socket}
+    else
+      case BookingLocation.validate(socket) do
+        {:ok, socket} ->
+          dispatch_booking(socket, booking_params, transition_fun)
+
+        # The chosen location asks the booker for something they have not
+        # given yet (a phone number to call them on). Surfaced inline on the
+        # picker rather than as a flash, and never dispatched, so no meeting
+        # is created half-addressed.
+        {:error, socket} ->
+          {:noreply, assign(socket, :submitting, false)}
+      end
+    end
+  end
+
+  defp dispatch_booking(socket, booking_params, transition_fun) do
+    socket = assign(socket, :submitting, true)
+
+    case BookingSubmissionHandlerComponent.submit_booking(socket, booking_params) do
+      {:ok, socket} ->
+        {:noreply, transition_fun.(socket, :confirmation, %{})}
+
+      {:redirect, socket} ->
+        {:noreply, socket}
+
+      {:awaiting_payment, socket} ->
+        {:noreply, transition_fun.(socket, :awaiting_payment, %{})}
+
+      {:slot_taken, socket} ->
+        {:noreply, return_to_schedule_for_new_slot(socket, transition_fun)}
+
+      # The sessions lost are already named on the series moment.
+      {:series_unavailable, socket} ->
+        {:noreply, return_to_series(socket, transition_fun)}
+
+      # A bot must not be able to tell the honeypot from a real booking, so
+      # it lands on the same confirmation step, with no flash, as a real one.
+      {:honeypot, socket} ->
+        {:noreply, transition_fun.(socket, :confirmation, %{})}
+
+      {:error, socket} ->
+        {:noreply, assign(socket, :submitting, false)}
+    end
+  end
+
+  @doc """
+  Recovers from a lost slot race: drops the stale time, returns to the moment
+  collecting the slot (the classic schedule step), which refreshes month
+  availability, and reloads that day's slots so the just-taken time
+  disappears and the booker can immediately pick another. The error flash is
+  expected to already be set by the caller (the submission handler, or a live
+  seat update that found the chosen time full).
+  """
+  @spec return_to_schedule_for_new_slot(Phoenix.LiveView.Socket.t(), transition_fun()) ::
+          Phoenix.LiveView.Socket.t()
+  def return_to_schedule_for_new_slot(socket, transition_fun) do
+    socket =
+      socket
+      |> assign(:submitting, false)
+      |> assign(:selected_time, nil)
+      |> assign(:available_slots, [])
+      |> then(&transition_fun.(&1, Progress.moment_for(&1.assigns.journey, :slot), %{}))
+
+    case socket.assigns[:selected_date] do
+      nil ->
+        socket
+
+      date ->
+        send(self(), {:load_slots, date})
+        assign(socket, :loading_slots, true)
+    end
+  end
+
+  # Back to the moment collecting the series, or to the slot's on a journey
+  # without one (a single session cannot lose a series' sessions, so that is
+  # only a guard).
+  defp return_to_series(socket, transition_fun) do
+    journey = socket.assigns.journey
+    moment = Progress.moment_for(journey, :series) || Progress.moment_for(journey, :slot)
+
+    socket
+    |> assign(:submitting, false)
+    |> transition_fun.(moment, %{})
+  end
+
+  @spec handle_form_validation(Phoenix.LiveView.Socket.t(), map()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_form_validation(socket, booking_params) do
+    # Show validation errors only after the user has interacted with the form.
+    # `touched_fields` is populated by the field_blur event handler; `_target`
+    # is a fallback for phx-change events that include it in the params.
+    touched_fields = socket.assigns[:touched_fields] || MapSet.new()
+
+    form_touched =
+      socket.assigns[:form_touched] ||
+        MapSet.size(touched_fields) > 0 ||
+        Map.has_key?(booking_params, "_target")
+
+    # Filter errors to only show for fields the user has actually interacted
+    # with (blurred). This matches the per-field validation UX of auth and
+    # contact forms — touching name doesn't reveal email errors.
+    visible_errors =
+      case InputProcessor.validate_form(booking_params, BookingConfig.booking_field_spec()) do
+        {:ok, _sanitized_params} -> %{}
+        {:error, errors} -> filter_errors_for_touched_fields(errors, touched_fields)
+      end
+
+    socket =
+      socket
+      |> assign(:form, Component.to_form(booking_params))
+      |> assign(:validation_errors, visible_errors)
+      |> assign(:form_touched, form_touched)
+
+    {:noreply, socket}
+  end
+
+  defp filter_errors_for_touched_fields(errors, touched_fields) do
+    Map.filter(errors, fn {field, _msg} ->
+      MapSet.member?(touched_fields, Atom.to_string(field))
+    end)
+  end
+end

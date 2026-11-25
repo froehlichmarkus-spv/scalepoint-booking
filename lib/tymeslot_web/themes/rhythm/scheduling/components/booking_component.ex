@@ -1,0 +1,226 @@
+defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Components.BookingComponent do
+  @moduledoc """
+  Rhythm theme component for the booking/contact form step.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Meetings.Approval
+  alias TymeslotWeb.Themes.Rhythm.Shared.OrganizerHeader
+  alias TymeslotWeb.Themes.Shared.BookingLabels
+  alias TymeslotWeb.Themes.Shared.BookingLocation
+  alias TymeslotWeb.Themes.Shared.BookingText
+  alias TymeslotWeb.Themes.Shared.ChosenLength
+  alias TymeslotWeb.Themes.Shared.Components.ApprovalNotice
+  alias TymeslotWeb.Themes.Shared.Components.BookingForm
+  alias TymeslotWeb.Themes.Shared.Components.GuestField
+  alias TymeslotWeb.Themes.Shared.Components.LocationField
+  alias TymeslotWeb.Themes.Shared.Components.VerificationNotice
+  alias TymeslotWeb.Themes.Shared.GuestBooking
+  alias TymeslotWeb.Themes.Shared.LocalizationHelpers
+  alias TymeslotWeb.Themes.Shared.SeriesSummary
+  alias TymeslotWeb.Themes.Shared.StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate update(assigns, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  defdelegate handle_event(event, params, socket), to: StepEvents
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    assigns =
+      assign(assigns,
+        next_day_end: LocalizationHelpers.booking_next_day_end(assigns),
+        series_count: SeriesSummary.pending_count(assigns)
+      )
+
+    ~H"""
+    <div
+      class="scheduling-box booker-card"
+      data-locale={@locale}
+      data-testid="booker-card"
+      id={assigns[:moment] && "#{assigns[:moment]}-step"}
+      data-moment={assigns[:moment]}
+      data-moment-state={assigns[:moment_state]}
+    >
+      <div class="slide-container">
+        <div class="slide slide--enter active">
+          <div class="slide-content booking-slide">
+            <div class="schedule-header">
+              <OrganizerHeader.organizer_header_small
+                organizer_profile={@organizer_profile}
+                length_minutes={ChosenLength.minutes(assigns)}
+                meeting_type={@meeting_type}
+                selected_duration={@duration}
+                host_currency={@host_currency}
+                show_price={!@is_rescheduling}
+                locale={@locale}
+                moment={assigns[:moment]}
+                moment_state={assigns[:moment_state]}
+                focus={assigns[:journey_focus]}
+              />
+            </div>
+
+            <div class="meeting-summary compact">
+              <div class="summary-row">
+                <div class="summary-item">
+                  <.icon name="hero-calendar" class="summary-icon hero-icon hero-icon--md" />
+                  <div>
+                    <div
+                      :if={@series_count}
+                      class="summary-value"
+                      data-testid="booking-series-summary"
+                    >
+                      {SeriesSummary.summary_line(assigns, @series_count)}
+                    </div>
+                    <div :if={is_nil(@series_count)} class="summary-value">
+                      {LocalizationHelpers.format_date(@selected_date)}
+                    </div>
+                    <div :if={is_nil(@series_count)} class="summary-label">
+                      {LocalizationHelpers.format_slot_label(@selected_time) ||
+                        dgettext("booking", "No time selected")}
+                    </div>
+                    <div :if={@next_day_end} class="summary-label" data-testid="booking-next-day-end">
+                      {@next_day_end}
+                    </div>
+                    <div class="summary-label" data-testid="booking-timezone">
+                      {LocalizationHelpers.format_zone_label(
+                        @selected_date,
+                        @selected_time,
+                        @user_timezone
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div class="summary-item">
+                  <.icon name="hero-clock" class="summary-icon hero-icon hero-icon--md" />
+                  <div>
+                    <div class="summary-value">
+                      {BookingText.duration_label(%{
+                        meeting_type: @meeting_type,
+                        duration: @selected_duration,
+                        chosen_length_minutes: ChosenLength.minutes(assigns)
+                      })}
+                    </div>
+                    <div class="summary-label">{dgettext("booking", "meeting")}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <LocationField.location_field
+              :if={BookingLocation.choice_required?(assigns)}
+              location_options={@location_options}
+              selected_location_id={@selected_location_id}
+              video_choices={BookingLocation.video_choices(assigns)}
+              selected_video_id={@selected_video_id}
+              venue_choices={BookingLocation.venue_choices(assigns)}
+              selected_venue_id={@selected_venue_id}
+              kept_location={BookingLocation.kept_location(assigns)}
+              location_phone={@location_phone}
+              location_error={@location_error}
+              phone_required={BookingLocation.phone_required?(assigns)}
+              target={@myself}
+            />
+
+            <LocationField.stated_location
+              :if={BookingLocation.stated_location?(assigns)}
+              option={BookingLocation.selected(assigns)}
+              venue_choices={BookingLocation.venue_choices(assigns)}
+            />
+
+            <BookingForm.booking_form
+              form={@form}
+              validation_errors={@validation_errors}
+              target={@myself}
+              class="booking-form"
+              message_rows={4}
+              labels={BookingForm.short_labels()}
+              organizer_name={organizer_display_name(@organizer_profile, @username_context)}
+              privacy_policy_url={BookingForm.privacy_policy_url(assigns[:legal_links])}
+            >
+              <GuestField.guest_field
+                :if={guests_allowed?(assigns)}
+                guest_emails={@guest_emails}
+                guest_input={@guest_input}
+                guest_error={@guest_error}
+                guests_open={@guests_open}
+                max_guests={@max_guests}
+                show_cap={@guest_cap_visible}
+                target={@myself}
+              />
+            </BookingForm.booking_form>
+
+            <ApprovalNotice.block
+              :if={Approval.required?(@meeting_type)}
+              organizer_name={organizer_display_name(@organizer_profile, @username_context)}
+              payment_required={@meeting_type.payment_required}
+              stage={:before}
+            />
+
+            <VerificationNotice.line meeting_type={@meeting_type} />
+
+            <SeriesSummary.price
+              meeting_type={@meeting_type}
+              currency={@host_currency}
+              locale={@locale}
+              rescheduling={@is_rescheduling}
+              count={@series_count}
+              class="booking-submit-price"
+            />
+
+            <div class="slide-actions horizontal">
+              <button
+                type="button"
+                class="prev-button"
+                phx-click="back_step"
+                phx-target={@myself}
+                data-testid="back-step"
+                data-intent="back"
+                disabled={@submitting}
+              >
+                <.icon name="hero-arrow-left" class="inline-icon" />
+                {dgettext("booking", "Back")}
+              </button>
+              <button
+                type="submit"
+                form="booking-form"
+                class="submit-button"
+                data-testid="submit-booking"
+                aria-describedby={SeriesSummary.price_describedby(assigns, @series_count)}
+                data-intent="submit"
+                disabled={@submitting || SeriesSummary.submit_waits?(assigns)}
+              >
+                <%= if @submitting do %>
+                  <.spinner class="loading-spinner icon-sm" />
+                  <span>{dgettext("booking", "Verifying...")}</span>
+                <% else %>
+                  {SeriesSummary.submit_label(assigns, single_label(@is_rescheduling, @meeting_type))}
+                <% end %>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp guests_allowed?(assigns), do: GuestBooking.guests_allowed?(assigns)
+
+  # Naming the action makes a gated meeting type's request visible at the
+  # moment of committing; a reschedule re-enters the approval gate too.
+  defp single_label(is_rescheduling, meeting_type) do
+    BookingLabels.submit_label(
+      is_rescheduling,
+      meeting_type,
+      dgettext("booking", "Submit"),
+      :rhythm
+    )
+  end
+
+  defp organizer_display_name(organizer_profile, username_context) do
+    BookingLabels.organizer_display_name(organizer_profile, username_context)
+  end
+end

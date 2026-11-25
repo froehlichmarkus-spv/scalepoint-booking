@@ -1,0 +1,623 @@
+defmodule Tymeslot.Precommit.Runner do
+  @moduledoc """
+  Shared engine behind `mix precommit` and `mix saas.precommit`.
+
+  Runs a list of `{name, args, env}` steps, keeps going after a failure so a
+  single run reports everything that needs fixing, and prints a summary. The
+  one exception is compilation: any step named "compile" (or a variant, such
+  as a second compile in a different `MIX_ENV`) is a barrier: if it fails,
+  downstream steps would only report noise, so the run stops there.
+
+  A `mix compile` step also fails when it prints a warning located in a path
+  dependency, even though it exits zero. `--warnings-as-errors` never reaches a
+  dependency (`mix deps.compile` passes `--no-warnings-as-errors`), and a path
+  dependency is source the workspace owns, so its warnings are defects too.
+  Warnings in fetched packages still pass.
+
+  ## What runs at the same time
+
+  Once the compile barriers have passed, nothing downstream needs anything from
+  another step beyond the build they established, so run in sequence the gate
+  simply adds every step's wall clock together. Instead:
+
+    * **The suite** starts in the background straight away. It is the long pole
+      and the only step under `MIX_ENV=test`, so it takes a different build lock
+      from everything else and never waits on it. Given a `:suite_plan`, it is
+      also split into `mix test --partitions` runs of its own (see
+      *Partitioning the suite*).
+    * **Steps that write the dev build** (`gettext.check`, which recompiles when
+      its inputs moved) run next, one at a time in the foreground, so nothing
+      reads the build while it is being rewritten.
+    * **Every other step** then runs concurrently. They only read the build, or
+      reach it through `mix compile`, which Mix serialises behind its build lock
+      and which is a no-op by this point. Each of these is mostly Mix boot time
+      plus one tool, so the group finishes in about the time of its slowest
+      member, credo or dialyzer, instead of their sum.
+
+  Output from a concurrent step, the suite included, is buffered and printed
+  whole the moment that step finishes, header and output in a single write, so
+  two steps never interleave and a finished suite's failures are readable while
+  dialyzer is still running. That is the cost of the arrangement: nothing
+  scrolls live after the compile steps.
+
+  ## Who yields under contention
+
+  The suite is the step whose deadline is tight: ExUnit kills a test after 60
+  seconds, and the partitions are sized as if the cores were theirs. Dialyzer,
+  credo and sobelow have no deadline, but left at the same priority the kernel
+  splits the cores evenly between them and the partitions, and a test that
+  takes seconds alone has been seen to time out. So every step except the
+  suite is started under `nice` (see `launcher/1`). On an idle machine that
+  changes nothing; under load the steps that can wait do.
+
+  The JavaScript suites are niced too, though vitest has a per-test deadline
+  of its own: both repos' `assets/vitest.config.js` raise it to 30 seconds so
+  that waiting for the CPU does not count as failing. Keep those limits in
+  step with this arrangement; a new JavaScript suite with a timeout needs the
+  same headroom.
+
+  ## Step results as they happen
+
+  Every step also prints one plain line the moment it finishes, before any
+  buffered output that goes with it: `precommit: ok credo`, or `precommit:
+  failed test (2)`. The suite's comes from its own task, so it is not held back
+  until the static checks are done. The prefix is a contract: the workspace
+  `mix.sh -p` buffers each repository's output until the whole run finishes, and
+  forwards only these lines to the terminal as they arrive, so a run that is
+  interrupted has still reported every step that finished.
+
+  A concurrent step that passes but whose output carries warnings, today the
+  modules over the `CredoChecks.LargeModules` soft limit, also prints
+  `precommit: warn credo (2)`, and the warnings are listed again under the
+  summary, so a green run cannot bury them in credo's block.
+
+  `--fail-fast` turns all of this off and runs everything in sequence. It asks
+  for the first failure as soon as possible, which is incompatible with steps
+  whose results are only known when they finish together.
+
+  ## Steps left out on purpose
+
+  `mix precommit --affected` drops the steps a diff cannot reach (see
+  `Tymeslot.Precommit.Affected`) and passes them as `:skipped`, each with its
+  reason. The summary lists them after the steps that ran, so a narrowed run
+  can never read as the full gate. Steps that already passed on the same tree
+  are passed the same way (see `Tymeslot.Precommit.PassRecord`); the
+  `:on_results` callback receives the results of every run, which is how
+  passes are recorded.
+
+  ## Partitioning the suite
+
+  Most of the suite's wall clock is its synchronous modules, which ExUnit runs
+  one at a time however many cores are free. Partitions are separate OS
+  processes, so they run those modules side by side. The `:suite_plan` option
+  is called when the suite starts and returns how many partitions to run and how
+  many schedulers each may use (see `Tymeslot.Precommit.CpuBudget`), or `nil` to
+  run it whole.
+
+  Each partition gets its own database and upload directory through
+  `MIX_TEST_PARTITION`, which `mix test --partitions` requires to be the bare
+  partition number. A worktree already uses that variable as its database
+  suffix, so the incoming value is passed on as `MIX_TEST_PARTITION_BASE` and
+  the test config joins the two: partition 3 in a worktree suffixed `_next`
+  uses `tymeslot_test_next3`. The databases are created and migrated by the
+  `test` alias on first use.
+
+  A partitioned run therefore never touches the unnumbered test database, which
+  is what lets another repository's suite use that one at the same time.
+  """
+
+  alias Mix.Project
+  alias Mix.SCM.Path, as: PathSCM
+  alias Tymeslot.Infrastructure.Tasks
+  alias Tymeslot.Precommit.Tee
+
+  @barrier_prefix "compile"
+  @result_prefix "precommit: "
+  # The prefix `CredoChecks.LargeModules` starts a warning-band message with.
+  # The checks are not compiled into the build, so the literal is repeated here.
+  @warning_marker "Soft limit:"
+  @dialyzer_schedulers 8
+  # Schedulers for a static check running beside the suite; see `beside_suite_env/1`.
+  @beside_suite_schedulers 2
+
+  @type step :: {name :: String.t(), args :: [String.t()], env :: atom()}
+  @type result :: {name :: String.t(), :passed | :failed | :skipped, non_neg_integer()}
+  @type cmd_fun :: ([String.t()], atom() -> non_neg_integer())
+  @type capture_fun ::
+          ([String.t()], atom(), [{String.t(), String.t()}] -> {String.t(), non_neg_integer()})
+  @type suite_plan_fun :: (-> Tymeslot.Precommit.CpuBudget.plan() | nil)
+
+  # `test.elixir` is the suite in the repository that consumes Core as a path
+  # dependency, whose `test` alias also runs the JavaScript suites; its gate
+  # runs those as a step of their own.
+  @suite_commands ~w[test test.elixir]
+
+  @doc """
+  Whether `step` runs the Elixir suite.
+
+  Keyed off the command rather than the step's display name, matching
+  `step_env/1`: the name is a label and can be reworded, the command is the
+  contract.
+  """
+  @spec suite?(step()) :: boolean()
+  def suite?({_name, [command | _rest], _env}), do: command in @suite_commands
+
+  @spec run([step()], boolean(), keyword()) :: :ok
+  def run(steps, fail_fast?, opts \\ []) do
+    cmd_fun = Keyword.get(opts, :cmd, &cmd/2)
+    capture_fun = Keyword.get(opts, :capture, &capture/3)
+    suite_plan_fun = Keyword.get(opts, :suite_plan, fn -> nil end)
+    {results, warnings} = run_all(steps, fail_fast?, cmd_fun, {capture_fun, suite_plan_fun})
+
+    Keyword.get(opts, :on_results, fn _results -> :ok end).(results)
+    report(results, Keyword.get(opts, :skipped, []), warnings)
+
+    if Enum.any?(results, &match?({_name, :failed, _code}, &1)) do
+      exit({:shutdown, 1})
+    end
+
+    :ok
+  end
+
+  # `--fail-fast` keeps the plain sequential path: a run that stops at the first
+  # failure cannot also be waiting on a step that only reports at the end.
+  defp run_all(steps, true, cmd_fun, _background), do: {run_steps(steps, true, cmd_fun, []), []}
+
+  defp run_all(steps, false, cmd_fun, {capture_fun, suite_plan_fun}) do
+    {head, tail} = split_after_last_barrier(steps)
+    head_results = run_steps(head, false, cmd_fun, [])
+
+    if broken?(head_results) do
+      {head_results, []}
+    else
+      {backgrounded, tail} = Enum.split_with(tail, &background?/1)
+
+      # Started here rather than at the top of the run because the suite needs
+      # the beams the compile steps produce, and a build that does not compile
+      # is the case those barriers exist to stop.
+      tasks = Enum.map(backgrounded, &start_background(&1, capture_fun, suite_plan_fun))
+      beside_suite? = backgrounded != []
+      {tail_results, warnings} = run_tail(head, tail, cmd_fun, {capture_fun, beside_suite?})
+
+      {order_like(steps, head_results ++ tail_results ++ Enum.map(tasks, &join/1)), warnings}
+    end
+  end
+
+  # Overlapping the static checks is only safe against a build the gate has
+  # established, so a step list without a compile barrier keeps them in
+  # sequence.
+  defp run_tail([], tail, cmd_fun, _capture_fun), do: {run_steps(tail, false, cmd_fun, []), []}
+
+  defp run_tail(_head, tail, cmd_fun, {capture_fun, beside_suite?}) do
+    {writers, readers} = Enum.split_with(tail, &writes_build?/1)
+    writer_results = run_steps(writers, false, cmd_fun, [])
+    {reader_results, warnings} = run_concurrently(readers, capture_fun, beside_suite?)
+    {writer_results ++ reader_results, warnings}
+  end
+
+  # Each step's output is printed as it finishes rather than in declared order,
+  # so a fast failure is on screen while credo and dialyzer are still running.
+  # The suite's task prints its own block at the same time, so each block goes
+  # out as one write (`print_block/2`) to keep the two from interleaving.
+  defp run_concurrently([], _capture_fun, _beside_suite?), do: {[], []}
+
+  defp run_concurrently(steps, capture_fun, beside_suite?) do
+    names = Enum.map_join(steps, ", ", fn {name, _args, _env} -> name end)
+
+    Mix.shell().info([
+      :bright,
+      "\n==> #{names}",
+      :reset,
+      :faint,
+      "  (concurrently; each step's output follows as it finishes)"
+    ])
+
+    steps
+    |> Tasks.async_stream(
+      fn {name, args, env} ->
+        extra_env = if beside_suite?, do: beside_suite_env(args), else: []
+        {name, args, capture_fun.(args, env, extra_env)}
+      end,
+      max_concurrency: length(steps),
+      ordered: false,
+      timeout: :infinity
+    )
+    |> Enum.map(fn {:ok, {name, args, {output, code}}} ->
+      print_block(block_header(name, "  mix #{Enum.join(args, " ")}"), output)
+      result = name |> status(code) |> announce()
+      {result, announce_warnings(name, warnings(output))}
+    end)
+    |> Enum.unzip()
+    |> then(fn {results, warnings} -> {results, List.flatten(warnings)} end)
+  end
+
+  @doc """
+  The warnings a step's output carries without failing it: one line per module
+  over the `CredoChecks.LargeModules` soft limit, found by the prefix that
+  check puts at the start of the message (`@warning_marker`, which its test
+  holds equal to the check's own). Credo prints each issue's first line with a
+  gutter in front of the message, so the line is returned from the marker on.
+  """
+  @spec warnings(String.t()) :: [String.t()]
+  def warnings(output) do
+    for line <- String.split(output, "\n"),
+        [_gutter, warning] <- [String.split(line, @warning_marker, parts: 2)],
+        do: String.trim_trailing(@warning_marker <> warning)
+  end
+
+  @doc false
+  @spec warning_marker() :: String.t()
+  def warning_marker, do: @warning_marker
+
+  # Plain text, like `announce/1`, so `mix.sh -p` forwards it as it arrives.
+  defp announce_warnings(_name, []), do: []
+
+  defp announce_warnings(name, warnings) do
+    IO.puts("#{@result_prefix}warn #{name} (#{length(warnings)})")
+    Enum.map(warnings, &{name, &1})
+  end
+
+  # The summary reads as the gate's running order, not as the order results
+  # happened to arrive, so a backgrounded step keeps its declared position.
+  defp order_like(steps, results) do
+    by_name = Map.new(results, fn {name, _status, _code} = result -> {name, result} end)
+
+    Enum.flat_map(steps, fn {name, _args, _env} ->
+      case Map.fetch(by_name, name) do
+        {:ok, result} -> [result]
+        :error -> []
+      end
+    end)
+  end
+
+  defp start_background({name, args, env}, capture_fun, suite_plan_fun) do
+    plan = suite_plan_fun.()
+
+    Mix.shell().info([
+      :bright,
+      "\n==> #{name}",
+      :reset,
+      :faint,
+      "  mix #{Enum.join(args, " ")}  (#{describe_plan(plan)}in the background; output follows when it finishes)"
+    ])
+
+    task =
+      Tasks.async(fn ->
+        {output, code} = capture_suite(args, env, capture_fun, plan)
+        announce(status(name, code))
+        print_block(block_header(name, "  (background output)"), output)
+        code
+      end)
+
+    {name, task}
+  end
+
+  defp describe_plan(nil), do: ""
+
+  defp describe_plan(%{partitions: 1, schedulers: schedulers}),
+    do: "1 partition of #{schedulers} schedulers, "
+
+  defp describe_plan(%{partitions: partitions, schedulers: schedulers}),
+    do: "#{partitions} partitions of #{schedulers} schedulers each, "
+
+  defp capture_suite(args, env, capture_fun, nil), do: capture_fun.(args, env, [])
+
+  defp capture_suite(args, env, capture_fun, %{partitions: count, schedulers: schedulers}) do
+    base = System.get_env("MIX_TEST_PARTITION", "")
+    erl_flags = erl_flags(schedulers)
+    partition_args = args ++ ["--partitions", Integer.to_string(count)]
+
+    1..count
+    |> Tasks.async_stream(
+      fn index ->
+        capture_fun.(partition_args, env, [
+          {"MIX_TEST_PARTITION", Integer.to_string(index)},
+          {"MIX_TEST_PARTITION_BASE", base},
+          {"ERL_FLAGS", erl_flags}
+        ])
+      end,
+      max_concurrency: count,
+      timeout: :infinity
+    )
+    |> Enum.with_index(1)
+    |> Enum.reduce({[], 0}, fn {{:ok, {output, code}}, index}, {outputs, worst} ->
+      header = "\n--- partition #{index} of #{count} ---\n"
+      {[outputs, header, output], if(worst == 0, do: code, else: worst)}
+    end)
+    |> then(fn {outputs, code} -> {IO.iodata_to_binary(outputs), code} end)
+  end
+
+  # No timeout: the step takes as long as it takes, and a run that has already
+  # spent minutes on the static checks should not throw away a nearly finished
+  # suite over a deadline nobody could set correctly.
+  defp join({name, task}), do: status(name, Task.await(task, :infinity))
+
+  defp block_header(name, detail), do: [:bright, "\n==> #{name}", :reset, :faint, detail]
+
+  # The IO server handles one request at a time, so a block sent as a single
+  # write cannot have another step's output land between its header and body.
+  # Formatted the way `Mix.shell().info/1` does, colour only on a terminal.
+  defp print_block(header, output), do: IO.write([IO.ANSI.format(header), "\n", output])
+
+  defp status(name, 0), do: {name, :passed, 0}
+  defp status(name, code), do: {name, :failed, code}
+
+  # Plain text, never coloured: a line that starts with an escape sequence would
+  # no longer start with the prefix `mix.sh` matches on.
+  defp announce({name, :passed, _code} = result) do
+    IO.puts("#{@result_prefix}ok #{name}")
+    result
+  end
+
+  defp announce({name, :failed, code} = result) do
+    IO.puts("#{@result_prefix}failed #{name} (#{code})")
+    result
+  end
+
+  # Everything up to and including the last barrier runs in the foreground, so
+  # a backgrounded step can never start against a build the gate has not yet
+  # established.
+  defp split_after_last_barrier(steps) do
+    case Enum.find_index(Enum.reverse(steps), fn {name, _args, _env} -> barrier?(name) end) do
+      nil -> {[], steps}
+      offset -> Enum.split(steps, length(steps) - offset)
+    end
+  end
+
+  defp background?(step), do: suite?(step)
+
+  # Steps that can rewrite `_build/dev` and so must not overlap the steps that
+  # read it. Keyed off the command for the same reason as `background?/1`.
+  defp writes_build?({_name, ["gettext.check" | _rest], _env}), do: true
+  defp writes_build?(_step), do: false
+
+  defp broken?(results), do: Enum.any?(results, &match?({_name, :skipped, _code}, &1))
+
+  defp run_steps([], _fail_fast?, _cmd_fun, acc), do: Enum.reverse(acc)
+
+  defp run_steps([{name, args, env} | rest], fail_fast?, cmd_fun, acc) do
+    Mix.shell().info([:bright, "\n==> #{name}", :reset, :faint, "  mix #{Enum.join(args, " ")}"])
+
+    result = name |> status(cmd_fun.(args, env)) |> announce()
+
+    acc = [result | acc]
+
+    cond do
+      match?({_step, :passed, _code}, result) -> run_steps(rest, fail_fast?, cmd_fun, acc)
+      barrier?(name) -> Enum.reverse([{"(skipped)", :skipped, 0} | acc])
+      fail_fast? -> Enum.reverse(acc)
+      true -> run_steps(rest, fail_fast?, cmd_fun, acc)
+    end
+  end
+
+  defp barrier?(name), do: String.starts_with?(name, @barrier_prefix)
+
+  # A compile step also fails on a warning located in a path dependency.
+  # `mix deps.compile` always compiles a dependency with
+  # `--no-warnings-as-errors`, so the flag on the step reaches this project's
+  # own modules only, and a warning in a sibling checkout this workspace owns
+  # would otherwise scroll past a green step. Warnings in fetched packages are
+  # left alone: they are not ours to fix.
+  @doc false
+  @spec cmd([String.t()], atom()) :: non_neg_integer()
+  def cmd(["compile" | _rest] = args, env) do
+    {tee, code} =
+      System.cmd("mix", args,
+        into: %Tee{},
+        stderr_to_stdout: true,
+        env: [{"MIX_ENV", to_string(env)} | step_env(args)]
+      )
+
+    warned = dependency_warnings(Tee.output(tee), path_dependencies())
+
+    if code == 0 and warned != [] do
+      Mix.shell().error(
+        "Warnings in path dependencies: #{Enum.map_join(warned, ", ", &to_string/1)}. " <>
+          "Mix compiles dependencies without --warnings-as-errors, so this step fails on them instead."
+      )
+
+      1
+    else
+      code
+    end
+  end
+
+  def cmd(["hex.audit" | _rest] = args, env) do
+    {output, code} = capture(args, env, [])
+    IO.write(output)
+    code
+  end
+
+  def cmd(args, env) do
+    {_output, code} =
+      System.cmd("mix", args,
+        into: IO.stream(:stdio, :line),
+        stderr_to_stdout: true,
+        env: [{"MIX_ENV", to_string(env)} | step_env(args)]
+      )
+
+    code
+  end
+
+  @registry_attempts 3
+  @registry_pause_ms 5_000
+
+  # The concurrent counterpart to `cmd/2`: the same invocation, with the output
+  # collected rather than streamed so it can be printed in one block when the
+  # step finishes.
+  @doc false
+  @spec capture([String.t()], atom(), [{String.t(), String.t()}]) ::
+          {String.t(), non_neg_integer()}
+  def capture(args, env, extra_env) do
+    {command, argv} = launcher(args)
+
+    run = fn ->
+      System.cmd(command, argv,
+        stderr_to_stdout: true,
+        env: [{"MIX_ENV", to_string(env)} | step_env(args)] ++ extra_env
+      )
+    end
+
+    if registry_step?(args), do: retry_registry(run, @registry_attempts), else: run.()
+  end
+
+  # `hex.audit` asks the live Hex registry, and under the load of a full gate
+  # the requests can time out, which fails the step without any finding. Only
+  # that failure is retried (a real advisory is reported at once), after a
+  # pause that lets the registry or the machine recover.
+  defp registry_step?(["hex.audit" | _rest]), do: true
+  defp registry_step?(_args), do: false
+
+  @doc false
+  @spec retry_registry((-> {String.t(), non_neg_integer()}), pos_integer(), non_neg_integer()) ::
+          {String.t(), non_neg_integer()}
+  def retry_registry(run, attempts_left, pause_ms \\ @registry_pause_ms) do
+    {output, code} = result = run.()
+
+    if code != 0 and attempts_left > 1 and registry_timeout?(output) do
+      Process.sleep(pause_ms)
+      retry_registry(run, attempts_left - 1, pause_ms)
+    else
+      result
+    end
+  end
+
+  defp registry_timeout?(output), do: String.contains?(output, "Failed to fetch record")
+
+  # Keyed off the command, as `suite?/1` is, so a niced step can never be the
+  # suite's parent: `nice` reaches every process a step starts, and the test
+  # partitions must keep the default priority. Where `nice` is missing the step
+  # simply runs at the default priority, as it did before.
+  @nice_increment "10"
+
+  @doc false
+  @spec launcher([String.t()]) :: {String.t(), [String.t()]}
+  def launcher([command | _rest] = args) when command in @suite_commands, do: {"mix", args}
+
+  def launcher(args) do
+    case System.find_executable("nice") do
+      nil -> {"mix", args}
+      nice -> {nice, ["-n", @nice_increment, "mix" | args]}
+    end
+  end
+
+  # Dialyzer sizes its analysis worker pool to
+  # `erlang:system_info(schedulers_online)` (`dialyzer_utils:parallelism/0`,
+  # consumed by the regulator in `dialyzer_coordinator`), so the count decides
+  # how much of the analysis runs at once.
+  #
+  # The number is a speed setting, not a memory guard: a warm run holds 4.2G to
+  # 5.4G whether it is handed 4 schedulers or 16. Building a PLT from scratch,
+  # which this step does when a dependency or the toolchain moves, peaks near
+  # 13G, so the memory guard is the systemd scope in the workspace `mix.sh`,
+  # which bounds the whole process tree however much dialyzer asks for.
+  # Measured on Core on a 16-core host, median wall clock of three runs: 92s at
+  # 4, 77s at 8, 92s at 16, the last losing to coordination overhead. The cap is
+  # never more than the cores the run may use (`System.schedulers_online/0`,
+  # which honours a CPU quota).
+  #
+  # The cap is keyed off the command rather than the step's display name, and set
+  # here rather than for the run as a whole, so the test suite in the same
+  # `mix precommit` keeps every core. `MIX_DIALYZER_SCHEDULERS` overrides it,
+  # matching the flag of the same name in the workspace `mix.sh`.
+  #
+  # Both task names are matched. The gate runs `dialyzer.incremental`, while
+  # `dialyzer` remains available as a cross-check of the incremental mode, and
+  # a cap that quietly stopped applying to either would be invisible: the run
+  # would simply get slower.
+  @doc false
+  @spec step_env([String.t()]) :: [{String.t(), String.t()}]
+  def step_env([command | _rest]) when command in ~w[dialyzer dialyzer.incremental] do
+    schedulers =
+      System.get_env("MIX_DIALYZER_SCHEDULERS") ||
+        Integer.to_string(dialyzer_schedulers(System.schedulers_online()))
+
+    [{"ERL_FLAGS", erl_flags(schedulers)}]
+  end
+
+  def step_env(_args), do: []
+
+  # The static checks that run concurrently with the suite each start a BEAM
+  # of their own, and a BEAM starts one scheduler per core it may use. The
+  # suite's partitions are already sized to use those cores between them (see
+  # `Tymeslot.Precommit.CpuBudget`), so credo, sobelow, xref and the rest,
+  # each with a full complement of schedulers on top, oversubscribed the run
+  # several times over: some forty schedulers on a ten-core quota, thrashing
+  # and throttled. Beside the suite they get two each instead; they are mostly
+  # Mix boot plus one tool, and their wall clock hides behind the suite's.
+  # Dialyzer keeps its own measured cap from `step_env/1`, which `capture/3`
+  # already applies, so it is left out here rather than given two ERL_FLAGS.
+  # Without a suite in the run (an `--affected` diff that reaches none), the
+  # checks have the machine to themselves and run uncapped.
+  @doc false
+  @spec beside_suite_env([String.t()]) :: [{String.t(), String.t()}]
+  def beside_suite_env([command | _rest]) when command in ~w[dialyzer dialyzer.incremental],
+    do: []
+
+  def beside_suite_env(_args),
+    do: [{"ERL_FLAGS", erl_flags(min(@beside_suite_schedulers, System.schedulers_online()))}]
+
+  # A scheduler count is appended to the inherited ERL_FLAGS rather than set in
+  # their place, so the flags the workspace `mix.sh` starts every BEAM with
+  # (busy-waiting off) reach the partitions and the capped steps too. The BEAM
+  # takes the last `+S` it is given, so an inherited count is overridden.
+  defp erl_flags(schedulers) do
+    String.trim("#{System.get_env("ERL_FLAGS")} +S #{schedulers}:#{schedulers}")
+  end
+
+  @doc false
+  @spec dependency_warnings(String.t(), [atom()]) :: [atom()]
+  def dependency_warnings(_output, []), do: []
+
+  def dependency_warnings(output, apps) do
+    names = Map.new(apps, &{Atom.to_string(&1), &1})
+
+    # The compiler names a dependency's file as `(app version) path:line`,
+    # on the location line under each warning it prints.
+    ~r/^[\s│├└─]*\(([a-z][a-z0-9_]*) [^\s)]+\) \S+:\d+/mu
+    |> Regex.scan(output, capture: :all_but_first)
+    |> Enum.flat_map(fn [name] -> List.wrap(names[name]) end)
+    |> Enum.uniq()
+  end
+
+  defp path_dependencies do
+    for {app, PathSCM} <- Project.deps_scms(), do: app
+  end
+
+  @doc false
+  @spec dialyzer_schedulers(pos_integer()) :: pos_integer()
+  def dialyzer_schedulers(cores), do: min(@dialyzer_schedulers, cores)
+
+  defp report(results, skipped, warnings) do
+    Mix.shell().info([:bright, "\nSummary", :reset])
+
+    Enum.each(results, fn
+      {name, :passed, _code} ->
+        Mix.shell().info(["  ", :green, "ok      ", :reset, name])
+
+      {name, :failed, code} ->
+        Mix.shell().info(["  ", :red, "failed  ", :reset, "#{name} (#{code})"])
+
+      {_name, :skipped, _code} ->
+        Mix.shell().info(["  ", :faint, "skipped remaining steps: the build is broken", :reset])
+    end)
+
+    Enum.each(skipped, fn {name, reason} ->
+      Mix.shell().info(["  ", :faint, "not run  ", :reset, name, :faint, " (#{reason})", :reset])
+    end)
+
+    report_warnings(warnings)
+  end
+
+  # Printed after the step lines so a passing run ends on them rather than
+  # leaving them in a step's block further up, where they scroll past.
+  defp report_warnings([]), do: :ok
+
+  defp report_warnings(warnings) do
+    Mix.shell().info([:bright, "\nWarnings", :reset, :faint, "  (not failing the run)", :reset])
+
+    Enum.each(warnings, fn {name, warning} ->
+      Mix.shell().info(["  ", :yellow, "warn    ", :reset, name, ": ", warning])
+    end)
+  end
+end

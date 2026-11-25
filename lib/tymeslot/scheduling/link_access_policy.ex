@@ -1,0 +1,164 @@
+defmodule Tymeslot.Scheduling.LinkAccessPolicy do
+  @moduledoc """
+  Centralized policy and helpers for accessing/copying the user's public
+  scheduling link. Used by the dashboard sidebar and by the public scheduling
+  dispatcher to ensure consistent behavior and early error reporting.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Demo
+  alias Tymeslot.Integrations.Calendar.BookingEligibility
+  alias Tymeslot.Integrations.Calendar.Management
+
+  @type dashboard_reason :: :no_username | :no_calendar
+  @type public_reason :: :no_calendar
+
+  # Determines whether the dashboard should allow viewing/copying the scheduling
+  # link. Returns {:ok, :allowed} when allowed, otherwise {:error, reason}.
+  @spec check_dashboard_allowed(map() | nil, map()) ::
+          {:ok, :allowed} | {:error, dashboard_reason}
+  defp check_dashboard_allowed(profile, integration_status) do
+    cond do
+      not has_username?(profile) ->
+        {:error, :no_username}
+
+      not has_calendar?(integration_status) ->
+        {:error, :no_calendar}
+
+      true ->
+        {:ok, :allowed}
+    end
+  end
+
+  @doc """
+  Simple boolean for HEEx usage in the dashboard.
+  """
+  @spec can_link?(map() | nil, map()) :: boolean
+  def can_link?(profile, integration_status) do
+    match?({:ok, :allowed}, check_dashboard_allowed(profile, integration_status))
+  end
+
+  @doc """
+  Computes the public scheduling path for a profile.
+
+  Requires a profile with a username. Use `can_link?/2` to check if
+  the profile is ready before calling this function.
+
+  Raises `ArgumentError` if the profile doesn't have a username.
+  """
+  @spec scheduling_path(map() | nil) :: String.t()
+  def scheduling_path(profile) do
+    if has_username?(profile) do
+      "/#{profile.username}"
+    else
+      raise ArgumentError,
+            "scheduling_path/1 requires a profile with a username. Use can_link?/2 to check readiness first."
+    end
+  end
+
+  @doc """
+  Tooltip message for disabled scheduling link in the dashboard.
+  """
+  @spec disabled_tooltip(map() | nil, map()) :: String.t()
+  def disabled_tooltip(profile, integration_status) do
+    case check_dashboard_allowed(profile, integration_status) do
+      {:error, :no_username} ->
+        dgettext("dashboard_common", "Set a username in Settings to enable this feature")
+
+      {:error, :no_calendar} ->
+        dgettext(
+          "dashboard_common",
+          "Connect a calendar in Calendar settings to enable this feature"
+        )
+
+      _other_reason ->
+        dgettext("dashboard_common", "Complete setup to enable this feature")
+    end
+  end
+
+  @doc """
+  Checks if the organizer is ready for public scheduling access.
+
+  Demo profiles are always considered ready. Otherwise, at least one active
+  calendar integration must exist.
+  """
+  @spec check_public_readiness(map() | nil) :: {:ok, :ready} | {:error, public_reason}
+  def check_public_readiness(profile) do
+    cond do
+      Demo.demo_profile?(profile) ->
+        {:ok, :ready}
+
+      is_nil(profile) or is_nil(Map.get(profile, :user_id)) ->
+        {:error, :no_calendar}
+
+      true ->
+        integrations = Management.list_active_calendar_integrations(profile.user_id)
+        bookable = BookingEligibility.filter_bookable(integrations)
+        if bookable != [], do: {:ok, :ready}, else: {:error, :no_calendar}
+    end
+  end
+
+  @doc """
+  The rule of `check_public_readiness/1`, judged from the dashboard's
+  `integration_status` (`Tymeslot.Dashboard.DashboardContext.get_integration_status/1`)
+  instead of a fresh read, so a dashboard that already holds the status can
+  tell its owner whether guests can open their page without querying again.
+
+  `has_calendar` there is the same test: an active integration whose provider
+  can take a booking.
+  """
+  @spec check_public_readiness(map() | nil, map() | nil) ::
+          {:ok, :ready} | {:error, public_reason}
+  def check_public_readiness(profile, integration_status) do
+    if Demo.demo_profile?(profile) or has_calendar?(integration_status),
+      do: {:ok, :ready},
+      else: {:error, :no_calendar}
+  end
+
+  @doc """
+  Converts a policy reason to a user-friendly message for flash/errors on public pages.
+  """
+  @spec reason_to_message(public_reason | dashboard_reason) :: String.t()
+  def reason_to_message(reason) do
+    case reason do
+      :no_username ->
+        dgettext(
+          "booking",
+          "This scheduling page isn’t available yet. The organiser hasn’t set a username."
+        )
+
+      :no_calendar ->
+        dgettext(
+          "booking",
+          "This scheduling page isn’t available right now. The organiser hasn’t connected a calendar yet."
+        )
+
+      _other_reason ->
+        dgettext("booking", "Complete setup to enable this feature")
+    end
+  end
+
+  @doc """
+  Whether the dashboard's integration status has a calendar connected, the
+  half of `can_link?/2` that features needing a calendar but not a username
+  gate on.
+  """
+  @spec has_calendar?(map() | nil) :: boolean()
+  def has_calendar?(integration_status) when is_map(integration_status),
+    do: integration_status[:has_calendar] || false
+
+  def has_calendar?(_integration_status), do: false
+
+  @doc """
+  Whether `profile` has a username to build a public link from. A blank
+  username does not count.
+  """
+  @spec has_username?(map() | nil) :: boolean()
+  def has_username?(nil), do: false
+
+  def has_username?(%{username: username}) when is_binary(username),
+    do: String.trim(username) != ""
+
+  def has_username?(_profile), do: false
+end

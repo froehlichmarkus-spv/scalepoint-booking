@@ -1,0 +1,302 @@
+defmodule TymeslotWeb.GuestRsvpControllerTest do
+  # Uses the global ETS rate limiter; must not run concurrently.
+  use TymeslotWeb.ConnCase, async: false
+  @moduletag :meetings
+  @moduletag :controllers
+
+  alias Tymeslot.Factory
+  alias Tymeslot.Meetings.GuestQueries
+  alias Tymeslot.Meetings.Guests
+  alias Tymeslot.Profiles
+  alias Tymeslot.Security.RateLimiter
+
+  setup do
+    RateLimiter.clear_all()
+    meeting = Factory.insert(:meeting)
+    {:ok, [guest]} = Guests.create_for_meeting(meeting.id, ["guest@example.com"])
+    %{guest: guest}
+  end
+
+  defp guest_for(meeting_attrs) do
+    meeting = Factory.insert(:meeting, meeting_attrs)
+    {:ok, [guest]} = Guests.create_for_meeting(meeting.id, ["late@example.com"])
+    guest
+  end
+
+  defp past_meeting_attrs do
+    start_time = DateTime.utc_now() |> DateTime.add(-1, :day) |> DateTime.truncate(:second)
+    [start_time: start_time, end_time: DateTime.add(start_time, 60, :minute)]
+  end
+
+  describe "GET /guest/:token/:response — confirmation landing page (no mutation)" do
+    test "accept link shows the pre-confirmation page without recording the RSVP", %{
+      conn: conn,
+      guest: guest
+    } do
+      conn = get(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 200) =~ "about to accept"
+      assert {:ok, reloaded} = GuestQueries.get_by_token(guest.rsvp_token)
+      assert reloaded.status == :pending
+    end
+
+    test "decline link shows the pre-confirmation page without recording the RSVP", %{
+      conn: conn,
+      guest: guest
+    } do
+      conn = get(conn, ~p"/guest/#{guest.rsvp_token}/decline")
+
+      assert html_response(conn, 200) =~ "about to decline"
+      assert {:ok, reloaded} = GuestQueries.get_by_token(guest.rsvp_token)
+      assert reloaded.status == :pending
+    end
+
+    test "an unknown token shows the invalid page", %{conn: conn} do
+      conn = get(conn, ~p"/guest/nope-not-a-token/accept")
+
+      assert html_response(conn, 404) =~ "link is not valid"
+    end
+
+    test "an invalid response value shows the invalid page", %{conn: conn, guest: guest} do
+      conn = get(conn, ~p"/guest/#{guest.rsvp_token}/maybe")
+
+      assert html_response(conn, 404) =~ "link is not valid"
+      assert {:ok, reloaded} = GuestQueries.get_by_token(guest.rsvp_token)
+      assert reloaded.status == :pending
+    end
+  end
+
+  describe "GET /guest/:token/:response — meeting no longer taking responses" do
+    test "a cancelled meeting shows the closed page", %{conn: conn} do
+      guest = guest_for(status: :cancelled)
+
+      conn = get(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 410) =~ "no longer taking responses"
+    end
+
+    test "a meeting that has already started shows the closed page", %{conn: conn} do
+      guest = guest_for(past_meeting_attrs())
+
+      conn = get(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 410) =~ "no longer taking responses"
+    end
+  end
+
+  describe "POST /guest/:token/:response — records the RSVP" do
+    test "accepting records the RSVP and shows the success page", %{conn: conn, guest: guest} do
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 200) =~ "going!"
+      assert {:ok, reloaded} = GuestQueries.get_by_token(guest.rsvp_token)
+      assert reloaded.status == :accepted
+      assert %DateTime{} = reloaded.responded_at
+    end
+
+    test "declining records the RSVP and shows the success page", %{conn: conn, guest: guest} do
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/decline")
+
+      assert html_response(conn, 200) =~ "declined"
+      assert {:ok, reloaded} = GuestQueries.get_by_token(guest.rsvp_token)
+      assert reloaded.status == :declined
+    end
+
+    test "an unknown token shows the invalid page", %{conn: conn} do
+      conn = post(conn, ~p"/guest/nope-not-a-token/accept")
+
+      assert html_response(conn, 404) =~ "link is not valid"
+    end
+
+    test "an invalid response value shows the invalid page", %{conn: conn, guest: guest} do
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/maybe")
+
+      assert html_response(conn, 404) =~ "link is not valid"
+      assert {:ok, reloaded} = GuestQueries.get_by_token(guest.rsvp_token)
+      assert reloaded.status == :pending
+    end
+
+    test "the success page links to the opposite response", %{conn: conn, guest: guest} do
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 200) =~ ~s(href="/guest/#{guest.rsvp_token}/decline")
+    end
+  end
+
+  describe "POST /guest/:token/:response — meeting no longer taking responses" do
+    test "a cancelled meeting is not answered", %{conn: conn} do
+      guest = guest_for(status: :cancelled)
+
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 410) =~ "no longer taking responses"
+      assert {:ok, %{status: :pending}} = GuestQueries.get_by_token(guest.rsvp_token)
+    end
+
+    test "a meeting that has already started is not answered", %{conn: conn} do
+      guest = guest_for(past_meeting_attrs())
+
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/decline")
+
+      assert html_response(conn, 410) =~ "no longer taking responses"
+      assert {:ok, %{status: :pending}} = GuestQueries.get_by_token(guest.rsvp_token)
+    end
+  end
+
+  describe "a guest brought by a group-booking participant" do
+    # A group meeting keeps no attendee timezone, so its guests' pages used to
+    # state the time in UTC. They follow the participant who invited them.
+    setup do
+      meeting = Factory.insert(:group_meeting)
+      participant = Factory.insert(:participant, meeting: meeting, timezone: "Asia/Tokyo")
+
+      {:ok, [guest]} =
+        Guests.create_for_participant(meeting.id, participant.id, ["friend@example.com"])
+
+      %{group_guest: guest}
+    end
+
+    test "the landing page and the success page show times in the participant's timezone",
+         %{conn: conn, group_guest: guest} do
+      landing = conn |> get(~p"/guest/#{guest.rsvp_token}/accept") |> html_response(200)
+
+      success =
+        conn |> recycle() |> post(~p"/guest/#{guest.rsvp_token}/accept") |> html_response(200)
+
+      for html <- [landing, success] do
+        assert html =~ "(Asia/Tokyo)"
+        refute html =~ "(Etc/UTC)"
+      end
+    end
+  end
+
+  describe "rate limiting" do
+    test "the landing page and the response share one per-client limit", %{
+      conn: conn,
+      guest: guest
+    } do
+      for _attempt <- 1..60 do
+        assert build_conn() |> get(~p"/guest/#{guest.rsvp_token}/accept") |> html_response(200)
+      end
+
+      conn = post(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+
+      assert html_response(conn, 429) =~ "Too many attempts"
+      assert {:ok, %{status: :pending}} = GuestQueries.get_by_token(guest.rsvp_token)
+    end
+  end
+
+  describe "a guest of a group booking who declined" do
+    # A slot of two seats: the participant and their guest, who declined and
+    # so gave the second seat back.
+    setup do
+      meeting = Factory.insert(:meeting, capacity: 2)
+      participant = Factory.insert(:participant, meeting: meeting)
+
+      {:ok, [guest]} =
+        Guests.create_for_participant(meeting.id, participant.id, ["g@example.com"])
+
+      {:ok, _declined} = Guests.record_rsvp(guest.rsvp_token, :declined)
+      %{meeting: meeting, guest: guest}
+    end
+
+    test "can answer yes again while their seat is free", %{conn: conn, guest: guest} do
+      assert html_response(get(conn, ~p"/guest/#{guest.rsvp_token}/accept"), 200) =~
+               "about to accept"
+
+      post(conn, ~p"/guest/#{guest.rsvp_token}/accept")
+      assert {:ok, %{status: :accepted}} = GuestQueries.get_by_token(guest.rsvp_token)
+    end
+
+    test "is told the meeting is fully booked once their seat has gone", %{
+      conn: conn,
+      meeting: meeting,
+      guest: guest
+    } do
+      Factory.insert(:participant, meeting: meeting)
+
+      assert html_response(get(conn, ~p"/guest/#{guest.rsvp_token}/accept"), 409) =~
+               "fully booked"
+
+      assert html_response(post(conn, ~p"/guest/#{guest.rsvp_token}/accept"), 409) =~
+               "fully booked"
+
+      assert {:ok, %{status: :declined}} = GuestQueries.get_by_token(guest.rsvp_token)
+    end
+  end
+
+  describe "legal links" do
+    test "guest RSVP page shows the organiser's legal links", %{conn: conn} do
+      user = Factory.insert(:user)
+      profile = Factory.insert(:profile, user: user)
+
+      {:ok, _profile} =
+        Profiles.update_legal_links(profile, %{
+          legal_notice_url: "https://organiser.example/impressum",
+          privacy_policy_url: "https://organiser.example/privacy"
+        })
+
+      meeting = Factory.insert(:meeting, organizer_user_id: user.id)
+      {:ok, [guest]} = Guests.create_for_meeting(meeting.id, ["linked@example.com"])
+
+      html = conn |> get(~p"/guest/#{guest.rsvp_token}/accept") |> html_response(200)
+
+      assert html =~ ~s(href="https://organiser.example/impressum")
+      assert html =~ ~s(href="https://organiser.example/privacy")
+    end
+
+    test "the fully-booked page shows the organiser's legal links, not the defaults", %{
+      conn: conn
+    } do
+      user = Factory.insert(:user)
+      profile = Factory.insert(:profile, user: user)
+
+      {:ok, _profile} =
+        Profiles.update_legal_links(profile, %{
+          legal_notice_url: "https://organiser.example/impressum",
+          privacy_policy_url: "https://organiser.example/privacy"
+        })
+
+      meeting = Factory.insert(:meeting, organizer_user_id: user.id, capacity: 2)
+      participant = Factory.insert(:participant, meeting: meeting)
+
+      {:ok, [guest]} =
+        Guests.create_for_participant(meeting.id, participant.id, ["g@example.com"])
+
+      {:ok, _declined} = Guests.record_rsvp(guest.rsvp_token, :declined)
+      Factory.insert(:participant, meeting: meeting)
+
+      confirm_page = conn |> get(~p"/guest/#{guest.rsvp_token}/accept") |> html_response(409)
+
+      submit_page =
+        build_conn() |> post(~p"/guest/#{guest.rsvp_token}/accept") |> html_response(409)
+
+      for html <- [confirm_page, submit_page] do
+        assert html =~ "fully booked"
+        assert html =~ ~s(href="https://organiser.example/impressum")
+        assert html =~ ~s(href="https://organiser.example/privacy")
+      end
+    end
+
+    test "an unknown token shows the instance defaults only", %{conn: conn} do
+      previous = Application.get_env(:tymeslot, :booking_privacy_policy_url)
+
+      Application.put_env(
+        :tymeslot,
+        :booking_privacy_policy_url,
+        "https://instance.example/privacy"
+      )
+
+      on_exit(fn ->
+        if previous,
+          do: Application.put_env(:tymeslot, :booking_privacy_policy_url, previous),
+          else: Application.delete_env(:tymeslot, :booking_privacy_policy_url)
+      end)
+
+      html = conn |> get(~p"/guest/nope-not-a-token/accept") |> html_response(404)
+
+      assert html =~ ~s(href="https://instance.example/privacy")
+      refute html =~ "Legal notice"
+    end
+  end
+end

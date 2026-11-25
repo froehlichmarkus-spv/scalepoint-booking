@@ -1,0 +1,194 @@
+defmodule Tymeslot.Announcements.CatalogIntegrityTest do
+  use ExUnit.Case, async: true
+
+  @moduletag :unit
+  @moduletag :notifications
+
+  alias Tymeslot.Announcements.Catalog
+
+  @max_title_length 80
+  @max_body_length 500
+  @max_cta_label_length 40
+  @max_bullet_length 100
+
+  @expired_grace_days 30
+
+  setup do
+    {:ok, entries: Catalog.list()}
+  end
+
+  describe "Tymeslot.Announcements.Catalog integrity" do
+    test "every key is globally unique", %{entries: entries} do
+      keys = Enum.map(entries, & &1.key)
+      duplicates = keys -- Enum.uniq(keys)
+
+      assert duplicates == [],
+             "duplicate announcement keys: #{inspect(duplicates)}. " <>
+               "Keys are the identity stored in user_seen_announcements; collisions cause " <>
+               "users to never have one of the duplicates marked seen."
+    end
+
+    test "every key is a non-empty binary", %{entries: entries} do
+      for entry <- entries do
+        assert is_binary(entry.key) and entry.key != "", "blank key on entry: #{inspect(entry)}"
+      end
+    end
+
+    test "every title is non-empty and fits the modal header", %{entries: entries} do
+      for entry <- entries do
+        assert is_binary(entry.title) and entry.title != "",
+               "blank title for #{entry.key}"
+
+        assert String.length(entry.title) <= @max_title_length,
+               "title for #{entry.key} is #{String.length(entry.title)} chars; " <>
+                 "max is #{@max_title_length}. Long titles overflow the modal header."
+      end
+    end
+
+    test "every body is non-empty and fits the modal", %{entries: entries} do
+      for entry <- entries do
+        assert is_binary(entry.body) and entry.body != "",
+               "blank body for #{entry.key}"
+
+        assert String.length(entry.body) <= @max_body_length,
+               "body for #{entry.key} is #{String.length(entry.body)} chars; " <>
+                 "max is #{@max_body_length}. Long bodies push the modal off-screen."
+      end
+    end
+
+    test "every image_path resolves to a file under priv/static", %{entries: entries} do
+      static_root = Path.join(:code.priv_dir(:tymeslot), "static")
+
+      for %{key: key, image_path: path} when is_binary(path) <- entries do
+        absolute = Path.join(static_root, String.trim_leading(path, "/"))
+
+        assert File.exists?(absolute),
+               "image_path #{inspect(path)} for #{key} does not exist at #{absolute}"
+      end
+    end
+
+    test "every cta_docs_slug is a bare slug, not a path or URL", %{entries: entries} do
+      for %{key: key, cta_docs_slug: slug} when is_binary(slug) <- entries do
+        assert slug != "", "blank cta_docs_slug for #{key}"
+
+        refute String.starts_with?(slug, "/"),
+               "cta_docs_slug #{inspect(slug)} for #{key} must not start with /; " <>
+                 "it is composed onto :docs_article_base_url, so store just the slug"
+
+        refute Regex.match?(~r{https?://}i, slug),
+               "cta_docs_slug #{inspect(slug)} for #{key} looks like an absolute URL; " <>
+                 "store just the slug — the base URL comes from :docs_article_base_url"
+      end
+    end
+
+    test "cta_label and cta_docs_slug are present together or absent together", %{
+      entries: entries
+    } do
+      for entry <- entries do
+        assert is_nil(entry.cta_label) == is_nil(entry.cta_docs_slug),
+               "cta_label/cta_docs_slug mismatch for #{entry.key}: #{inspect(entry.cta_label)} / " <>
+                 "#{inspect(entry.cta_docs_slug)}. The component renders a CTA only when both are set."
+      end
+    end
+
+    test "every bullet is a non-empty binary that fits one line", %{entries: entries} do
+      for %{key: key, bullets: bullets} <- entries, bullet <- bullets do
+        assert is_binary(bullet) and bullet != "", "blank bullet for #{key}"
+
+        assert String.length(bullet) <= @max_bullet_length,
+               "bullet for #{key} is #{String.length(bullet)} chars; " <>
+                 "max is #{@max_bullet_length}. Long bullets wrap awkwardly in the modal."
+      end
+    end
+
+    test "every cta_label is non-empty and fits the button", %{entries: entries} do
+      for %{key: key, cta_label: label} when is_binary(label) <- entries do
+        assert label != "", "blank cta_label for #{key}"
+
+        assert String.length(label) <= @max_cta_label_length,
+               "cta_label for #{key} is #{String.length(label)} chars; " <>
+                 "max is #{@max_cta_label_length}"
+      end
+    end
+
+    test "every published_at is a UTC DateTime", %{entries: entries} do
+      for entry <- entries do
+        assert match?(%DateTime{time_zone: "Etc/UTC"}, entry.published_at),
+               "published_at for #{entry.key} must be a UTC DateTime; got #{inspect(entry.published_at)}"
+      end
+    end
+
+    test "every expires_at, when set, is a UTC DateTime after published_at", %{entries: entries} do
+      for %{expires_at: %DateTime{} = expires_at} = entry <- entries do
+        assert expires_at.time_zone == "Etc/UTC",
+               "expires_at for #{entry.key} must be a UTC DateTime; got #{inspect(expires_at)}"
+
+        assert DateTime.after?(expires_at, entry.published_at),
+               "expires_at for #{entry.key} must be after published_at; the entry would never be shown."
+      end
+    end
+
+    # Expired entries are never shown but keep costing a translation in every
+    # locale, so they are deleted once they have been expired for a while.
+    # The clock is the newest entry's publication, not today: the test fails
+    # when someone adds an announcement while an older one has been expired
+    # for longer than the grace, never on a calendar date alone.
+    test "no entry was expired for more than #{@expired_grace_days} days when the newest was published",
+         %{entries: entries} do
+      long_expired = long_expired(entries)
+
+      assert long_expired == [],
+             "expired more than #{@expired_grace_days} days before the newest announcement, " <>
+               "delete from the catalogue: " <> Enum.join(long_expired, ", ")
+    end
+
+    test "the expiry check flags an entry long expired before the newest one" do
+      newest = ~U[2026-06-01 00:00:00Z]
+
+      entries = [
+        %{key: "newest", published_at: newest, expires_at: nil},
+        %{
+          key: "stale",
+          published_at: ~U[2026-01-01 00:00:00Z],
+          expires_at: ~U[2026-04-01 00:00:00Z]
+        },
+        %{
+          key: "recent",
+          published_at: ~U[2026-04-01 00:00:00Z],
+          expires_at: ~U[2026-05-15 00:00:00Z]
+        }
+      ]
+
+      assert long_expired(entries) == ["stale"]
+    end
+
+    test "the catalogue announces poll invitations and management, linking to the polls guide",
+         %{entries: entries} do
+      entry = Enum.find(entries, &(&1.key == "meeting_polls"))
+
+      assert entry, "expected a meeting_polls announcement"
+      assert entry.cta_docs_slug == "meeting-polls"
+      assert entry.image_path == "/images/announcements/meeting-polls.svg"
+      assert DateTime.after?(entry.expires_at, entry.published_at)
+    end
+
+    test "the catalogue announces the Spanish translation", %{entries: entries} do
+      entry = Enum.find(entries, &(&1.key == "spanish_language"))
+
+      assert entry, "expected a spanish_language announcement"
+      assert entry.image_path == "/images/announcements/spanish.svg"
+      assert DateTime.after?(entry.expires_at, entry.published_at)
+    end
+  end
+
+  defp long_expired([]), do: []
+
+  defp long_expired(entries) do
+    newest = entries |> Enum.map(& &1.published_at) |> Enum.max(DateTime)
+    cutoff = DateTime.add(newest, -@expired_grace_days, :day)
+
+    for %{expires_at: %DateTime{} = expires_at, key: key} <- entries,
+        DateTime.before?(expires_at, cutoff),
+        do: key
+  end
+end

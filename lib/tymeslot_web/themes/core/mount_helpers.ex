@@ -1,0 +1,402 @@
+defmodule TymeslotWeb.Themes.Core.MountHelpers do
+  @moduledoc "Socket initialisation helpers for the booking flow dispatcher."
+
+  use Phoenix.VerifiedRoutes,
+    endpoint: TymeslotWeb.Endpoint,
+    router: TymeslotWeb.Router,
+    statics: TymeslotWeb.static_paths()
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  import Phoenix.Component, only: [assign: 3]
+
+  alias Phoenix.LiveView
+  alias Tymeslot.BookingPages
+  alias Tymeslot.Bookings.MeetingLinks
+  alias Tymeslot.ContentTranslations
+  alias Tymeslot.Demo
+  alias Tymeslot.Polls
+  alias Tymeslot.Scheduling.LinkAccessPolicy
+  alias TymeslotWeb.Live.Scheduling.Handlers.BookingErrorMessage
+  alias TymeslotWeb.Live.Scheduling.OrganizerHelpers
+  alias TymeslotWeb.Live.Scheduling.PreviewToken
+
+  alias TymeslotWeb.Themes.Core.{
+    Context,
+    ErrorBoundary,
+    MeetingManagement,
+    PollVoting,
+    Registry,
+    SeriesManagement
+  }
+
+  alias TymeslotWeb.Themes.Shared.Customization.Helpers, as: ThemeCustomizationHelpers
+  alias TymeslotWeb.Themes.Shared.PathHandlers
+
+  @doc """
+  Mounts the socket when an organizer profile is present.
+
+  Delegates to the meeting-management, series, poll-voting or scheduling-flow mount
+  depending on the live action and params. Accepts `delegate_fn` — a
+  `(theme_id, function, args -> result)` function — for delegating
+  scheduling-flow mounts to the theme module.
+  """
+  @spec mount_with_profile(map(), map(), map(), Phoenix.LiveView.Socket.t(), function()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  def mount_with_profile(profile, params, session, socket, delegate_fn) do
+    action = socket.assigns[:live_action]
+
+    cond do
+      action in [:reschedule, :cancel, :cancel_confirmed] && params["meeting_uid"] ->
+        mount_meeting_management(profile, params, socket, action)
+
+      action == :series && params["series_uid"] ->
+        mount_series(profile, params, socket)
+
+      action == :poll_voting && params["token"] ->
+        mount_poll_voting(profile, params, socket)
+
+      true ->
+        mount_scheduling_flow(profile, params, session, socket, delegate_fn)
+    end
+  end
+
+  @doc """
+  Mounts the socket when no organizer profile is available.
+
+  Accepts `delegate_fn` — a `(theme_id, function, args -> result)` function — for delegating
+  mounts to the theme module.
+  """
+  @spec mount_without_profile(map(), map(), Phoenix.LiveView.Socket.t(), function()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  def mount_without_profile(params, session, socket, delegate_fn) do
+    case renamed_host_meeting_path(params, socket.assigns[:live_action]) do
+      {:ok, path} -> {:ok, LiveView.redirect(socket, to: path)}
+      {:error, :not_found} -> mount_unknown_or_anonymous(params, session, socket, delegate_fn)
+    end
+  end
+
+  # A cancel, reschedule or series link under a username nobody holds any
+  # more: the host has since renamed themselves. The uid names the meeting
+  # (or the series), so send the
+  # visitor to the host's current page for it. A username someone else has
+  # since claimed is handled by `meeting_not_found/4` instead, after that
+  # host's scoped lookup has found nothing of theirs.
+  defp renamed_host_meeting_path(%{"username" => username, "meeting_uid" => uid}, action)
+       when is_binary(username) and is_binary(uid) and
+              action in [:reschedule, :cancel, :cancel_confirmed],
+       do: MeetingLinks.current_path(uid, action)
+
+  defp renamed_host_meeting_path(%{"username" => username, "series_uid" => uid}, :series)
+       when is_binary(username) and is_binary(uid),
+       do: MeetingLinks.current_series_path(uid)
+
+  defp renamed_host_meeting_path(_params, _action), do: {:error, :not_found}
+
+  defp mount_unknown_or_anonymous(params, session, socket, delegate_fn) do
+    if params["username"] && is_nil(socket.assigns[:organizer_profile]) do
+      # Unknown organizer: raise a real 404 rather than a soft-404 redirect to
+      # "/". Raising in mount is handled by Plug.Exception on the dead render,
+      # so crawlers and clients see the correct status.
+      raise TymeslotWeb.NotFoundError, "No organizer found for #{inspect(params["username"])}"
+    else
+      case Context.from_params(params) do
+        %Context{} = context ->
+          socket = Context.assign_to_socket(socket, context)
+
+          delegate_fn.(context.theme_id, :mount, [params, session, socket])
+
+        nil ->
+          {:ok, assign(socket, :error, ErrorBoundary.load_failed_message())}
+      end
+    end
+  end
+
+  # Mounts a scheduling flow for a known organizer profile. `delegate_fn` — a
+  # `(theme_id, function, args -> result)` function — delegates to the theme
+  # module.
+  @spec mount_scheduling_flow(map(), map(), map(), Phoenix.LiveView.Socket.t(), function()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  defp mount_scheduling_flow(profile, params, session, socket, delegate_fn) do
+    case LinkAccessPolicy.check_public_readiness(profile) do
+      {:ok, :ready} ->
+        case prepare_theme_context(profile, params, socket) do
+          {:ok, context, socket} ->
+            delegate_fn.(context.theme_id, :mount, [params, session, socket])
+
+          {:error, error_socket} ->
+            {:ok, error_socket}
+        end
+
+      {:error, reason} ->
+        mount_readiness_error(profile, params, socket, reason)
+    end
+  end
+
+  # Loads a meeting and prepares the socket for the cancel/reschedule/cancel_confirmed flow.
+  @spec mount_meeting_management(map(), map(), Phoenix.LiveView.Socket.t(), atom()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  defp mount_meeting_management(profile, params, socket, action) do
+    meeting_uid = params["meeting_uid"]
+
+    case MeetingManagement.validate_and_load_meeting(meeting_uid, action, profile.user_id) do
+      {:ok, meeting} ->
+        {socket, profile} = follow_attendee_language(socket, profile, meeting)
+
+        # A booking made through a booking page is managed in that page's look.
+        profile = BookingPages.for_meeting(profile, meeting)
+
+        socket =
+          setup_meeting_management_socket(
+            socket,
+            profile,
+            meeting,
+            meeting_uid,
+            action,
+            params
+          )
+
+        {:ok, socket}
+
+      # A group meeting's uid names the shared slot, which nobody on it may
+      # cancel or move from here; the visitor is sent to the host's booking
+      # page, told where their own spot's links are.
+      {:error, :group_meeting} ->
+        {:ok,
+         socket
+         |> LiveView.put_flash(:error, MeetingManagement.group_meeting_message())
+         |> LiveView.redirect(to: ~p"/#{profile.username}")}
+
+      # A meeting confirmed from a poll is the host's to move or cancel; the
+      # person in its attendee fields is a guest like everyone else.
+      {:error, :managed_by_host} ->
+        {:ok,
+         socket
+         |> LiveView.put_flash(:error, MeetingManagement.managed_by_host_message())
+         |> LiveView.redirect(to: ~p"/#{profile.username}")}
+
+      {:error, :not_found} ->
+        {:ok, meeting_not_found(socket, profile, meeting_uid, action)}
+
+      # The host's request for a new time lapsed unanswered: nothing is
+      # booked, so the visitor is sent to the booking page to book afresh.
+      {:error, {_refused, :request_lapsed} = reason} ->
+        {:ok,
+         socket
+         |> LiveView.put_flash(:error, refusal_message(reason))
+         |> LiveView.redirect(to: ~p"/#{profile.username}")}
+
+      {:error, reason} ->
+        {:ok,
+         socket
+         |> LiveView.put_flash(:error, refusal_message(reason))
+         |> LiveView.redirect(to: ~p"/#{profile.username}")}
+    end
+  end
+
+  # The attendee's page for a whole series. Not found, and a series of
+  # another host's, are treated as a meeting's uid is.
+  @spec mount_series(map(), map(), Phoenix.LiveView.Socket.t()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  defp mount_series(profile, params, socket) do
+    case SeriesManagement.load(params["series_uid"], profile) do
+      {:ok, series} ->
+        {socket, profile} = follow_attendee_language(socket, profile, series)
+
+        socket =
+          socket
+          |> assign(:organizer_profile, profile)
+          |> SeriesManagement.assign_series(series)
+          |> assign(:loading, false)
+          |> assign(:has_theme, true)
+
+        # A series booked through a booking page is managed in its look.
+        profile =
+          case socket.assigns.series_sessions do
+            [%{meeting: meeting} | _rest] -> BookingPages.for_meeting(profile, meeting)
+            [] -> profile
+          end
+
+        {:ok, socket |> assign(:organizer_profile, profile) |> assign_page_theme(profile, params)}
+
+      {:redirect, path} ->
+        {:ok, LiveView.redirect(socket, to: path)}
+
+      {:error, :not_found} ->
+        {:ok, SeriesManagement.not_found_redirect(socket, profile)}
+    end
+  end
+
+  # A meeting's pages, and a series', speak the language the attendee booked
+  # in, unless the visitor picked another (`?locale=`, the language
+  # switcher's): the emailed links carry no locale, and the attendee may open
+  # them anywhere (`OrganizerHelpers.follow_booked_language/2`).
+  defp follow_attendee_language(socket, profile, %{attendee_locale: booked}) do
+    socket = OrganizerHelpers.follow_booked_language(socket, booked)
+    {socket, socket.assigns[:organizer_profile] || profile}
+  end
+
+  # A cancel or reschedule refusal. A reason `BookingErrorMessage` does not
+  # name reads as the page's own failure, not a booking's.
+  defp refusal_message(reason) do
+    BookingErrorMessage.message(
+      reason,
+      dgettext("booking_manage", "This meeting can no longer be changed.")
+    )
+  end
+
+  # The host this username names has no meeting with that uid. When another
+  # host does, the link was handed out under a username its host has since
+  # given up and someone else has claimed: send the visitor to the owner's
+  # current page, exactly as the uid-only link would. Nothing of the new
+  # holder's is shown, and their scoped lookup never acts on the meeting.
+  defp meeting_not_found(socket, profile, meeting_uid, action) do
+    case MeetingLinks.current_path(meeting_uid, action) do
+      {:ok, path} ->
+        if String.starts_with?(path, "/#{profile.username}/"),
+          do: meeting_not_found_redirect(socket, profile),
+          else: LiveView.redirect(socket, to: path)
+
+      {:error, :not_found} ->
+        meeting_not_found_redirect(socket, profile)
+    end
+  end
+
+  # To the booking page of the host the link names: "/" would put a guest
+  # on the sign-in page.
+  defp meeting_not_found_redirect(socket, profile) do
+    socket
+    |> LiveView.put_flash(:error, BookingErrorMessage.message(:meeting_not_found))
+    |> LiveView.redirect(to: ~p"/#{profile.username}")
+  end
+
+  # Mounts the public poll voting page for a known organizer profile.
+  #
+  # Applies the same public-readiness gate as the scheduling flow, then loads the
+  # poll by its public token. A missing token, or one whose poll belongs to a
+  # different host than the resolved username, redirects to that username's booking
+  # page exactly as a failed meeting-management load does: a poll must never render
+  # under the wrong host's theme.
+  @spec mount_poll_voting(map(), map(), Phoenix.LiveView.Socket.t()) ::
+          {:ok, Phoenix.LiveView.Socket.t()}
+  defp mount_poll_voting(profile, params, socket) do
+    case LinkAccessPolicy.check_public_readiness(profile) do
+      {:ok, :ready} ->
+        load_and_mount_poll(profile, params, socket)
+
+      {:error, reason} ->
+        mount_readiness_error(profile, params, socket, reason)
+    end
+  end
+
+  # Builds the theme context from params and profile, assigns it to the socket.
+  @spec prepare_theme_context(map(), map(), Phoenix.LiveView.Socket.t()) ::
+          {:ok, Context.t(), Phoenix.LiveView.Socket.t()} | {:error, Phoenix.LiveView.Socket.t()}
+  defp prepare_theme_context(profile, params, socket) do
+    case Context.from_params(params, profile) do
+      %Context{} = context ->
+        socket =
+          socket
+          |> Context.assign_to_socket(context)
+          # Only a demo provider's organiser is a demo one; `Demo.NoOp`
+          # answers false for every profile.
+          |> assign(:demo_theme_switcher, Demo.demo_profile?(profile))
+          |> ThemeCustomizationHelpers.assign_theme_customization(profile, context.theme_id)
+
+        {:ok, context, socket}
+
+      nil ->
+        {:error, assign(socket, :error, ErrorBoundary.load_failed_message())}
+    end
+  end
+
+  # Private
+
+  defp load_and_mount_poll(profile, params, socket) do
+    case Polls.get_poll_for_voting(params["token"]) do
+      {:ok, %{user_id: user_id} = poll} when user_id == profile.user_id ->
+        case prepare_theme_context(profile, params, socket) do
+          {:ok, _context, socket} ->
+            {:ok, PollVoting.assign_poll_state(socket, poll, params)}
+
+          {:error, error_socket} ->
+            {:ok, error_socket}
+        end
+
+      _not_found_or_wrong_host ->
+        {:ok,
+         socket
+         |> LiveView.put_flash(:error, dgettext("booking", "Poll not found"))
+         |> LiveView.redirect(to: ~p"/#{profile.username}")}
+    end
+  end
+
+  # An organiser who is not ready for public bookings is an ordinary product
+  # state, not a failure: the theme still renders, and its own `ErrorComponent`
+  # shows the explanation in place of the booking flow.
+  #
+  # The message is assigned, deliberately not flashed. The scheduling layout
+  # renders a flash group of its own on top of the root layout's, so a flash
+  # here surfaced the same sentence twice above a card already carrying it.
+  #
+  # The refused mount never reaches the theme's own mount, where an owner
+  # preview is recognised, so it is recognised here too: the owner looking
+  # at their own page (the onboarding stage) is not a visitor to win over,
+  # and the page carries no branding invitation for them
+  # (`Shared.SchedulingPage`).
+  defp mount_readiness_error(profile, params, socket, reason) do
+    case prepare_theme_context(profile, params, socket) do
+      {:ok, _context, socket} ->
+        {:ok,
+         socket
+         |> LiveView.clear_flash()
+         |> assign(:owner_preview, PreviewToken.owner?(params["preview_token"], profile.user_id))
+         |> assign(:scheduling_error_message, LinkAccessPolicy.reason_to_message(reason))}
+
+      {:error, error_socket} ->
+        {:ok, error_socket}
+    end
+  end
+
+  defp setup_meeting_management_socket(
+         socket,
+         profile,
+         meeting,
+         meeting_uid,
+         action,
+         params
+       ) do
+    socket =
+      socket
+      |> assign(
+        :organizer_profile,
+        ContentTranslations.localise(profile, socket.assigns[:content_locale])
+      )
+      |> assign(:booking_window_days, OrganizerHelpers.booking_window_days(profile))
+      |> assign(:meeting, meeting)
+      |> assign(:meeting_uid, meeting_uid)
+      |> assign(:booking_path, PathHandlers.meeting_booking_path(profile, meeting))
+      |> assign(:loading, false)
+      |> assign(:has_theme, true)
+      |> assign_page_theme(profile, params)
+
+    MeetingManagement.assign_action_specific_data(socket, action, meeting, params)
+  end
+
+  # The booking pages' resolution: `?theme=`, then the organiser's theme,
+  # each only when the catalogue knows it, then the default. The page, its
+  # stylesheet and its customisation all follow the one answer.
+  defp assign_page_theme(socket, profile, params) do
+    {socket, theme_id} =
+      case Context.from_params(params, profile) do
+        %Context{} = context ->
+          {Context.assign_to_socket(socket, context), context.theme_id}
+
+        nil ->
+          theme_id = Registry.default_theme_id()
+          {assign(socket, :theme_id, theme_id), theme_id}
+      end
+
+    ThemeCustomizationHelpers.assign_theme_customization(socket, profile, theme_id)
+  end
+end

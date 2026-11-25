@@ -1,0 +1,369 @@
+defmodule Tymeslot.Bookings.ActivationTest do
+  @moduledoc """
+  The confirmation-side effects shared by every path that turns a meeting
+  into a booking the world knows about: a fresh confirmed booking, a held
+  request the host just approved, the Stripe checkout webhook, and an
+  ad-hoc host booking.
+
+  Coverage here proves the branching `activate_in_transaction/2`'s
+  moduledoc promises:
+  a request still `awaiting_approval` takes the request fan-out rather than
+  the confirmation one, a meeting with an API-created video provider hands
+  off to `VideoRoomWorker` instead of scheduling the confirmation email
+  itself (the room-then-email ordering the moduledoc calls load-bearing),
+  and everything else goes straight to the confirmation email. An email
+  that cannot be enqueued is returned, so the caller's transaction rolls the
+  booking back with it.
+  """
+
+  # async: false already required by the module's own setup; the recovery
+  # tests below additionally patch Oban.insert/1 with :meck, which replaces
+  # the module globally for every process.
+  use Tymeslot.DataCase, async: false
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  import Tymeslot.Factory
+
+  @moduletag :bookings
+  @moduletag :video
+
+  alias Ecto.Changeset
+  alias Tymeslot.Bookings.Activation
+  alias Tymeslot.Workers.EmailWorker
+  alias Tymeslot.Workers.VideoRoomWorker
+
+  # Runs activation as every caller does, inside the transaction that made the
+  # booking, rolling back on an error as they do.
+  defp activate(meeting, opts \\ []) do
+    Repo.transaction(fn ->
+      case Activation.activate_in_transaction(meeting, opts) do
+        {:ok, pending} -> pending
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
+  defp meeting_for(user, attrs) do
+    defaults = %{organizer_user: user, organizer_user_id: user.id}
+    insert(:meeting, Map.merge(defaults, attrs))
+  end
+
+  describe "activate_in_transaction/2 — a request still awaiting approval" do
+    test "dispatches to the request fan-out, not the confirmation one" do
+      user = insert(:user)
+
+      meeting =
+        meeting_for(user, %{
+          status: :awaiting_approval,
+          approval_requested_at: DateTime.utc_now(:second),
+          approval_deadline_at: DateTime.add(DateTime.utc_now(:second), 24, :hour)
+        })
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_booking_request_emails", "meeting_id" => meeting.id}
+      )
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+
+      refute_enqueued(worker: VideoRoomWorker)
+    end
+  end
+
+  describe "activate_in_transaction/2 — with_video_room: true" do
+    test "enqueues the video-room job rather than scheduling the confirmation email itself" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "mirotalk")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      assert {:ok, _pending} = activate(meeting, with_video_room: true)
+
+      assert_enqueued(
+        worker: VideoRoomWorker,
+        args: %{"meeting_id" => meeting.id, "announce" => true}
+      )
+
+      # The room must exist before the join link can go out, so the worker
+      # sends the confirmation itself once it has created it — Activation
+      # must not race it by scheduling the same email up front.
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "a meeting with no video integration goes straight to notification" do
+      user = insert(:user)
+      meeting = meeting_for(user, %{status: :confirmed, video_integration_id: nil})
+
+      assert {:ok, _pending} = activate(meeting, with_video_room: true)
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+
+      refute_enqueued(worker: VideoRoomWorker)
+    end
+  end
+
+  describe "activate_in_transaction/2 — auto-detecting the provider" do
+    test "a Zoom meeting takes the room-creating path" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "zoom")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: VideoRoomWorker,
+        args: %{"meeting_id" => meeting.id, "announce" => true}
+      )
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "a kMeet meeting takes the room-creating path" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "kmeet")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: VideoRoomWorker,
+        args: %{"meeting_id" => meeting.id, "announce" => true}
+      )
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "a Jitsi meeting takes the room-creating path" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "jitsi")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: VideoRoomWorker,
+        args: %{"meeting_id" => meeting.id, "announce" => true}
+      )
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "a Nextcloud Talk booking without with_video_room: true gets its room before the confirmation" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "nextcloud_talk")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: VideoRoomWorker,
+        args: %{"meeting_id" => meeting.id, "announce" => true}
+      )
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "a meeting whose provider is not API-created goes straight to notification" do
+      user = insert(:user)
+      meeting = meeting_for(user, %{status: :confirmed, video_integration_id: nil})
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+
+      refute_enqueued(worker: VideoRoomWorker)
+    end
+
+    test "an integration whose provider is no longer recognised still goes to notification" do
+      # A provider disabled after the integration was created — the row is
+      # inserted directly, bypassing the changeset's enum validation, exactly
+      # as a legacy row already in the database would.
+      user = insert(:user)
+
+      video_integration =
+        insert(:video_integration, user: user, provider: "discontinued_provider")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      assert {:ok, _pending} = activate(meeting)
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+
+      refute_enqueued(worker: VideoRoomWorker)
+    end
+  end
+
+  describe "activate_in_transaction/2 — recovery branches" do
+    test "awaiting_approval: a failed request-email insert rolls the request back, nudge and expiry too" do
+      user = insert(:user)
+
+      meeting =
+        meeting_for(user, %{
+          status: :awaiting_approval,
+          approval_requested_at: DateTime.utc_now(:second),
+          approval_deadline_at: DateTime.add(DateTime.utc_now(:second), 24, :hour)
+        })
+
+      # Only the request-email insert fails. The host would never hear of the
+      # request, so it is returned, and the jobs the same call armed roll
+      # back with the booking.
+      :meck.new(Oban, [:passthrough])
+
+      :meck.expect(Oban, :insert, fn changeset ->
+        if Changeset.get_field(changeset, :args)["action"] == "send_booking_request_emails" do
+          {:error, :simulated_failure}
+        else
+          :meck.passthrough([changeset])
+        end
+      end)
+
+      try do
+        assert {:error, _reason} = activate(meeting)
+      after
+        :meck.unload(Oban)
+      end
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_booking_request_emails", "meeting_id" => meeting.id}
+      )
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_booking_approval_nudge", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "with_video_room: true — a failed video-room insert still enqueues the confirmation email" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "mirotalk")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      # Only the video-room insert fails; the fallback (`notify/1`) is what
+      # guarantees the attendee still gets a confirmation email rather than
+      # nothing at all when the video job cannot be enqueued.
+      :meck.new(Oban, [:passthrough])
+
+      :meck.expect(Oban, :insert, fn changeset ->
+        if Changeset.get_field(changeset, :worker) == "Tymeslot.Workers.VideoRoomWorker" do
+          {:error, :simulated_failure}
+        else
+          :meck.passthrough([changeset])
+        end
+      end)
+
+      try do
+        assert {:ok, _pending} = activate(meeting, with_video_room: true)
+      after
+        :meck.unload(Oban)
+      end
+
+      refute_enqueued(worker: VideoRoomWorker)
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "notify/1: a failed confirmation-email insert is returned, so the booking rolls back" do
+      # No video integration, so this goes straight to `notify/1`. Only the
+      # confirmation-email insert fails: the booking must not commit with its
+      # announcement claimed and no confirmation queued.
+      user = insert(:user)
+      meeting = meeting_for(user, %{status: :confirmed, video_integration_id: nil})
+
+      :meck.new(Oban, [:passthrough])
+
+      :meck.expect(Oban, :insert, fn changeset ->
+        if Changeset.get_field(changeset, :args)["action"] == "send_confirmation_emails" do
+          {:error, :simulated_failure}
+        else
+          :meck.passthrough([changeset])
+        end
+      end)
+
+      try do
+        assert {:error, _reason} = activate(meeting)
+      after
+        :meck.unload(Oban)
+      end
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_confirmation_emails", "meeting_id" => meeting.id}
+      )
+
+      assert %{announced_at: nil} = Repo.reload!(meeting)
+    end
+  end
+
+  describe "activate_in_transaction/2 — announce: :series" do
+    test "a failed video-room insert is returned, so the series rolls back" do
+      user = insert(:user)
+      video_integration = insert(:video_integration, user: user, provider: "mirotalk")
+
+      meeting =
+        meeting_for(user, %{status: :confirmed, video_integration_id: video_integration.id})
+
+      :meck.new(Oban, [:passthrough])
+
+      :meck.expect(Oban, :insert, fn changeset ->
+        if Changeset.get_field(changeset, :worker) == "Tymeslot.Workers.VideoRoomWorker" do
+          {:error, :simulated_failure}
+        else
+          :meck.passthrough([changeset])
+        end
+      end)
+
+      # Unlike a booking of its own, which falls back to announcing
+      # without a room, the error comes back for the caller to roll back.
+      try do
+        assert {:error, _reason} = activate(meeting, with_video_room: true, announce: :series)
+      after
+        :meck.unload(Oban)
+      end
+    end
+  end
+end

@@ -1,0 +1,499 @@
+defmodule TymeslotWeb.Live.Scheduling.CustomFieldsBookingFlowTest do
+  @moduledoc """
+  End-to-end integration test for the custom fields booking flow, walked on
+  every theme in `TymeslotWeb.ThemeTestMatrix` on the classic journey, one
+  page per step (the wizard of questions, and the bare thank-you address);
+  the regression without custom fields runs on every shipped theme. Paper
+  asks its questions all at once on its schedule screen, and
+  `paper_theme_test.exs` walks them there.
+
+  Each theme ships its own questions and confirmation components, and the
+  dispatcher routes a booker to whichever theme the organiser picked, so the
+  walk runs once per theme rather than on the default theme alone.
+
+  Two scenarios:
+
+  1. Booker walks the full wizard with a `short_text` and a `note` field.
+     Verifies: Questions step renders, required-field validation blocks
+     advancement, `note` acknowledgement is enforced, the booking is
+     persisted with `custom_fields_snapshot` and `custom_field_answers`,
+     and the confirmation page shows the answers.
+
+  2. Meeting type with no custom fields uses the 4-step flow (no
+     Questions step).
+
+  The step counter ("Question 1 of 2") is visible text in some themes and only
+  an `aria-label` in others; the assertions match either, so a theme that
+  dropped it would leave screen-reader users with no sense of progress and
+  fail here.
+  """
+
+  use TymeslotWeb.LiveCase, async: false
+
+  @moduletag :integration
+  @moduletag :scheduling
+  @moduletag :live
+  @moduletag :custom_fields
+
+  import Mox
+  import Tymeslot.Factory
+  import Tymeslot.BookingTestHelpers
+
+  alias Tymeslot.Infrastructure.AvailabilityCache
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Repo
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.TestMocks
+  alias TymeslotWeb.BookingDriver
+  alias TymeslotWeb.ThemeTestMatrix
+
+  # Every theme's booking step carries this testid; its heading wording is the
+  # theme's own.
+  @booking_form "[data-testid='booking-form']"
+
+  setup :verify_on_exit!
+
+  setup tags do
+    Mox.set_mox_from_context(tags)
+    RateLimiter.clear_all()
+    AvailabilityCache.clear_all()
+
+    old_cfg = Application.get_env(:tymeslot, :recaptcha, [])
+    Application.put_env(:tymeslot, :recaptcha, Keyword.put(old_cfg, :booking_enabled, false))
+    on_exit(fn -> Application.put_env(:tymeslot, :recaptcha, old_cfg) end)
+
+    TestMocks.setup_all_mocks()
+
+    user = insert(:user)
+
+    profile =
+      insert(:profile,
+        user: user,
+        username: "cf-booker",
+        booking_theme: Map.fetch!(tags, :theme_id),
+        timezone: "America/New_York"
+      )
+
+    schedule =
+      insert(:availability_schedule,
+        profile: profile,
+        is_default: true,
+        advance_booking_days: 30,
+        min_advance_hours: 0,
+        buffer_before_minutes: 0,
+        buffer_after_minutes: 0
+      )
+
+    Enum.each(1..7, fn day_of_week ->
+      insert(:weekly_availability,
+        schedule: schedule,
+        day_of_week: day_of_week,
+        is_available: true,
+        start_time: ~T[09:00:00],
+        end_time: ~T[17:00:00]
+      )
+    end)
+
+    insert(:calendar_integration, user: user, is_active: true)
+
+    %{profile: profile, user: user}
+  end
+
+  # One page per step: the classic journey's shape (Quill, Rhythm).
+  for theme <- Enum.filter(ThemeTestMatrix.all(), &(&1.journey == :classic)) do
+    describe "#{theme.name}: booking flow with custom fields" do
+      @describetag theme_id: theme.id
+
+      setup %{user: user} do
+        base_mt =
+          insert(:meeting_type,
+            user: user,
+            duration_minutes: 30,
+            name: "Custom Fields Chat",
+            is_active: true
+          )
+
+        {:ok, mt} =
+          MeetingTypes.update_meeting_type(base_mt, %{
+            "custom_fields" => [
+              %{
+                "id" => "cf-text-001",
+                "type" => "short_text",
+                "label" => "Company",
+                "required" => true,
+                "position" => 0
+              },
+              %{
+                "id" => "cf-note-002",
+                "type" => "note",
+                "label" => "Terms",
+                "body" => "Please agree to the call recording terms.",
+                "required" => true,
+                "position" => 1
+              }
+            ]
+          })
+
+        %{meeting_type: mt}
+      end
+
+      @tag :capture_log
+      test "questions step renders, validation blocks advance, booking persists snapshot and answers",
+           %{conn: conn, profile: profile, meeting_type: _meeting_type} do
+        # Navigate overview → schedule → pick a slot (lands on :questions).
+        view = navigate_to_booking_form_with_questions(conn, profile)
+
+        # --- Questions step rendered ---
+        html = render(view)
+        assert html =~ "Question 1 of 2"
+        assert html =~ "Company"
+
+        # --- Required field blocks advance when empty ---
+        press_continue(view)
+        assert render(view) =~ "Question 1 of 2"
+
+        # --- Fill the short_text field and advance ---
+        BookingDriver.answer(view, "cf-text-001", "Acme Corp")
+
+        press_continue(view)
+
+        assert render(view) =~ "Question 2 of 2"
+        assert render(view) =~ "Please agree to the call recording terms."
+
+        # --- Note acknowledgement is enforced ---
+        press_continue(view)
+        assert render(view) =~ "Question 2 of 2"
+
+        # --- Tick acknowledgement then advance to booking ---
+        BookingDriver.answer(view, "cf-note-002", "acknowledge")
+
+        press_continue(view)
+
+        # --- Booking step ---
+        assert has_element?(view, @booking_form)
+
+        view
+        |> form("form[data-fact='attendee']", %{
+          "booking" => %{
+            "name" => "Jane Doe",
+            "email" => "jane.cf@example.com",
+            "message" => ""
+          }
+        })
+        |> render_submit()
+
+        # Drain async state
+        _drain = :sys.get_state(view.pid)
+
+        # --- Confirmation page shows answers ---
+        html = render(view)
+        assert html =~ "Your answers"
+        assert html =~ "Company"
+        assert html =~ "Acme Corp"
+        assert html =~ "Terms"
+
+        # --- Persisted booking carries snapshot and answers ---
+        [meeting] = Repo.all_by(MeetingSchema, attendee_email: "jane.cf@example.com")
+
+        # --- Confirmation offers an "Add to calendar" download for this meeting ---
+        assert html =~ "Add to calendar"
+        assert html =~ ~s(href="/#{profile.username}/meeting/#{meeting.uid}/calendar.ics")
+
+        assert length(meeting.custom_fields_snapshot) == 2
+
+        labels = Enum.map(meeting.custom_fields_snapshot, & &1["label"])
+        assert "Company" in labels
+        assert "Terms" in labels
+
+        answers = meeting.custom_field_answers
+        assert map_size(answers) == 2
+
+        # The short_text answer must be the value we typed.
+        text_answer =
+          Enum.find_value(meeting.custom_fields_snapshot, fn d ->
+            if d["label"] == "Company", do: answers[d["id"]]
+          end)
+
+        assert text_answer == "Acme Corp"
+
+        # The note answer must record confirmation.
+        note_answer =
+          Enum.find_value(meeting.custom_fields_snapshot, fn d ->
+            if d["label"] == "Terms", do: answers[d["id"]]
+          end)
+
+        assert match?(%{"confirmed" => true}, note_answer)
+      end
+
+      test "a required question left empty is refused in the guest's language",
+           %{conn: conn, profile: profile} do
+        view = navigate_to_booking_form(conn, profile, nil, locale: "de")
+
+        press_continue(view)
+
+        html = render(view)
+        assert html =~ "Text ist erforderlich"
+        refute html =~ "Text is required"
+      end
+    end
+
+    describe "#{theme.name}: questions step – back-navigation preserves answers" do
+      @describetag theme_id: theme.id
+
+      setup %{user: user} do
+        base_mt =
+          insert(:meeting_type,
+            user: user,
+            duration_minutes: 30,
+            name: "Preserve Answers Chat",
+            is_active: true
+          )
+
+        {:ok, mt} =
+          MeetingTypes.update_meeting_type(base_mt, %{
+            "custom_fields" => [
+              %{
+                "id" => "cf-preserve-001",
+                "type" => "short_text",
+                "label" => "Company",
+                "required" => true,
+                "position" => 0
+              }
+            ]
+          })
+
+        %{meeting_type: mt}
+      end
+
+      @tag :capture_log
+      test "navigating :booking → :questions keeps previously entered answers",
+           %{conn: conn, profile: profile} do
+        view = navigate_to_booking_form_with_questions(conn, profile)
+
+        # Fill in the answer and advance to :booking.
+        BookingDriver.answer(view, "cf-preserve-001", "Acme Corp")
+
+        press_continue(view)
+
+        assert has_element?(view, @booking_form)
+
+        # Go back to :questions.
+        BookingDriver.back(view)
+
+        html = render(view)
+
+        # The questions step re-rendered (the question label is visible).
+        assert html =~ "Company"
+
+        # The previously entered answer is still present in the input — not wiped.
+        assert html =~ "Acme Corp"
+
+        # The booking details form is gone.
+        refute has_element?(view, @booking_form)
+      end
+
+      @tag :capture_log
+      test "pressing back on the first question returns to the schedule step",
+           %{conn: conn, profile: profile} do
+        view = navigate_to_booking_form_with_questions(conn, profile)
+
+        # We're on the first (and only) question — the back button must work,
+        # taking the booker back to time-slot selection rather than being a
+        # dead-end.
+        assert render(view) =~ "Company"
+
+        BookingDriver.back(view)
+
+        html = render(view)
+
+        refute html =~ "Company"
+
+        assert has_element?(view, "[data-fact='time'], [data-fact='slot']")
+        assert has_element?(view, "[data-intent='continue']")
+      end
+    end
+
+    describe "#{theme.name}: an answer sent once the questions are off screen" do
+      @describetag theme_id: theme.id
+
+      setup %{user: user} do
+        base_mt =
+          insert(:meeting_type,
+            user: user,
+            duration_minutes: 30,
+            name: "Validate Answers Chat",
+            is_active: true
+          )
+
+        {:ok, mt} =
+          MeetingTypes.update_meeting_type(base_mt, %{
+            "custom_fields" => [
+              %{
+                "id" => "cf-text-001",
+                "type" => "short_text",
+                "label" => "Company",
+                "required" => true,
+                "position" => 0
+              }
+            ]
+          })
+
+        %{meeting_type: mt}
+      end
+
+      @tag :capture_log
+      test "is dropped, and the booking keeps the answer given on the questions step",
+           %{conn: conn, profile: profile} do
+        view = navigate_to_booking_form_with_questions(conn, profile)
+
+        BookingDriver.answer(view, "cf-text-001", "Acme Corp")
+
+        press_continue(view)
+
+        assert has_element?(view, @booking_form)
+        before = render(view)
+
+        # A blank answer relayed as if from the questions step, which is no
+        # longer on screen: the page does not take it.
+        send(view.pid, {:step_event, :questions, :answer, {"cf-text-001", ""}})
+
+        assert render(view) == before
+
+        view
+        |> form("form[data-fact='attendee']", %{
+          "booking" => %{
+            "name" => "Mallory",
+            "email" => "mallory@example.com",
+            "message" => ""
+          }
+        })
+        |> render_submit()
+
+        _drain = :sys.get_state(view.pid)
+
+        html = render(view)
+        assert html =~ "Your answers"
+        assert html =~ "Acme Corp"
+
+        [meeting] = Repo.all_by(MeetingSchema, attendee_email: "mallory@example.com")
+        assert meeting.custom_field_answers["cf-text-001"] == "Acme Corp"
+      end
+
+      # "Schedule another" keeps the meeting type and forgets the rest: the
+      # next booking is someone else's, so the questions start blank.
+      @tag :capture_log
+      test "are asked again, blank, after Schedule another", %{conn: conn, profile: profile} do
+        view = navigate_to_booking_form_with_questions(conn, profile)
+
+        BookingDriver.answer(view, "cf-text-001", "Acme Corp")
+        BookingDriver.continue(view)
+        BookingDriver.submit(view, %{name: "Mallory", email: "mallory@example.com"})
+        assert render(view) =~ "Acme Corp"
+
+        BookingDriver.restart(view)
+        [slug] = BookingDriver.meeting_types(view)
+        BookingDriver.choose_meeting_type(view, slug)
+        BookingDriver.continue(view)
+        BookingDriver.pick_first_slot(view)
+        BookingDriver.continue(view)
+
+        assert has_element?(view, "form[data-fact='answer'][data-question='cf-text-001']")
+        refute render(view) =~ "Acme Corp"
+      end
+    end
+
+    describe "#{theme.name}: direct visit to the thank-you page" do
+      @describetag theme_id: theme.id
+
+      @tag :capture_log
+      test "renders without crashing when no booking data is present",
+           %{conn: conn, profile: profile} do
+        # A direct GET to /:username/thank-you mounts the :confirmation state
+        # without going through the booking submission handler, so the
+        # custom_fields_snapshot / custom_field_answers assigns are never set by
+        # that path. Safe defaults must keep the confirmation component from
+        # raising a KeyError.
+        {:ok, view, html} =
+          live(conn, "/#{profile.username}/thank-you?timezone=#{profile.timezone}")
+
+        socket = :sys.get_state(view.pid).socket
+        assert socket.assigns.theme_id == unquote(theme.id)
+        assert socket.assigns.custom_fields_snapshot == []
+        assert socket.assigns.custom_field_answers == %{}
+
+        # No `meeting_uid` reaches this mount (a bare refresh/direct link carries
+        # none), so the `:if` guard on the "Add to calendar" link must hide it:
+        # rendering it here would dead-link to a meeting the socket never loaded.
+        refute html =~ ~s(data-testid="add-to-calendar")
+      end
+
+      @tag :capture_log
+      test "names an anonymous guest in the visitor's language",
+           %{conn: conn, profile: profile} do
+        {:ok, view, _html} =
+          live(conn, "/#{profile.username}/thank-you?timezone=#{profile.timezone}&locale=de")
+
+        assert :sys.get_state(view.pid).socket.assigns.name == "Gast"
+      end
+
+      # The page holds no meeting type, so the schedule it would otherwise
+      # restart on could offer no day or time and refuse Back.
+      @tag :capture_log
+      test "schedule another starts again on the overview",
+           %{conn: conn, profile: profile} do
+        {:ok, view, _html} =
+          live(conn, "/#{profile.username}/thank-you?timezone=#{profile.timezone}")
+
+        view |> element("[phx-click='schedule_another']") |> render_click()
+
+        assert :sys.get_state(view.pid).socket.assigns.current_state == :overview
+      end
+    end
+  end
+
+  for theme <- ThemeTestMatrix.all() do
+    describe "#{theme.name}: booking flow without custom fields (regression)" do
+      @describetag theme_id: theme.id
+
+      setup %{user: user} do
+        mt =
+          insert(:meeting_type,
+            user: user,
+            duration_minutes: 30,
+            name: "No Fields Chat",
+            is_active: true
+          )
+
+        %{meeting_type: mt}
+      end
+
+      @tag :capture_log
+      test "no questions step is rendered when meeting type has no custom fields",
+           %{conn: conn, profile: profile} do
+        # navigate_to_booking_form ends at :booking — no :questions detour.
+        view = navigate_to_booking_form(conn, profile, nil)
+
+        html = render(view)
+        refute html =~ "Question 1 of"
+        assert has_element?(view, @booking_form)
+      end
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Helpers
+  # ---------------------------------------------------------------------------
+
+  # When custom fields are present, the same booking-flow navigation that
+  # lands on :booking instead routes to :questions — so the shared helper
+  # leaves us on the questions step.
+  defp navigate_to_booking_form_with_questions(conn, profile) do
+    navigate_to_booking_form(conn, profile, nil)
+  end
+
+  # Presses the way on whether or not it is enabled, as a booker can: the
+  # driver's `continue/1` waits for an enabled one, and these tests are about
+  # what a press does while an answer is still missing.
+  defp press_continue(view), do: view |> element("[data-intent='continue']") |> render_click()
+end

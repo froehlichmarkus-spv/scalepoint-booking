@@ -1,0 +1,185 @@
+defmodule Tymeslot.Workers.VideoRoom.Announcement do
+  @moduledoc """
+  The event a video room job raises once its room exists, or once it is clear
+  the room never will.
+
+  A caller that wants every notification to carry the join link hands the
+  whole announcement to `Tymeslot.Workers.VideoRoomWorker` instead of sending
+  it before the room is there. Two announcements can be owed that way:
+
+    * `:created`, a new booking. For a solo meeting `Events.meeting_created/1`
+      claims the event once per meeting, so a late room after the fallback
+      announcement, or a second job for the same meeting, can never announce
+      it twice. A group meeting instead releases each live seat's own
+      confirmation email, whose jobs are uniqued per seat, so re-releasing
+      them is likewise a no-op in the common case (see
+      `Events.announce_video_room_outcome/1`).
+
+    * `{:rescheduled, previous, rescheduled_to, opts}`, a reschedule that
+      moved the meeting onto a video location it has no room for yet. `opts`
+      are the reschedule emails' options, passed on to
+      `Events.meeting_rescheduled/3` (`moved_by: :host` for a move the host
+      made in their own calendar). Nothing on the
+      meeting records that a reschedule was announced, and `announced_at` is
+      the booking's claim, not this one's, so the job itself has to know when
+      it no longer owes the event (see `deliver/3`).
+
+  `:none` is a job for a meeting that was already announced without a room.
+
+  ## Carried in job args
+
+  `Events.meeting_rescheduled/2` takes the meeting as it was before the
+  reschedule, which a job cannot hold. The reschedule email reads only that
+  meeting's times, so those are what the args carry, as ISO 8601 strings, next
+  to the start time the reschedule moved the meeting to. `moved_by: :host` is
+  carried as `"moved_by" => "host"`; args without it, as every job enqueued
+  before it existed, announce the reschedule as the attendee's.
+  """
+
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Notifications.Events
+
+  require Logger
+
+  @typedoc "Where the meeting was before a reschedule, as its email reads it."
+  @type previous_times :: %{start_time: DateTime.t(), end_time: DateTime.t()}
+
+  @typedoc "The reschedule emails' options (`Events.meeting_rescheduled/3`)."
+  @type reschedule_opts :: [moved_by: :host]
+
+  @typedoc "A reschedule's announcement: where the meeting was, and where it went."
+  @type rescheduled :: {:rescheduled, previous_times(), DateTime.t(), reschedule_opts()}
+
+  @type t :: :none | :created | rescheduled()
+
+  @doc """
+  The reschedule announcement for a meeting moved from `original` to `updated`.
+  `opts` are passed on to the reschedule emails (`moved_by: :host`).
+  """
+  @spec rescheduled(MeetingSchema.t(), MeetingSchema.t(), reschedule_opts()) :: rescheduled()
+  def rescheduled(
+        %MeetingSchema{start_time: start_time},
+        %MeetingSchema{} = original,
+        opts \\ []
+      ) do
+    {:rescheduled, %{start_time: original.start_time, end_time: original.end_time}, start_time,
+     Keyword.take(opts, [:moved_by])}
+  end
+
+  @doc "The job args that encode `announcement`."
+  @spec to_args(t()) :: map()
+  def to_args(:none), do: %{"announce" => false}
+  def to_args(:created), do: %{"announce" => true}
+
+  def to_args({:rescheduled, previous, rescheduled_to, opts}) do
+    Map.merge(
+      %{
+        "announce" => "rescheduled",
+        "previous_start_time" => DateTime.to_iso8601(previous.start_time),
+        "previous_end_time" => DateTime.to_iso8601(previous.end_time),
+        "start_time" => DateTime.to_iso8601(rescheduled_to)
+      },
+      moved_by_args(opts[:moved_by])
+    )
+  end
+
+  defp moved_by_args(:host), do: %{"moved_by" => "host"}
+  defp moved_by_args(nil), do: %{}
+
+  @doc """
+  The announcement a job's args encode. Args predating the `announce` key, or
+  carrying a value this cannot read, owe nothing.
+  """
+  @spec from_args(map()) :: t()
+  def from_args(%{"announce" => true}), do: :created
+
+  def from_args(
+        %{
+          "announce" => "rescheduled",
+          "previous_start_time" => previous_start,
+          "previous_end_time" => previous_end,
+          "start_time" => rescheduled_to
+        } = args
+      ) do
+    {:rescheduled, %{start_time: parse!(previous_start), end_time: parse!(previous_end)},
+     parse!(rescheduled_to), moved_by_opts(args["moved_by"])}
+  end
+
+  def from_args(_args), do: :none
+
+  defp moved_by_opts("host"), do: [moved_by: :host]
+  defp moved_by_opts(_absent), do: []
+
+  @doc "Whether the job still owes the attendees an announcement."
+  @spec owed?(t()) :: boolean()
+  def owed?(:none), do: false
+  def owed?(_announcement), do: true
+
+  @doc """
+  Raises the announcement for `meeting`, as it now stands.
+
+  `fallback_attempted?` says the job's recovery has already raised this
+  announcement without a room. That settles it for a reschedule, which has no
+  claim of its own to consult: its fallback is raised once, and a failure
+  there is logged, not retried. A booking's announcement ignores it and
+  consults its claim instead, which is what actually happened: a fallback
+  that failed left the claim free, and a job that stopped before recording
+  anything is covered too.
+
+  A reschedule is not announced either when the meeting no longer starts when
+  this reschedule put it: a later reschedule has moved it since, and has told
+  the attendees about the meeting it is now.
+
+  A booking whose emails could not be queued is not announced at all, and
+  `{:error, {:announcement_failed, reason}}` tells the job to retry; a
+  reschedule's failures are logged and not retried.
+  """
+  @spec deliver(t(), MeetingSchema.t(), boolean()) :: :ok | {:error, term()}
+  def deliver(:none, _meeting, _fallback_attempted?), do: :ok
+
+  def deliver(:created, meeting, _fallback_attempted?) do
+    Logger.info("Announcing the meeting now its room exists", meeting_id: meeting.id)
+
+    with {:error, reason} <- Events.announce_video_room_outcome(meeting),
+         do: {:error, {:announcement_failed, reason}}
+  end
+
+  def deliver({:rescheduled, _previous, _rescheduled_to, _opts}, meeting, true) do
+    Logger.info("Reschedule already announced without a room, not announcing it again",
+      meeting_id: meeting.id
+    )
+  end
+
+  def deliver({:rescheduled, previous, rescheduled_to, opts}, meeting, false) do
+    if DateTime.compare(meeting.start_time, rescheduled_to) == :eq do
+      announce_reschedule(meeting, previous, opts)
+    else
+      Logger.info("Meeting rescheduled again before its room existed, leaving it to that one",
+        meeting_id: meeting.id
+      )
+    end
+  end
+
+  defp announce_reschedule(meeting, previous, opts) do
+    Logger.info("Announcing the reschedule now the meeting's room exists",
+      meeting_id: meeting.id
+    )
+
+    case Events.meeting_rescheduled(meeting, previous, opts) do
+      {:ok, _result} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.warning("Failed to send reschedule notifications from the video room job",
+          meeting_id: meeting.id,
+          reason: LogFormat.reason(reason)
+        )
+    end
+  end
+
+  defp parse!(iso8601) do
+    {:ok, datetime, _offset} = DateTime.from_iso8601(iso8601)
+    datetime
+  end
+end

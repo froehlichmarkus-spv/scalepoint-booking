@@ -1,0 +1,181 @@
+defmodule Tymeslot.Availability.WeeklyAvailabilityQueries do
+  @moduledoc """
+  Query interface for weekly availability-related database operations.
+
+  Weekly rows hang off an availability schedule, so every lookup here is keyed
+  by `schedule_id` rather than by profile.
+  """
+  import Ecto.Query, warn: false
+
+  alias Tymeslot.Availability.{
+    AvailabilityBreakSchema,
+    AvailabilityScheduleSchema,
+    WeeklyAvailabilitySchema
+  }
+
+  alias Tymeslot.Clock
+  alias Tymeslot.Repo
+
+  @default_start_time ~T[09:00:00]
+  @default_end_time ~T[17:00:00]
+
+  @doc """
+  The start time given to weekdays in a freshly created schedule.
+  """
+  @spec default_start_time() :: Time.t()
+  def default_start_time, do: @default_start_time
+
+  @doc """
+  The end time given to weekdays in a freshly created schedule.
+  """
+  @spec default_end_time() :: Time.t()
+  def default_end_time, do: @default_end_time
+
+  @doc """
+  Gets a single weekly availability.
+  Returns nil if the weekly availability does not exist.
+  """
+  @spec get_weekly_availability(integer()) :: WeeklyAvailabilitySchema.t() | nil
+  def get_weekly_availability(id), do: Repo.get(WeeklyAvailabilitySchema, id)
+
+  @doc """
+  Fetches a day by id, scoped to the profile that owns its schedule, so a
+  caller cannot reach another account's day by guessing an id.
+  """
+  @spec get_for_profile(integer(), integer()) :: WeeklyAvailabilitySchema.t() | nil
+  def get_for_profile(id, profile_id) do
+    WeeklyAvailabilitySchema
+    |> join(:inner, [d], s in AvailabilityScheduleSchema, on: s.id == d.schedule_id)
+    |> where([d, s], d.id == ^id and s.profile_id == ^profile_id)
+    |> Repo.one()
+  end
+
+  @doc """
+  Creates a weekly availability.
+  """
+  @spec create_weekly_availability(map()) ::
+          {:ok, WeeklyAvailabilitySchema.t()} | {:error, Ecto.Changeset.t()}
+  def create_weekly_availability(attrs) when is_map(attrs) do
+    %WeeklyAvailabilitySchema{}
+    |> WeeklyAvailabilitySchema.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a weekly availability.
+  """
+  @spec update_weekly_availability(WeeklyAvailabilitySchema.t(), map()) ::
+          {:ok, WeeklyAvailabilitySchema.t()} | {:error, Ecto.Changeset.t()}
+  def update_weekly_availability(%WeeklyAvailabilitySchema{} = weekly_availability, attrs)
+      when is_map(attrs) do
+    weekly_availability
+    |> WeeklyAvailabilitySchema.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Gets the complete weekly schedule for a schedule including breaks.
+  """
+  @spec get_weekly_schedule_with_breaks(integer()) :: [WeeklyAvailabilitySchema.t()]
+  def get_weekly_schedule_with_breaks(schedule_id) do
+    breaks_query = from(b in AvailabilityBreakSchema, order_by: b.sort_order)
+
+    WeeklyAvailabilitySchema
+    |> where([wa], wa.schedule_id == ^schedule_id)
+    |> preload([wa], breaks: ^breaks_query)
+    |> order_by([wa], wa.day_of_week)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets availability for a specific day of the week with breaks.
+  """
+  @spec get_day_availability_with_breaks(integer(), integer()) ::
+          WeeklyAvailabilitySchema.t() | nil
+  def get_day_availability_with_breaks(schedule_id, day_of_week) do
+    breaks_query = from(b in AvailabilityBreakSchema, order_by: b.sort_order)
+
+    WeeklyAvailabilitySchema
+    |> where([wa], wa.schedule_id == ^schedule_id and wa.day_of_week == ^day_of_week)
+    |> preload([wa], breaks: ^breaks_query)
+    |> Repo.one()
+  end
+
+  @doc """
+  As `get_day_availability_with_breaks/2`, locking the day's row
+  (`FOR UPDATE`) until the caller's transaction ends. The lock also holds off
+  a break being added to that day meanwhile: its insert waits on the row.
+  """
+  @spec lock_day_availability_with_breaks(integer(), integer()) ::
+          WeeklyAvailabilitySchema.t() | nil
+  def lock_day_availability_with_breaks(schedule_id, day_of_week) do
+    breaks_query = from(b in AvailabilityBreakSchema, order_by: b.sort_order)
+
+    WeeklyAvailabilitySchema
+    |> where([wa], wa.schedule_id == ^schedule_id and wa.day_of_week == ^day_of_week)
+    |> preload([wa], breaks: ^breaks_query)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+  end
+
+  @doc """
+  Creates the seven default weekly days for a new schedule.
+
+  Accepts an optional `repo` argument so callers inside an existing database
+  transaction can pass their transaction-scoped repo, ensuring the inserts are
+  part of the same transaction rather than a separate connection.
+  """
+  @spec create_default_weekly_days(integer(), Ecto.Repo.t()) ::
+          {:ok, non_neg_integer()} | {:error, :failed_to_create_schedule}
+  def create_default_weekly_days(schedule_id, repo \\ Repo) do
+    now = DateTime.truncate(Clock.utc_now(), :second)
+
+    # Build all entries at once
+    # Monday to Friday (1-5)
+    # Saturday and Sunday (6-7)
+    entries =
+      Enum.map(1..5, fn day ->
+        %{
+          schedule_id: schedule_id,
+          day_of_week: day,
+          is_available: true,
+          start_time: @default_start_time,
+          end_time: @default_end_time,
+          inserted_at: now,
+          updated_at: now
+        }
+      end) ++
+        Enum.map(6..7, fn day ->
+          %{
+            schedule_id: schedule_id,
+            day_of_week: day,
+            is_available: false,
+            start_time: nil,
+            end_time: nil,
+            inserted_at: now,
+            updated_at: now
+          }
+        end)
+
+    # Bulk insert all 7 days at once. on_conflict: :nothing ensures that a
+    # pre-existing row for the same (schedule_id, day_of_week) silently skips
+    # rather than raising; the count check below then surfaces the mismatch.
+    case repo.insert_all(WeeklyAvailabilitySchema, entries,
+           on_conflict: :nothing,
+           conflict_target: [:schedule_id, :day_of_week]
+         ) do
+      {count, _value} when count == 7 -> {:ok, count}
+      {_count, _value} -> {:error, :failed_to_create_schedule}
+    end
+  end
+
+  @doc """
+  Clears all breaks for a specific day's availability.
+  """
+  @spec clear_breaks_for_day(integer()) :: {non_neg_integer(), nil | [term()]}
+  def clear_breaks_for_day(weekly_availability_id) do
+    Repo.delete_all(
+      where(AvailabilityBreakSchema, [b], b.weekly_availability_id == ^weekly_availability_id)
+    )
+  end
+end

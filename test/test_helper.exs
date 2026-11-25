@@ -1,0 +1,104 @@
+# Configure Swoosh for testing
+Application.put_env(:swoosh, :api_client, false)
+Application.put_env(:tymeslot, Tymeslot.Mailer, adapter: Swoosh.Adapters.Test)
+
+# Run migrations before tests
+Mix.Task.run("ecto.create", ["--quiet"])
+Mix.Task.run("ecto.migrate", ["--quiet"])
+
+# E2E tests require the HTTP server to be running so the browser can connect.
+# Enable it before starting the app so the endpoint boots with server: true.
+if System.get_env("E2E") == "true" do
+  existing_endpoint_config = Application.get_env(:tymeslot, TymeslotWeb.Endpoint, [])
+
+  Application.put_env(
+    :tymeslot,
+    TymeslotWeb.Endpoint,
+    Keyword.put(existing_endpoint_config, :server, true)
+  )
+end
+
+# Start Ecto sandbox - ensure Repo is ready first
+{:ok, _result} = Application.ensure_all_started(:tymeslot)
+
+# Run the suite as an established install, so sign-ups skip the first-user
+# admin bootstrap's lock (see Tymeslot.Test.AdminBootstrapHelpers).
+Tymeslot.Test.AdminBootstrapHelpers.close!()
+
+# Clear out jobs a migration committed (see Tymeslot.Test.SuiteConfig).
+Tymeslot.Test.SuiteConfig.discard_committed_jobs!()
+
+Ecto.Adapters.SQL.Sandbox.mode(Tymeslot.Repo, :manual)
+
+# Mox mocks are defined once, at compile time, in
+# test/support/mocks/defmocks.ex.
+
+# Analytics: collect emitted events across the suite; assert completeness only
+# under ANALYTICS_COMPLETENESS=1 (see Tymeslot.Test.SuiteConfig).
+Tymeslot.Test.SuiteConfig.setup_analytics_completeness(
+  Tymeslot.Analytics.TestCollector,
+  Tymeslot.Analytics.Contract
+)
+
+Tymeslot.Test.SuiteConfig.cleanup_uploads_after_suite()
+Tymeslot.Test.SuiteConfig.setup_log_capture()
+
+ExUnit.start()
+
+# A bare `assert_receive` waits ExUnit's default 100 ms, too little on a loaded
+# machine for a message from another process; a passing assertion returns as
+# soon as its message arrives, so a longer bound costs nothing. Absence checks
+# (`refute_receive`) keep their own short default.
+base_config = [
+  capture_log: true,
+  exclude: Tymeslot.Test.SuiteConfig.default_exclude_tags(),
+  formatters: Tymeslot.Test.SuiteConfig.formatters(),
+  assert_receive_timeout: 1_000
+]
+
+exunit_config =
+  case Tymeslot.Test.SuiteConfig.max_cases() do
+    nil -> base_config
+    max_cases -> Keyword.put(base_config, :max_cases, max_cases)
+  end
+
+ExUnit.configure(exunit_config)
+
+# Start Wallaby for E2E browser tests
+if System.get_env("E2E") == "true" do
+  Application.put_env(:wallaby, :base_url, TymeslotWeb.Endpoint.url())
+
+  # The browser console goes to a file rather than stdout. LiveView turns its
+  # own client-side debug logging on whenever the page is served from
+  # localhost, so every mount and every diff is echoed through Wallaby's
+  # logger, burying the ExUnit output (and the failure it is there to show)
+  # under thousands of "received diff - Object" lines. Severe JS errors do not
+  # go through this logger at all: they raise `Wallaby.JSError` and fail the
+  # test, so nothing diagnostic is lost by moving the stream off the terminal.
+  console_log_path = Path.join(System.tmp_dir!(), "tymeslot-e2e-console.log")
+  Application.put_env(:wallaby, :js_logger, File.open!(console_log_path, [:write, :utf8]))
+  IO.puts("E2E browser console: #{console_log_path}")
+
+  # Chrome checks every submitted login against its list of breached
+  # passwords, and the factory's default password is a common one. When the
+  # check flags it, Chrome opens its own warning over the page, the page
+  # loses focus, and WebDriver clicks stop reaching the document for as long
+  # as the warning is up, surviving later `visit/2` calls. Any test that
+  # clicks after `log_in_via_browser/2` then fails at random, depending on
+  # whether the warning has opened yet. Turning the check off keeps the page
+  # focused.
+  chromedriver = Application.get_env(:wallaby, :chromedriver, [])
+
+  capabilities =
+    chromedriver
+    |> Keyword.get_lazy(:capabilities, &Wallaby.Chrome.default_capabilities/0)
+    |> put_in([:chromeOptions, :prefs], %{"profile.password_manager_leak_detection" => false})
+
+  Application.put_env(
+    :wallaby,
+    :chromedriver,
+    Keyword.put(chromedriver, :capabilities, capabilities)
+  )
+
+  {:ok, _apps} = Application.ensure_all_started(:wallaby)
+end

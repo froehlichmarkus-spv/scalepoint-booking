@@ -1,0 +1,174 @@
+defmodule TymeslotWeb.Live.Scheduling.TimezoneChangeAvailabilityTest do
+  @moduledoc """
+  Changing "Your timezone" on the schedule step recomputes which days are
+  bookable, not just the selected day's times.
+
+  The host keeps Monday evenings in London, 22:00 to 02:00 the next morning.
+  Read from Kyiv, two hours ahead, that whole window falls on Tuesday, so every
+  Monday is greyed out. Read from London, Monday offers 22:00 and 23:00. A
+  booker who opens the page in Kyiv and switches to London must see Mondays
+  come alive; before the fix the grid kept the map computed for Kyiv and only
+  the slot list followed the new zone.
+  """
+
+  use TymeslotWeb.LiveCase, async: false
+
+  @moduletag :scheduling
+  @moduletag :live
+  @moduletag :integration
+
+  import Mox
+  import Tymeslot.Factory
+  import Tymeslot.Test.ClockHelpers
+
+  alias Tymeslot.BookingTestHelpers
+  alias Tymeslot.Clock
+  alias Tymeslot.Infrastructure.AvailabilityCache
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.TestMocks
+  alias TymeslotWeb.BookingDriver
+  alias TymeslotWeb.BookingDriver.Page
+  alias TymeslotWeb.ThemeTestMatrix
+
+  @host_zone "Europe/London"
+  @booker_zone "Europe/Kyiv"
+
+  @date "[data-fact='date']:not([data-alternate])"
+  @time "[data-fact='time']"
+
+  setup :verify_on_exit!
+
+  setup tags do
+    Mox.set_mox_from_context(tags)
+    RateLimiter.clear_all()
+    AvailabilityCache.clear_all()
+    TestMocks.setup_all_mocks()
+    # The assertions below expect the page to land on the test's Monday and
+    # Tuesday, so no earlier window may still be open. From a Wednesday the
+    # next Monday is the first window in both zones.
+    freeze_clock_midweek()
+    keep_test_week_in_one_month()
+    :ok
+  end
+
+  # Monday and Tuesday must sit on one month grid. When the Monday after the
+  # frozen Wednesday ends its month, Tuesday opens the next one and the grid
+  # never offers it, so move the whole test a week on.
+  defp keep_test_week_in_one_month do
+    monday = next_monday()
+
+    if Date.add(monday, 1).month != monday.month,
+      do: freeze_clock(DateTime.add(Clock.utc_now(), 7, :day))
+  end
+
+  # Greyed-out days are a calendar of days; a week of times has no day to grey.
+  for theme <- ThemeTestMatrix.all_where(&(&1.schedule_view == :calendar)) do
+    @tag :capture_log
+    test "#{theme.name}: the bookable days follow the new timezone", %{conn: conn} do
+      profile = overnight_monday_host(unquote(theme.id))
+
+      {:ok, view, _html} = live(conn, "/#{profile.username}?timezone=#{@booker_zone}")
+
+      BookingDriver.choose_meeting_type(view, "night-chat")
+
+      monday = next_monday()
+      tuesday = Date.add(monday, 1)
+
+      BookingTestHelpers.advance_calendar_to(view, monday)
+
+      # In Kyiv the window is Tuesday 00:00 to 04:00, and Monday has nothing.
+      wait_until(fn -> bookable?(view, tuesday) end)
+      refute bookable?(view, monday)
+
+      view |> element(day(tuesday)) |> render_click()
+      wait_until(fn -> slot_times(view) != [] end)
+      assert slot_times(view) == ["12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM"]
+
+      change_timezone(view, @host_zone)
+
+      # In London the same window is Monday 22:00 to Tuesday 02:00: Monday
+      # becomes bookable, and Tuesday keeps only the tail of the window.
+      wait_until(fn -> bookable?(view, monday) end)
+      assert bookable?(view, tuesday)
+
+      # Tuesday was the first free day, which the page had already landed on,
+      # so clicking it left the calendar where the page put it
+      # (`CalendarHelpers.untouched?/1`): the landing follows the zone and
+      # moves to London's first free day, Monday, with its times read in London.
+      wait_until(fn -> selected_date(view) == Date.to_string(monday) end)
+      wait_until(fn -> slot_times(view) == ["10:00 PM", "11:00 PM"] end)
+
+      view |> element(day(tuesday)) |> render_click()
+      wait_until(fn -> slot_times(view) == ["12:00 AM", "1:00 AM"] end)
+    end
+  end
+
+  defp overnight_monday_host(theme_id) do
+    user = insert(:user)
+
+    profile =
+      insert(:profile,
+        user: user,
+        username: "night-owl-#{theme_id}",
+        booking_theme: theme_id,
+        timezone: @host_zone
+      )
+
+    schedule =
+      insert(:availability_schedule,
+        profile: profile,
+        is_default: true,
+        advance_booking_days: 30,
+        min_advance_hours: 0,
+        buffer_before_minutes: 0,
+        buffer_after_minutes: 0
+      )
+
+    insert(:weekly_availability,
+      schedule: schedule,
+      day_of_week: 1,
+      is_available: true,
+      start_time: ~T[22:00:00],
+      end_time: ~T[02:00:00],
+      ends_next_day: true
+    )
+
+    insert(:calendar_integration, user: user, is_active: true)
+    insert(:meeting_type, user: user, slug: "night-chat", duration_minutes: 60, is_active: true)
+    profile
+  end
+
+  # The Monday after the frozen Wednesday: at least two days out in both zones,
+  # so neither today's cut-off nor the zones disagreeing about today can touch
+  # it, and the first overnight window in either.
+  defp next_monday do
+    from =
+      Clock.utc_now() |> DateTime.shift_zone!(@booker_zone) |> DateTime.to_date() |> Date.add(2)
+
+    Date.add(from, rem(8 - Date.day_of_week(from), 7))
+  end
+
+  defp day(date), do: "#{@date}[data-value='#{Date.to_string(date)}']"
+
+  defp bookable?(view, date), do: has_element?(view, "#{day(date)}:not([disabled])")
+
+  # Through the picker the booker uses: open it, search for the city, pick it.
+  defp change_timezone(view, zone) do
+    view |> element("[phx-click='toggle_timezone_dropdown']") |> render_click()
+    view |> element("input.tz-picker__search") |> render_keyup(%{"search" => "London"})
+
+    view
+    |> element("button.tz-picker__option[phx-value-timezone='#{zone}']")
+    |> render_click()
+  end
+
+  # The themes mark the chosen day differently, so read the booking's own.
+  defp selected_date(view), do: Page.assigns(view)[:selected_date]
+
+  defp slot_times(view) do
+    view
+    |> render()
+    |> Floki.parse_document!()
+    |> Floki.attribute(@time, "data-value")
+  end
+end

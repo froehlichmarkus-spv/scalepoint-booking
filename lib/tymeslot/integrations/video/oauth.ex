@@ -1,0 +1,117 @@
+defmodule Tymeslot.Integrations.Video.OAuth do
+  @moduledoc """
+  Authorisation and reconnect URLs for the OAuth-backed video providers.
+
+  Three providers, one flow: build a callback URL, ask the provider's helper
+  for an authorisation URL, and turn a misconfiguration into a message naming
+  the environment variable the operator has to set.
+
+  That last part differs between providers only in a brand name and an env-var
+  prefix, so `@providers` holds it in one place. The messages are
+  operator-facing and name concrete variables, so they are the kind of text
+  that is easy to get subtly wrong in one copy and not the others.
+
+  What is *not* tabled is the call into each helper: Google needs its scopes
+  passed explicitly and Teams and Zoom do not, so those keep a clause each
+  rather than being forced into a shared shape.
+  """
+
+  alias Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelper
+  alias Tymeslot.Integrations.Shared.OAuth.PendingFlow
+  alias Tymeslot.Integrations.Shared.OAuthConfig
+  alias Tymeslot.Integrations.Video.Teams.TeamsOAuthHelper
+  alias Tymeslot.Integrations.Video.Zoom.ZoomOAuthHelper
+  alias TymeslotWeb.Endpoint
+
+  @typedoc "A video provider that authenticates over OAuth."
+  @type provider :: :google_meet | :teams | :zoom
+
+  # `label` is the brand named in operator-facing errors; `config` is the
+  # OAuth client whose credentials it uses (Teams shares Microsoft's app
+  # registration with Outlook); `callback` is the path segment in its OAuth
+  # redirect URI.
+  @providers %{
+    google_meet: %{label: "Google", config: :google, callback: "google"},
+    teams: %{label: "Microsoft", config: :microsoft, callback: "teams"},
+    zoom: %{label: "Zoom", config: :zoom, callback: "zoom"}
+  }
+
+  @google_scopes [:calendar, :meet]
+
+  @doc """
+  Whether this provider authenticates over OAuth.
+  """
+  @spec supported?(atom()) :: boolean()
+  def supported?(provider), do: Map.has_key?(@providers, provider)
+
+  @doc """
+  Builds an authorisation URL to start a fresh connection.
+  """
+  @spec authorization_url(provider(), pos_integer()) :: {:ok, String.t()} | {:error, String.t()}
+  def authorization_url(provider, user_id), do: build(provider, user_id, [])
+
+  @doc """
+  Builds an authorisation URL for reconnecting an existing integration.
+
+  `opts` carries the `integration_id` and `login_hint` that let the provider
+  target the account already connected, rather than asking the user to pick one
+  again and risk connecting the wrong one.
+  """
+  @spec reconnect_url(provider(), pos_integer(), keyword()) ::
+          {:ok, String.t()} | {:error, String.t()}
+  def reconnect_url(provider, user_id, opts), do: build(provider, user_id, opts)
+
+  defp build(provider, user_id, opts) do
+    with true <- supported?(provider),
+         {:ok, flow} <- PendingFlow.start(user_id, provider) do
+      {:ok, url_for(provider, user_id, redirect_uri(provider), Keyword.put(opts, :pkce, flow))}
+    else
+      false -> {:error, "Provider does not support OAuth"}
+      {:error, _changeset} -> {:error, "Failed to setup #{@providers[provider].label} OAuth"}
+    end
+  rescue
+    error -> {:error, format_error(provider, error)}
+  end
+
+  @doc """
+  The provider's OAuth callback URL. The authorisation request and the code
+  exchange must name the same URI, so both build it here.
+  """
+  @spec redirect_uri(provider()) :: String.t()
+  def redirect_uri(provider) do
+    %{callback: callback} = Map.fetch!(@providers, provider)
+    "#{Endpoint.url()}/auth/#{callback}/video/callback"
+  end
+
+  # Each provider's helper takes its options last; Google additionally needs
+  # its scopes stated explicitly, which is the only shape difference worth a
+  # clause each.
+  defp url_for(:google_meet, user_id, redirect_uri, opts) do
+    google_helper().authorization_url(user_id, redirect_uri, @google_scopes, opts)
+  end
+
+  defp url_for(:teams, user_id, redirect_uri, opts) do
+    teams_helper().authorization_url(user_id, redirect_uri, opts)
+  end
+
+  defp url_for(:zoom, user_id, redirect_uri, opts) do
+    zoom_helper().authorization_url(user_id, redirect_uri, opts)
+  end
+
+  defp format_error(provider, error) do
+    %{label: label, config: config} = @providers[provider]
+    OAuthConfig.setup_error_message(config, label, error)
+  end
+
+  defp google_helper do
+    Application.get_env(:tymeslot, :google_calendar_oauth_helper, GoogleOAuthHelper)
+  end
+
+  defp teams_helper do
+    Application.get_env(:tymeslot, :teams_oauth_helper, TeamsOAuthHelper)
+  end
+
+  defp zoom_helper do
+    Application.get_env(:tymeslot, :zoom_oauth_helper, ZoomOAuthHelper)
+  end
+end

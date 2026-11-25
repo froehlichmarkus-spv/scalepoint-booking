@@ -1,0 +1,228 @@
+defmodule TymeslotWeb.Components.DashboardLayout do
+  @moduledoc """
+  Shared layout component for all dashboard pages.
+  Provides consistent navigation, styling, and user interface elements.
+  """
+  use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Phoenix.LiveView.JS
+  alias TymeslotWeb.Components.Dashboard.PublicPageNotice
+  alias TymeslotWeb.Components.DashboardSidebar
+  alias TymeslotWeb.Components.UserDropdownComponent
+
+  @doc """
+  Renders the main dashboard layout with left sidebar and top navigation.
+  """
+  attr :current_user, :any, required: true
+  attr :profile, :any, required: true
+  attr :current_action, :atom, required: true
+  attr :integration_status, :map, default: %{}
+  attr :automations_allowed, :boolean, default: true
+  attr :analytics_allowed, :boolean, default: true
+  attr :full_width, :boolean, default: false
+
+  attr :compact_nav, :boolean,
+    default: false,
+    doc: "a slimmer top bar, for sections whose content should take the screen"
+
+  attr :focus, :boolean,
+    default: false,
+    doc: "focus mode: from the lg breakpoint the menu is hidden (see `CalendarFocus`)"
+
+  attr :sidebar_extensions, :list, default: []
+
+  attr :nav_rail, :boolean,
+    default: false,
+    doc: "from the lg breakpoint, the menu is a narrow column of icons"
+
+  attr :nav_rail_toggle, :boolean,
+    default: false,
+    doc: "offer the control that switches the menu between full width and the rail"
+
+  attr :unseen_announcements, :list, default: []
+  slot :inner_block, required: true
+
+  @spec dashboard_layout(map()) :: Phoenix.LiveView.Rendered.t()
+  def dashboard_layout(assigns) do
+    ~H"""
+    <div
+      class="flex flex-col h-dvh overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+      id="dashboard-root"
+      data-calendar-focus={@focus && "true"}
+      phx-hook="ClipboardCopy"
+    >
+      <%!-- Feature-announcement carousel. Renders nothing when the list is empty. --%>
+      <.live_component
+        :if={@unseen_announcements != []}
+        module={TymeslotWeb.Components.AnnouncementModalComponent}
+        id="announcement-modal"
+        announcements={@unseen_announcements}
+        current_user={@current_user}
+      />
+
+      <%!-- Top Navigation --%>
+      <div class="shrink-0">
+        <.top_navigation current_user={@current_user} profile={@profile} compact={@compact_nav} />
+      </div>
+
+      <%!-- Main Layout Area --%>
+      <div class="dashboard-main-row flex lg:gap-8 flex-1 overflow-hidden min-h-0">
+        <DashboardSidebar.sidebar
+          current_action={@current_action}
+          integration_status={@integration_status}
+          profile={@profile}
+          automations_allowed={@automations_allowed}
+          analytics_allowed={@analytics_allowed}
+          sidebar_extensions={@sidebar_extensions}
+          rail={@nav_rail}
+          rail_toggle={@nav_rail_toggle}
+        />
+
+        <%!-- Main Content Area --%>
+        <div
+          id="dashboard-content-container"
+          class={[
+            "flex-1 min-w-0 w-full lg:ml-0",
+            if(@full_width, do: "flex flex-col overflow-hidden", else: "overflow-y-auto")
+          ]}
+          phx-hook="ScrollReset"
+          data-action={@current_action}
+        >
+          <.refused_calendar_notice
+            names={Map.get(@integration_status, :refused_calendars, [])}
+            current_action={@current_action}
+          />
+          <%!-- Off the integrations page, which is where it sends the host:
+                its calendars tab shows the empty or paused state itself. --%>
+          <PublicPageNotice.notice
+            :if={@current_action != :integrations}
+            profile={@profile}
+            integration_status={@integration_status}
+          />
+          <%= if @full_width do %>
+            <main class="flex-1 flex flex-col min-h-0">{render_slot(@inner_block)}</main>
+          <% else %>
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 pb-8">
+              <main>{render_slot(@inner_block)}</main>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Shown on every dashboard page while a calendar's credentials stay refused,
+  # because the booking page offers no times until it is reconnected and the
+  # owner may never open the integrations page on their own. That page carries
+  # its own attention banner, so the notice stays off it.
+  attr :names, :list, required: true
+  attr :current_action, :atom, required: true
+
+  defp refused_calendar_notice(assigns) do
+    ~H"""
+    <div
+      :if={@names != [] and @current_action != :integrations}
+      id="refused-calendar-notice"
+      class="max-w-7xl mx-auto px-4 lg:px-8 pt-4"
+    >
+      <.info_box variant={:error}>
+        {dngettext(
+          "dashboard_common",
+          "%{names} needs reconnecting. Until you reconnect it, your booking page may not offer times or take bookings.",
+          "%{names} need reconnecting. Until you reconnect them, your booking page may not offer times or take bookings.",
+          length(@names),
+          names: Enum.join(@names, ", ")
+        )}
+        <.link
+          navigate={~p"/dashboard/integrations?tab=calendars"}
+          class="font-semibold underline hover:no-underline"
+        >
+          {dgettext("dashboard_common", "Reconnect")}
+        </.link>
+      </.info_box>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders the top navigation bar.
+  """
+  attr :current_user, :any, required: true
+  attr :profile, :any, required: true
+  attr :show_sidebar_toggle, :boolean, default: true
+  attr :compact, :boolean, default: false
+
+  @spec top_navigation(map()) :: Phoenix.LiveView.Rendered.t()
+  def top_navigation(assigns) do
+    ~H"""
+    <div
+      id="dashboard-top-nav"
+      data-compact={to_string(@compact)}
+      class={["w-full px-2 sm:px-4", if(@compact, do: "py-0.5", else: "py-4 sm:py-6")]}
+    >
+      <%!-- Compact: one 44px row (the touch-target height of its controls)
+           with no padding around it, about 52px in all. --%>
+      <nav class={["brand-nav relative", @compact && "brand-nav-compact"]} style="z-index: 50;">
+        <div class="w-full px-1 sm:px-4">
+          <div class={[
+            "flex items-center justify-between gap-2",
+            if(@compact, do: "h-11", else: "h-16")
+          ]}>
+            <%!-- Left side: Logo and Mobile Menu Button --%>
+            <div class="flex items-center space-x-2 sm:space-x-4 sm:-ml-4 flex-1 min-w-0">
+              <%= if @show_sidebar_toggle do %>
+                <%!-- Mobile Menu Button --%>
+                <button
+                  id="dashboard-sidebar-toggle"
+                  type="button"
+                  class={[
+                    "lg:hidden dashboard-mobile-menu-toggle flex items-center justify-center",
+                    if(@compact, do: "w-11 h-11", else: "w-12 h-12"),
+                    "rounded-token-xl bg-tymeslot-50 border-2 border-tymeslot-100 hover:bg-turquoise-50 hover:border-turquoise-100 transition-all shrink-0"
+                  ]}
+                  phx-click={
+                    JS.toggle_class("dashboard-sidebar-open", to: "#dashboard-sidebar")
+                    |> JS.toggle_class("hidden", to: "#dashboard-sidebar-overlay")
+                    |> JS.toggle_attribute({"aria-expanded", "true", "false"})
+                  }
+                  aria-label={dgettext("dashboard_common", "Toggle sidebar")}
+                  aria-controls="dashboard-sidebar"
+                  aria-expanded="false"
+                >
+                  <.icon name="hero-bars-3" class="w-6 h-6 text-tymeslot-700" />
+                </button>
+              <% end %>
+
+              <%!-- Logo with Icon and Text --%>
+              <div class="flex items-center space-x-3 min-w-0">
+                <TymeslotWeb.Components.CoreComponents.Brand.logo
+                  mode={:full}
+                  img_class={
+                    if(@compact,
+                      do: "h-8 sm:h-10 shrink min-w-0",
+                      else: "h-10 sm:h-16 shrink min-w-0"
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <%!-- Right side: User dropdown --%>
+            <div class="relative shrink-0" data-tour="user-menu">
+              <.live_component
+                module={UserDropdownComponent}
+                id="user-dropdown"
+                current_user={@current_user}
+                profile={@profile}
+                compact={@compact}
+              />
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
+    """
+  end
+end

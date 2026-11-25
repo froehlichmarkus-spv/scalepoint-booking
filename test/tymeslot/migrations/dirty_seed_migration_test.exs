@@ -1,0 +1,520 @@
+defmodule Tymeslot.Migrations.DirtySeedMigrationTest do
+  @moduledoc """
+  Runs every migration written since the seed's pinned schema version against a
+  database pre-seeded with adversarial data. Catches constraint violations,
+  failed backfills, and data assumptions that don't hold for real-world
+  installations.
+
+  ## Why a pinned version rather than "the last N migrations"
+
+  The failure this test exists to catch is a migration that succeeds on an empty
+  database and fails on a populated one: a NOT NULL column added without a
+  backfill, a unique index built over duplicate rows, a check constraint older
+  rows violate, an `UPDATE ... FROM` that trips over an orphan. Everything else
+  in the gate runs migrations against an empty database, so this is the only
+  place that failure shows up.
+
+  Seeding that data requires the seed's `INSERT`s to match the schema they are
+  loaded against. Pinning the split point to a fixed version is what makes that
+  possible: `migration_dirty_seed.sql` is written once against the schema as of
+  `@seed_schema_version` and never has to be rewritten again, because the
+  schema it is loaded against never moves. A "last N migrations" window instead
+  slides the load point forward with every migration added, so each new
+  constraint or table rename eventually invalidates rows that were valid when
+  they were written — a red build about the seed file, not about the migration
+  under test.
+
+  Pinning also widens the range: a migration stays covered until the pin is
+  deliberately moved past it, instead of ageing out after N more land. It costs
+  nothing extra to run, because either way the run applies every migration.
+
+  The residual gap is that the seed cannot populate a table or column created
+  after the pin, so a migration constraining a table younger than the pin still
+  meets it empty. That is the trigger for moving the pin forward: add the rows
+  you need, move the pin to cover them, and repair whatever the newer schema
+  rejects. `CredoChecks.MigrationConstraintSafety` is the static backstop that
+  covers the gap in the meantime.
+
+  ## Its own database
+
+  The test rebuilds a schema outside the sandbox, so it never does that to the
+  partition database the rest of the suite runs against. For its duration
+  `Tymeslot.Repo` is restarted against a scratch database beside it, which is
+  created empty in `setup` and dropped in `on_exit`. The named repo is
+  repointed rather than a second, dynamic one started, because migrations
+  from dependencies (ErrorTracker's) query the named pool directly.
+
+  Restoring the suite's state is therefore a repo restart, not a migration
+  pass, and it happens in `on_exit`, which ExUnit runs even after a timeout
+  has killed the test process. A run cut off part-way leaves only the scratch
+  database behind, which the next run drops before it starts; nothing it seeds
+  or commits can reach another test. The test is intentionally slow and
+  non-async.
+  """
+
+  use ExUnit.Case, async: false
+
+  @moduletag :migrations
+  @moduletag :database
+  # One full migration pass over a seeded database: minutes, not seconds, on a
+  # loaded machine. A timeout here costs only this test (see the moduledoc).
+  @moduletag timeout: 300_000
+
+  alias Ecto.Adapters.Postgres
+  alias Ecto.Adapters.SQL
+  alias Ecto.Adapters.SQL.Sandbox
+  alias Ecto.Migrator
+
+  @seed_path Path.expand("../../support/migration_dirty_seed.sql", __DIR__)
+
+  # The schema version `migration_dirty_seed.sql` is written against. The
+  # database is migrated to exactly this version before the seed is loaded, so
+  # the seed's `INSERT`s only ever have to satisfy the schema as it stood here.
+  # Everything after it is what this test exercises. See the moduledoc before
+  # changing it; moving it forward is a deliberate act with seed consequences,
+  # never a routine response to a red build.
+  @seed_schema_version 20_260_702_180_350
+
+  # The seed file repeats the pinned version in a machine-readable header line
+  # so a human reading the SQL knows which schema to write against. This test is
+  # the authority; the assertion below keeps the two from drifting apart.
+  @seed_version_marker ~r/^-- SEED SCHEMA VERSION:\s*(\d+)\s*$/m
+
+  # Oban comes down first and returns last: its notifier holds a connection of
+  # its own, and while the repo points at the scratch database its plugins
+  # would run against a schema that has no `oban_jobs` table yet.
+  setup do
+    suite_config = Application.fetch_env!(:tymeslot, Tymeslot.Repo)
+
+    # Named after the partition database, so concurrent partitions and
+    # worktrees each get their own. Plain pool, not the sandbox: migrations
+    # commit, and so does the seed.
+    scratch_config =
+      Keyword.merge(suite_config,
+        database: "#{suite_config[:database]}_dirty_seed",
+        pool: DBConnection.ConnectionPool,
+        pool_size: 2,
+        # Drops it even if a session is still attached.
+        force_drop: true
+      )
+
+    # Registered before anything it undoes, and the suite is restored before
+    # the scratch database is dropped: dropping is the one step that may fail,
+    # and failing must not leave Oban down or the sandbox out of manual mode.
+    # Each step runs whether or not the one before it raised, so a repo that
+    # fails to come back still gets Oban restarted and the scratch database
+    # dropped; the first error is the one reported.
+    on_exit(fn ->
+      try do
+        restart_repo!(suite_config)
+      after
+        try do
+          restart_oban()
+
+          # `test_helper.exs` puts the sandbox in manual mode once, at boot.
+          # Restarting the repo resets the pool to its default mode, so put it
+          # back before the next test module tries to check a connection out.
+          Sandbox.mode(Tymeslot.Repo, :manual)
+        after
+          # Left behind, the next run drops it before it starts.
+          _dropped = Postgres.storage_down(scratch_config)
+        end
+      end
+    end)
+
+    :ok = Supervisor.terminate_child(Tymeslot.Supervisor, Oban)
+
+    # A run killed part-way leaves its scratch database behind; start clean.
+    drop_scratch!(scratch_config)
+    :ok = Postgres.storage_up(scratch_config)
+    restart_repo!(scratch_config)
+
+    :ok
+  end
+
+  describe "migrations against dirty seed data" do
+    test "every migration after the pinned seed schema succeeds with adversarial data" do
+      versions_under_test = assert_pin_is_usable!()
+
+      # Migrate the empty scratch database to exactly the version the seed
+      # file is written against.
+      Migrator.run(Tymeslot.Repo, migrations_path(), :up, to: @seed_schema_version)
+
+      load_seed!()
+      assert_seeded_calendar_events!()
+      seeded = seeded_availability!()
+
+      # Run everything after the pin — this is the actual test.
+      assert run_remaining_migrations!() == versions_under_test
+
+      assert_availability_rekeyed!(seeded)
+      assert_buffers_split!()
+      assert_seats_not_yet_notified!()
+      assert_theme_settings_backfilled!()
+    end
+  end
+
+  # Returns the versions the seed data is exercising, and fails loudly rather
+  # than silently passing if the pin no longer refers to a real migration or has
+  # nothing left after it.
+  defp assert_pin_is_usable! do
+    all_versions = all_migration_versions()
+    {before_seed, after_seed} = Enum.split_while(all_versions, &(&1 <= @seed_schema_version))
+
+    assert @seed_schema_version in before_seed, """
+    @seed_schema_version #{@seed_schema_version} is not a migration in #{migrations_path()}.
+
+    The pin must name a real migration, because the database is migrated to
+    exactly that version before test/support/migration_dirty_seed.sql is loaded.
+    If that migration was squashed or removed, repoint the pin at the migration
+    that now leaves the schema in the shape the seed file expects.
+    """
+
+    assert after_seed != [], """
+    @seed_schema_version #{@seed_schema_version} is the newest migration, so this
+    test would exercise nothing. Leave the pin where it is; it only moves when
+    the seed file needs a table or column that did not exist at the pin.
+    """
+
+    assert_seed_declares_pin!()
+
+    after_seed
+  end
+
+  defp assert_seed_declares_pin! do
+    declared =
+      case Regex.run(@seed_version_marker, File.read!(@seed_path)) do
+        [_line, version] -> String.to_integer(version)
+        nil -> nil
+      end
+
+    assert declared == @seed_schema_version, """
+    test/support/migration_dirty_seed.sql declares schema version #{inspect(declared)},
+    but @seed_schema_version here is #{@seed_schema_version}.
+
+    The seed file's header line is documentation for whoever edits the SQL; this
+    module is the authority. Update the `-- SEED SCHEMA VERSION:` line to match.
+    """
+  end
+
+  # The seed is a script of many statements, which the extended query protocol
+  # rejects ("cannot insert multiple commands into a prepared statement"), so it
+  # goes over the simple protocol instead. It also has to travel as a single
+  # query: the payment_transactions block toggles `session_replication_role`,
+  # which is per-connection state, so splitting the script would let the pool
+  # hand those statements to different connections.
+  defp load_seed! do
+    case SQL.query(Tymeslot.Repo, File.read!(@seed_path), [], query_type: :text) do
+      {:ok, _result} ->
+        :ok
+
+      {:error, error} ->
+        flunk("""
+        The dirty seed failed to load against schema version #{@seed_schema_version}.
+
+        This is a failure of the seed file, not of any migration under test: the
+        statements never ran far enough to reach one. The schema the seed is
+        loaded against is pinned, so the usual causes are a new row written
+        against today's schema instead of the pinned one, or @seed_schema_version
+        having been moved forward past a row that the newer schema rejects.
+
+        Fix the SQL, or revert the pin — do not delete rows to make it pass
+        without checking what they covered. See the maintenance rules at the top
+        of test/support/migration_dirty_seed.sql.
+
+        #{Exception.message(error)}
+        """)
+    end
+  end
+
+  # `provider_calendar_events` is the largest table on a real installation and
+  # the one migrations reach for most, so a migration touching it while the seed
+  # holds none of its rows proves only that the migration does not crash. The
+  # seed's `INSERT ... SELECT`s hang off the seeded calendar integrations, and
+  # an `INSERT ... SELECT` whose `WHERE` matches nothing inserts nothing and
+  # reports success, so the census below is what stands between a renamed
+  # integration and a section that silently seeds an empty table again.
+  defp assert_seeded_calendar_events! do
+    census = %{
+      total: scalar!("SELECT COUNT(*) FROM provider_calendar_events"),
+      integrations:
+        scalar!("SELECT COUNT(DISTINCT calendar_integration_id) FROM provider_calendar_events"),
+      all_day:
+        scalar!(
+          "SELECT COUNT(*) FROM provider_calendar_events WHERE all_day AND start_at IS NULL"
+        ),
+      timed:
+        scalar!(
+          "SELECT COUNT(*) FROM provider_calendar_events WHERE NOT all_day AND start_at IS NOT NULL"
+        ),
+      blocks_time_edge:
+        scalar!(
+          "SELECT COUNT(*) FROM provider_calendar_events WHERE status = 'cancelled' OR transparency = 'transparent'"
+        )
+    }
+
+    assert census.total >= 6 and census.integrations >= 3 and census.all_day > 0 and
+             census.timed > 0 and census.blocks_time_edge >= 2,
+           """
+           The dirty seed left provider_calendar_events without the shapes the
+           PROVIDER CALENDAR EVENTS section is meant to cover, so every migration
+           touching that table would run against data it was not given.
+
+           An `INSERT ... SELECT` that matched no calendar integration is the
+           usual cause: the section selects its parents by user email and
+           integration name, so renaming a seeded integration empties it without
+           any statement failing. Repair the section in
+           test/support/migration_dirty_seed.sql rather than relaxing this check.
+
+           #{inspect(census)}
+           """
+  end
+
+  # The availability rows as the seed left them, keyed by profile: this is the
+  # "before" half of the only assertion in the suite that can prove the schedule
+  # rekey preserved data, because it is the only place the rekey ever meets a
+  # populated table.
+  defp seeded_availability! do
+    census = %{
+      weekly: count_by_profile!("weekly_availability"),
+      overrides: count_by_profile!("availability_overrides"),
+      breaks: scalar!("SELECT COUNT(*) FROM availability_breaks")
+    }
+
+    # Without this the comparison after the migration could hold two empty
+    # results against each other and pass having proved nothing — the exact
+    # weakness that made an empty database useless for testing the rekey.
+    assert map_size(census.weekly) > 1 and map_size(census.overrides) > 1 and
+             census.breaks > 0,
+           """
+           The dirty seed left no availability rows across at least two profiles,
+           so the schedule rekey assertions would compare empty against empty.
+
+           Restore the WEEKLY AVAILABILITY, BREAKS AND OVERRIDES section of
+           test/support/migration_dirty_seed.sql rather than relaxing this check.
+
+           #{inspect(census)}
+           """
+
+    census
+  end
+
+  defp assert_availability_rekeyed!(seeded) do
+    # Every profile gained exactly one default schedule carrying the policy it
+    # used to hold on the profile itself, NULLs included (COALESCEd to the
+    # column defaults) — the values a self-hoster's booking rules survive as.
+    assert scalar!("SELECT COUNT(*) FROM availability_schedules WHERE is_default") ==
+             scalar!("SELECT COUNT(*) FROM profiles")
+
+    # Re-counted per schedule rather than in total, so the rekey cannot pass by
+    # collapsing every profile's rows onto one schedule.
+    assert count_by_default_schedule!("weekly_availability") == seeded.weekly
+    assert count_by_default_schedule!("availability_overrides") == seeded.overrides
+
+    # Breaks are reached only through their weekly row's id, so an unchanged
+    # count proves the rekey updated those rows rather than replacing them.
+    assert scalar!("SELECT COUNT(*) FROM availability_breaks") == seeded.breaks
+  end
+
+  # Each seeded profile's single buffer became an equal before/after pair on
+  # its default schedule: 15 copied, 0 copied, NULL COALESCEd to 15 by the
+  # schedule migration, and 500 clamped to 120. The last row is the only thing
+  # that proves the clamp ran, because without it the range constraints would
+  # never meet a value they reject. The old column, which the split kept for
+  # the release before it, is gone once the later contract migration runs.
+  defp assert_buffers_split! do
+    %{rows: rows} =
+      SQL.query!(
+        Tymeslot.Repo,
+        """
+        SELECT u.email, s.buffer_before_minutes, s.buffer_after_minutes
+        FROM availability_schedules AS s
+        JOIN profiles AS p ON p.id = s.profile_id
+        JOIN users AS u ON u.id = p.user_id
+        WHERE s.is_default AND u.email LIKE 'seed-user-%@example.com'
+        ORDER BY u.email
+        """,
+        []
+      )
+
+    assert rows == [
+             ["seed-user-1@example.com", 15, 15],
+             ["seed-user-2@example.com", 0, 0],
+             ["seed-user-3@example.com", 15, 15],
+             ["seed-user-4@example.com", 120, 120]
+           ]
+
+    assert scalar!("""
+           SELECT COUNT(*) FROM information_schema.columns
+           WHERE table_name = 'availability_schedules' AND column_name = 'buffer_minutes'
+           """) == 0
+  end
+
+  # Nobody on an existing booking has been told of an end change, so every
+  # seat comes through with no notified end. Participants postdate the pin
+  # and so are absent from the seed; the column is NULL for them by the same
+  # nullable, default-free add.
+  defp assert_seats_not_yet_notified! do
+    assert scalar!("SELECT COUNT(*) FROM meetings") > 0
+    assert scalar!("SELECT COUNT(*) FROM meeting_guests") == 2
+
+    for table <- ~w(meetings meeting_participants meeting_guests) do
+      assert scalar!("SELECT COUNT(*) FROM #{table} WHERE notified_end_time IS NOT NULL") == 0
+    end
+  end
+
+  # Every seeded theme customisation reached `settings`, each option column
+  # under its own name with the null ones left out (the defaults-only row
+  # keeps just the two NOT NULL defaults, the empty seed stays an empty
+  # string), and the one processing state moved under the background video.
+  defp assert_theme_settings_backfilled! do
+    %{rows: rows} =
+      SQL.query!(
+        Tymeslot.Repo,
+        """
+        SELECT u.email, t.theme_id, t.settings, t.video_processing_status
+        FROM theme_customizations AS t
+        JOIN profiles AS p ON p.id = t.profile_id
+        JOIN users AS u ON u.id = p.user_id
+        WHERE u.email LIKE 'seed-user-%@example.com'
+        ORDER BY u.email, t.theme_id
+        """,
+        []
+      )
+
+    [_quill, [_email, "2", %{"background_video_path" => video_path}, _status] | _rest] = rows
+
+    assert rows == [
+             [
+               "seed-user-1@example.com",
+               "1",
+               %{
+                 "color_scheme" => "custom",
+                 "custom_palette_seed" => "#AB34CD",
+                 "background_type" => "gradient",
+                 "background_value" => "gradient_2"
+               },
+               %{}
+             ],
+             [
+               "seed-user-1@example.com",
+               "2",
+               %{
+                 "color_scheme" => "monochrome",
+                 "background_type" => "video",
+                 "background_value" => "custom",
+                 "background_video_path" => video_path
+               },
+               %{"background_video_path" => "completed"}
+             ],
+             [
+               "seed-user-2@example.com",
+               "1",
+               %{
+                 "color_scheme" => "forest",
+                 "background_type" => "image",
+                 "background_value" => "preset:ocean-sunset"
+               },
+               %{}
+             ],
+             [
+               "seed-user-2@example.com",
+               "2",
+               %{"color_scheme" => "default", "background_type" => "gradient"},
+               %{}
+             ],
+             [
+               "seed-user-3@example.com",
+               "1",
+               %{
+                 "color_scheme" => "ocean",
+                 "custom_palette_seed" => "",
+                 "background_type" => "image"
+               },
+               %{}
+             ]
+           ]
+
+    assert video_path =~ ~r{^\d+/2/backgrounds/clip\.mp4$}
+  end
+
+  defp count_by_profile!(table) do
+    rows!("SELECT profile_id, COUNT(*) FROM #{table} GROUP BY profile_id")
+  end
+
+  # Joins back to the owning profile so the result is comparable with the
+  # profile-keyed counts taken before the rekey dropped the column.
+  defp count_by_default_schedule!(table) do
+    rows!("""
+    SELECT s.profile_id, COUNT(*)
+    FROM #{table} AS t
+    JOIN availability_schedules AS s ON s.id = t.schedule_id AND s.is_default
+    GROUP BY s.profile_id
+    """)
+  end
+
+  defp rows!(sql) do
+    %{rows: rows} = SQL.query!(Tymeslot.Repo, sql, [])
+    Map.new(rows, fn [key, count] -> {key, count} end)
+  end
+
+  defp scalar!(sql) do
+    %{rows: [[value]]} = SQL.query!(Tymeslot.Repo, sql, [])
+    value
+  end
+
+  defp run_remaining_migrations! do
+    Migrator.run(Tymeslot.Repo, migrations_path(), :up, all: true)
+  rescue
+    error ->
+      reraise """
+              A migration after #{@seed_schema_version} failed against the dirty seed data.
+
+              This is what the test is for: the migration works on an empty
+              database and does not work on a populated one. Give it a backfill,
+              a deduplication step, or a default — do not remove the seed rows
+              that caught it.
+
+              #{Exception.message(error)}
+              """,
+              __STACKTRACE__
+  end
+
+  defp all_migration_versions do
+    migrations_path()
+    |> Path.join("*.exs")
+    |> Path.wildcard()
+    |> Enum.map(fn path ->
+      path |> Path.basename() |> String.split("_", parts: 2) |> hd() |> String.to_integer()
+    end)
+    |> Enum.sort()
+  end
+
+  # The repo reads its configuration when it starts, so a restart is what
+  # repoints it. Restarting also hands the suite a pool with an empty
+  # prepared-statement cache, rather than plans built against another schema.
+  defp restart_repo!(config) do
+    :ok = Supervisor.terminate_child(Tymeslot.Supervisor, Tymeslot.Repo)
+    Application.put_env(:tymeslot, Tymeslot.Repo, config)
+    {:ok, _repo} = Supervisor.restart_child(Tymeslot.Supervisor, Tymeslot.Repo)
+  end
+
+  # Already running when the test was killed before it stopped Oban.
+  defp restart_oban do
+    case Supervisor.restart_child(Tymeslot.Supervisor, Oban) do
+      {:ok, _oban} -> :ok
+      {:error, :running} -> :ok
+    end
+  end
+
+  defp drop_scratch!(config) do
+    case Postgres.storage_down(config) do
+      :ok -> :ok
+      {:error, :already_down} -> :ok
+    end
+  end
+
+  defp migrations_path do
+    "priv/repo/migrations"
+  end
+end

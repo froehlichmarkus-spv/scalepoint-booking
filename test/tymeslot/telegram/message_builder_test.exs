@@ -1,0 +1,289 @@
+defmodule Tymeslot.Telegram.MessageBuilderTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :telegram
+  @moduletag :unit
+
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Notifications.EventTypes
+  alias Tymeslot.Telegram.MessageBuilder
+
+  @meeting %MeetingSchema{
+    attendee_name: "John Smith",
+    attendee_email: "john@example.com",
+    attendee_timezone: "America/New_York",
+    start_time: ~U[2026-03-10 14:00:00Z],
+    end_time: ~U[2026-03-10 14:30:00Z],
+    title: "30-minute intro call",
+    id: "6f1d2c3b-0a4e-4b8f-9c7d-1e2f3a4b5c6d",
+    uid: "abc123"
+  }
+
+  # The organiser's timezone, deliberately different from the attendee's: these
+  # messages land in the organiser's chat, so every time below is theirs.
+  @timezone "UTC"
+
+  describe "build_message/3 for every subscribable event" do
+    test "each one has a dedicated message rather than the generic fallback" do
+      meeting = Map.merge(@meeting, %{approval_deadline_at: nil, decline_reason: nil})
+
+      assert EventTypes.all() != []
+
+      generic =
+        Enum.filter(EventTypes.all(), fn event ->
+          MessageBuilder.build_message(event, meeting, @timezone) =~ "Meeting Update"
+        end)
+
+      assert generic == []
+    end
+
+    test "an unknown event name still builds the generic message" do
+      assert MessageBuilder.build_message("meeting.renamed", @meeting, @timezone) =~
+               "<b>Meeting Update</b>"
+    end
+  end
+
+  describe "build_message/3 for a meeting the host manages" do
+    # Without a main participant, its first guest fills the attendee fields
+    # under their address for a name. The host arranged, moved and cancelled
+    # it; the guest did none of that.
+    @managed Map.merge(@meeting, %{
+               managed_by_host: true,
+               attendee_name: "guest@example.com",
+               attendee_email: "guest@example.com"
+             })
+
+    test "says the host arranged it, naming the guest's address once" do
+      msg = MessageBuilder.build_message("meeting.created", @managed, @timezone)
+
+      assert msg =~ "You arranged <i>30-minute intro call</i> with <b>guest@example.com</b>"
+      refute msg =~ "booked"
+      assert length(String.split(msg, "guest@example.com")) == 2
+    end
+
+    test "does not say the guest moved or cancelled it" do
+      moved = MessageBuilder.build_message("meeting.rescheduled", @managed, @timezone)
+      cancelled = MessageBuilder.build_message("meeting.cancelled", @managed, @timezone)
+
+      assert moved =~ "Moved <i>30-minute intro call</i> with <b>guest@example.com</b>"
+      assert cancelled =~ "Cancelled <i>30-minute intro call</i> with <b>guest@example.com</b>"
+    end
+
+    test "an ordinary booking still says who booked it" do
+      msg = MessageBuilder.build_message("meeting.created", @meeting, @timezone)
+
+      assert msg =~ "<b>John Smith</b> booked <i>30-minute intro call</i>"
+      assert msg =~ "john@example.com"
+    end
+
+    test "a poll-confirmed one names its guest, with the address beneath" do
+      msg =
+        MessageBuilder.build_message(
+          "meeting.created",
+          Map.put(@managed, :attendee_name, "Ada Lovelace"),
+          @timezone
+        )
+
+      assert msg =~ "with <b>Ada Lovelace</b>"
+      assert msg =~ "guest@example.com"
+    end
+  end
+
+  describe "build_message/3" do
+    test "builds meeting.requested message with the deadline to respond by" do
+      meeting = Map.put(@meeting, :approval_deadline_at, ~U[2026-03-09 18:00:00Z])
+      msg = MessageBuilder.build_message("meeting.requested", meeting, @timezone)
+      assert msg =~ "<b>New Booking Request</b>"
+      assert msg =~ "John Smith"
+      assert msg =~ "Respond by Mon 09 Mar 2026, 18:00"
+    end
+
+    test "builds meeting.declined message with the host's reason" do
+      meeting = Map.put(@meeting, :decline_reason, "Fully booked <that> week")
+      msg = MessageBuilder.build_message("meeting.declined", meeting, @timezone)
+      assert msg =~ "<b>Booking Request Declined</b>"
+      assert msg =~ "Fully booked &lt;that&gt; week"
+    end
+
+    test "builds meeting.request_expired message" do
+      msg = MessageBuilder.build_message("meeting.request_expired", @meeting, @timezone)
+      assert msg =~ "<b>Booking Request Expired</b>"
+      assert msg =~ "slot was released"
+    end
+
+    test "builds meeting.created message" do
+      msg = MessageBuilder.build_message("meeting.created", @meeting, @timezone)
+      assert msg =~ "<b>New Meeting</b>"
+      assert msg =~ "John Smith"
+      assert msg =~ "Meeting"
+      assert msg =~ "john@example.com"
+      assert msg =~ "14:00"
+    end
+
+    test "builds meeting.cancelled message" do
+      meeting = Map.put(@meeting, :cancellation_reason, "Schedule conflict")
+      msg = MessageBuilder.build_message("meeting.cancelled", meeting, @timezone)
+      assert msg =~ "<b>Meeting Cancelled</b>"
+      assert msg =~ "John Smith"
+      assert msg =~ "Schedule conflict"
+    end
+
+    test "builds meeting.rescheduled message" do
+      msg = MessageBuilder.build_message("meeting.rescheduled", @meeting, @timezone)
+      assert msg =~ "<b>Meeting Rescheduled</b>"
+      assert msg =~ "John Smith"
+    end
+
+    test "HTML-escapes user content" do
+      meeting = %{@meeting | attendee_name: "<script>alert('xss')</script>"}
+      msg = MessageBuilder.build_message("meeting.created", meeting, @timezone)
+      refute msg =~ "<script>"
+      assert msg =~ "&lt;script&gt;"
+    end
+
+    for event <- ["meeting.created", "meeting.rescheduled"] do
+      test "#{event} links the organiser's own video room, not the attendee's" do
+        meeting = %{
+          @meeting
+          | organizer_video_url: "https://meet.example.com/host",
+            attendee_video_url: "https://meet.example.com/guest",
+            meeting_url: "https://meet.example.com/room"
+        }
+
+        msg = MessageBuilder.build_message(unquote(event), meeting, @timezone)
+        assert msg =~ ~s(<a href="https://meet.example.com/host">Join video call</a>)
+        refute msg =~ "meet.example.com/guest"
+      end
+    end
+
+    test "falls back to the meeting URL when there is no organiser link" do
+      meeting = %{@meeting | meeting_url: "https://meet.example.com/room"}
+      msg = MessageBuilder.build_message("meeting.created", meeting, @timezone)
+      assert msg =~ ~s(<a href="https://meet.example.com/room">Join video call</a>)
+    end
+
+    test "omits the video line when the meeting has no link" do
+      msg = MessageBuilder.build_message("meeting.created", @meeting, @timezone)
+      refute msg =~ "Join video call"
+    end
+
+    test "names the meeting by its title" do
+      msg = MessageBuilder.build_message("meeting.created", @meeting, @timezone)
+      assert msg =~ "<i>30-minute intro call</i>"
+    end
+
+    test "uses attendee_email as fallback name" do
+      meeting = %{@meeting | attendee_name: nil}
+      msg = MessageBuilder.build_message("meeting.created", meeting, @timezone)
+      assert msg =~ "john@example.com"
+    end
+  end
+
+  describe "build_message/3 — timezone" do
+    test "renders times in the organiser's timezone, not the attendee's" do
+      msg = MessageBuilder.build_message("meeting.created", @meeting, "Europe/Tallinn")
+      assert msg =~ "16:00\u201316:30 (Europe/Tallinn)"
+      refute msg =~ "America/New_York"
+    end
+  end
+
+  # The uid is the booker's capability (the cancel and reschedule links are
+  # built from it), so the host's link names the booking by its id.
+  describe "build_message/3: the link to the booking" do
+    test "names the booking by its id, never its uid" do
+      out = MessageBuilder.build_message("meeting.created", @meeting, @timezone)
+
+      assert out =~ "/dashboard/meetings?meeting=#{@meeting.id}"
+      refute out =~ @meeting.uid
+    end
+  end
+
+  describe "build_message/3: what the booker told the organiser" do
+    @details %{
+      attendee_message: "Bring the <Q3> figures & slides",
+      attendee_phone: "+44 20 7946 0000",
+      attendee_company: "Acme Ltd",
+      location: "1 High Street, Oxford",
+      location_kind: :in_person,
+      custom_fields_snapshot: [%{"id" => "q1", "type" => "text", "label" => "Topic"}],
+      custom_field_answers: %{"q1" => "Pricing <b>now</b>"},
+      approval_deadline_at: nil
+    }
+
+    for event <- [:meeting_created, :meeting_rescheduled, :meeting_requested] do
+      test "#{event} shows the notes, contact details, location and answers, escaped" do
+        message =
+          MessageBuilder.build_message(
+            EventTypes.to_event_type(unquote(event)),
+            Map.merge(@meeting, @details),
+            @timezone
+          )
+
+        assert message =~ "Bring the &lt;Q3&gt; figures &amp; slides"
+        assert message =~ "+44 20 7946 0000"
+        assert message =~ "Acme Ltd"
+        assert message =~ "1 High Street, Oxford"
+        assert message =~ "<b>Topic</b>: Pricing &lt;b&gt;now&lt;/b&gt;"
+      end
+    end
+
+    test "a cancellation leaves them out" do
+      message =
+        MessageBuilder.build_message(
+          EventTypes.to_event_type(:meeting_cancelled),
+          Map.merge(@meeting, @details),
+          @timezone
+        )
+
+      refute message =~ "figures"
+      refute message =~ "Topic"
+    end
+
+    test "counts the answers past the cap rather than listing them" do
+      snapshot = for n <- 1..11, do: %{"id" => "q#{n}", "type" => "text", "label" => "Q#{n}"}
+
+      meeting =
+        Map.merge(@meeting, %{
+          custom_fields_snapshot: snapshot,
+          custom_field_answers: Map.new(1..11, &{"q#{&1}", "answer"})
+        })
+
+      message =
+        MessageBuilder.build_message(
+          EventTypes.to_event_type(:meeting_created),
+          meeting,
+          @timezone
+        )
+
+      assert message =~ "<b>Q10</b>: answer"
+      refute message =~ "<b>Q11</b>"
+      assert message =~ "1 more answer in the dashboard"
+    end
+  end
+
+  describe "build_test_message/0" do
+    test "returns a test message" do
+      msg = MessageBuilder.build_test_message()
+      assert msg =~ "Test"
+      assert msg =~ "Tymeslot"
+    end
+  end
+
+  describe "build_message/3 end on a later day" do
+    test "a same-day meeting shows one date and both times" do
+      assert MessageBuilder.build_message("meeting.created", @meeting, @timezone) =~
+               "Tue 10 Mar 2026, 14:00–14:30"
+    end
+
+    test "a meeting ending the next day shows the end with its own day" do
+      meeting = %{
+        @meeting
+        | start_time: ~U[2026-03-10 23:30:00Z],
+          end_time: ~U[2026-03-11 00:30:00Z]
+      }
+
+      assert MessageBuilder.build_message("meeting.created", meeting, @timezone) =~
+               "Tue 10 Mar 2026, 23:30 – Wed 11 Mar 00:30"
+    end
+  end
+end

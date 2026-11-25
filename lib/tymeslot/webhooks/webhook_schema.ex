@@ -1,0 +1,255 @@
+defmodule Tymeslot.Webhooks.WebhookSchema do
+  @moduledoc """
+  Ecto schema for webhooks.
+
+  Allows users to configure HTTP endpoints that receive notifications
+  when specific booking events occur (created, cancelled, rescheduled, etc.).
+  Enables integration with automation tools like n8n, Zapier, Make.com.
+  """
+  use Gettext, backend: TymeslotWeb.Gettext
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  alias Tymeslot.ChangesetValidators.URL, as: URLValidator
+  alias Tymeslot.Notifications.EventTypes
+  alias Tymeslot.Security.EncryptedString
+  alias Tymeslot.Security.Encryption
+  alias Tymeslot.Validation.Constraints
+  alias Tymeslot.Webhooks.SsrfValidator
+
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          user_id: integer() | nil,
+          name: String.t() | nil,
+          url: String.t() | nil,
+          webhook_token_encrypted: binary() | nil,
+          events: [String.t()],
+          is_active: boolean(),
+          last_triggered_at: DateTime.t() | nil,
+          last_status: String.t() | nil,
+          failure_count: integer(),
+          disabled_at: DateTime.t() | nil,
+          disabled_reason: String.t() | nil,
+          user: Tymeslot.Auth.UserSchema.t() | Ecto.Association.NotLoaded.t(),
+          webhook_token: String.t() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
+  schema "webhooks" do
+    field(:name, :string)
+    # Zapier, n8n and Make hook URLs are themselves the credential: anyone
+    # holding one can post into the host's automation.
+    field(:url, EncryptedString, source: :url_encrypted, redact: true)
+    field(:webhook_token_encrypted, :binary)
+    field(:events, {:array, :string}, default: [])
+    field(:is_active, :boolean, default: true)
+    field(:last_triggered_at, :utc_datetime)
+    field(:last_status, :string)
+    field(:failure_count, :integer, default: 0)
+    field(:disabled_at, :utc_datetime)
+    field(:disabled_reason, :string)
+
+    # Virtual field for decrypted token
+    field(:webhook_token, :string, virtual: true, redact: true)
+
+    belongs_to(:user, Tymeslot.Auth.UserSchema)
+
+    timestamps(type: :utc_datetime)
+  end
+
+  # Sourced from `Tymeslot.Notifications.EventTypes` so a new event cannot be
+  # published by the dispatchers while remaining unselectable here.
+  @valid_events EventTypes.all()
+
+  # Changesets are split by who writes the row:
+  #
+  #   * `create_changeset/1` takes the owner, set by the context, and then
+  #     the organiser's own fields.
+  #   * `update_changeset/2` carries only what the organiser edits: the name,
+  #     the URL, the events, and the token (blank regenerates it).
+  #   * `state_transition_changeset/2` carries the delivery bookkeeping,
+  #     written by the context and the delivery worker.
+  @user_fields [:name, :url, :events, :webhook_token]
+  @state_fields [
+    :is_active,
+    :last_triggered_at,
+    :last_status,
+    :failure_count,
+    :disabled_at,
+    :disabled_reason
+  ]
+
+  @doc "Changeset for a new webhook. `user_id` is set by the context, never taken from the form."
+  @spec create_changeset(map()) :: Ecto.Changeset.t()
+  def create_changeset(attrs) do
+    %__MODULE__{}
+    |> cast(attrs, [:user_id])
+    |> validate_required([:user_id])
+    |> foreign_key_constraint(:user_id)
+    |> update_changeset(attrs)
+  end
+
+  @doc """
+  Changeset for the organiser's own edits. The owner and the delivery
+  bookkeeping are never changed here.
+  """
+  @spec update_changeset(t() | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
+  def update_changeset(webhook, attrs) do
+    # If webhook_token is explicitly set to nil in attrs, ensure it stays nil after cast
+    # so generate_token can detect it.
+    attrs = attrs || %{}
+
+    webhook
+    |> cast(attrs, @user_fields)
+    |> validate_required([:name, :url])
+    |> validate_length(:name, Constraints.integration_name_length_opts())
+    |> validate_length(:url, min: 1, max: Constraints.url_max_length())
+    |> URLValidator.validate_url(:url,
+      block_private_ips: not SsrfValidator.allow_private?(),
+      enforce_https: not SsrfValidator.allow_private?()
+    )
+    |> validate_events()
+    |> maybe_seed_webhook_token(attrs)
+    |> generate_token()
+    |> encrypt_token()
+  end
+
+  @doc """
+  Changeset for the delivery bookkeeping: active state, failure count,
+  disable reason and the last delivery's outcome. No validation, so a row in
+  any state can be switched off or re-enabled.
+  """
+  @spec state_transition_changeset(t(), map()) :: Ecto.Changeset.t()
+  def state_transition_changeset(webhook, attrs), do: cast(webhook, attrs, @state_fields)
+
+  defp maybe_seed_webhook_token(changeset, attrs) do
+    if blank_token_supplied?(attrs) do
+      put_change(changeset, :webhook_token, generate_secure_token())
+    else
+      changeset
+    end
+  end
+
+  # `attrs` reaches the changeset atom-keyed from internal callers and
+  # string-keyed from form params (`cast/3` above already rejects a mix of the
+  # two), so both shapes are answered here once.
+  defp blank_token_supplied?(%{webhook_token: token}), do: is_nil(token) or token == ""
+  defp blank_token_supplied?(%{"webhook_token" => token}), do: is_nil(token) or token == ""
+  defp blank_token_supplied?(_attrs), do: false
+
+  @encrypted_credential_fields [:webhook_token_encrypted]
+
+  @doc """
+  Returns the list of encrypted credential field atoms on this schema. Used by
+  `Tymeslot.Security.CredentialReencryption` so the authoritative list lives in
+  one place.
+  """
+  @spec encrypted_credential_fields() :: [atom()]
+  def encrypted_credential_fields, do: @encrypted_credential_fields
+
+  @doc """
+  Decrypts the webhook token field.
+  """
+  @spec decrypt_token(t()) :: t()
+  def decrypt_token(%__MODULE__{} = webhook) do
+    %{webhook | webhook_token: Encryption.decrypt(webhook.webhook_token_encrypted)}
+  end
+
+  @max_failure_count 10
+
+  @doc """
+  Checks if webhook should be active (not disabled by failures)
+  """
+  @spec should_be_active?(t()) :: boolean()
+  def should_be_active?(%__MODULE__{is_active: false}), do: false
+  def should_be_active?(%__MODULE__{disabled_at: %DateTime{}}), do: false
+
+  def should_be_active?(%__MODULE__{failure_count: count}) when count >= @max_failure_count,
+    do: false
+
+  def should_be_active?(%__MODULE__{}), do: true
+
+  @doc """
+  Consecutive delivery failures after which a webhook auto-disables.
+
+  Named rather than repeated as a literal at each site, as Slack and Telegram
+  already do: the count is checked here and again where the failure is
+  recorded, and two copies of a threshold drift.
+  """
+  @spec max_failure_count() :: pos_integer()
+  def max_failure_count, do: @max_failure_count
+
+  @doc """
+  Checks if webhook is subscribed to a specific event
+  """
+  @spec subscribed_to?(t(), String.t()) :: boolean()
+  def subscribed_to?(%__MODULE__{events: events}, event_type) do
+    event_type in events
+  end
+
+  # Private functions
+
+  defp validate_events(changeset) do
+    case get_change(changeset, :events) do
+      nil ->
+        changeset
+
+      events ->
+        case validate_events_list(events) do
+          :ok -> changeset
+          {:error, {message, opts}} -> add_error(changeset, :events, message, opts)
+        end
+    end
+  end
+
+  @doc """
+  Validates a list of event types. A refusal is a changeset error,
+  `{msgid, opts}`, translated where it is shown like any other.
+  """
+  @spec validate_events_list([String.t()]) :: :ok | {:error, {String.t(), keyword()}}
+  def validate_events_list([]),
+    do: {:error, {dgettext_noop("errors", "Must select at least one event"), []}}
+
+  def validate_events_list(events) when is_list(events) do
+    case Enum.reject(events, &(&1 in @valid_events)) do
+      [] ->
+        :ok
+
+      invalid_events ->
+        {:error,
+         {dgettext_noop("errors", "Contains invalid events: %{events}"),
+          [events: Enum.join(invalid_events, ", ")]}}
+    end
+  end
+
+  @doc """
+  Generates a new secure webhook token.
+  """
+  @spec generate_secure_token() :: String.t()
+  def generate_secure_token do
+    "ts_" <> Base.encode64(:crypto.strong_rand_bytes(24), padding: false)
+  end
+
+  defp generate_token(changeset) do
+    # For new records, generate a token if not already present
+    if get_field(changeset, :webhook_token_encrypted) || get_change(changeset, :webhook_token) do
+      changeset
+    else
+      put_change(changeset, :webhook_token, generate_secure_token())
+    end
+  end
+
+  defp encrypt_token(changeset) do
+    case get_change(changeset, :webhook_token) do
+      nil ->
+        changeset
+
+      "" ->
+        changeset
+
+      token ->
+        put_change(changeset, :webhook_token_encrypted, Encryption.encrypt(token))
+    end
+  end
+end

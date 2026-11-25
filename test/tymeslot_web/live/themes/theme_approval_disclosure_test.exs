@@ -1,0 +1,237 @@
+defmodule TymeslotWeb.Live.Themes.ThemeApprovalDisclosureTest do
+  @moduledoc """
+  What a visitor is told when the meeting type needs the host's approval.
+
+  The failure this guards against is the one the whole feature exists to fix:
+  a visitor who picks a time, sees "You're All Set!", and only learns from an
+  email that nobody has agreed to it. Every stage of the flow is checked in
+  every theme, and the confirmation screen is checked hardest, because that is
+  the screen that used to lie.
+  """
+
+  use TymeslotWeb.LiveCase, async: false
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  import Mox
+  import Phoenix.LiveViewTest
+  import Tymeslot.Factory
+  import Tymeslot.BookingTestHelpers, only: [seed_booking_account: 3]
+
+  @moduletag :themes
+  @moduletag :bookings
+
+  alias Ecto.Changeset
+  alias Phoenix.PubSub
+  alias Tymeslot.MeetingPayments.BookingPaymentQueries
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Repo
+  alias Tymeslot.TestMocks
+  alias TymeslotWeb.BookingDriver
+  alias TymeslotWeb.Themes.Shared.BookingLabels
+  alias TymeslotWeb.ThemeTestMatrix
+
+  setup :verify_on_exit!
+
+  setup tags do
+    Mox.set_mox_from_context(tags)
+    TestMocks.setup_email_mocks()
+    TestMocks.setup_subscription_mocks()
+
+    Tymeslot.CalendarMock
+    |> stub(:get_events_for_range_fresh, fn _user_id, _start, _end -> {:ok, []} end)
+    |> stub(:get_booking_integration_info, fn _user_id -> {:error, :no_integration} end)
+
+    :ok
+  end
+
+  defp gate(user) do
+    [type] = MeetingTypes.get_all_meeting_types(user.id)
+
+    type
+    |> Changeset.change(requires_approval: true, approval_window_hours: 12)
+    |> Repo.update!()
+  end
+
+  for theme <- ThemeTestMatrix.registered() do
+    describe "#{theme.slug}: a gated meeting type" do
+      @tag :capture_log
+      test "is marked as needing approval before anything is picked", %{conn: conn} do
+        %{user: user, profile: profile} =
+          seed_booking_account(
+            unquote(theme.id),
+            "gated-#{unquote(theme.slug)}",
+            "America/New_York"
+          )
+
+        gate(user)
+
+        {:ok, _view, html} = live(conn, ~p"/#{profile.username}?timezone=America/New_York")
+
+        assert html =~ "data-testid=\"approval-pill\""
+        assert html =~ "Needs approval"
+      end
+
+      @tag :capture_log
+      test "says so on the form, and does not call the button \"Book\"", %{conn: conn} do
+        %{user: user, profile: profile} =
+          seed_booking_account(
+            unquote(theme.id),
+            "form-#{unquote(theme.slug)}",
+            "America/New_York"
+          )
+
+        gate(user)
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=America/New_York")
+
+        BookingDriver.book(view, until: :attendee)
+        html = render(view)
+
+        assert html =~ "data-testid=\"approval-notice\""
+        assert html =~ "sends a request rather than booking the time outright"
+
+        # The last thing read before committing must not promise a booking.
+        submit = view |> element("[data-testid='submit-booking']") |> render()
+        assert submit =~ request_label(unquote(theme.key))
+
+        refute submit =~
+                 BookingLabels.submit_label(false, %{}, "Book Meeting", unquote(theme.key))
+      end
+
+      @tag :capture_log
+      test "does not tell the visitor they are all set", %{conn: conn} do
+        %{user: user, profile: profile} =
+          seed_booking_account(
+            unquote(theme.id),
+            "done-#{unquote(theme.slug)}",
+            "America/New_York"
+          )
+
+        gate(user)
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=America/New_York")
+
+        email = "held-#{unquote(theme.slug)}@example.com"
+
+        html =
+          BookingDriver.book(view,
+            attendee: %{name: "Test Attendee", email: email, message: "Hello!"}
+          )
+
+        assert confirmation_heading(html) == held_headline(unquote(theme.key))
+        assert html =~ "Not confirmed yet"
+        assert html =~ "still has to accept this time"
+
+        refute html =~ "You're All Set!"
+        refute html =~ "Meeting Confirmed!"
+        refute html =~ "is all set"
+
+        # And the booking really is held, not merely described as one.
+        meeting = Repo.get_by!(MeetingSchema, organizer_user_id: user.id, attendee_email: email)
+        assert meeting.status == :awaiting_approval
+      end
+    end
+
+    describe "#{theme.slug}: the payment-processing return page" do
+      @tag :capture_log
+      test "does not say the booking is confirmed while it is awaiting approval", %{conn: conn} do
+        %{user: user} =
+          seed_booking_account(
+            unquote(theme.id),
+            "paid-gated-#{unquote(theme.slug)}",
+            "America/New_York"
+          )
+
+        meeting = insert(:meeting, organizer_user_id: user.id, status: :awaiting_payment)
+
+        payment =
+          insert(:booking_payment,
+            meeting: meeting,
+            host_user_id: user.id,
+            status: :pending,
+            stripe_checkout_session_id: "cs_TEST"
+          )
+
+        {:ok, view, html} =
+          live(
+            conn,
+            ~p"/themes/#{unquote(theme.slug)}/payment-processing/#{meeting.id}?session_id=cs_TEST"
+          )
+
+        assert html =~ "Confirming your payment"
+
+        # Simulate what the webhook does for a meeting type that also requires
+        # approval: the payment settles, but the meeting goes to the approval
+        # gate instead of being confirmed outright.
+        {:ok, _payment} =
+          BookingPaymentQueries.update(payment, %{
+            status: :paid,
+            paid_at: DateTime.utc_now(:second)
+          })
+
+        meeting
+        |> Changeset.change(status: :awaiting_approval)
+        |> Repo.update!()
+
+        PubSub.broadcast(Tymeslot.PubSub, "meeting_payment:#{meeting.id}", :paid)
+
+        html = render(view)
+
+        refute html =~ "Booking confirmed"
+        assert html =~ "Payment received"
+        assert html =~ "not confirmed yet"
+      end
+    end
+
+    describe "#{theme.slug}: an ordinary meeting type" do
+      @tag :capture_log
+      test "is unchanged and still says the booking is confirmed", %{conn: conn} do
+        %{user: user, profile: profile} =
+          seed_booking_account(
+            unquote(theme.id),
+            "plain-#{unquote(theme.slug)}",
+            "America/New_York"
+          )
+
+        {:ok, view, _html} = live(conn, ~p"/#{profile.username}?timezone=America/New_York")
+
+        refute render(view) =~ "data-testid=\"approval-pill\""
+
+        email = "plain-#{unquote(theme.slug)}@example.com"
+
+        html =
+          BookingDriver.book(view,
+            attendee: %{name: "Test Attendee", email: email, message: "Hello!"}
+          )
+
+        refute html =~ "data-testid=\"approval-notice\""
+        refute confirmation_heading(html) == held_headline(unquote(theme.key))
+
+        meeting = Repo.get_by!(MeetingSchema, organizer_user_id: user.id, attendee_email: email)
+        assert meeting.status == :confirmed
+      end
+    end
+  end
+
+  # The submit of a gated type: Folio words its own, the rest share one.
+  defp request_label(:folio), do: "Request this time"
+  defp request_label(_shared), do: "Request meeting"
+
+  # Each theme's own headline for a held request, as the heading reads (Floki
+  # decodes the entity in Folio's apostrophe); the shared one where a theme keeps it.
+  defp held_headline(:folio), do: "Thank you. I'll reply to your request soon."
+  defp held_headline(:paper), do: "Request sent"
+  defp held_headline(_shared), do: "Request sent!"
+
+  # The text of the confirmation heading every theme renders.
+  defp confirmation_heading(html) do
+    heading = html |> Floki.parse_fragment!() |> Floki.find("[data-testid=confirmation-heading]")
+
+    assert [_one] = heading
+    # Quill marks a wrapper around its h1 and subtitle; the rest mark the h1.
+    h1 = Floki.find(heading, "h1")
+    node = if h1 == [], do: heading, else: h1
+    node |> Floki.text() |> String.trim()
+  end
+end

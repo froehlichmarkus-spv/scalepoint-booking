@@ -1,0 +1,288 @@
+# Polish glossary (pl)
+
+Termbase for the Polish catalogues. Settle a term here before using a new one.
+
+## Tone and style
+
+- **Informal second person singular** to the signed-in user and to booking visitors:
+  "twoje spotkania", "Zaloguj się", "Wybierz termin". Never "Pan/Pani", never "Państwo".
+- **Lowercase pronouns**: "ty", "twój", "ci", "cię", "ciebie", capitalised only at the start
+  of a sentence. The capitalised "Twój" belongs to a letter to one named person; our strings
+  address an unknown reader, and Polish interfaces (Google, Apple, Microsoft) write it lowercase.
+- **Drop the possessive where Polish would.** English says "your" far more often than Polish
+  does: "Sesja wygasła", not "Twoja sesja wygasła"; "Wyślij gościom link", not "Wyślij gościom
+  swój link". When it refers back to the subject of the sentence it must be "swój", never "twój":
+  "Zmień swój adres URL".
+- **Sentence case** for buttons, labels and headings: "Zapisz zmiany", not "Zapisz Zmiany".
+- Imperative for actions ("Anuluj", "Zapisz"), perfective where it completes something
+  ("Przetestuj połączenie", not "Testuj połączenie"); noun phrases for labels ("Nazwa użytkownika").
+- **Avoid gendered forms.** We do not know the gender of the reader or of the person a
+  placeholder names. Prefer, in this order: make a noun the subject ("Spotkanie zostało
+  odwołane"), use the impersonal "-no/-to" form ("Podłączono Zoom", "Zapisano zmiany"), use the
+  present tense ("%{name} zaprasza cię"), or a noun phrase. The bracketed "zaprosił(a)" is a
+  last resort, never in a subject line or heading.
+- Polish typography: „cudzysłów drukarski” where the source uses quotes; no em dashes, and no
+  dash as sentence punctuation: use a comma, a colon, parentheses or a full stop instead. A spaced
+  półpauza " – " stays only as a separator in titles and subject lines and in ranges
+  ("Kwiecień – maj 2026"). The single ellipsis character "…", never "..."; a space between a number
+  and its unit ("5 MB", "1000 px"); no space before `:` `,` `.` `?` `!`.
+- **Gender-neutral address in marketing copy too.** Never a masculine past form or adjective
+  aimed at the reader ("zarezerwowałeś", "które sam dodasz", "jesteś gotowy"): use the present
+  or future ("które dodasz"), "samodzielnie", or a noun phrase.
+- **Vocative comma**: "Cześć, %{name}!" / "Cześć, %{name},". No comma after a closing
+  "Pozdrawiamy".
+- Do not translate brand names: Tymeslot, Google, Google Calendar, Google Meet, Outlook,
+  Microsoft, Microsoft Teams, Zoom, Stripe, Nextcloud, Radicale, Zimbra, Baikal, mailbox.org,
+  CalDAV, iCloud, Fastmail, Slack, Telegram, MiroTalk, Jitsi, OAuth, SSO, plan names (Cloud Free,
+  Cloud Pro, Self-Hosted) and theme names (Quill, Rhythm). Environment variables stay verbatim.
+- "X via %{brand}" is "X · %{brand}"; "via" is not "przez".
+- After "przez" or "w", give a provider or calendar placeholder a declined head noun:
+  "przez konto %{provider}", "w kalendarzu %{calendar}", "Podłączono usługę %{service}".
+- Example addresses use the reserved domains: "jan.kowalski@example.com", never a real
+  Polish domain such as "przyklad.pl".
+
+## Placeholders and grammatical case
+
+A placeholder is filled with a value in the **nominative** that cannot be declined: a person's
+name, a meeting type, a calendar name, a weekday, a provider. So a placeholder must never sit
+where Polish needs another case, which rules out a preposition directly before it ("z %{name}",
+"do %{name}", "od %{name}", "dla %{name}", "w %{calendar}") and any verb that governs the
+genitive, dative or instrumental of it. Restructure instead:
+
+- a colon or parentheses (a spaced półpauza only in a title or subject line):
+  "Spotkanie potwierdzone – %{date}, %{name}",
+  "Prośba wysłana (odbiorca: %{name})", "Wiadomość od uczestnika: %{name}";
+- a declined head noun in front of the placeholder: "w kalendarzu %{calendar}",
+  "ustawienia dnia: %{day}";
+- make the placeholder the subject: "%{name} pisze:", "%{name} ma wtedy %{time}".
+
+Numbers outside a plural entry cannot agree with a noun either, so a plain msgid with
+"%{count}", "%{days}" or "%{max}" must not follow the number with an inflected noun or
+adjective ("%{days} dni" breaks at 1, "%{max} terminów" at 2–4). Use an abbreviation that does not
+inflect ("%{days} dn.", "%{hours} godz.", "%{minutes} min") or a label: "Maksymalna liczba
+terminów: %{max}". Plural entries carry three forms: [0] for 1, [1] for 2–4 (except 12–14),
+[2] for everything else; each form in the case the sentence demands (accusative after
+"odśwież", genitive after "brak" and so on).
+
+Duration strings in the `errors` domain are in the accusative, because they are only ever
+inserted into "Spróbuj ponownie za %{wait}". Check every such composition before translating a
+fragment: read how the code uses it.
+
+## Dates and months
+
+- A month **inside a date** is genitive ("5 kwietnia 2026"); that form lives in
+  `LocaleFormat` and is not translated here.
+- The month names in the `booking` domain ("January" … "December") are the **standalone**
+  form used in calendar headings ("%{month} %{year}", month ranges): nominative and
+  capitalised, "Kwiecień 2026", "Kwiecień – maj 2026".
+- Weekday names are nominative; never put a preposition before a weekday placeholder.
+
+## Core terms
+
+| English | Polish |
+|---|---|
+| meeting | spotkanie |
+| booking (the act/record) | rezerwacja |
+| to book | zarezerwować |
+| scheduling page / booking page | strona rezerwacji |
+| meeting type | typ spotkania |
+| slot / time slot | termin |
+| availability | dostępność |
+| availability schedule | harmonogram dostępności |
+| working hours | godziny pracy |
+| buffer | bufor |
+| host / organizer | organizator |
+| attendee | uczestnik |
+| guest / visitor | gość |
+| invitee | zaproszony |
+| dashboard | panel |
+| settings | ustawienia |
+| profile | profil |
+| username | nazwa użytkownika |
+| account | konto |
+| sign up | załóż konto (link/button), rejestracja (noun) |
+| log in / sign in | zaloguj się |
+| log out / sign out | wyloguj się |
+| password | hasło |
+| reset password | zresetuj hasło |
+| verify / verification | potwierdź / potwierdzenie (e-mail) |
+| calendar integration | integracja kalendarza |
+| connect (a calendar/account) | podłącz |
+| disconnect | odłącz |
+| sync / synchronise | synchronizacja / synchronizuj |
+| reschedule | zmień termin |
+| cancel (a meeting) | odwołaj |
+| cancel (an action/dialog) | anuluj |
+| confirm | potwierdź |
+| pending | oczekujące |
+| upcoming | nadchodzące |
+| past | minione |
+| time zone | strefa czasowa |
+| poll | ankieta |
+| vote | głos / zagłosuj |
+| webhook | webhook |
+| embed | osadzenie / osadź |
+| payment | płatność |
+| payout | wypłata |
+| refund | zwrot |
+| price | cena |
+| invoice | faktura |
+| subscription | subskrypcja |
+| video call | spotkanie wideo |
+| meeting link | link do spotkania |
+| reminder | przypomnienie |
+| notification | powiadomienie |
+| admin | administrator |
+| owner | właściciel |
+| required | wymagane |
+| optional | opcjonalne |
+| save | zapisz |
+| delete | usuń |
+| remove | usuń |
+| edit | edytuj |
+| reconnect | połącz ponownie |
+| approve (a booking request) | zatwierdź / zatwierdzenie |
+| decline (a request) | odrzuć |
+| time off | nieobecność (plural "nieobecności"), never "wolne" |
+| minimum notice | minimalne wyprzedzenie |
+| advance booking window / how far ahead | maksymalne wyprzedzenie; "rezerwacje do %{days} dni naprzód" |
+| upload | prześlij |
+| delivery (webhook, message) | wysyłka |
+| actions (column, menu) | akcje |
+| location (of a meeting) | lokalizacja |
+| localisation (language settings) | język i region |
+| recommended | zalecane |
+| unlisted (meeting type) | ukryty |
+| permissive / strict | mniej / bardziej restrykcyjny |
+| browser notification | powiadomienie w przeglądarce |
+| test (a connection) | przetestuj |
+| trigger (webhook) | wyzwalacz; "Last triggered" = "Ostatnie wywołanie" |
+| endpoint | punkt końcowy |
+| mailbox | skrzynka |
+| calendar feed / free-busy feed | kanał kalendarza / kanał zajętości |
+| busy times | zajęte terminy |
+| conflict checking | sprawdzanie konfliktów |
+| booking calendar (where bookings are written) | kalendarz rezerwacji |
+| app password / app-specific password | hasło aplikacji / hasło dla aplikacji |
+| occurrence (recurrence) | wystąpienie; in summaries "łącznie %{count} razy" |
+| 12h / 24h clock | 12 h / 24 h |
+| RSVP: going / declined / no reply | weźmie udział / nie weźmie udziału / bez odpowiedzi |
+| outstanding refund | zaległy zwrot |
+| payment of %{amount} | płatność w kwocie %{amount} |
+| request received (booker's side) | prośba wysłana |
+| security notification / alert | powiadomienie / ostrzeżenie dotyczące bezpieczeństwa |
+| fingerprint (analytics) | odcisk cyfrowy |
+| referrer | strona odsyłająca |
+| preset (image, video) | z kolekcji |
+| custom (preset value) | własna wartość |
+| mark as done / not done | oznacz jako wykonane / niewykonane |
+| toggle menu | otwórz lub zamknij menu |
+| Slack workspace | przestrzeń robocza Slack |
+| time-of-day buckets | wczesny ranek, przedpołudnie, popołudnie, wieczór, późny wieczór |
+| retry / try again | spróbuj ponownie |
+| loading | wczytywanie |
+| failed | nie powiodło się |
+| bookable times (calendar layer) | terminy do rezerwacji; short pill "Bookable" = "Do rezerwacji"; never "dostępne" or "wolne" |
+| open for booking (extra time for a meeting type) | otwórz do rezerwacji; toast "Otwarto do rezerwacji: %{name}, …"; "Just this once" / "Every week" = "Tylko ten raz" / "Co tydzień" |
+| layers (calendar rail) | warstwy |
+| treat as busy / free (read-only all-day event) | traktuj jako zajęty / wolny; "Treated as busy for bookings" = "Przy rezerwacjach traktowane jako zajęte" |
+| block this time / blocked | zablokuj ten termin / zablokowane (default event title) |
+| copy free times | skopiuj wolne terminy |
+| booking request (short pill) / expired (pill) | prośba / wygasła |
+| tell guests (notify guests of a change to an event) | powiadom gości, always the imperative, never a past form like "powiadomiłeś"; "Delete and tell guests" = "Usuń i powiadom gości"; failure "Nie udało się powiadomić gości"; "Guests will get an update" = "Goście dostaną aktualizację"; the held, cancellable update is aktualizacja ("Ta aktualizacja nie czeka już na wysłanie") |
+| Tymeslot meeting (a booked meeting sent from the calendar) vs calendar event | spotkanie Tymeslot ("Wyślij jako spotkanie Tymeslot", "wyślij spotkanie Tymeslot") vs wydarzenie (a plain entry in a calendar); never call a calendar event "spotkanie", nor a Tymeslot meeting "wydarzenie" |
+| syncing (status label: a calendar write the provider has not confirmed yet) | Synchronizowanie (label, tooltip); in running text "Trwa synchronizacja z kalendarzem"; see sync / synchronise above |
+| preview / live preview | podgląd / podgląd na żywo ("Podgląd motywu", "Podgląd na żywo"); "na żywo" only with podgląd, never for a page accepting bookings (that is online, below) |
+| accept (a booking request) | zatwierdź; "Accepting…" = "Zatwierdzanie…" |
+| hatched (times) | zakreskowane |
+| booking link | link do rezerwacji ("Skopiowano link do rezerwacji!") |
+| link (the setup wizard's name for the username field, the address of the page) | link ("Ten link jest już zajęty. Wybierz inny.") |
+| keep (your link: save it somewhere you will find it) | zachowaj ("Albo zachowaj go na później") |
+| live (a page that accepts bookings; the wizard's step name and badge) | online ("Strona jest online", "%{link} jest już online"); not "na żywo", which is for live previews |
+| free/busy (a person's busy time, not the feed) | zajętość; in running text "kiedy masz zajęte" |
+| Apple Account (Apple's own Polish UI) | Konto Apple; its sections "Logowanie i bezpieczeństwo", "Hasła dla aplikacji" |
+| translation (noun; booking-page languages) | tłumaczenie (pl. tłumaczenia); "%{language} translations" → "Tłumaczenia: %{language}", "Your %{language} translations" → "Tłumaczenia na ten język (%{language})": `%{language}` is filled with the language's own name and can't be declined |
+| translate | przetłumaczyć (pf.) / tłumaczyć (impf.); "%{translated}/%{total} translated" → "Przetłumaczono %{translated}/%{total}" |
+| original language (the language the host writes their texts in) | język oryginału; "in %{language}" → "w języku oryginału (%{language})"; the original text is oryginał ("w oryginale"), and the badge beside that language reads "oryginał" |
+| translation language (a language the host translates into) | język tłumaczenia (pl. "języki tłumaczeń": "w językach tłumaczeń") |
+| language switcher (the visitor-facing control on the booking page) | przełącznik języka |
+| outdated (a translation whose original changed) | nieaktualny; status "Nieaktualne"; counted "%{count} nieaktualny tekst / nieaktualne teksty / nieaktualnych tekstów" |
+| missing (a text not translated yet) | "Brak" as the status pill; attributive "brakujące" ("Tylko brakujące lub nieaktualne") |
+| translated (status) | Przetłumaczone |
+| review (the link to a language's review page) | Sprawdź |
+
+### Booking series
+
+A **series** is several sessions of one meeting type that a booker books with a host in one go; each **session** is one meeting of that series. The terms below are the ones `emails_booking_series` uses; keep them in every series string.
+
+| English | pl |
+|---|---|
+| session (one meeting within a booking series) | **sesja** (`Sesja %{position} z %{count}`, `Zarządzaj wszystkimi sesjami`) |
+| series (a booking series) | **seria** (`Nowa seria`) |
+
+### Booking pages (a host's extra pages)
+
+A host has one **main page** at `/<username>` and may add extra **booking pages**, each at `/<username>/<page>` with its own theme and meeting types. An extra page is still a booking page, so it uses the same noun as the generic entry; the main page is told apart by its name, never by a different noun.
+
+| English | pl |
+|---|---|
+| booking page (any public page guests book through, extra or main) | **strona rezerwacji** (plural **strony rezerwacji**) |
+| main page (the host's own page at `/<username>`, as opposed to their extra booking pages) | **strona główna** (always with the qualifier; never the bare word for *home page*) |
+| draft (a booking page not public yet because it lists no meeting type) | **wersja robocza** (same word as the poll draft) |
+| address (the URL path of a page, `/<username>/<page>`) | **adres** Nigdy *URL* ani *ścieżka*; adres e-mail i adres miejsca to osobne pojęcia z własnym tłumaczeniem |
+
+## Notes
+
+- "Cancel" a meeting or booking is "odwołaj" everywhere, the payments screens included;
+  "anuluj" is only for dismissing a dialog or abandoning an action, and for a subscription.
+- "Schedule" as a verb on the booking flow is "zarezerwuj", not "zaplanuj", so it matches
+  "rezerwacja" everywhere else. "Zaplanuj" is reserved for automations and reminders.
+- "Event" from a connected calendar is "wydarzenie"; a Tymeslot booking stays "spotkanie".
+- Keep "e-mail" hyphenated (Polish spelling); "adres e-mail", not "email".
+- "Link" is a Polish word now; use it rather than "odnośnik".
+
+## Marketing and SaaS terms
+
+| English | Polish |
+|---|---|
+| no-show | niestawiennictwo / niestawienie się (never "nieobecność", which is time off); no-show fee: opłata za niestawiennictwo |
+| deposit / prepayment | zaliczka / przedpłata |
+| discovery call / scoping call | rozmowa wstępna |
+| intake form | formularz wstępny |
+| self-hosting / self-host | na własnym serwerze / hostuj (hostujesz, hostować) Tymeslot na własnym serwerze; never "self-hosting", "samodzielny hosting" or "hostuj samodzielnie" |
+| managed cloud | zarządzana chmura |
+| managed service (profession pages) | usługa zarządzana |
+| platform fee | prowizja platformy ("0,5% prowizji platformy"), never "opłata platformy"; Stripe's own charges stay "opłaty Stripe" |
+| booking analytics (Pro feature) | statystyki rezerwacji (short: "statystyki"); "wbudowane statystyki" |
+| third-party / site analytics (Umami, Fathom, Google) | analityka ("bez zewnętrznej analityki", "nasza własna analityka bez ciasteczek") |
+| custom questions | własne pytania (w formularzu rezerwacji); in running text also "pytania przy rezerwacji" |
+| group bookings | rezerwacje grupowe (a studio's group classes stay "zajęcia grupowe") |
+| booker | osoba rezerwująca (plural "osoby rezerwujące"); never the bare noun "rezerwujący". An adjectival "klient rezerwujący trening" is fine |
+| embed modes: inline / popup / floating button | w treści (kalendarz w treści) / okienko pop-up / pływający przycisk |
+| profession guides (/for) | poradniki |
+| advertising pixels / ad trackers | piksele reklamowe / trackery reklamowe (the English keeps the two apart; so do we) |
+| Google Calendar | Google Calendar, verbatim; never „Kalendarz Google” as the product name. A provider list with a head noun, "kalendarz Google, Outlook lub CalDAV", is fine |
+| white-label branding | własny branding bez logo Tymeslot |
+| per seat / per user | za użytkownika ("10 USD za użytkownika/mies.") |
+| free plan / no card | darmowy plan / bez karty |
+| Pro price | Pro (%{pro_monthly}/mies.); "/year" is "/rok" |
+| trial | okres próbny |
+| billing period | okres rozliczeniowy |
+| upgrade to Pro | przejdź na Pro |
+| cancel a subscription | anuluj subskrypcję |
+| GDPR / DPA | RODO / umowa powierzenia przetwarzania danych (DPA) |
+| single sign-on / identity provider | logowanie jednokrotne (SSO) / dostawca tożsamości |
+| widget | widżet |
+
+Prices are written with the ISO currency code after the number, Polish decimal comma and a
+space: "10 USD", "0 EUR", "12,95 EUR", "300 PLN", "od ok. 15 000 USD/rok"; never "$10", "€0" or
+"300 zł". Percentages take no space: "0,5%", "1,29%".
+
+The /for profession pages price in złoty at Polish market rates (written "300 PLN"), and the
+savings calculator's `hourly_rate` for `pl` is a złoty figure. Tymeslot's own plan prices stay as
+the placeholders give them.
+
+`profession_in_text` in `priv/professions/*/pl.exs` is the lowercase nominative plural
+("fizjoterapeuci", "konsultanci IT", "instruktorzy pilatesu"). Polish cannot put it after "dla",
+so the /for msgstrs that use it make the profession the subject: "Wszystko, czego potrzebują
+%{profession_in_text}.", "Konfiguracja, od której mogą zacząć %{profession_in_text}".

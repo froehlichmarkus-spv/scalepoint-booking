@@ -1,0 +1,471 @@
+defmodule Tymeslot.PollsTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :unit
+  @moduletag :polls
+
+  alias Tymeslot.Polls
+  alias Tymeslot.Polls.{PollParticipantSchema, PollSchema}
+  alias Tymeslot.Repo
+
+  import Tymeslot.Factory
+
+  setup do
+    user = insert(:user)
+    insert(:calendar_integration, user: user, provider: "debug")
+    future = DateTime.utc_now() |> DateTime.add(1, :day) |> DateTime.truncate(:second)
+    {:ok, user: user, future: future}
+  end
+
+  defp slot(start_time), do: %{start_time: start_time}
+  defp slot(start_time, end_time), do: %{start_time: start_time, end_time: end_time}
+
+  describe "starts_during_time_off/3" do
+    test "names the start times whose meeting would run into time off", %{user: user} do
+      profile = insert(:profile, user: user, timezone: "Etc/UTC")
+      day = Date.add(Date.utc_today(), 10)
+      insert(:time_off_period, profile: profile, starts_on: day, ends_on: day)
+
+      inside = DateTime.new!(day, ~T[10:00:00], "Etc/UTC")
+      runs_into_it = DateTime.new!(Date.add(day, -1), ~T[23:45:00], "Etc/UTC")
+      clear_of_it = DateTime.new!(Date.add(day, -1), ~T[23:00:00], "Etc/UTC")
+
+      assert Polls.starts_during_time_off(user.id, [clear_of_it, runs_into_it, inside], 30) ==
+               [runs_into_it, inside]
+    end
+
+    test "names nothing when the host has no time off", %{user: user, future: future} do
+      insert(:profile, user: user)
+
+      assert Polls.starts_during_time_off(user.id, [future], 30) == []
+    end
+  end
+
+  describe "create_poll/2 without a meeting type" do
+    test "inserts the poll and its slots with 0-based positions, preloaded", %{
+      user: user,
+      future: future
+    } do
+      attrs = %{
+        title: "Team sync",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        slots: [
+          slot(future),
+          slot(DateTime.add(future, 1, :hour)),
+          slot(DateTime.add(future, 2, :hour))
+        ]
+      }
+
+      assert {:ok, poll} = Polls.create_poll(user.id, attrs)
+      assert %PollSchema{title: "Team sync", duration_minutes: 30, status: :open} = poll
+      assert poll.user_id == user.id
+      assert [%{position: 0}, %{position: 1}, %{position: 2}] = poll.time_slots
+      assert poll.participants == []
+    end
+
+    test "defaults each slot's end_time from the duration when omitted", %{
+      user: user,
+      future: future
+    } do
+      attrs = %{
+        title: "Team sync",
+        duration_minutes: 45,
+        timezone: "Etc/UTC",
+        slots: [slot(future)]
+      }
+
+      assert {:ok, %{time_slots: [slot]}} = Polls.create_poll(user.id, attrs)
+      assert slot.start_time == future
+      assert slot.end_time == DateTime.add(future, 45 * 60, :second)
+    end
+
+    test "keeps an explicit per-slot end_time", %{user: user, future: future} do
+      explicit_end = DateTime.add(future, 90 * 60, :second)
+
+      attrs = %{
+        title: "Team sync",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        slots: [slot(future, explicit_end)]
+      }
+
+      assert {:ok, %{time_slots: [%{end_time: ^explicit_end}]}} =
+               Polls.create_poll(user.id, attrs)
+    end
+  end
+
+  describe "create_poll/2 with a meeting type" do
+    test "snapshots title from the type name and duration when not provided", %{
+      user: user,
+      future: future
+    } do
+      meeting_type =
+        insert(:meeting_type, user: user, name: "Discovery call", duration_minutes: 25)
+
+      attrs = %{
+        timezone: "Etc/UTC",
+        meeting_type_id: meeting_type.id,
+        slots: [slot(future)]
+      }
+
+      assert {:ok, poll} = Polls.create_poll(user.id, attrs)
+      assert poll.title == "Discovery call"
+      assert poll.duration_minutes == 25
+      assert poll.meeting_type_id == meeting_type.id
+    end
+
+    test "explicit attrs override the snapshot", %{user: user, future: future} do
+      meeting_type =
+        insert(:meeting_type, user: user, name: "Discovery call", duration_minutes: 25)
+
+      attrs = %{
+        title: "Custom title",
+        duration_minutes: 60,
+        timezone: "Etc/UTC",
+        meeting_type_id: meeting_type.id,
+        slots: [slot(future)]
+      }
+
+      assert {:ok, poll} = Polls.create_poll(user.id, attrs)
+      assert poll.title == "Custom title"
+      assert poll.duration_minutes == 60
+    end
+
+    test "returns an error when the meeting type is not found for the user", %{
+      user: user,
+      future: future
+    } do
+      other_type = insert(:meeting_type)
+
+      attrs = %{
+        timezone: "Etc/UTC",
+        meeting_type_id: other_type.id,
+        slots: [slot(future)]
+      }
+
+      assert {:error, :meeting_type_not_found} = Polls.create_poll(user.id, attrs)
+    end
+
+    test "returns an error for a payment-required type", %{user: user, future: future} do
+      meeting_type = insert(:meeting_type, user: user, payment_required: true)
+
+      attrs = %{
+        title: "Paid",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        meeting_type_id: meeting_type.id,
+        slots: [slot(future)]
+      }
+
+      assert {:error, :payment_required_type} = Polls.create_poll(user.id, attrs)
+    end
+
+    test "refuses a one-off event's type", %{user: user, future: future} do
+      one_off = insert(:meeting_type, user: user, one_off: true)
+
+      attrs = %{
+        title: "Webinar",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        meeting_type_id: one_off.id,
+        slots: [slot(future)]
+      }
+
+      assert {:error, :meeting_type_not_found} = Polls.create_poll(user.id, attrs)
+    end
+  end
+
+  describe "meeting_types_for_poll/1" do
+    test "offers the host's active types, but no paid type or one-off event", %{user: user} do
+      offered = insert(:meeting_type, user: user)
+      insert(:meeting_type, user: user, payment_required: true)
+      insert(:meeting_type, user: user, one_off: true)
+      insert(:meeting_type, user: user, is_active: false)
+      insert(:meeting_type, user: insert(:user))
+
+      assert [%{id: id}] = Polls.meeting_types_for_poll(user.id)
+      assert id == offered.id
+    end
+  end
+
+  describe "create_poll/2 slot validation" do
+    test "rejects an empty slot list", %{user: user} do
+      attrs = %{title: "T", duration_minutes: 30, timezone: "Etc/UTC", slots: []}
+      assert {:error, :no_slots} = Polls.create_poll(user.id, attrs)
+    end
+
+    test "rejects more than the maximum number of slots", %{user: user, future: future} do
+      slots = for i <- 1..(PollSchema.max_slots() + 1), do: slot(DateTime.add(future, i, :hour))
+      attrs = %{title: "T", duration_minutes: 30, timezone: "Etc/UTC", slots: slots}
+      assert {:error, :too_many_slots} = Polls.create_poll(user.id, attrs)
+    end
+
+    test "rejects a slot whose start_time is in the past", %{user: user, future: future} do
+      past = DateTime.utc_now() |> DateTime.add(-1, :day) |> DateTime.truncate(:second)
+
+      attrs = %{
+        title: "T",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        slots: [slot(future), slot(past)]
+      }
+
+      assert {:error, :slot_in_past} = Polls.create_poll(user.id, attrs)
+    end
+
+    test "rejects a deadline that has already passed", %{user: user, future: future} do
+      past = DateTime.utc_now() |> DateTime.add(-1, :hour) |> DateTime.truncate(:second)
+
+      attrs = %{
+        title: "T",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        deadline_at: past,
+        slots: [slot(future)]
+      }
+
+      assert {:error, %Ecto.Changeset{} = changeset} = Polls.create_poll(user.id, attrs)
+      assert %{deadline_at: ["must be in the future"]} = errors_on(changeset)
+      assert Polls.list_polls(user.id) == []
+    end
+
+    test "rolls back when two slots share the same start_time", %{user: user, future: future} do
+      attrs = %{
+        title: "T",
+        duration_minutes: 30,
+        timezone: "Etc/UTC",
+        slots: [slot(future), slot(future)]
+      }
+
+      assert {:error, %Ecto.Changeset{}} = Polls.create_poll(user.id, attrs)
+      assert Polls.list_polls(user.id) == []
+    end
+  end
+
+  describe "get_poll_for_voting/1" do
+    test "returns the poll for any status by token", %{user: user, future: future} do
+      {:ok, poll} = create_basic_poll(user, future)
+      assert {:ok, found} = Polls.get_poll_for_voting(poll.token)
+      assert found.id == poll.id
+    end
+
+    test "returns not_found for an unknown token" do
+      assert {:error, :not_found} = Polls.get_poll_for_voting("nope")
+    end
+  end
+
+  describe "get_poll_for_host/2" do
+    test "returns the poll scoped to the owner", %{user: user, future: future} do
+      {:ok, poll} = create_basic_poll(user, future)
+      assert {:ok, found} = Polls.get_poll_for_host(poll.id, user.id)
+      assert found.id == poll.id
+    end
+
+    test "returns not_found for another user", %{user: user, future: future} do
+      {:ok, poll} = create_basic_poll(user, future)
+      other = insert(:user)
+      assert {:error, :not_found} = Polls.get_poll_for_host(poll.id, other.id)
+    end
+  end
+
+  describe "list_polls/1" do
+    test "returns the user's polls newest first", %{user: user} do
+      now = DateTime.utc_now(:second)
+      older = insert(:poll, user: user, inserted_at: DateTime.add(now, -1, :hour))
+      newer = insert(:poll, user: user, inserted_at: now)
+
+      ids = user.id |> Polls.list_polls() |> Enum.map(& &1.id)
+      assert ids == [newer.id, older.id]
+    end
+  end
+
+  describe "cancel_poll/2" do
+    test "cancels an open poll", %{user: user, future: future} do
+      {:ok, poll} = create_basic_poll(user, future)
+      assert {:ok, %{status: :cancelled}} = Polls.cancel_poll(poll.id, user.id)
+    end
+
+    test "refuses to cancel a poll that is not open", %{user: user} do
+      confirmed = insert(:poll, user: user, status: :confirmed)
+      assert {:error, :not_open} = Polls.cancel_poll(confirmed.id, user.id)
+    end
+
+    test "refuses to cancel a poll owned by another user", %{user: user, future: future} do
+      {:ok, poll} = create_basic_poll(user, future)
+      other = insert(:user)
+      assert {:error, :not_found} = Polls.cancel_poll(poll.id, other.id)
+    end
+
+    test "broadcasts an update to subscribers", %{user: user, future: future} do
+      {:ok, poll} = create_basic_poll(user, future)
+      :ok = Polls.subscribe(poll.id)
+
+      assert {:ok, _cancelled} = Polls.cancel_poll(poll.id, user.id)
+      assert_receive {:poll_updated, poll_id}
+      assert poll_id == poll.id
+    end
+  end
+
+  describe "tallies/1" do
+    test "counts yes/if_need_be/no per slot, including zero-vote slots", %{
+      user: user,
+      future: future
+    } do
+      poll = insert(:poll, user: user)
+      slot1 = insert(:poll_time_slot, poll: poll, position: 0, start_time: future)
+
+      slot2 =
+        insert(:poll_time_slot,
+          poll: poll,
+          position: 1,
+          start_time: DateTime.add(future, 1, :hour)
+        )
+
+      slot3 =
+        insert(:poll_time_slot,
+          poll: poll,
+          position: 2,
+          start_time: DateTime.add(future, 2, :hour)
+        )
+
+      participant_a = insert(:poll_participant, poll: poll)
+      participant_b = insert(:poll_participant, poll: poll)
+
+      insert(:poll_vote, participant: participant_a, time_slot: slot1, response: :yes)
+      insert(:poll_vote, participant: participant_a, time_slot: slot2, response: :if_need_be)
+      insert(:poll_vote, participant: participant_b, time_slot: slot1, response: :yes)
+      insert(:poll_vote, participant: participant_b, time_slot: slot2, response: :no)
+
+      {:ok, loaded} = Polls.get_poll_for_host(poll.id, user.id)
+      tallies = Polls.tallies(loaded)
+
+      assert tallies[slot1.id] == %{yes: 2, if_need_be: 0, no: 0}
+      assert tallies[slot2.id] == %{yes: 0, if_need_be: 1, no: 1}
+      assert tallies[slot3.id] == %{yes: 0, if_need_be: 0, no: 0}
+    end
+  end
+
+  describe "unconfirmed participants" do
+    setup do
+      poll = insert(:poll)
+      now = DateTime.utc_now(:second)
+
+      confirmed = insert(:poll_participant, poll: poll)
+      fresh = insert(:poll_participant, poll: poll, confirmed_at: nil, link_sent_at: now)
+
+      expired =
+        insert(:poll_participant,
+          poll: poll,
+          confirmed_at: nil,
+          inserted_at: DateTime.add(now, -49, :hour),
+          link_sent_at: DateTime.add(now, -49, :hour)
+        )
+
+      %{poll: poll, confirmed: confirmed, fresh: fresh, expired: expired}
+    end
+
+    test "count_unconfirmed/1 counts only those whose link is still live", %{poll: poll} do
+      assert Polls.count_unconfirmed(poll) == 1
+    end
+
+    test "prune_unconfirmed_participants/0 deletes only the expired ones", ctx do
+      assert {1, nil} = Polls.prune_unconfirmed_participants()
+
+      remaining =
+        PollParticipantSchema
+        |> Repo.all()
+        |> Enum.map(& &1.id)
+        |> MapSet.new()
+
+      assert MapSet.equal?(remaining, MapSet.new([ctx.confirmed.id, ctx.fresh.id]))
+    end
+  end
+
+  describe "leading_slot_ids/2" do
+    test "leads on yes votes, ties broken on if need be" do
+      slots = [%{id: "a"}, %{id: "b"}, %{id: "c"}]
+
+      tallies = %{
+        "a" => %{yes: 2, if_need_be: 0, no: 0},
+        "b" => %{yes: 2, if_need_be: 1, no: 0},
+        "c" => %{yes: 0, if_need_be: 0, no: 2}
+      }
+
+      assert Polls.leading_slot_ids(slots, tallies) == ["b"]
+    end
+
+    test "no time leads when nobody is available or every time scores the same" do
+      slots = [%{id: "a"}, %{id: "b"}]
+
+      assert Polls.leading_slot_ids(slots, %{}) == []
+
+      even = %{"a" => %{yes: 1, if_need_be: 0}, "b" => %{yes: 1, if_need_be: 0}}
+      assert Polls.leading_slot_ids(slots, even) == []
+    end
+  end
+
+  describe "voting_open?/1" do
+    test "true for an open poll with no deadline" do
+      assert Polls.voting_open?(build(:poll, status: :open, deadline_at: nil))
+    end
+
+    test "true for an open poll with a future deadline" do
+      future = DateTime.add(DateTime.utc_now(), 1, :day)
+      assert Polls.voting_open?(build(:poll, status: :open, deadline_at: future))
+    end
+
+    test "false for an open poll with a past deadline" do
+      past = DateTime.add(DateTime.utc_now(), -1, :day)
+      refute Polls.voting_open?(build(:poll, status: :open, deadline_at: past))
+    end
+
+    test "false for a confirmed poll" do
+      refute Polls.voting_open?(build(:poll, status: :confirmed, deadline_at: nil))
+    end
+
+    test "false for a cancelled poll" do
+      refute Polls.voting_open?(build(:poll, status: :cancelled, deadline_at: nil))
+    end
+  end
+
+  describe "voting_open?/2" do
+    test "judges the deadline against the instant given, not the wall clock" do
+      poll = build(:poll, status: :open, deadline_at: ~U[2030-01-01 12:00:00Z])
+
+      assert Polls.voting_open?(poll, ~U[2030-01-01 11:59:59Z])
+      refute Polls.voting_open?(poll, ~U[2030-01-01 12:00:00Z])
+    end
+  end
+
+  describe "next_to_close/2" do
+    @now ~U[2030-01-01 12:00:00Z]
+
+    test "picks the earliest deadline still ahead among the polls open to votes" do
+      later = build(:poll, status: :open, deadline_at: ~U[2030-01-03 12:00:00Z])
+      sooner = build(:poll, status: :open, deadline_at: ~U[2030-01-02 12:00:00Z])
+
+      assert Polls.next_to_close([later, sooner], @now) == sooner
+    end
+
+    test "skips polls without a deadline, past their deadline, or no longer open" do
+      polls = [
+        build(:poll, status: :open, deadline_at: nil),
+        build(:poll, status: :open, deadline_at: ~U[2030-01-01 11:00:00Z]),
+        build(:poll, status: :cancelled, deadline_at: ~U[2030-01-02 12:00:00Z]),
+        build(:poll, status: :confirmed, deadline_at: ~U[2030-01-02 12:00:00Z])
+      ]
+
+      assert Polls.next_to_close(polls, @now) == nil
+    end
+  end
+
+  defp create_basic_poll(user, start_time) do
+    Polls.create_poll(user.id, %{
+      title: "Team sync",
+      duration_minutes: 30,
+      timezone: "Etc/UTC",
+      slots: [slot(start_time)]
+    })
+  end
+end

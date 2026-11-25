@@ -1,0 +1,131 @@
+defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
+  @moduledoc """
+  Folio's wrapper: the shared `ThemeShell` on the scheme's canvas, with no
+  background of its own (the cover belongs to the masthead at the top of the
+  page). Inside it,
+  Folio's page grid (`.booker-page folio-page`, sized to content in an embed
+  by its `iframe.css`) holds the content area, which starts with the shell's
+  chrome, and the theme extensions as its footer row.
+
+  It marks the page `folio-theme-wrapper--light` or `--dark` (`mode/1`), the
+  one thing Folio's CSS cannot derive from the palette's custom properties:
+  the `color-scheme` that form controls and scrollbars follow.
+  """
+  use Phoenix.Component
+
+  alias Tymeslot.ThemeCustomizations.Tokens
+  alias Tymeslot.Themes.Catalog
+  alias Tymeslot.Utils.Colour
+  alias TymeslotWeb.Themes.Shared.Components.{LegalLinks, ThemeShell}
+
+  import TymeslotWeb.Themes.Shared.Customization.Helpers, only: [prepare_wrapper_assigns: 1]
+
+  attr :theme_tokens, :any, default: nil
+  attr :locale, :string, default: nil
+  attr :current_state, :atom, default: nil
+
+  attr :journey, :any,
+    default: nil,
+    doc: "the page's journey: a continuous page shows the switcher throughout"
+
+  attr :offered_locales, :list, default: nil, doc: "the locale codes the organiser offers"
+  attr :language_dropdown_open, :boolean, default: nil
+  attr :organizer_user_id, :integer, default: nil
+  attr :should_show_branding, :boolean, default: false
+  attr :show_language_switcher, :boolean, default: nil
+  attr :owner_preview, :boolean, default: false
+  attr :refused_calendars, :list, default: []
+  attr :demo_mode, :boolean, doc: "handed to the theme extensions only when given"
+
+  attr :legal_links, :map,
+    required: true,
+    doc: "the organiser's legal links (`Profiles.public_legal_links/1`), or nil for none"
+
+  attr :show_extensions, :boolean,
+    default: true,
+    doc: "false on pages that are not booking-page impressions (the payment return pages)"
+
+  slot :inner_block, required: true
+
+  @spec folio_wrapper(map()) :: Phoenix.LiveView.Rendered.t()
+  def folio_wrapper(assigns) do
+    brand = resolve_brand(assigns)
+    Tymeslot.Brands.bind(brand)
+
+    assigns =
+      assigns
+      |> prepare_wrapper_assigns()
+      |> assign(theme_id: theme_id(), mode: mode(assigns.theme_tokens))
+      |> assign(brand: brand, brand_style: Tymeslot.Brands.css(brand))
+
+    ~H"""
+    <ThemeShell.theme_shell
+      class={["folio-theme-wrapper", "folio-theme-wrapper--#{@mode}"]}
+      locale={@locale}
+      theme_tokens={@theme_tokens}
+    >
+      <div
+        class="booker-page folio-page"
+        data-brand={@brand.key}
+        data-layout={@brand.layout}
+        data-portrait={if(@brand.portrait, do: "on", else: "off")}
+        data-copy="1"
+      >
+        <style>
+          {@brand_style}
+        </style>
+        <div class="content-area">
+          <ThemeShell.chrome
+            locales={@language_locales}
+            language_class="folio-language"
+            locale={@locale}
+            language_dropdown_open={@language_dropdown_open}
+            show_language_switcher={@show_language_switcher}
+            owner_preview={@owner_preview}
+            refused_calendars={@refused_calendars}
+          />
+          {render_slot(@inner_block)}
+        </div>
+        <ThemeShell.extensions
+          :if={@show_extensions}
+          theme_id={@theme_id}
+          organizer_user_id={@organizer_user_id}
+          should_show_branding={@should_show_branding}
+          owner_preview={@owner_preview}
+          {Map.take(assigns, [:demo_mode])}
+        />
+        <LegalLinks.footer links={@legal_links} />
+        <p :if={Tymeslot.Brands.powered_by(@brand)} class="room-powered">
+          {Tymeslot.Brands.powered_by(@brand)}
+        </p>
+        <p class="room-source"><a href="/source">AGPLv3 source</a></p>
+      </div>
+    </ThemeShell.theme_shell>
+    """
+  end
+
+  @doc """
+  Whether the page's palette is dark (its canvas darker than its text) or
+  light; light when there are no tokens to read, as on the payment pages.
+  """
+  @spec mode(Tokens.t() | nil) :: :light | :dark
+  def mode(%Tokens{vars: %{"--theme-canvas" => canvas, "--theme-text" => text}})
+      when is_binary(canvas) and is_binary(text) do
+    if Colour.relative_luminance(canvas) < Colour.relative_luminance(text),
+      do: :dark,
+      else: :light
+  end
+
+  def mode(_tokens), do: :light
+
+  defp resolve_brand(assigns) do
+    Tymeslot.Brands.for_user_id(assigns[:organizer_user_id]) ||
+      Tymeslot.Brands.for_username(assigns[:username_context]) ||
+      Tymeslot.Brands.neutral_default()
+  end
+
+  defp theme_id do
+    {:ok, id} = Catalog.key_to_id(:folio)
+    id
+  end
+end

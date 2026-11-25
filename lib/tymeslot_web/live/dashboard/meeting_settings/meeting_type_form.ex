@@ -1,0 +1,554 @@
+defmodule TymeslotWeb.Dashboard.MeetingSettings.MeetingTypeForm do
+  @moduledoc """
+  LiveComponent that renders and manages the Meeting Type form UI state.
+
+  It handles local UI events (validate, icon selection, calendar destination).
+  A new meeting type is created with an explicit submit on the Details tab
+  (`MeetingTypeForm.Creation`), after which the same component carries on in
+  edit mode; from then on each change auto-saves via `MeetingTypeForm.Autosave`.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  # Follow project rule: ALWAYS alias nested modules and organize alphabetically within groups
+  alias Tymeslot.Availability.Schedules
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.MeetingTypes.ApprovalWindow
+  alias TymeslotWeb.Dashboard.MeetingSettings.Helpers
+  alias TymeslotWeb.Dashboard.MeetingSettings.MeetingTypeForm.ReminderHandlers
+
+  alias TymeslotWeb.Dashboard.MeetingSettings.MeetingTypeForm.{
+    Autosave,
+    Creation,
+    FormView,
+    GroupHandlers,
+    GuestLimit,
+    Init,
+    LengthsField,
+    LengthsHandlers,
+    SeriesHandlers,
+    SessionHandlers,
+    SlotIntervalField,
+    Validation
+  }
+
+  alias TymeslotWeb.CustomInputModeHelper
+  alias TymeslotWeb.Live.Shared.Flash
+
+  # The fixed dates' events, all handled by `SessionHandlers` (which hands a
+  # one-to-one type's offered times on to `OfferedTimeHandlers`).
+  @session_events SessionHandlers.events()
+
+  # The group bookings section's events, all handled by `GroupHandlers`.
+  @group_events GroupHandlers.events()
+
+  # Public assigns passed from parent
+  # - type: existing meeting type or nil
+  # - is_edit: whether the meeting type exists yet (set here too, on creation)
+  # - video_integrations: list for selection
+  # - venues: the organiser's saved venues, for in-person locations
+  # - parent_myself: phx-target for parent events (cancel, done, visibility)
+  # - current_user: used for security metadata in validation
+  # - username: the profile's own page address, for the Visibility switches
+  # - booking_pages: the profile's booking pages, one Visibility switch each
+  # - page_memberships: `BookingPages.memberships/1`, which pages list which type
+  # - pages_editable: `BookingPages.editable?/1`, whether the booking pages'
+  #   switches may be flipped
+  # - profile: the booking languages, for the translation status the form
+  #   shows (`Languages.TranslationStatus`)
+
+  # The further lengths' events, all handled by `LengthsHandlers`.
+  @lengths_events LengthsHandlers.events()
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     assign(socket,
+       form_errors: %{},
+       form_data: %{},
+       selected_icon: "none",
+       locations: [],
+       venues: [],
+       selected_calendar_integration_id: nil,
+       selected_target_calendar_id: nil,
+       selected_availability_schedule_id: nil,
+       schedules: [],
+       default_schedule_name: Schedules.default_schedule_name(),
+       available_calendars: [],
+       no_writable_calendars: false,
+       target_calendar_status: :ok,
+       refreshing_calendars: false,
+       reminders: [],
+       max_reminders: MeetingTypes.max_reminders(),
+       new_reminder_value: "",
+       new_reminder_unit: "minutes",
+       reminder_error: nil,
+       show_custom_reminder: false,
+       reminder_confirmation: nil,
+       custom_fields: [],
+       save_status: :saved,
+       editing_question: nil,
+       editing_question_mode: :add,
+       editing_location: nil,
+       editing_location_mode: :add,
+       custom_questions_allowed: true,
+       group_bookings_allowed: true,
+       recurring_bookings_allowed: true,
+       series: SeriesHandlers.initial(nil),
+       payments_feature_enabled: false,
+       payments_charges_enabled: false,
+       payment_currency: "usd",
+       payment_currency_support: :supported,
+       payment_account_currency: "usd",
+       payment_stored_price: "",
+       payment_currency_minimum_cents: 50,
+       payment_required: false,
+       payment_price: "",
+       allow_guests: false,
+       guest_limit: nil,
+       requires_approval: false,
+       requires_email_verification: false,
+       approval_window_hours: nil,
+       show_as_free: false,
+       group_bookings_enabled: false,
+       max_participants: to_string(Init.default_group_limit()),
+       show_seat_availability: true,
+       last_spots_threshold: nil,
+       booking_limits: Init.get_booking_limits(nil),
+       scheduling_rules: Init.get_scheduling_rules(nil),
+       active_tab: "details",
+       username: nil,
+       booking_pages: [],
+       page_memberships: %{},
+       pages_editable: true,
+       profile: nil,
+       __initialized__: false
+     )}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(assigns, socket) do
+    socket =
+      socket
+      |> assign(keep_created_type(assigns, socket))
+      |> Init.maybe_initialize()
+
+    # Custom-question and location edits arrive here as a `send_update`
+    # carrying `:custom_fields` or `:locations` (add/edit/delete/reorder).
+    # Persist them like any other change so auto-save covers both editors.
+    #
+    # Deferred autosave retries (throttle backoff) arrive as `trigger_autosave: true`.
+    #
+    # Other send_updates (calendar refresh, reminder-confirmation clearing) don't
+    # carry either key and skip the autosave.
+    if Map.has_key?(assigns, :custom_fields) or Map.has_key?(assigns, :locations) or
+         Map.get(assigns, :trigger_autosave) == true do
+      {:ok, Autosave.maybe_run(socket)}
+    else
+      {:ok, socket}
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def render(assigns), do: FormView.form(assigns)
+
+  @impl Phoenix.LiveComponent
+  def handle_event("switch_tab", %{"tab" => "details"}, socket) do
+    {:noreply, assign(socket, :active_tab, "details")}
+  end
+
+  # The other tabs are disabled until the meeting type exists, since nothing
+  # on them can save before then; a forged switch is ignored the same way.
+  def handle_event("switch_tab", %{"tab" => tab}, %{assigns: %{is_edit: true}} = socket)
+      when tab in ~w(location booking questions reminders) do
+    {:noreply, assign(socket, :active_tab, tab)}
+  end
+
+  def handle_event("switch_tab", _params, socket), do: {:noreply, socket}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("create_meeting_type", params, %{assigns: %{is_edit: false}} = socket) do
+    {:noreply, Creation.run(socket, Map.get(params, "meeting_type", %{}))}
+  end
+
+  # A second submit can arrive after the first has created the type (a double
+  # click racing the round trip). The type exists now, so there is nothing
+  # left to create.
+  def handle_event("create_meeting_type", _params, socket), do: {:noreply, socket}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("validate_meeting_type", %{"meeting_type" => params}, socket) do
+    metadata = Helpers.get_security_metadata(socket)
+
+    # The interval dropdown's "Custom…" entry names a mode, not a duration, so
+    # it is read for the mode and then dropped: the number input it reveals is
+    # what posts the value. Left in, it would reach the validator as a
+    # non-numeric interval and raise an error against a choice that never
+    # claimed to be one.
+    socket = sync_slot_interval_mode(socket, params)
+    params = drop_interval_mode_sentinel(params)
+
+    # An input-level change posts one further duration as `%{"<index>" => value}`;
+    # it is folded into the full list before merging, so the other entries
+    # survive.
+    params = LengthsField.fold_params(params, socket.assigns.form_data || %{})
+
+    # Merge incoming params into existing form data to prevent wiping other fields
+    new_data = Map.merge(socket.assigns.form_data || %{}, params)
+
+    # Determine which fields changed (input-level phx-change sends only the targeted field)
+    changed_fields = Map.keys(params)
+
+    # Start from existing errors and update only the changed fields
+    current_errors = socket.assigns.form_errors || %{}
+
+    # Saving accepts the edited type's own duration even off the step, so
+    # the instant feedback is given the same stored duration.
+    opts = [stored_duration: socket.assigns.type && socket.assigns.type.duration_minutes]
+
+    {updated_data, updated_errors} =
+      Enum.reduce(changed_fields, {new_data, current_errors}, fn field, {acc_data, acc_errors} ->
+        Validation.validate_and_update_field(
+          field,
+          Map.get(params, field),
+          metadata,
+          acc_data,
+          acc_errors,
+          opts
+        )
+      end)
+
+    {:noreply,
+     socket
+     |> assign(form_data: updated_data, form_errors: updated_errors)
+     |> Autosave.maybe_run()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event(event, params, socket) when event in @lengths_events,
+    do: {:noreply, LengthsHandlers.handle_event(event, params, socket)}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("select_icon", %{"icon" => icon}, socket) do
+    {:noreply, socket |> assign(:selected_icon, icon) |> Autosave.maybe_run()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("select_calendar_integration", %{"id" => id}, socket) do
+    integration_id =
+      case id do
+        id when is_binary(id) -> String.to_integer(id)
+        id when is_integer(id) -> id
+      end
+
+    send(self(), {:refresh_calendar_list, socket.assigns.id, integration_id})
+
+    socket =
+      socket
+      |> assign(:selected_calendar_integration_id, integration_id)
+      |> assign(:refreshing_calendars, true)
+      |> assign(:available_calendars, [])
+      |> assign(:no_writable_calendars, false)
+      |> assign(:target_calendar_status, :ok)
+      |> assign(:selected_target_calendar_id, nil)
+      |> Validation.clear_error(:calendar_integration)
+
+    {:noreply, socket}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("select_target_calendar", %{"id" => id}, socket) do
+    socket =
+      socket
+      |> assign(:selected_target_calendar_id, id)
+      # The picker only offers writable calendars, so any pick clears the
+      # warning raised about the calendar that was stored before.
+      |> assign(:target_calendar_status, :ok)
+      |> Validation.clear_error(:target_calendar)
+
+    {:noreply, Autosave.maybe_run(socket)}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("update_availability_schedule", %{"schedule" => schedule}, socket) do
+    # Blank is the "default schedule" chip, and parses to nil, so the meeting
+    # type keeps following whichever schedule is default rather than pinning
+    # the one that happened to be default when it was chosen.
+    socket =
+      socket
+      |> assign(:selected_availability_schedule_id, parse_schedule_id(schedule))
+      |> Autosave.maybe_run()
+
+    {:noreply, flash_schedule_saved(socket)}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_payment_required", _params, socket) do
+    # Guard: hosts who cannot accept charges must not flip the toggle even
+    # if a stale/forged event arrives — the control renders disabled. The
+    # same applies while group bookings is enabled (mutual exclusion).
+    if socket.assigns.payments_charges_enabled and
+         not socket.assigns.group_bookings_enabled and
+         (socket.assigns.payment_required or not socket.assigns.requires_email_verification) do
+      {:noreply,
+       socket
+       |> assign(:payment_required, !socket.assigns.payment_required)
+       |> Validation.clear_error(:payment_required)
+       |> Autosave.maybe_run()}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_requires_approval", _params, socket) do
+    # Guard: approval and group bookings are mutually exclusive. The control
+    # renders disabled while group bookings are on, so a stale or forged
+    # event must not turn approval on; turning it off is always allowed.
+    if socket.assigns.group_bookings_enabled and not socket.assigns.requires_approval do
+      {:noreply, socket}
+    else
+      {:noreply,
+       socket
+       |> assign(:requires_approval, !socket.assigns.requires_approval)
+       |> Validation.clear_error(:max_participants)
+       |> Autosave.maybe_run()}
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_requires_email_verification", _params, socket) do
+    # Guard: verification excludes payments and series. The control renders
+    # disabled while either is on, so a stale or forged event must not turn
+    # it on; turning it off is always allowed.
+    %{requires_email_verification: on?, series: series} = socket.assigns
+
+    if not on? and (socket.assigns.payment_required or series.series_mode != nil) do
+      {:noreply, socket}
+    else
+      {:noreply,
+       socket
+       |> assign(:requires_email_verification, not on?)
+       |> Validation.clear_error(:requires_email_verification)
+       |> Autosave.maybe_run()}
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("update_approval_window", params, socket) do
+    # The input sits inside the meeting-type form, so the event carries the
+    # whole form's params under "meeting_type".
+    raw =
+      params
+      |> Map.get("meeting_type", %{})
+      |> Map.get("approval_window_hours")
+
+    case ApprovalWindow.parse(raw) do
+      {:ok, hours} ->
+        {:noreply,
+         socket
+         |> assign(:approval_window_hours, hours)
+         |> Validation.clear_error(:approval_window_hours)
+         |> Autosave.maybe_run()}
+
+      # Leave the stored value and last successful save untouched: surfacing
+      # the error and stopping here is what stops a half-typed number from
+      # autosaving over a good previously saved window.
+      {:error, :invalid_approval_window} ->
+        {:noreply,
+         socket
+         |> assign(:save_status, :unsaved)
+         |> assign(
+           :form_errors,
+           Map.put(
+             socket.assigns.form_errors,
+             :approval_window_hours,
+             dgettext(
+               "dashboard_meeting_form",
+               "Enter a whole number of hours, or leave blank to use the default."
+             )
+           )
+         )}
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_allow_guests", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:allow_guests, !socket.assigns.allow_guests)
+     |> Autosave.maybe_run()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("update_booking_limits", params, socket) do
+    # The inputs sit inside the meeting-type form, so the event carries the
+    # whole form's params under "meeting_type".
+    type_params = Map.get(params, "meeting_type", %{})
+
+    limits =
+      Map.new(Init.get_booking_limits(nil), fn {key, _default} ->
+        {key, parse_booking_limit(type_params[key])}
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:booking_limits, limits)
+     |> Autosave.maybe_run()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("update_series", params, socket),
+    do: {:noreply, SeriesHandlers.apply_event(params, socket)}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("update_scheduling_rules", params, socket) do
+    # Kept as typed: the mapper parses them, and an out-of-range value stays in
+    # the input next to the changeset's error rather than vanishing.
+    type_params = Map.get(params, "meeting_type", %{})
+
+    rules =
+      Map.new(socket.assigns.scheduling_rules, fn {key, current} ->
+        {key, Map.get(type_params, key, current)}
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:scheduling_rules, rules)
+     |> Autosave.maybe_run()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_show_as_free", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_as_free, !socket.assigns.show_as_free)
+     |> Autosave.maybe_run()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("change_payment_price", %{"meeting_type" => %{"price_input" => price}}, socket) do
+    # Guard, as for the toggle: the price input is not rendered for a host
+    # who cannot set prices, so only a stale or forged event lands here.
+    if socket.assigns.payments_charges_enabled do
+      {:noreply,
+       socket
+       |> assign(:payment_price, price)
+       |> Validation.clear_error(:price_cents)
+       |> Autosave.maybe_run()}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event(event, params, socket) when event in @group_events,
+    do: {:noreply, GroupHandlers.handle_event(event, params, socket)}
+
+  @impl Phoenix.LiveComponent
+  def handle_event(event, params, socket) when event in @session_events,
+    do: {:noreply, SessionHandlers.handle_event(event, params, socket)}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("toggle_guest_limit", _params, socket),
+    do: {:noreply, GuestLimit.toggle(socket)}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("change_guest_limit", params, socket),
+    do: {:noreply, GuestLimit.change(params, socket)}
+
+  # The reminder picker's events, all handled by `ReminderHandlers`.
+  @reminder_events ReminderHandlers.events()
+
+  @impl Phoenix.LiveComponent
+  def handle_event(event, params, socket) when event in @reminder_events,
+    do: {:noreply, ReminderHandlers.handle_event(event, params, socket)}
+
+  @impl Phoenix.LiveComponent
+  def handle_event("flush_autosave", _params, socket) do
+    # Edit-mode submit (e.g. pressing Enter) persists current state in place
+    # without closing the overlay — there is no separate "save" action.
+    {:noreply, Autosave.maybe_run(socket)}
+  end
+
+  # Picking a schedule is one deliberate click on a chip, so it is worth a flash
+  # confirming the change is already stored: the inline indicator sits beside
+  # "Done", far from the chips, and reads as ambient. Autosave's other triggers
+  # stay silent on purpose — typing a name would fire one per keystroke, which
+  # is exactly what `Autosave.indicator/1` exists to avoid.
+  defp flash_schedule_saved(%{assigns: %{is_edit: true, save_status: :saved}} = socket) do
+    Flash.info(dgettext("dashboard_meeting_form", "Schedule updated and saved"))
+    socket
+  end
+
+  # A failed save already shows its own error, so it gets no "saved" flash.
+  defp flash_schedule_saved(socket), do: socket
+
+  # Once this form has created its meeting type, the parent may still render
+  # once more with the props it had while the type was new (`type: nil`,
+  # `is_edit: false`) before it learns of the record. Taking those would flip
+  # the form back to create mode and offer a second create, so they are
+  # dropped while the form holds a persisted type.
+  defp keep_created_type(%{type: nil} = assigns, %{assigns: %{type: %{id: id}}})
+       when is_integer(id),
+       do: Map.drop(assigns, [:type, :is_edit])
+
+  defp keep_created_type(assigns, _socket), do: assigns
+
+  # Blank means "follow the profile's default schedule", stored as nil; the
+  # same goes for anything unparseable, since the chips only ever offer the
+  # blank default and the profile's own schedule ids.
+  defp parse_schedule_id(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {id, ""} when id > 0 -> id
+      _other -> nil
+    end
+  end
+
+  defp parse_schedule_id(_value), do: nil
+
+  # Blank clears the limit; anything unparseable is treated as blank (the
+  # number input constrains typing, and the changeset enforces the range).
+  # Blank is a real choice here: it means "use the application default", which
+  # the domain resolves at read time. So a cleared field stores nil rather than
+  # reverting to whatever the default happened to be when it was cleared.
+  defp parse_booking_limit(nil), do: nil
+
+  defp parse_booking_limit(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {limit, ""} when limit > 0 -> limit
+      _other -> nil
+    end
+  end
+
+  # Picking anything other than "Custom…" from the dropdown closes the number
+  # input, which is the only way back out of custom mode. A value the dropdown
+  # does not offer keeps it open, since that value has nowhere else to be
+  # edited.
+  #
+  # Only fires when the interval was the field that changed: the form posts one
+  # field at a time, so every other change must leave the mode alone.
+  defp sync_slot_interval_mode(socket, %{"slot_interval" => value}) do
+    custom? = custom_interval_sentinel?(value) or off_preset_interval?(value)
+    CustomInputModeHelper.set_custom_mode(socket, :slot_interval_minutes, custom?)
+  end
+
+  defp sync_slot_interval_mode(socket, _params), do: socket
+
+  defp drop_interval_mode_sentinel(%{"slot_interval" => value} = params) do
+    if custom_interval_sentinel?(value), do: Map.delete(params, "slot_interval"), else: params
+  end
+
+  defp drop_interval_mode_sentinel(params), do: params
+
+  defp custom_interval_sentinel?(value), do: value == SlotIntervalField.custom_interval_option()
+
+  defp off_preset_interval?(value) when is_binary(value) do
+    case Integer.parse(String.trim(value)) do
+      {interval, ""} -> not CustomInputModeHelper.preset_value?(:slot_interval_minutes, interval)
+      _not_an_integer -> false
+    end
+  end
+
+  defp off_preset_interval?(_value), do: false
+end

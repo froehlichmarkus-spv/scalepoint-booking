@@ -1,0 +1,209 @@
+defmodule Tymeslot.Meetings.GuestSchema do
+  @moduledoc """
+  Ecto schema for a guest added to a meeting during booking.
+
+  Guests are additional invitees the primary attendee adds when booking. Each
+  guest receives a confirmation email with a tokenised RSVP link and can accept
+  or decline independently of the primary attendee; their response is reflected
+  on the organiser's dashboard.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  alias Tymeslot.ChangesetValidators.Email, as: EmailChangeset
+  alias Tymeslot.Locales
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.ParticipantSchema
+  alias Tymeslot.Security.EncryptedString
+  alias Tymeslot.Security.Token
+  alias Tymeslot.Timezones
+
+  @type t :: %__MODULE__{
+          id: binary() | nil,
+          meeting_id: binary() | nil,
+          participant_id: binary() | nil,
+          email: String.t() | nil,
+          name: String.t() | nil,
+          locale: String.t() | nil,
+          timezone: String.t() | nil,
+          status: status(),
+          rsvp_token: String.t() | nil,
+          rsvp_token_hash: String.t() | nil,
+          responded_at: DateTime.t() | nil,
+          confirmation_sent_at: DateTime.t() | nil,
+          invited_by: inviter() | nil,
+          reminders_sent: [map()] | nil,
+          notified_end_time: DateTime.t() | nil,
+          meeting: MeetingSchema.t() | Ecto.Association.NotLoaded.t() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+
+  schema "meeting_guests" do
+    field(:email, :string)
+    field(:name, :string)
+    # The guest's own language and timezone, which their emails are written
+    # in. Set only where the guest came with them (a poll participant the
+    # host confirmed a meeting for); nil reads as the meeting's attendee
+    # values (`Tymeslot.Meetings.Recipient.as_seen_by_guest/2`).
+    field(:locale, :string)
+    field(:timezone, :string)
+    field(:status, Ecto.Enum, values: [:pending, :accepted, :declined], default: :pending)
+    # Every email a guest is sent (confirmation, reminders, reschedules)
+    # rebuilds their RSVP links from this token, so it is encrypted rather
+    # than only hashed, and looked up by `rsvp_token_hash`.
+    field(:rsvp_token, EncryptedString, source: :rsvp_token_encrypted, redact: true)
+    field(:rsvp_token_hash, :string)
+    field(:responded_at, :utc_datetime)
+    field(:confirmation_sent_at, :utc_datetime)
+    field(:reminders_sent, {:array, :map}, default: nil)
+    # Who put this guest on the meeting. Nil on rows from before the column,
+    # which read as the booker (see `inviter/1`).
+    field(:invited_by, Ecto.Enum, values: [:booker, :organizer])
+    # The end this guest was last told, as `MeetingSchema`'s `notified_end_time`
+    # records it for the booker.
+    field(:notified_end_time, :utc_datetime)
+
+    belongs_to(:meeting, MeetingSchema, type: :binary_id)
+    belongs_to(:participant, ParticipantSchema, type: :binary_id)
+
+    timestamps(type: :utc_datetime)
+  end
+
+  @typedoc """
+  Who invited a guest: the person booking, on the public page, or the host,
+  from their dashboard.
+  """
+  @type inviter :: :booker | :organizer
+
+  @typedoc "How a guest has answered their invitation."
+  @type status :: :pending | :accepted | :declined
+  @token_bytes 24
+
+  @doc """
+  Changeset for adding a guest to a meeting.
+
+  Normalises the email, validates its format, defaults the status to
+  `:pending`, and generates an unguessable `rsvp_token` when one is not
+  already present. A `locale` must be a supported one and a `timezone` a
+  known IANA zone, as for the meeting's attendee; both are optional.
+  """
+  @spec creation_changeset(t(), map()) :: Ecto.Changeset.t()
+  def creation_changeset(guest, attrs) do
+    guest
+    |> cast(attrs, [
+      :email,
+      :name,
+      :locale,
+      :timezone,
+      :meeting_id,
+      :participant_id,
+      :status,
+      :invited_by
+    ])
+    |> update_change(:email, &normalize_email/1)
+    |> validate_required([:email, :meeting_id])
+    |> EmailChangeset.validate_email(:email)
+    |> validate_inclusion(:locale, Locales.supported_codes(),
+      message: dgettext_noop("errors", "is not a supported locale")
+    )
+    |> validate_change(:timezone, &validate_timezone/2)
+    |> ensure_status()
+    |> ensure_rsvp_token()
+    |> Token.put_hash(:rsvp_token, :rsvp_token_hash)
+    |> unique_constraint(:rsvp_token_hash)
+    # Two indexes, one rule per booking shape: a solo booking cannot invite an
+    # address twice (its guests carry no participant), and on a group slot each
+    # booker cannot invite an address twice, but two bookers inviting the same
+    # colleague is fine.
+    |> unique_constraint([:meeting_id, :email],
+      name: :meeting_guests_meeting_id_email_solo_index,
+      message: dgettext_noop("errors", "has already been added")
+    )
+    |> unique_constraint([:meeting_id, :participant_id, :email],
+      name: :meeting_guests_participant_id_email_index,
+      message: dgettext_noop("errors", "has already been added")
+    )
+    |> foreign_key_constraint(:meeting_id)
+    |> foreign_key_constraint(:participant_id)
+  end
+
+  @doc """
+  Changeset for recording a guest's RSVP response.
+
+  Only the `status` and `responded_at` fields are writable here.
+  """
+  @spec rsvp_changeset(t(), map()) :: Ecto.Changeset.t()
+  def rsvp_changeset(guest, attrs) do
+    guest
+    |> cast(attrs, [:status, :responded_at])
+    |> validate_required([:status])
+  end
+
+  @doc "Changeset for stamping the confirmation email as sent."
+  @spec confirmation_sent_changeset(t(), DateTime.t()) :: Ecto.Changeset.t()
+  def confirmation_sent_changeset(guest, sent_at) do
+    cast(guest, %{confirmation_sent_at: sent_at}, [:confirmation_sent_at])
+  end
+
+  @doc """
+  Changeset recording that this guest has been emailed the reminder for one
+  configured offset. A meeting can carry several offsets, so the record is a
+  list rather than a single stamp.
+  """
+  @spec reminders_sent_changeset(t(), [map()]) :: Ecto.Changeset.t()
+  def reminders_sent_changeset(guest, reminders_sent) do
+    cast(guest, %{reminders_sent: reminders_sent}, [:reminders_sent])
+  end
+
+  @doc """
+  Who invited `guest`. A row from before `invited_by` existed carries nil and
+  reads as the booker, the wording those guests were already sent.
+  """
+  @spec inviter(t() | map()) :: inviter()
+  def inviter(%{invited_by: :organizer}), do: :organizer
+  def inviter(_guest), do: :booker
+
+  @typedoc "Aggregate RSVP counts for a list of guests."
+  @type summary :: %{
+          total: non_neg_integer(),
+          accepted: non_neg_integer(),
+          declined: non_neg_integer(),
+          pending: non_neg_integer()
+        }
+
+  @doc "A zeroed RSVP summary accumulator."
+  @spec empty_summary() :: summary()
+  def empty_summary, do: %{total: 0, accepted: 0, declined: 0, pending: 0}
+
+  defp ensure_status(changeset) do
+    case get_field(changeset, :status) do
+      nil -> put_change(changeset, :status, :pending)
+      _present -> changeset
+    end
+  end
+
+  defp ensure_rsvp_token(changeset) do
+    case get_field(changeset, :rsvp_token) do
+      nil -> put_change(changeset, :rsvp_token, Token.generate(@token_bytes))
+      _present -> changeset
+    end
+  end
+
+  defp validate_timezone(field, timezone) do
+    if Timezones.valid?(timezone),
+      do: [],
+      else: [{field, dgettext_noop("errors", "is not a valid timezone")}]
+  end
+
+  defp normalize_email(nil), do: nil
+
+  defp normalize_email(email) when is_binary(email) do
+    email |> String.trim() |> String.downcase()
+  end
+end

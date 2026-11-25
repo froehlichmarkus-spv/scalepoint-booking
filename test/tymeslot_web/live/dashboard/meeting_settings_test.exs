@@ -1,0 +1,644 @@
+defmodule TymeslotWeb.Dashboard.MeetingSettingsTest do
+  use TymeslotWeb.LiveCase, async: true
+
+  @moduletag :meeting_types
+  @moduletag :live
+
+  import Tymeslot.DashboardTestHelpers
+  import Tymeslot.Factory
+
+  alias Ecto.Changeset
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.Repo
+
+  setup :setup_dashboard_user
+
+  # ===========================================================================
+  # Meeting Types List
+  # ===========================================================================
+
+  describe "Meeting types list" do
+    test "shows meeting types when they exist", %{conn: conn, user: user} do
+      insert(:meeting_type, user: user, name: "Strategy Session")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      assert render(view) =~ "Strategy Session"
+    end
+
+    test "offers Add Meeting Type once, beside the page title", %{conn: conn, user: user} do
+      insert(:meeting_type, user: user, name: "Strategy Session")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+      doc = view |> render() |> LazyHTML.from_document()
+
+      assert doc |> LazyHTML.query("button[phx-click='toggle_add_form']") |> Enum.count() == 1
+
+      assert doc
+             |> LazyHTML.query("div:has(> div > h1) button[phx-click='toggle_add_form']")
+             |> Enum.count() == 1
+    end
+
+    # Defaults are seeded once, with the profile; a host without any (here
+    # a profile made directly by the factory) sees the empty state, and
+    # visiting the page creates nothing.
+    test "shows the empty state to a host with no meeting types", %{conn: conn, user: user} do
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      assert render(view) =~ "No meeting types configured yet"
+      assert MeetingTypes.get_all_meeting_types(user.id) == []
+    end
+  end
+
+  # ===========================================================================
+  # Editing a Meeting Type
+  # ===========================================================================
+
+  describe "Editing a meeting type" do
+    test "renames a meeting type and shows the updated name in the list", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type =
+        insert(:meeting_type, user: user, name: "Old Name", duration_minutes: 30, is_active: true)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert render(view) =~ "Edit Meeting Type"
+
+      # Editing a field auto-saves immediately — there is no submit button.
+      view
+      |> element(~s|input[name="meeting_type[name]"]|)
+      |> render_change(%{"meeting_type" => %{"name" => "Renamed Type"}})
+
+      # Persisted before any "Done"/close action: nothing depends on it.
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id).name == "Renamed Type"
+      assert render(view) =~ "All changes saved"
+
+      # Done only tears down the overlay; the list reflects the saved state.
+      view |> element("button", "Done") |> render_click()
+
+      html = render(view)
+      assert html =~ "Renamed Type"
+      refute html =~ "Old Name"
+    end
+  end
+
+  # ===========================================================================
+  # Edit form tabs
+  # ===========================================================================
+
+  describe "Edit form tabs" do
+    setup %{conn: conn, user: user, profile: profile} do
+      Repo.update!(Changeset.change(profile, username: "tabhost"))
+      meeting_type = insert(:meeting_type, user: user, name: "Tabbed Type", duration_minutes: 30)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      %{view: view, meeting_type: meeting_type}
+    end
+
+    test "opens on the Details tab with the other panels hidden", %{view: view} do
+      assert has_element?(view, "[role='tablist']")
+      assert has_element?(view, "#meeting-type-form-tabs-tab-details[aria-selected='true']")
+
+      refute has_element?(view, "#meeting-type-form-tabs-panel-details[hidden]")
+      assert has_element?(view, "#meeting-type-form-tabs-panel-location[hidden]")
+      assert has_element?(view, "#meeting-type-form-tabs-panel-booking[hidden]")
+      assert has_element?(view, "#meeting-type-form-tabs-panel-questions[hidden]")
+      assert has_element?(view, "#meeting-type-form-tabs-panel-reminders[hidden]")
+    end
+
+    # Five tabs do not fit a phone's width. Wrapping them stacked a ragged
+    # second row of tabs; they stay one row that scrolls sideways instead.
+    test "the tabs stay a single row that scrolls sideways", %{view: view} do
+      [class] =
+        view
+        |> render()
+        |> Floki.parse_document!()
+        |> Floki.attribute("#meeting-type-form-tabs[role='tablist']", "class")
+
+      assert class =~ "flex-nowrap"
+      assert class =~ "overflow-x-auto"
+      refute class =~ "flex-wrap"
+      assert has_element?(view, "#meeting-type-form-tabs[phx-hook='ScrollStrip']")
+
+      assert has_element?(
+               view,
+               "#meeting-type-form-tabs #meeting-type-form-tabs-tab-reminders.whitespace-nowrap"
+             )
+    end
+
+    test "switching tabs reveals that panel and hides the previous one", %{view: view} do
+      view |> element("#meeting-type-form-tabs-tab-booking") |> render_click()
+
+      assert has_element?(view, "#meeting-type-form-tabs-tab-booking[aria-selected='true']")
+      assert has_element?(view, "#meeting-type-form-tabs-tab-details[aria-selected='false']")
+      refute has_element?(view, "#meeting-type-form-tabs-panel-booking[hidden]")
+      assert has_element?(view, "#meeting-type-form-tabs-panel-details[hidden]")
+    end
+
+    test "an invalid field marks its tab with an error indicator", %{view: view} do
+      view |> element("#meeting-type-form-tabs-tab-reminders") |> render_click()
+
+      # The name input sits in the now-hidden Details panel; an invalid value
+      # must still surface there via the tab indicator.
+      view
+      |> element(~s|input[name="meeting_type[name]"]|)
+      |> render_change(%{"meeting_type" => %{"name" => ""}})
+
+      assert has_element?(
+               view,
+               "#meeting-type-form-tabs-tab-details span",
+               "This tab contains errors"
+             )
+
+      refute has_element?(
+               view,
+               "#meeting-type-form-tabs-tab-reminders span",
+               "This tab contains errors"
+             )
+    end
+
+    test "the visibility toggle lives in the Booking Rules panel and persists", %{
+      view: view,
+      meeting_type: meeting_type,
+      user: user
+    } do
+      view |> element("#meeting-type-form-tabs-tab-booking") |> render_click()
+
+      # The switch reads "Show on /<username>": on while the type is listed.
+      # A switch must state "false" when off: a boolean false drops the
+      # attribute, leaving screen readers with no state at all.
+      assert has_element?(
+               view,
+               "#meeting-type-form-tabs-panel-booking [phx-click='toggle_private'][aria-checked='true']"
+             )
+
+      view
+      |> element("#meeting-type-form-tabs-panel-booking [phx-click='toggle_private']")
+      |> render_click()
+
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id).is_private
+
+      assert has_element?(
+               view,
+               "#meeting-type-form-tabs-panel-booking [phx-click='toggle_private'][aria-checked='false']"
+             )
+    end
+  end
+
+  # ===========================================================================
+  # Auto-saving edits
+  # ===========================================================================
+
+  describe "Auto-saving edits" do
+    test "changing a field persists immediately without a submit", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, duration_minutes: 30)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view
+      |> element(~s|input[name="meeting_type[duration]"]|)
+      |> render_change(%{"meeting_type" => %{"duration" => "45"}})
+
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id).duration_minutes == 45
+      assert render(view) =~ "All changes saved"
+    end
+
+    test "an invalid change is not persisted and is flagged unsaved", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, name: "Keep Me")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      html =
+        view
+        |> element(~s|input[name="meeting_type[name]"]|)
+        |> render_change(%{"meeting_type" => %{"name" => ""}})
+
+      # The last valid value stays in the database; the editor flags it unsaved.
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id).name == "Keep Me"
+      assert html =~ "Unsaved changes"
+    end
+
+    test "a name collision with another meeting type is not persisted and shows the error indicator",
+         %{conn: conn, user: user} do
+      # Insert two meeting types for the same user; we will try to rename type_b
+      # to the name already taken by type_a. The DB unique constraint on
+      # (user_id, name) turns this into a genuine changeset error — not one of
+      # the :incomplete companion-field cases — so apply_result/2 must set
+      # save_status: :error.
+      _type_a = insert(:meeting_type, user: user, name: "Taken Name")
+      type_b = insert(:meeting_type, user: user, name: "Original Name")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{type_b.id}']")
+      |> render_click()
+
+      view
+      |> element(~s|input[name="meeting_type[name]"]|)
+      |> render_change(%{"meeting_type" => %{"name" => "Taken Name"}})
+
+      # The original name must be intact in the database.
+      assert MeetingTypes.get_meeting_type(type_b.id, user.id).name == "Original Name"
+
+      # The editor must show the error indicator, not the success or incomplete
+      # copy. HEEx escapes the apostrophe, so match the rendered entity form.
+      assert render(view) =~ "Couldn&#39;t save changes"
+    end
+
+    test "a reminder beyond one year is rejected on add and later edits still save", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type = insert(:meeting_type, user: user, duration_minutes: 30)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("#meeting-type-form-tabs-tab-reminders") |> render_click()
+      view |> element("button[phx-click='toggle_custom_reminder']") |> render_click()
+
+      view
+      |> element(~s|input[name="reminder[value]"]|)
+      |> render_change(%{"reminder" => %{"value" => "400"}})
+
+      view
+      |> element(~s|input[type=hidden][name="reminder[unit]"]|)
+      |> render_change(%{"reminder" => %{"unit" => "days"}})
+
+      html = view |> element("button[phx-click='add_reminder']") |> render_click()
+
+      assert html =~ "Reminders cannot be set for more than 1 year in advance"
+      refute html =~ "Added 400 days before"
+
+      view
+      |> element(~s|input[name="meeting_type[duration]"]|)
+      |> render_change(%{"meeting_type" => %{"duration" => "45"}})
+
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id).duration_minutes == 45
+      assert render(view) =~ "All changes saved"
+    end
+
+    # The form autosaves on Add, so a value typed and left in the open custom
+    # row used to be lost when the host moved on. Focus leaving the row now
+    # adds it, and the add saves like any other.
+    test "a custom reminder typed but not added is saved when focus leaves the row", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type = insert(:meeting_type, user: user, duration_minutes: 30, reminder_config: [])
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("#meeting-type-form-tabs-tab-reminders") |> render_click()
+      view |> element("button[phx-click='toggle_custom_reminder']") |> render_click()
+
+      view
+      |> element(~s|input[name="reminder[value]"]|)
+      |> render_change(%{"reminder" => %{"value" => "3"}})
+
+      html =
+        view
+        |> element("#reminder-custom-row")
+        |> render_hook("commit_custom_reminder", %{
+          "reminder" => %{"value" => "3", "unit" => "hours"}
+        })
+
+      assert html =~ "3 hours before"
+
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id).reminder_config == [
+               %{"value" => 3, "unit" => "hours"}
+             ]
+    end
+
+    test "the custom reminder unit select keeps the chosen unit across re-renders", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type = insert(:meeting_type, user: user, duration_minutes: 30)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("#meeting-type-form-tabs-tab-reminders") |> render_click()
+      view |> element("button[phx-click='toggle_custom_reminder']") |> render_click()
+
+      unit = ~s|select[data-name="reminder[unit]"]|
+
+      assert has_element?(view, unit <> ~s| option[value="minutes"][selected]|)
+
+      view
+      |> element(~s|input[type=hidden][name="reminder[unit]"]|)
+      |> render_change(%{"reminder" => %{"unit" => "hours"}})
+
+      assert has_element?(view, unit <> ~s| option[value="hours"][selected]|)
+      refute has_element?(view, unit <> ~s| option[value="minutes"][selected]|)
+    end
+  end
+
+  # ===========================================================================
+  # Reminder Limit
+  # ===========================================================================
+
+  describe "Reminder limit" do
+    test "the add buttons lock once the last allowed reminder is added", %{
+      conn: conn,
+      user: user
+    } do
+      max = MeetingTypes.max_reminders()
+
+      # One short of the limit, so the host can still add exactly one more.
+      # Built from the limit itself: the UI must offer whatever the save path
+      # enforces, not a number written out beside it.
+      meeting_type =
+        insert(:meeting_type,
+          user: user,
+          reminder_config: for(n <- 1..(max - 1)//1, do: %{"value" => n * 5, "unit" => "minutes"})
+        )
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("#meeting-type-form-tabs-tab-reminders") |> render_click()
+
+      refute has_element?(view, "button[phx-click='toggle_custom_reminder'][disabled]")
+
+      view |> element("button[phx-click='toggle_custom_reminder']") |> render_click()
+
+      view
+      |> element(~s|input[name="reminder[value]"]|)
+      |> render_change(%{"reminder" => %{"value" => "45"}})
+
+      html = view |> element("button[phx-click='add_reminder']") |> render_click()
+
+      assert html =~ "Added 45 minutes before"
+      assert has_element?(view, "button[phx-click='toggle_custom_reminder'][disabled]")
+      assert html =~ "Maximum of #{max} reminders allowed"
+
+      assert length(MeetingTypes.get_meeting_type(meeting_type.id, user.id).reminder_config) ==
+               max
+    end
+  end
+
+  # ===========================================================================
+  # Toggling Meeting Type Status
+  # ===========================================================================
+
+  describe "Toggling meeting type status" do
+    test "deactivates an active meeting type", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, is_active: true)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='toggle_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert render(view) =~ "Meeting type status updated"
+      assert Repo.reload!(meeting_type).is_active == false
+    end
+
+    test "reactivates an inactive meeting type", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, is_active: false)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='toggle_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert render(view) =~ "Meeting type status updated"
+      assert Repo.reload!(meeting_type).is_active == true
+    end
+
+    test "toggling twice returns to original state", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, is_active: true)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      # First toggle: active → inactive
+      view
+      |> element("[phx-click='toggle_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert Repo.reload!(meeting_type).is_active == false
+
+      # Second toggle: inactive → active
+      view
+      |> element("[phx-click='toggle_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert Repo.reload!(meeting_type).is_active == true
+    end
+  end
+
+  # ===========================================================================
+  # Deleting a Meeting Type
+  # ===========================================================================
+
+  describe "Deleting a meeting type" do
+    test "requires confirmation before removing the type from the list", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, name: "To Be Removed")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      assert render(view) =~ "To Be Removed"
+
+      view
+      |> element("[phx-click='show_delete_modal'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert render(view) =~ "To Be Removed"
+
+      view
+      |> element("#delete-meeting-type-modal button", "Delete Meeting Type")
+      |> render_click()
+
+      html = render(view)
+      assert html =~ "Meeting type deleted"
+      refute html =~ "To Be Removed"
+      assert MeetingTypes.get_meeting_type(meeting_type.id, user.id) == nil
+    end
+
+    test "cancelling the delete modal leaves the type intact", %{conn: conn, user: user} do
+      meeting_type = insert(:meeting_type, user: user, name: "Stays Around")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='show_delete_modal'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view
+      |> element("#delete-meeting-type-modal button", "Cancel")
+      |> render_click()
+
+      assert render(view) =~ "Stays Around"
+      assert %{name: "Stays Around"} = MeetingTypes.get_meeting_type(meeting_type.id, user.id)
+    end
+  end
+
+  # ===========================================================================
+  # Booking link & visibility
+  # ===========================================================================
+
+  describe "Booking link and visibility" do
+    setup %{profile: profile} do
+      # The link/visibility controls only appear once the profile has a username.
+      %{profile: Repo.update!(Changeset.change(profile, username: "linkhost"))}
+    end
+
+    test "toggling a type private persists the flag and badges it unlisted", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type =
+        insert(:meeting_type, user: user, name: "Strategy Session", is_private: false)
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view
+      |> element("[phx-click='toggle_private'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      assert render(view) =~ "Visibility updated"
+      assert Repo.reload!(meeting_type).is_private == true
+
+      # The list view marks the now-private type as unlisted.
+      view |> element("button", "Done") |> render_click()
+      assert render(view) =~ "Unlisted"
+    end
+
+    test "changing the booking link persists the new slug after confirmation", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type = insert(:meeting_type, user: user, name: "Strategy Session")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("[phx-click='open_slug_modal']") |> render_click()
+
+      view
+      |> form("#booking-link-modal form", %{"slug" => "vip-call"})
+      |> render_change()
+
+      view |> element("#booking-link-modal button", "Save link") |> render_click()
+
+      assert render(view) =~ "Booking link updated"
+      assert Repo.reload!(meeting_type).slug == "vip-call"
+    end
+
+    test "randomising mints an unguessable link different from the name slug", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type = insert(:meeting_type, user: user, name: "Strategy Session")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("[phx-click='open_slug_modal']") |> render_click()
+      view |> element("#booking-link-modal [phx-click='randomise_slug']") |> render_click()
+      view |> element("#booking-link-modal button", "Save link") |> render_click()
+
+      assert render(view) =~ "Booking link updated"
+      reloaded = Repo.reload!(meeting_type)
+      assert reloaded.slug
+      assert reloaded.slug != "strategy-session"
+    end
+
+    test "cancelling the booking link modal discards the draft for the next open", %{
+      conn: conn,
+      user: user
+    } do
+      meeting_type = insert(:meeting_type, user: user, name: "Strategy Session")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{meeting_type.id}']")
+      |> render_click()
+
+      view |> element("[phx-click='open_slug_modal']") |> render_click()
+
+      view
+      |> form("#booking-link-modal form", %{"slug" => "abandoned-draft"})
+      |> render_change()
+
+      view |> element("#booking-link-modal button", "Cancel") |> render_click()
+      view |> element("[phx-click='open_slug_modal']") |> render_click()
+
+      assert has_element?(view, "#booking-link-modal input[name=slug][value='strategy-session']")
+
+      view |> element("#booking-link-modal button", "Save link") |> render_click()
+
+      refute Repo.reload!(meeting_type).slug == "abandoned-draft"
+    end
+
+    test "a booking link already taken by another type is rejected", %{conn: conn, user: user} do
+      _taken = insert(:meeting_type, user: user, name: "Coffee Chat")
+      other = insert(:meeting_type, user: user, name: "Other Session")
+
+      {:ok, view, _html} = live(conn, ~p"/dashboard/meeting-settings")
+
+      view
+      |> element("[phx-click='edit_type'][phx-value-id='#{other.id}']")
+      |> render_click()
+
+      view |> element("[phx-click='open_slug_modal']") |> render_click()
+
+      view
+      |> form("#booking-link-modal form", %{"slug" => "coffee-chat"})
+      |> render_change()
+
+      view |> element("#booking-link-modal button", "Save link") |> render_click()
+
+      assert render(view) =~ "already taken"
+      assert Repo.reload!(other).slug == nil
+    end
+  end
+end

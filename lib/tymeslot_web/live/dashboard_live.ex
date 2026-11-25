@@ -1,0 +1,575 @@
+defmodule TymeslotWeb.DashboardLive do
+  @moduledoc """
+  The dashboard for authenticated users: one LiveView behind every
+  `/dashboard/*` section.
+
+  The sections are LiveComponents rather than separate LiveViews, so switching
+  between them patches the page instead of remounting it, and the sidebar,
+  integration status and profile are loaded once for all of them.
+  `TymeslotWeb.Dashboard.ComponentDispatch` maps the current `live_action` to
+  the component to render.
+
+  Because every section shares this process, its mailbox is where components
+  talk to each other: a child asks for a sibling to be refreshed, or for a flash
+  to be shown, by messaging the parent. `handle_info/2` is therefore mostly a
+  routing table, with the calendar and meeting-type-form traffic delegated to
+  `TymeslotWeb.Dashboard.CalendarMessages` and
+  `TymeslotWeb.Dashboard.MeetingFormMessages`.
+
+  ## Extensions
+
+  External applications can add their own sections without Core knowing they
+  exist: they register sidebar entries and components through application
+  config, and route their paths to this LiveView with a custom `live_action`.
+  `Tymeslot.Dashboard.ExtensionSchema` is the contract, and documents the
+  configuration keys, the component requirements and the routing pattern.
+  """
+
+  use TymeslotWeb, :live_view
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Availability
+  alias Tymeslot.BookingPages
+  alias Tymeslot.CalendarGrid
+  alias Tymeslot.CalendarGrid.WriteGuardian
+  alias Tymeslot.Dashboard.DashboardContext
+  alias Tymeslot.Meetings
+  alias Tymeslot.Onboarding
+  alias TymeslotWeb.Components.DashboardLayout
+  alias TymeslotWeb.Components.Shared.PickerPreferences
+  alias TymeslotWeb.Components.TourOverlay
+  alias TymeslotWeb.Dashboard.AgendaRefresh
+  alias TymeslotWeb.Dashboard.AutomationSettingsComponent
+  alias TymeslotWeb.Dashboard.BookingLinkShare
+  alias TymeslotWeb.Dashboard.CalendarFocus
+  alias TymeslotWeb.Dashboard.CalendarMessages
+  alias TymeslotWeb.Dashboard.CalendarUpNextStrip
+  alias TymeslotWeb.Dashboard.ComponentDispatch
+  alias TymeslotWeb.Dashboard.MeetingFormMessages
+  alias TymeslotWeb.Dashboard.OnboardingChecklist
+  alias TymeslotWeb.Dashboard.PaymentsHandlers
+  alias TymeslotWeb.Dashboard.PollEventHandlers
+  alias TymeslotWeb.Dashboard.ScheduleSettingsComponent
+  alias TymeslotWeb.Dashboard.ServiceSettingsComponent
+  alias TymeslotWeb.Dashboard.TourEventHandlers
+  alias TymeslotWeb.Helpers.PageTitles
+
+  require Logger
+
+  # The sections showing the Theme screen, which follows booking page changes.
+  @booking_page_actions [:theme, :theme_customization]
+
+  # The standalone calendar/video/payments pages live as tabs inside the
+  # unified integrations hub. Their routes stay defined (deep links, emails and
+  # OAuth/Stripe returns still point at them) but each legacy live action bounces
+  # to the matching hub tab.
+  @legacy_integration_tabs %{
+    calendar_integration: "calendars",
+    video_integration: "video",
+    payments: "payments"
+  }
+
+  @impl Phoenix.LiveView
+  @spec mount(map(), map(), Phoenix.LiveView.Socket.t()) ::
+          {:ok, Phoenix.LiveView.Socket.t()} | {:ok, Phoenix.LiveView.Socket.t(), keyword()}
+  def mount(_params, _session, socket) do
+    # Snapshot once, before the dashboard tour can mark itself seen mid-session,
+    # so the overview greeting stays "Welcome" for the whole first visit and
+    # only becomes "Welcome back" on a later one.
+    first_visit? =
+      case socket.assigns[:current_user] do
+        %{} = user -> not Onboarding.dashboard_tour_seen?(user)
+        _no_user -> false
+      end
+
+    # `:agenda` defaults nil so the calendar's Up-next strip can be guarded on
+    # the dead render, before `AgendaRefresh.load/1` has run.
+    # `:calendar_focus` waits for the calendar's first open, which loads it
+    # once per process (nil until then).
+    # `viewport_fit: :cover` lets the root layout write the dashboard's
+    # viewport meta (under the notch, resized by the on-screen keyboard).
+    {:ok,
+     assign(socket,
+       first_dashboard_visit: first_visit?,
+       agenda: nil,
+       calendar_focus: nil,
+       nav_expanded: false,
+       viewport_fit: :cover
+     )}
+  end
+
+  @impl Phoenix.LiveView
+  @spec handle_params(map(), String.t(), Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_params(params, _url, socket) do
+    case Map.fetch(@legacy_integration_tabs, socket.assigns.live_action) do
+      {:ok, tab} ->
+        socket =
+          if socket.assigns.live_action == :payments && !socket.assigns.payments_allowed do
+            put_flash(
+              socket,
+              :error,
+              dgettext("dashboard_home", "Meeting payments require an upgraded plan.")
+            )
+          else
+            socket
+          end
+
+        {:noreply, push_navigate(socket, to: hub_tab_path(tab, params))}
+
+      :error ->
+        {:noreply, handle_dashboard_params(params, socket)}
+    end
+  end
+
+  # Builds the hub URL for a legacy redirect, carrying the Stripe return markers
+  # (`?return=1` from the OAuth callback, `?refresh=1` from old links) through
+  # so the hub still triggers the capability resync on the payments tab.
+  defp hub_tab_path(tab, params) do
+    passthrough =
+      for key <- [:return, :refresh],
+          Map.has_key?(params, Atom.to_string(key)),
+          do: {key, params[Atom.to_string(key)]}
+
+    query = [{:tab, tab} | passthrough]
+    ~p"/dashboard/integrations?#{query}"
+  end
+
+  defp handle_dashboard_params(params, socket) do
+    action = socket.assigns.live_action
+
+    # Leaving the calendar unmounts the surface while this process lives on,
+    # so the writes it still has queued are handed to their guardian. The
+    # count tells a surface LiveView revives, rather than mounts afresh, to
+    # take them back (see `Dashboard.Calendar.Writes.adopt/1`).
+    socket =
+      if action == :calendar do
+        assign_new(socket, :calendar_left, fn -> 0 end)
+      else
+        WriteGuardian.detach()
+        assign(socket, :calendar_left, Map.get(socket.assigns, :calendar_left, 0) + 1)
+      end
+
+    socket =
+      if connected?(socket) && action == :calendar &&
+           !socket.assigns[:calendar_pubsub_subscribed] do
+        user_id = socket.assigns.current_user.id
+
+        Phoenix.PubSub.subscribe(Tymeslot.PubSub, "calendar_events:#{user_id}")
+        Meetings.subscribe_to_guest_rsvp_updates(user_id)
+        Availability.subscribe(user_id)
+
+        assign(socket, :calendar_pubsub_subscribed, true)
+      else
+        socket
+      end
+
+    socket = if action == :calendar, do: assign_calendar_focus(socket), else: socket
+    socket = subscribe_to_booking_pages(socket, action)
+
+    socket =
+      socket
+      |> assign(:page_title, PageTitles.dashboard_title(action))
+      |> assign(:params, params)
+      |> TourEventHandlers.assign_tour_state(action)
+
+    socket =
+      if action == :integrations,
+        do: PaymentsHandlers.maybe_enqueue_resync(params, socket),
+        else: socket
+
+    socket = if connected?(socket), do: AgendaRefresh.load(socket), else: socket
+
+    socket
+    |> AgendaRefresh.reschedule()
+    |> PollEventHandlers.keep_deadline_timer(action)
+  end
+
+  # The Theme screen follows the owner's page changes made in other tabs, so
+  # it leaves a page deleted there at once rather than on its next edit.
+  defp subscribe_to_booking_pages(%{assigns: %{profile: %{id: profile_id}}} = socket, action)
+       when action in @booking_page_actions do
+    if connected?(socket) and !socket.assigns[:booking_pages_subscribed] do
+      BookingPages.subscribe(profile_id)
+      assign(socket, :booking_pages_subscribed, true)
+    else
+      socket
+    end
+  end
+
+  defp subscribe_to_booking_pages(socket, _action), do: socket
+
+  # Whether focus mode is on, read once per process (the dead render too, so
+  # the menu never flashes): later changes go through
+  # `handle_event("calendar:toggle_focus", ...)`, which keeps it current.
+  defp assign_calendar_focus(
+         %{assigns: %{calendar_focus: nil, current_user: %{id: user_id}}} = socket
+       ) do
+    preferences = CalendarGrid.get_or_create_preferences(user_id)
+    assign(socket, :calendar_focus, preferences.focus_mode)
+  end
+
+  defp assign_calendar_focus(socket), do: socket
+
+  @impl Phoenix.LiveView
+  @spec render(map()) :: Phoenix.LiveView.Rendered.t()
+  def render(assigns) do
+    assigns =
+      assigns
+      |> assign(
+        :component_module,
+        ComponentDispatch.component_for_action(
+          assigns.live_action,
+          assigns[:dashboard_action_components]
+        )
+      )
+      |> assign(:component_props, ComponentDispatch.props_for_action(assigns))
+      |> assign(
+        :should_render_feature,
+        ComponentDispatch.should_render_feature?(assigns.live_action, assigns)
+      )
+      |> assign(:calendar_focus_active, CalendarFocus.active?(assigns))
+
+    ~H"""
+    <DashboardLayout.dashboard_layout
+      current_user={@current_user}
+      profile={@profile}
+      current_action={@live_action}
+      integration_status={@integration_status}
+      automations_allowed={@automations_allowed}
+      analytics_allowed={@analytics_allowed}
+      full_width={@live_action == :calendar}
+      compact_nav={@live_action == :calendar}
+      focus={@calendar_focus_active}
+      nav_rail={@live_action == :calendar and not @nav_expanded}
+      nav_rail_toggle={@live_action == :calendar}
+      sidebar_extensions={@sidebar_extensions}
+      unseen_announcements={@unseen_announcements}
+    >
+      <.live_component
+        :if={@tour_active}
+        module={TourOverlay}
+        id="dashboard-tour-overlay"
+        step={Enum.at(@tour_steps, @tour_step_index)}
+        step_index={@tour_step_index}
+        total_steps={@tour_total_steps}
+      />
+      <%!-- Notices an overlay adds to the overview (`:dashboard_notice_components`).
+           No wrapper: a notice with nothing to say must leave no gap, so each
+           one owns its own spacing. --%>
+      <%= if @live_action == :overview do %>
+        <.live_component
+          :for={module <- @dashboard_notice_components}
+          module={module}
+          id={"dashboard-notice-#{inspect(module)}"}
+          current_user={@current_user}
+        />
+      <% end %>
+      <%!-- Content --%>
+      <div class={if @live_action == :calendar, do: "flex-1 flex flex-col min-h-0", else: ""}>
+        <%= if @live_action == :calendar do %>
+          <%!-- Always rendered, so a strip appearing never changes the siblings
+               of the grid's wrapper (morphdom would rebuild it and detach the
+               surface). The calendar leaves Up next to its agenda tab on
+               phones. --%>
+          <div id="calendar-strips" class="shrink-0">
+            <div
+              :if={OnboardingChecklist.visible?(@current_user, @integration_status, @profile)}
+              class="px-3 pt-2 md:px-4"
+            >
+              <OnboardingChecklist.onboarding_checklist
+                variant={:compact}
+                integration_status={@integration_status}
+                current_user={@current_user}
+                profile={@profile}
+              />
+            </div>
+            <div
+              :if={@agenda && @agenda.next}
+              id="calendar-up-next"
+              class="max-sm:hidden"
+            >
+              <CalendarUpNextStrip.up_next_strip
+                entry={@agenda.next}
+                timezone={@agenda.timezone}
+                time_format={@time_format}
+              />
+            </div>
+          </div>
+        <% end %>
+        <div class={
+          if @live_action == :calendar, do: "flex-1 min-h-0 flex flex-col", else: "contents"
+        }>
+          <%= if @should_render_feature do %>
+            <.live_component
+              module={@component_module}
+              id={ComponentDispatch.component_id(@live_action)}
+              current_user={@current_user}
+              first_dashboard_visit={@first_dashboard_visit}
+              profile={Map.get(@component_props, :profile, @profile)}
+              shared_data={Map.get(@component_props, :shared_data, %{})}
+              integration_status={@integration_status}
+              time_format={@time_format}
+              saving={@saving}
+              client_ip={@client_ip}
+              user_agent={@user_agent}
+              viewport_hint={@viewport}
+              live_action={@live_action}
+              calendar_left={@calendar_left}
+              calendar_focus={@calendar_focus_active}
+              params={@params}
+              custom_questions_allowed={@custom_questions_allowed}
+              group_bookings_allowed={@group_bookings_allowed}
+              recurring_bookings_allowed={@recurring_bookings_allowed}
+              payments_allowed={@payments_allowed}
+              automations_allowed={@automations_allowed}
+              feature_placeholder_components={@feature_placeholder_components}
+            />
+          <% else %>
+            <ComponentDispatch.feature_placeholder
+              section={@live_action}
+              current_user={@current_user}
+              feature_placeholder_components={@feature_placeholder_components}
+            />
+          <% end %>
+        </div>
+      </div>
+    </DashboardLayout.dashboard_layout>
+    """
+  end
+
+  # Handle events from child components
+  @impl Phoenix.LiveView
+  @spec handle_info({:profile_updated, map()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:profile_updated, profile}, socket) do
+    {:noreply,
+     socket
+     |> assign(profile: profile)
+     |> handle_saving_animation()
+     |> refresh_dashboard_data()}
+  end
+
+  # The clock is resolved once at mount, so changing it in settings has to be
+  # announced or the rest of the dashboard keeps rendering the old one until the
+  # next full page load.
+  @spec handle_info({:time_format_updated, String.t()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:time_format_updated, time_format}, socket) do
+    PickerPreferences.put_time_format(time_format)
+    {:noreply, assign(socket, time_format: time_format)}
+  end
+
+  @spec handle_info(
+          {:integration_added | :integration_removed | :integration_updated, any()},
+          Phoenix.LiveView.Socket.t()
+        ) :: {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({event, _type}, socket)
+      when event in [:integration_added, :integration_removed, :integration_updated] do
+    {:noreply,
+     socket
+     |> handle_saving_animation()
+     |> refresh_dashboard_data()}
+  end
+
+  @spec handle_info({:meeting_type_changed}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:meeting_type_changed}, socket) do
+    if socket.assigns.live_action == :meeting_settings do
+      send_update(ServiceSettingsComponent, id: ComponentDispatch.component_id(:meeting_settings))
+    end
+
+    {:noreply,
+     socket
+     |> handle_saving_animation()
+     |> refresh_dashboard_data()
+     |> AgendaRefresh.load()}
+  end
+
+  @spec handle_info({:flash, {atom(), String.t()}}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:flash, {type, message}}, socket) do
+    {:noreply, put_flash(socket, type, message)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:hide_saving, gen}, socket) do
+    if gen == socket.assigns[:saving_gen] do
+      {:noreply, assign(socket, saving: false, saving_timer_ref: nil)}
+    else
+      # Stale timer message from a cancelled generation — ignore
+      {:noreply, socket}
+    end
+  end
+
+  # Messages from MeetingTypeForm and its children go to `MeetingFormMessages`.
+
+  @impl Phoenix.LiveView
+  def handle_info({:clear_reminder_confirmation, form_id}, socket),
+    do: MeetingFormMessages.handle_clear_reminder_confirmation(form_id, socket)
+
+  def handle_info({:refresh_calendar_list, form_id, integration_id}, socket),
+    do: MeetingFormMessages.handle_refresh_calendar_list(form_id, integration_id, socket)
+
+  def handle_info({:calendar_list_refreshed, form_id, _integration_id, calendars}, socket),
+    do: MeetingFormMessages.handle_calendar_list_refreshed(form_id, calendars, socket)
+
+  def handle_info({:retry_autosave, form_id}, socket),
+    do: MeetingFormMessages.handle_retry_autosave(form_id, socket)
+
+  # Generic external redirect message from components.
+  # Only HTTPS URLs are allowed to prevent open-redirect attacks from
+  # malicious or buggy extension components.
+  @spec handle_info({:external_redirect, String.t()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:external_redirect, url}, socket) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{scheme: "https", host: host} when is_binary(host) and host != "" ->
+        {:noreply, redirect(socket, external: url)}
+
+      _other ->
+        Logger.warning("Rejected external redirect to non-HTTPS URL",
+          url: url,
+          user_id: socket.assigns[:current_user] && socket.assigns.current_user.id
+        )
+
+        {:noreply, put_flash(socket, :error, dgettext("dashboard_home", "Invalid redirect URL"))}
+    end
+  end
+
+  # A component that finds, while updating, that the URL names something gone
+  # (a booking page deleted in another tab) cannot patch from `update/2`, so it
+  # asks here. Only dashboard paths, so a component cannot send the user away.
+  @spec handle_info({:patch, String.t()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:patch, "/dashboard" <> _rest = path}, socket),
+    do: {:noreply, push_patch(socket, to: path)}
+
+  @spec handle_info({:booking_pages_changed, integer()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:booking_pages_changed, _profile_id}, socket) do
+    action = socket.assigns.live_action
+
+    if action in @booking_page_actions do
+      send_update(ComponentDispatch.component_for_action(action, nil),
+        id: ComponentDispatch.component_id(action),
+        booking_pages_changed: true
+      )
+    end
+
+    {:noreply, socket}
+  end
+
+  @spec handle_info({:reload_schedule}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:reload_schedule}, socket) do
+    # Refresh the availability component after mutations from child components
+    send_update(ScheduleSettingsComponent,
+      id: ComponentDispatch.component_id(:availability),
+      profile: socket.assigns.profile
+    )
+
+    {:noreply, socket}
+  end
+
+  @spec handle_info({:telegram_linked, integer(), String.t()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:telegram_linked, integration_id, _chat_id}, socket) do
+    send_update(AutomationSettingsComponent,
+      id: ComponentDispatch.component_id(:automation),
+      telegram_linked_integration_id: integration_id
+    )
+
+    {:noreply, socket}
+  end
+
+  @spec handle_info({:telegram_link_expired, integer()}, Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info({:telegram_link_expired, integration_id}, socket) do
+    send_update(AutomationSettingsComponent,
+      id: ComponentDispatch.component_id(:automation),
+      telegram_link_expired_id: integration_id
+    )
+
+    {:noreply, socket}
+  end
+
+  # Poll-specific handle_info clauses — delegated to PollEventHandlers.
+
+  def handle_info({:poll_updated, poll_id}, socket),
+    do: PollEventHandlers.handle_poll_updated(poll_id, socket)
+
+  def handle_info({:poll_deadline_reached, poll_id}, socket),
+    do: PollEventHandlers.handle_poll_deadline_reached(poll_id, socket)
+
+  def handle_info({:poll_deadline_next, deadline}, socket),
+    do: PollEventHandlers.handle_poll_deadline_next(deadline, socket)
+
+  def handle_info(:agenda_tick, socket) do
+    {:noreply, socket |> AgendaRefresh.reschedule() |> AgendaRefresh.refresh()}
+  end
+
+  @spec handle_info(any(), Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_info(message, socket) do
+    case CalendarMessages.handle_info(message, socket) do
+      :unhandled -> {:noreply, socket}
+      reply -> reply
+    end
+  end
+
+  @impl Phoenix.LiveView
+  @spec handle_event(String.t(), map(), Phoenix.LiveView.Socket.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_event("tour:" <> action, params, socket),
+    do: TourEventHandlers.handle_event(action, params, socket)
+
+  def handle_event("onboarding:toggle", %{"id" => key}, socket),
+    do:
+      keep_user(Onboarding.toggle_dashboard_setup_item(socket.assigns.current_user, key), socket)
+
+  def handle_event("booking_link_copied", params, socket),
+    do: BookingLinkShare.handle_copied(socket, params["channel"])
+
+  def handle_event("calendar:toggle_focus", _params, socket),
+    do: {:noreply, CalendarFocus.toggle(socket)}
+
+  # The calendar shows the menu as an icon rail so the grid gets the width;
+  # this widens it again for the rest of the visit.
+  def handle_event("nav:toggle_rail", _params, socket),
+    do: {:noreply, update(socket, :nav_expanded, &(not &1))}
+
+  def handle_event("onboarding:dismiss", _params, socket),
+    do: keep_user(Onboarding.dismiss_dashboard_setup(socket.assigns.current_user), socket)
+
+  # Private functions
+
+  defp keep_user({:ok, user}, socket), do: {:noreply, assign(socket, :current_user, user)}
+  defp keep_user({:error, _reason}, socket), do: {:noreply, socket}
+
+  @spec handle_saving_animation(Phoenix.LiveView.Socket.t(), non_neg_integer()) ::
+          Phoenix.LiveView.Socket.t()
+  defp handle_saving_animation(socket, duration \\ 1000) do
+    if ref = socket.assigns[:saving_timer_ref] do
+      Process.cancel_timer(ref)
+    end
+
+    gen = (socket.assigns[:saving_gen] || 0) + 1
+    ref = Process.send_after(self(), {:hide_saving, gen}, duration)
+    assign(socket, saving: true, saving_timer_ref: ref, saving_gen: gen)
+  end
+
+  # Refreshes integration status only — used after integration events.
+  # Action-specific data (e.g. upcoming meetings) is loaded exclusively by
+  # handle_params/3 and does not need to change when an integration is added
+  # or removed.
+  @spec refresh_dashboard_data(Phoenix.LiveView.Socket.t()) :: Phoenix.LiveView.Socket.t()
+  defp refresh_dashboard_data(socket) do
+    if user = socket.assigns[:current_user] do
+      integration_status = DashboardContext.get_integration_status(user.id)
+      assign(socket, :integration_status, integration_status)
+    else
+      socket
+    end
+  end
+end

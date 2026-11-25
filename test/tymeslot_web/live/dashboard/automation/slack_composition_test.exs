@@ -1,0 +1,136 @@
+defmodule TymeslotWeb.Dashboard.Automation.SlackCompositionTest do
+  @moduledoc """
+  Composition tests for the Slack integration LiveComponent.
+
+  Verifies the wiring between AutomationSettingsComponent and the new Slack
+  surface: tab visibility, primary/secondary CTAs in the empty state, the
+  OAuth deep-link redirect target, and the feature gate that hides the
+  section when automations are not allowed.
+  """
+
+  use TymeslotWeb.ConnCase, async: false
+
+  @moduletag :slack
+  @moduletag :automation
+  @moduletag :live
+  @moduletag :integration
+
+  import Phoenix.LiveViewTest
+  import Tymeslot.AuthTestHelpers
+  import Tymeslot.Factory
+  import Tymeslot.TestFixtures
+
+  alias Tymeslot.ConfigTestHelpers
+  alias Tymeslot.Onboarding.OnboardingQueries
+  alias Tymeslot.Security.Encryption
+
+  setup %{conn: conn} do
+    user = create_user_fixture()
+    {:ok, user} = OnboardingQueries.mark_onboarding_complete(user)
+
+    ConfigTestHelpers.setup_config(:tymeslot,
+      slack_notifications_allowed: true,
+      slack_oauth_available: true,
+      slack_client_id: "test-client-id",
+      feature_access_checker: Tymeslot.Features.DefaultAccessChecker,
+      dashboard_additional_hooks: [],
+      feature_placeholder_components: %{}
+    )
+
+    conn = log_in_user(conn, user)
+    {:ok, conn: conn, user: user}
+  end
+
+  describe "automation page composition" do
+    test "exposes a Slack tab when slack_notifications_allowed is true",
+         %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard/automation")
+
+      assert has_element?(view, "#automation-tabs-tab-slack[role='tab']", "Slack")
+    end
+
+    test "renders the Slack empty state with both CTAs on the Slack tab",
+         %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard/automation")
+      view |> element("button", "Slack") |> render_click()
+      html = render(view)
+
+      assert html =~ "No Slack Integrations"
+      assert html =~ "Add to Slack"
+      assert html =~ ~s(href="/api/slack/oauth/start")
+      assert html =~ "Add via webhook URL"
+    end
+
+    test "clicking 'Add via webhook URL' opens the webhook URL form",
+         %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/dashboard/automation")
+      view |> element("button", "Slack") |> render_click()
+      view |> element("button", "Add via webhook URL") |> render_click()
+      html = render(view)
+
+      assert html =~ "Slack Webhook URL"
+      assert html =~ "Incoming Webhook"
+    end
+
+    test "hides the Slack tab entirely when the feature flag is off",
+         %{conn: conn} do
+      ConfigTestHelpers.setup_config(:tymeslot, slack_notifications_allowed: false)
+
+      {:ok, view, _html} = live(conn, "/dashboard/automation")
+
+      # Anchored on the tab strip itself, so the refute below cannot pass
+      # merely because the strip failed to render.
+      assert has_element?(view, "#automation-tabs-tab-webhooks")
+      refute has_element?(view, "#automation-tabs-tab-slack")
+    end
+  end
+
+  describe "webhook URL edit form" do
+    @secret_url "https://hooks.slack.com/services/TSECRET/BSECRET/topsecrettoken123"
+
+    test "never renders the decrypted webhook URL into the edit form", %{conn: conn, user: user} do
+      _integration =
+        insert(:slack_integration,
+          user: user,
+          app_mode: :webhook_url,
+          channel_id: nil,
+          channel_name: nil,
+          bot_token_encrypted: nil,
+          webhook_url_encrypted: Encryption.encrypt(@secret_url)
+        )
+
+      {:ok, view, _html} = live(conn, "/dashboard/automation")
+      view |> element("button", "Slack") |> render_click()
+
+      # Open the edit form for the webhook integration via the card's Edit
+      # button (aria-label="Edit"); its phx-click carries the JS push event.
+      html =
+        view
+        |> element("button[aria-label='Edit']")
+        |> render_click()
+
+      # The edit form must render, but the stored secret must not appear in the
+      # DOM (no plaintext value, no value-attribute leak).
+      assert html =~ "Slack Webhook URL"
+      refute html =~ @secret_url
+      assert html =~ "Leave blank to keep"
+    end
+  end
+
+  describe "paywall enforcement" do
+    test "hides Add to Slack and exposes only the webhook-URL fallback when OAuth is unavailable",
+         %{conn: conn} do
+      ConfigTestHelpers.setup_config(:tymeslot,
+        slack_oauth_available: false,
+        slack_client_id: nil
+      )
+
+      {:ok, view, _html} = live(conn, "/dashboard/automation")
+      view |> element("button", "Slack") |> render_click()
+      html = render(view)
+
+      refute html =~ "Add to Slack"
+      assert html =~ "Add Slack via Webhook URL"
+    end
+  end
+end

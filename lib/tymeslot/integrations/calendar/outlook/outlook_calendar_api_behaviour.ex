@@ -1,0 +1,75 @@
+defmodule Tymeslot.Integrations.Calendar.Outlook.CalendarAPIBehaviour do
+  @moduledoc """
+  Behaviour for Outlook Calendar API client.
+  """
+
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationSchema
+
+  @type api_error ::
+          {:error,
+           :unauthorized
+           | :not_found
+           | :rate_limited
+           | :network_error
+           # A 4xx the provider answered with a refusal of the request itself.
+           | :refused
+           | :malformed_response
+           | :timeout
+           | :server_error
+           | :authentication_error
+           # A list read followed more next links than the page cap allows.
+           | :too_many_pages, String.t()}
+
+  # A repeat rule Graph has no pattern for, or cannot hold with the
+  # organiser's dates, refused before anything is sent (see
+  # `Outlook.RecurrenceConverter`).
+  @type write_refusal :: {:error, :rule_not_supported_by_outlook | :day_missing_in_some_months}
+
+  @callback list_calendars(CalendarIntegrationSchema.t()) ::
+              {:ok, [map()]} | api_error()
+  @callback list_events(CalendarIntegrationSchema.t(), String.t(), DateTime.t(), DateTime.t()) ::
+              {:ok, [map()]} | api_error()
+  @callback list_primary_events(CalendarIntegrationSchema.t(), DateTime.t(), DateTime.t()) ::
+              {:ok, [map()]} | api_error()
+  @callback create_event(CalendarIntegrationSchema.t(), map()) ::
+              {:ok, map()} | api_error() | write_refusal()
+  @callback create_event(CalendarIntegrationSchema.t(), String.t(), map()) ::
+              {:ok, map()} | api_error() | write_refusal()
+  @callback update_event(CalendarIntegrationSchema.t(), String.t(), map()) ::
+              {:ok, map()} | api_error() | write_refusal()
+  @callback update_event(CalendarIntegrationSchema.t(), String.t(), String.t(), map()) ::
+              {:ok, map()} | api_error() | write_refusal()
+  @callback get_event(CalendarIntegrationSchema.t(), String.t()) :: {:ok, map()} | api_error()
+  @callback get_event(CalendarIntegrationSchema.t(), String.t(), keyword()) ::
+              {:ok, map()} | api_error()
+  @callback get_series_master(CalendarIntegrationSchema.t(), String.t()) ::
+              {:ok, map()} | api_error() | {:error, term()}
+  @callback get_series_exceptions(CalendarIntegrationSchema.t(), String.t()) ::
+              {:ok, map()} | api_error()
+  @callback list_instances(CalendarIntegrationSchema.t(), String.t(), DateTime.t(), DateTime.t()) ::
+              {:ok, [map()]} | api_error()
+  @callback find_events_by_ical_uid(CalendarIntegrationSchema.t(), String.t()) ::
+              {:ok, [map()]} | api_error()
+  @callback insert_event(CalendarIntegrationSchema.t(), String.t(), map()) ::
+              {:ok, map()} | api_error()
+  @callback get_event_calendar_id(CalendarIntegrationSchema.t(), String.t()) ::
+              {:ok, String.t()} | {:error, :unknown_calendar} | api_error()
+  @callback patch_event(CalendarIntegrationSchema.t(), String.t(), map()) ::
+              {:ok, map()} | api_error()
+  @callback delete_event(CalendarIntegrationSchema.t(), String.t()) ::
+              :ok | api_error()
+  @callback delete_event(CalendarIntegrationSchema.t(), String.t(), String.t()) ::
+              :ok | api_error()
+  @callback refresh_token(CalendarIntegrationSchema.t()) ::
+              {:ok, {String.t(), String.t(), DateTime.t()}} | api_error()
+  @callback token_valid?(CalendarIntegrationSchema.t()) :: boolean()
+  @callback register_graph_subscription(CalendarIntegrationSchema.t()) ::
+              {:ok, CalendarIntegrationSchema.t()}
+              | {:error, :webhook_base_url_not_configured}
+              | {:error, term()}
+              | api_error()
+  @callback bootstrap_sync(CalendarIntegrationSchema.t()) ::
+              {:ok, CalendarIntegrationSchema.t()}
+              | {:error, term()}
+              | api_error()
+end

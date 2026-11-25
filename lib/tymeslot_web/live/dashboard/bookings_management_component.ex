@@ -1,0 +1,553 @@
+defmodule TymeslotWeb.Dashboard.BookingsManagementComponent do
+  @moduledoc """
+  LiveComponent for viewing and managing meetings in the dashboard.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.BookingPages
+  alias Tymeslot.Bookings.Policy
+  alias Tymeslot.Meetings
+  alias Tymeslot.Security.RateLimiter
+
+  alias Phoenix.LiveView
+
+  alias TymeslotWeb.Components.Dashboard.Meetings.CancelSeriesModal
+  alias TymeslotWeb.Components.Dashboard.Meetings.Helpers
+  alias TymeslotWeb.Components.Dashboard.Meetings.HostMoveModal
+  alias TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents
+  alias TymeslotWeb.Components.Dashboard.Meetings.SeriesModal
+  alias TymeslotWeb.Dashboard.BookingsManagement.CalendarMove
+  alias TymeslotWeb.Dashboard.BookingsManagement.Cancellation
+  alias TymeslotWeb.Dashboard.BookingsManagement.GuestActions
+  alias TymeslotWeb.Dashboard.BookingsManagement.Modals
+  alias TymeslotWeb.Dashboard.BookingsManagement.RequestActions
+  alias TymeslotWeb.Dashboard.BookingsManagement.RescheduleRequest
+  alias TymeslotWeb.Dashboard.BookingsManagement.SeriesActions
+  alias TymeslotWeb.Live.Shared.Flash
+  alias TymeslotWeb.Live.Shared.RateLimit
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     socket
+     |> LiveView.stream(:meetings, [])
+     |> assign(:filter, "upcoming")
+     |> assign(:booking_pages, [])
+     |> assign(:page_filter, nil)
+     |> assign(:focus, nil)
+     |> assign(:_last_focus_param, nil)
+     |> assign(:loading, true)
+     |> assign(:is_empty, true)
+     |> assign(:cancelling_meeting, nil)
+     |> assign(:cancel_booking_payment, nil)
+     |> assign(:cancel_refund_error, %{})
+     |> assign(:cancel_refund_form, %{choice: "full", amount: "", acknowledged: false})
+     |> assign(:sending_reschedule, nil)
+     |> assign(:answering_request, MapSet.new())
+     |> assign(:answering_opts, %{})
+     |> assign(:move_offers, %{})
+     |> assign(:awaiting_approval_count, 0)
+     |> assign(:per_page, 20)
+     |> assign(:next_cursor, nil)
+     |> assign(:has_more, false)
+     |> assign(:loading_more, false)
+     # Track initialization and last-known values to prevent unnecessary reloads
+     |> assign(:_initialized, false)
+     |> assign(:_last_filter, nil)
+     |> assign(:_last_user_id, nil)
+     |> assign(:_last_per_page, nil)
+     |> ModalHook.mount_modal(
+       cancel_meeting: false,
+       reschedule_request: false,
+       calendar_move: false,
+       decline_request: false,
+       add_guests: false
+     )
+     |> assign(:staged_guests, [])
+     |> assign(:guest_stage_error, nil)
+     |> assign(:guest_stage_input, "")
+     |> assign(:add_guests_existing, [])
+     |> assign(:host_move_meeting, nil)
+     |> SeriesActions.mount()}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(%{host_move: result}, socket),
+    do: {:ok, RescheduleRequest.close_host_move(socket, result, &load_meetings/1)}
+
+  def update(assigns, socket) do
+    socket = assign(socket, assigns)
+
+    new_filter = socket.assigns.filter
+    new_user_id = socket.assigns.current_user.id
+    new_per_page = socket.assigns.per_page
+
+    last_filter = socket.assigns[:_last_filter]
+    last_user_id = socket.assigns[:_last_user_id]
+    last_per_page = socket.assigns[:_last_per_page]
+    initialized? = socket.assigns[:_initialized]
+
+    # `?meeting=<id>` (a host's link to one booking) shows it alone; an empty
+    # or non-string param (`?meeting[x]=1`) names none. Choosing a tab drops the
+    # focus while the URL keeps the param, so only a change of it restores it.
+    focus_param = focus_param(get_in(socket.assigns, [:params, "meeting"]))
+    focus_changed? = focus_param != socket.assigns._last_focus_param
+
+    socket =
+      if focus_changed?,
+        do: assign(socket, focus: focus_param, _last_focus_param: focus_param),
+        else: socket
+
+    should_load =
+      !initialized? or focus_changed? or
+        new_filter != last_filter or
+        new_user_id != last_user_id or
+        new_per_page != last_per_page
+
+    socket =
+      socket
+      |> assign(:_initialized, true)
+      |> assign(:_last_filter, new_filter)
+      |> assign(:_last_user_id, new_user_id)
+      |> assign(:_last_per_page, new_per_page)
+
+    socket = if initialized?, do: socket, else: assign_booking_pages(socket)
+    socket = if should_load, do: load_meetings(socket), else: socket
+
+    {:ok, socket}
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("filter_meetings", %{"filter" => filter}, socket) do
+    user_id = socket.assigns.current_user.id
+
+    RateLimit.with_rate_limit(RateLimiter.check(:meeting_filter, user_id), socket, fn ->
+      case validate_filter(filter) do
+        {:ok, validated_filter} ->
+          :telemetry.execute(
+            [:tymeslot, :dashboard, :meetings, :filter],
+            %{},
+            %{user_id: user_id, filter: validated_filter}
+          )
+
+          {:noreply,
+           socket
+           |> assign(:filter, validated_filter)
+           |> assign(:focus, nil)
+           |> assign(:next_cursor, nil)
+           |> assign(:has_more, false)
+           |> assign(:loading, true)
+           |> load_meetings()}
+
+        {:error, _errors} ->
+          {:noreply, socket}
+      end
+    end)
+  end
+
+  def handle_event("filter_booking_page", %{"page" => page}, socket) do
+    RateLimit.with_rate_limit(
+      RateLimiter.check(:meeting_filter, socket.assigns.current_user.id),
+      socket,
+      fn ->
+        {:noreply,
+         socket
+         |> assign(:page_filter, parse_page_filter(page, socket.assigns.booking_pages))
+         |> assign(:focus, nil)
+         |> assign(:next_cursor, nil)
+         |> assign(:has_more, false)
+         |> assign(:loading, true)
+         |> load_meetings()}
+      end
+    )
+  end
+
+  def handle_event("series:" <> _action = event, params, socket),
+    do: SeriesActions.handle_event(event, params, socket, &load_meetings/1)
+
+  def handle_event("show_cancel_modal", %{"id" => _meeting_id} = params, socket),
+    do: {:noreply, Cancellation.show(socket, params, &Policy.can_cancel_meeting?/1)}
+
+  def handle_event("hide_cancel_modal", _params, socket),
+    do: {:noreply, Cancellation.hide(socket)}
+
+  def handle_event("confirm_cancel_meeting", params, socket) do
+    user_id = socket.assigns.current_user.id
+
+    RateLimit.with_rate_limit(RateLimiter.check(:dashboard_cancel, user_id), socket, fn ->
+      ModalHook.with_modal_data(socket, :cancel_meeting, fn meeting ->
+        {:noreply, Cancellation.confirm(socket, meeting, params, &load_meetings/1)}
+      end)
+    end)
+  end
+
+  def handle_event("show_reschedule_modal", %{"id" => _id} = params, socket),
+    do: {:noreply, RescheduleRequest.show(socket, params, &Policy.can_host_change_time?/1)}
+
+  def handle_event("hide_reschedule_modal", _params, socket) do
+    {:noreply, ModalHook.hide_modal(socket, :reschedule_request)}
+  end
+
+  def handle_event("confirm_reschedule_request", _params, socket) do
+    user_id = socket.assigns.current_user.id
+
+    RateLimit.with_rate_limit(RateLimiter.check(:dashboard_reschedule, user_id), socket, fn ->
+      ModalHook.with_modal_data(socket, :reschedule_request, fn meeting ->
+        {:noreply, RescheduleRequest.send(socket, meeting, &load_meetings/1)}
+      end)
+    end)
+  end
+
+  # The card is redrawn from the meeting as the list loads it, so it keeps its
+  # guests, participants and badges once the banner is gone.
+  def handle_event("dismiss_calendar_sync_banner", %{"id" => meeting_id}, socket) do
+    user_id = socket.assigns.current_user.id
+
+    with {:ok, _dismissed} <- Meetings.dismiss_calendar_sync_status(meeting_id, user_id),
+         {:ok, %{items: [meeting]}} <- Meetings.list_user_meeting(user_id, meeting_id) do
+      {:noreply, LiveView.stream_insert(socket, :meetings, meeting)}
+    else
+      _not_dismissed -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("show_calendar_move_modal", params, socket),
+    do: {:noreply, CalendarMove.show(socket, params, &load_meetings/1)}
+
+  def handle_event("hide_calendar_move_modal", _params, socket),
+    do: {:noreply, ModalHook.hide_modal(socket, :calendar_move)}
+
+  def handle_event("confirm_calendar_move", _params, socket),
+    do: {:noreply, CalendarMove.confirm(socket, &load_meetings/1)}
+
+  def handle_event("load_more", _params, %{assigns: %{loading_more: true}} = socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("load_more", _params, socket) do
+    socket = assign(socket, :loading_more, true)
+
+    filter = socket.assigns.filter
+    current_user = socket.assigns.current_user
+    per_page = socket.assigns.per_page
+    after_cursor = socket.assigns.next_cursor
+
+    :telemetry.execute(
+      [:tymeslot, :dashboard, :meetings, :load_more, :start],
+      %{},
+      %{user_id: current_user.id, filter: filter, after: after_cursor}
+    )
+
+    case Meetings.list_user_meetings_by_filter(current_user.id, filter,
+           per_page: per_page,
+           after: after_cursor,
+           booking_page: socket.assigns.page_filter
+         ) do
+      {:ok, page} ->
+        socket =
+          Enum.reduce(page.items, socket, fn item, s ->
+            LiveView.stream_insert(s, :meetings, item)
+          end)
+
+        :telemetry.execute(
+          [:tymeslot, :dashboard, :meetings, :load_more, :stop],
+          %{items: length(page.items)},
+          %{user_id: current_user.id, filter: filter, has_more: page.has_more}
+        )
+
+        {:noreply,
+         socket
+         |> assign(:next_cursor, page.next_cursor)
+         |> assign(:has_more, page.has_more)
+         |> assign(
+           :move_offers,
+           Map.merge(socket.assigns.move_offers, Meetings.calendar_move_offers(page.items))
+         )
+         |> assign(:loading_more, false)}
+
+      {:error, _error} ->
+        :telemetry.execute(
+          [:tymeslot, :dashboard, :meetings, :load_more, :error],
+          %{},
+          %{user_id: current_user.id, filter: filter, after: after_cursor}
+        )
+
+        Flash.error(dgettext("dashboard_bookings", "Failed to load more meetings"))
+        {:noreply, assign(socket, :loading_more, false)}
+    end
+  end
+
+  # Approving from the dashboard and approving from the emailed link are the
+  # same transition through `Meetings.Approval`, which resolves the race
+  # between them in the database. The only thing this layer adds is the
+  # ownership check: the lookup is scoped to the signed-in host, so an id
+  # belonging to somebody else is not found rather than answered.
+  #
+  # Gated on the same per-answer limiter the emailed link uses, so this is
+  # not the one write handler in the module a click loop can drive unbounded.
+  def handle_event("approve_request", %{"id" => _id} = params, socket) do
+    RateLimit.with_rate_limit(
+      RateLimiter.check(:dashboard_meeting_approval, socket.assigns.current_user.id),
+      socket,
+      fn -> RequestActions.approve(socket, params, &load_meetings/1) end
+    )
+  end
+
+  def handle_event("show_decline_modal", %{"id" => _id} = params, socket) do
+    case RequestActions.fetch_held_request(socket, params) do
+      {:ok, meeting} ->
+        {:noreply, ModalHook.show_modal(socket, :decline_request, meeting)}
+
+      {:error, message} ->
+        # The row that could not be opened (already answered elsewhere, or
+        # lapsed) is stale either way, so it is reloaded here exactly as
+        # `RequestActions.answer/4` reloads after its own failures.
+        {:noreply, socket |> RequestActions.flash_and_stay(message) |> load_meetings()}
+    end
+  end
+
+  def handle_event("show_add_guests_modal", %{"id" => id}, socket) do
+    {:noreply, GuestActions.open(socket, id, &load_meetings/1)}
+  end
+
+  def handle_event("hide_add_guests_modal", _params, socket) do
+    {:noreply, ModalHook.hide_modal(socket, :add_guests)}
+  end
+
+  def handle_event("stage_guest", %{"email" => email}, socket) do
+    ModalHook.with_modal_data(socket, :add_guests, fn meeting ->
+      {:noreply, GuestActions.stage(socket, meeting, email)}
+    end)
+  end
+
+  def handle_event("unstage_guest", %{"email" => email}, socket) do
+    {:noreply, GuestActions.unstage(socket, email)}
+  end
+
+  def handle_event("confirm_add_guests", _params, socket) do
+    ModalHook.with_modal_data(socket, :add_guests, fn meeting ->
+      {:noreply, GuestActions.confirm(socket, meeting, &load_meetings/1)}
+    end)
+  end
+
+  def handle_event("hide_decline_modal", _params, socket) do
+    {:noreply, ModalHook.hide_modal(socket, :decline_request)}
+  end
+
+  def handle_event("confirm_decline_request", params, socket) do
+    RateLimit.with_rate_limit(
+      RateLimiter.check(:dashboard_meeting_approval, socket.assigns.current_user.id),
+      socket,
+      fn ->
+        reason = RequestActions.decline_reason(Map.get(params, "reason"))
+
+        ModalHook.with_modal_data(socket, :decline_request, fn meeting ->
+          socket
+          |> ModalHook.hide_modal(:decline_request)
+          |> RequestActions.decline(meeting, reason, &load_meetings/1)
+        end)
+      end
+    )
+  end
+
+  # The other half of `RequestActions.answer/4`'s `start_async/3` call: the
+  # transition itself, and its calendar/video/notification fan-out, ran off
+  # this process, and its result lands here.
+  @impl Phoenix.LiveComponent
+  def handle_async({:answer_request, _meeting_id} = key, result, socket) do
+    RequestActions.handle_answer(socket, key, result)
+  end
+
+  @impl Phoenix.LiveComponent
+  def render(assigns) do
+    ~H"""
+    <div id="bookings-management">
+      <.dashboard_page icon="hero-clock" title={dgettext("dashboard_common", "Meetings")}>
+        <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <%!-- No tab is current while the list shows one linked booking. --%>
+          <MeetingListComponents.filter_tabs
+            active={if @focus, do: nil, else: @filter}
+            awaiting_approval_count={@awaiting_approval_count}
+            target={@myself}
+          />
+          <MeetingListComponents.page_filter
+            :if={@booking_pages != []}
+            pages={@booking_pages}
+            selected={@page_filter}
+            target={@myself}
+          />
+        </div>
+
+        <MeetingListComponents.focus_notice :if={@focus} found={@loading or !@is_empty} />
+
+        <MeetingListComponents.meetings_list
+          :if={!@focus or @loading or !@is_empty}
+          loading={@loading}
+          is_empty={@is_empty}
+          meetings_stream={@streams.meetings}
+          filter={@filter}
+          profile={@profile}
+          time_format={@time_format}
+          cancelling_meeting={@cancelling_meeting}
+          sending_reschedule={@sending_reschedule}
+          answering_request={@answering_request}
+          move_offers={@move_offers}
+          target={@myself}
+        />
+
+        <MeetingListComponents.load_more
+          has_more={@has_more}
+          loading_more={@loading_more}
+          target={@myself}
+        />
+      </.dashboard_page>
+
+      <Modals.booking_modals
+        cancel_meeting={@cancel_meeting_modal_data}
+        show_cancel={@show_cancel_meeting_modal || false}
+        cancel_booking_payment={@cancel_booking_payment}
+        cancel_refund_error={@cancel_refund_error}
+        cancel_refund_form={@cancel_refund_form}
+        cancelling={@cancelling_meeting != nil}
+        decline_request={@decline_request_modal_data}
+        show_decline={@show_decline_request_modal || false}
+        declining={
+          @decline_request_modal_data != nil and
+            RequestActions.answering?(@answering_request, @decline_request_modal_data.id)
+        }
+        reschedule_request={@reschedule_request_modal_data}
+        show_reschedule={@show_reschedule_request_modal || false}
+        sending_reschedule={@sending_reschedule}
+        calendar_move={@calendar_move_modal_data}
+        show_calendar_move={@show_calendar_move_modal || false}
+        add_guests={@add_guests_modal_data}
+        show_add_guests={@show_add_guests_modal || false}
+        staged_guests={@staged_guests}
+        guest_stage_error={@guest_stage_error}
+        guest_stage_input={@guest_stage_input}
+        existing_guests={@add_guests_existing}
+        profile={@profile}
+        time_format={@time_format}
+        target={@myself}
+      />
+
+      <SeriesModal.series_modal
+        id="series-modal"
+        show={@show_series_modal}
+        overview={@series_modal_data}
+        timezone={Helpers.get_meeting_timezone(nil, @profile)}
+        time_format={@time_format}
+        target={@myself}
+      />
+      <CancelSeriesModal.cancel_series_modal
+        id="cancel-series-modal"
+        show={@show_cancel_series_modal}
+        data={@cancel_series_modal_data}
+        target={@myself}
+      />
+
+      <.live_component
+        :if={@host_move_meeting}
+        module={HostMoveModal}
+        id="host-move-modal"
+        meeting={@host_move_meeting}
+        timezone={Helpers.get_meeting_timezone(@host_move_meeting, @profile)}
+        time_format={@time_format}
+        user_id={@current_user.id}
+        parent_module={__MODULE__}
+        parent_id={@id}
+      />
+    </div>
+    """
+  end
+
+  # Private functions
+
+  defp assign_awaiting_approval_count(socket) do
+    assign(
+      socket,
+      :awaiting_approval_count,
+      Meetings.count_awaiting_approval_for_organizer(socket.assigns.current_user.id)
+    )
+  end
+
+  defp load_meetings(socket) do
+    filter = socket.assigns.filter
+    current_user = socket.assigns.current_user
+    per_page = socket.assigns.per_page
+
+    :telemetry.execute(
+      [:tymeslot, :dashboard, :meetings, :load, :start],
+      %{},
+      %{user_id: current_user.id, filter: filter}
+    )
+
+    case fetch_page(socket.assigns.focus, current_user.id, filter,
+           per_page: per_page,
+           booking_page: socket.assigns.page_filter
+         ) do
+      {:ok, page} ->
+        :telemetry.execute(
+          [:tymeslot, :dashboard, :meetings, :load, :stop],
+          %{items: length(page.items)},
+          %{user_id: current_user.id, filter: filter}
+        )
+
+        socket
+        |> LiveView.stream(:meetings, page.items, reset: true)
+        |> assign(:move_offers, Meetings.calendar_move_offers(page.items))
+        |> assign(:next_cursor, page.next_cursor)
+        |> assign(:has_more, page.has_more)
+        |> assign(:loading, false)
+        |> assign(:is_empty, page.items == [])
+        |> assign_awaiting_approval_count()
+
+      {:error, _error} ->
+        :telemetry.execute(
+          [:tymeslot, :dashboard, :meetings, :load, :error],
+          %{},
+          %{user_id: current_user.id, filter: filter}
+        )
+
+        Flash.error(dgettext("dashboard_bookings", "Failed to load meetings"))
+
+        socket
+        |> LiveView.stream(:meetings, [], reset: true)
+        |> assign(:next_cursor, nil)
+        |> assign(:has_more, false)
+        |> assign(:loading, false)
+        |> assign(:is_empty, true)
+    end
+  end
+
+  defp focus_param(param) when is_binary(param) and param != "", do: param
+  defp focus_param(_none), do: nil
+
+  defp fetch_page(nil, user_id, filter, opts),
+    do: Meetings.list_user_meetings_by_filter(user_id, filter, opts)
+
+  defp fetch_page(focus, user_id, _filter, _opts),
+    do: Meetings.list_user_meeting(user_id, focus)
+
+  # The host's booking pages, for the page filter; none without a profile.
+  defp assign_booking_pages(%{assigns: %{profile: %{id: profile_id}}} = socket),
+    do: assign(socket, :booking_pages, BookingPages.list(profile_id))
+
+  defp assign_booking_pages(socket), do: socket
+
+  # "main" is the host's own page; an id must be one of their pages, so a
+  # crafted value narrows to nothing it should not. Anything else is all pages.
+  defp parse_page_filter("main", _pages), do: :main
+
+  defp parse_page_filter(page, pages) when is_binary(page) do
+    Enum.find_value(pages, fn %{id: id} -> if Integer.to_string(id) == page, do: id end)
+  end
+
+  defp parse_page_filter(_page, _pages), do: nil
+
+  @valid_filters ["upcoming", "past", "cancelled", "awaiting_approval"]
+
+  defp validate_filter(filter) when filter in @valid_filters, do: {:ok, filter}
+  defp validate_filter(_filter), do: {:error, "Invalid filter option"}
+end

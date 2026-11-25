@@ -1,0 +1,104 @@
+defmodule Tymeslot.MeetingPayments.ConnectAccountQueries do
+  @moduledoc """
+  All Repo.* calls for connect_accounts.
+  """
+
+  import Ecto.Query
+  alias Tymeslot.MeetingPayments.ConnectAccountSchema
+  alias Tymeslot.Repo
+
+  @spec get(Ecto.UUID.t()) :: ConnectAccountSchema.t() | nil
+  def get(id), do: Repo.get(ConnectAccountSchema, id)
+
+  @spec live_for_user(integer()) :: ConnectAccountSchema.t() | nil
+  def live_for_user(user_id) do
+    Repo.one(
+      from c in ConnectAccountSchema,
+        where: c.user_id == ^user_id and is_nil(c.deleted_at),
+        limit: 1
+    )
+  end
+
+  @doc """
+  The user's live account, locked (`SELECT ... FOR UPDATE`) until the
+  surrounding transaction ends. Serialises a change of the account's
+  currency against a checkout reading it.
+  """
+  @spec lock_live_for_user(integer()) :: ConnectAccountSchema.t() | nil
+  def lock_live_for_user(user_id) do
+    Repo.one(
+      from c in ConnectAccountSchema,
+        where: c.user_id == ^user_id and is_nil(c.deleted_at),
+        limit: 1,
+        lock: "FOR UPDATE"
+    )
+  end
+
+  @spec by_stripe_account_id(String.t()) :: ConnectAccountSchema.t() | nil
+  def by_stripe_account_id(stripe_account_id) do
+    Repo.one(
+      from c in ConnectAccountSchema,
+        where: c.stripe_account_id == ^stripe_account_id and is_nil(c.deleted_at),
+        limit: 1
+    )
+  end
+
+  @spec insert_placeholder(integer()) ::
+          {:ok, ConnectAccountSchema.t()} | {:error, Ecto.Changeset.t()}
+  def insert_placeholder(user_id) do
+    %ConnectAccountSchema{}
+    |> ConnectAccountSchema.changeset(%{user_id: user_id, status: :creating})
+    |> Repo.insert()
+  end
+
+  @spec set_oauth_nonce(ConnectAccountSchema.t(), String.t()) ::
+          {:ok, ConnectAccountSchema.t()} | {:error, Ecto.Changeset.t()}
+  def set_oauth_nonce(schema, nonce) do
+    schema
+    |> ConnectAccountSchema.changeset(%{oauth_nonce: nonce})
+    |> Repo.update()
+  end
+
+  @doc """
+  Atomically clears the user's live row's nonce when it equals `nonce`:
+  `:ok` for exactly one of any number of concurrent claims.
+  """
+  @spec claim_oauth_nonce(integer(), String.t()) :: :ok | :error
+  def claim_oauth_nonce(user_id, nonce) do
+    query =
+      from(c in ConnectAccountSchema,
+        where: c.user_id == ^user_id and is_nil(c.deleted_at) and c.oauth_nonce == ^nonce
+      )
+
+    case Repo.update_all(query, set: [oauth_nonce: nil, updated_at: DateTime.utc_now(:second)]) do
+      {1, nil} -> :ok
+      {0, nil} -> :error
+    end
+  end
+
+  @spec update(ConnectAccountSchema.t(), map()) ::
+          {:ok, ConnectAccountSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update(schema, attrs) do
+    schema
+    |> ConnectAccountSchema.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @spec soft_delete_for_user(integer(), DateTime.t()) :: {non_neg_integer(), nil}
+  def soft_delete_for_user(user_id, now) do
+    query =
+      from(c in ConnectAccountSchema,
+        where: c.user_id == ^user_id and is_nil(c.deleted_at)
+      )
+
+    Repo.update_all(query,
+      set: [
+        deleted_at: now,
+        charges_enabled: false,
+        status: :deleted,
+        user_id: nil,
+        updated_at: now
+      ]
+    )
+  end
+end

@@ -1,0 +1,140 @@
+defmodule Tymeslot.Infrastructure.Config do
+  @moduledoc """
+  Configuration module for the the scheduler application.
+  Provides centralized access to configuration values to reduce duplication
+  and ensure consistency across the codebase.
+  """
+
+  # Database Modules
+
+  @doc """
+  Gets the user queries module configured for the application.
+  """
+  @spec user_queries_module() :: module()
+  def user_queries_module do
+    get_module(:user_queries_module, Tymeslot.Auth.UserQueries)
+  end
+
+  # Authentication Modules
+
+  # Service Modules
+
+  @doc """
+  Gets the email service module configured for the application.
+  """
+  @spec email_service_module() :: module()
+  def email_service_module do
+    get_module(:email_service_module, Tymeslot.Emails.EmailService)
+  end
+
+  @doc """
+  Gets the HTTP client module configured for the application.
+
+  Read at runtime so tests can inject a mock via `with_config/3` or
+  `Application.put_env/3`.
+  """
+  @spec http_client_module() :: module()
+  def http_client_module do
+    get_module(:http_client_module, Tymeslot.Infrastructure.HTTPClient)
+  end
+
+  @doc """
+  Gets the Google Calendar API module configured for the application.
+  """
+  @spec google_calendar_api_module() :: module()
+  def google_calendar_api_module do
+    get_module(:google_calendar_api_module, Tymeslot.Integrations.Calendar.Google.CalendarAPI)
+  end
+
+  @doc """
+  Gets the Outlook Calendar API module configured for the application.
+  """
+  @spec outlook_calendar_api_module() :: module()
+  def outlook_calendar_api_module do
+    get_module(:outlook_calendar_api_module, Tymeslot.Integrations.Calendar.Outlook.CalendarAPI)
+  end
+
+  # Configuration Values
+
+  @doc """
+  Gets the success redirect path after authentication.
+  """
+  @spec success_redirect_path() :: String.t()
+  def success_redirect_path do
+    get_auth_config(:success_redirect_path, "/dashboard")
+  end
+
+  # Provider settings (single source of truth)
+  @doc """
+  Returns the calendar providers configuration map.
+  This should be used as the source of truth for which calendar providers are enabled.
+  """
+  @spec calendar_provider_settings() :: map()
+  def calendar_provider_settings do
+    Application.get_env(:tymeslot, :calendar_providers, %{})
+  end
+
+  @doc """
+  Returns the video providers configuration map.
+  This should be used as the source of truth for which video providers are enabled.
+  """
+  @spec video_provider_settings() :: map()
+  def video_provider_settings do
+    Application.get_env(:tymeslot, :video_providers, %{})
+  end
+
+  @doc """
+  Checks if new user registration is enabled.
+  """
+  @spec registration_enabled?() :: boolean()
+  def registration_enabled? do
+    Application.get_env(:tymeslot, :registration_enabled, true)
+  end
+
+  @doc """
+  Checks if password-based authentication is enabled.
+  When disabled, only OAuth login flows are available.
+  """
+  @spec password_auth_enabled?() :: boolean()
+  def password_auth_enabled? do
+    Application.get_env(:tymeslot, :password_auth_enabled, true)
+  end
+
+  @doc """
+  Checks if legal agreements should be enforced.
+  """
+  @spec enforce_legal_agreements?() :: boolean()
+  def enforce_legal_agreements? do
+    Application.get_env(:tymeslot, :enforce_legal_agreements, false)
+  end
+
+  @doc """
+  Checks if the logo should link to the marketing site.
+  """
+  @spec logo_links_to_marketing?() :: boolean()
+  def logo_links_to_marketing? do
+    Application.get_env(:tymeslot, :logo_links_to_marketing, false)
+  end
+
+  @doc """
+  Gets the site home path.
+  """
+  @spec site_home_path() :: String.t()
+  def site_home_path do
+    Application.get_env(:tymeslot, :site_home_path, "/dashboard")
+  end
+
+  # Private Helpers
+
+  defp get_module(key, default) do
+    Application.get_env(:tymeslot, key, default)
+  end
+
+  defp get_auth_config(key, default) do
+    case Application.get_env(:tymeslot, :auth) do
+      nil -> default
+      config when is_list(config) -> Keyword.get(config, key, default)
+      _non_list -> default
+    end
+  end
+end

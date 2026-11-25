@@ -1,0 +1,510 @@
+/* Global resets for Rhythm theme — natural document flow, no viewport locking.
+   Content scrolls the page; background fills via min-height. */
+html.rhythm-theme {
+  min-height: 100%;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+body.rhythm-theme {
+  min-height: 100%;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--theme-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* Main theme container */
+.video-background-theme {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: var(--surface-dark-light);
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Grid layout for integrated footer */
+.video-background-theme.theme-grid {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: stretch;
+  justify-content: stretch;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* A column at every width: what sits beside the box is positioned out of the
+   flow, and what shares the flow with it (the owner-preview notice, the
+   language switcher's own row below 1024px) belongs above it, never in a lane
+   beside it. */
+.video-background-theme.theme-grid .content-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;  /* fallback: top-align */
+  justify-content: safe center; /* center when fits, fall back to start when overflows */
+  align-items: center;
+  padding: var(--space-lg);
+  min-height: 0;
+  /* Scroll when the box exceeds the viewport row (short screens / confirmation
+     step with the branding footer). `safe center` only top-aligns the overflow;
+     without this the bottom of an over-tall box is unreachable. confirmation.css
+     already documents this rule as a precondition. Embed mode overrides this to
+     `overflow: visible` (iframe.css) so the auto-resize loop still drives height. */
+  overflow-y: auto;
+  position: relative;
+}
+
+/* A demo page's theme switcher (shared/components/preview-notice.css) sits
+   above the box, like everything else that shares the flow. It is no wider
+   than the box, which keeps it out of the lane beside the box where the
+   language switcher floats from 1024px. */
+.video-background-theme.theme-grid .content-area > .demo-theme-switcher {
+  flex-shrink: 0;
+  max-width: min(520px, calc(100% - 2 * var(--space-md)));
+}
+
+/* A column item may shrink along the main axis; the box keeps its content
+   height and the content area scrolls instead. */
+.video-background-theme.theme-grid .content-area > .scheduling-box {
+  flex-shrink: 0;
+}
+
+/* Scheduling Box */
+.scheduling-box {
+  container-type: inline-size;
+  container-name: scheduling;
+  background: var(--box-surface);
+  backdrop-filter: blur(var(--box-blur)) saturate(150%) var(--box-backdrop-floor);
+  -webkit-backdrop-filter: blur(var(--box-blur)) saturate(150%) var(--box-backdrop-floor);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--box-shadow);
+  width: min(520px, 100%);
+  max-width: 96vw;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  border: var(--border-width-thin) solid var(--border-medium);
+  color: var(--theme-text);
+  box-sizing: border-box;
+}
+
+/* A background the organiser chose may be light anywhere, so the box's
+   text gets a dark floor under it (variables.css, --box-backdrop-floor).
+   The wrapper names the kind; the theme's video and its own default
+   gradient keep the glass as it is. */
+.video-background-theme:is([data-background="color"], [data-background="image"], [data-background="gradient"]) {
+  --box-backdrop-floor: var(--box-backdrop-floor-static);
+}
+
+/* Slide System */
+.slide-container {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template: 1fr / 1fr;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.slide {
+  grid-area: 1 / 1;
+  padding: var(--space-xl);
+  padding-bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: var(--slide-transition);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.slide.prev {
+  transform: translateX(-100%);
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* A step's slide enters as it mounts. Only the booking steps after the
+   overview carry slide--enter (the overview is the first paint; the meeting
+   and poll pages share the .slide markup and stay still), and each step's
+   root has an id of its own, so a step change inserts a new slide and this
+   plays. */
+@keyframes rhythm-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-enter-offset));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide--enter.active {
+  animation: rhythm-slide-in var(--transition-slow) both;
+}
+
+.slide-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  color: var(--theme-text);
+  overflow: hidden;
+}
+
+.slide-title {
+  margin-bottom: var(--space-lg);
+  text-align: center;
+  color: var(--theme-text);
+}
+
+/* Slide Navigation */
+/* Schedule Slide Container */
+.schedule-slide {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* Override .slide-content overflow:hidden so the timezone dropdown
+     (position:absolute) can paint over the calendar/time-slots below it. */
+  overflow: visible;
+}
+
+.schedule-grid {
+  margin-top: var(--space-3xs);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Slide Navigation */
+.slide-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: auto;
+  padding-top: var(--space-lg);
+  flex-shrink: 0;
+  position: relative;
+  bottom: 0;
+  padding-bottom: 0;
+  gap: var(--space-sm);
+}
+
+/* ============================================
+   LAYOUT UTILITIES
+   ============================================ */
+
+/* Stack Layout (Vertical Flex) */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cluster Layout (Horizontal Flex) */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.cluster-xs { gap: var(--space-xs); }
+
+/* Centering */
+.center-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Scrollable Containers */
+.scroll-y,
+.slot-list__body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scroll-y::-webkit-scrollbar,
+.slot-list__body::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.scroll-y::-webkit-scrollbar-track,
+.slot-list__body::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 3px;
+}
+
+.scroll-y::-webkit-scrollbar-thumb,
+.slot-list__body::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.scroll-y::-webkit-scrollbar-thumb:hover,
+.slot-list__body::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ============================================
+   RESPONSIVE — WIDTH BREAKPOINTS
+   ============================================ */
+
+/* ============================================
+   ROOT SIZING — .scheduling-box width/border-radius depends on the
+   page or iframe viewport because the box IS the container query root.
+   These remain @media. The .video-background-theme rules sit OUTSIDE
+   the box, so they stay viewport-driven too.
+   ============================================ */
+
+/* Extra Large Desktop — Better readability */
+@media (min-width: 1440px) {
+  .slide-content {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+/* Desktop Large */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .scheduling-box {
+    max-width: 640px;
+    height: auto;
+  }
+}
+
+/* Desktop */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .scheduling-box {
+    width: 90%;
+    max-width: 580px;
+    height: auto;
+  }
+}
+
+/* Tablet — outer wrapper rules */
+@media (min-width: 480px) and (max-width: 767px) {
+  .video-background-theme {
+    padding: var(--space-md);
+    align-items: center;
+  }
+
+  .scheduling-box {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: auto;
+    border-radius: var(--radius-xl);
+  }
+}
+
+/* ============================================
+   INTERIOR RESPONSIVE — slide content scales with the box's actual width,
+   so the booker adapts the same in a narrow embed as on a small phone.
+   ============================================ */
+
+/* Tablet — slide internals (narrow embeds 480–519px; excludes standard 520px box) */
+@container scheduling (min-width: 480px) and (max-width: 519px) {
+  .slide {
+    padding: var(--space-lg);
+  }
+
+  .slide-actions {
+    padding-top: var(--space-md);
+  }
+}
+
+/* Mobile — container query for scheduling-box internals */
+@container scheduling (max-width: 479px) {
+  .slide {
+    padding: var(--space-md) var(--space-sm);
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  .slide-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow-y: visible;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .slide-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .slide-actions {
+    padding-top: var(--space-md);
+    gap: var(--space-sm);
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+}
+
+/* Mobile — viewport rules that cannot be container queries
+   (elements outside .scheduling-box, or properties that reference vw) */
+@media (max-width: 479px) {
+  .video-background-theme {
+    padding: 0;
+    background: var(--surface-dark-medium);
+    align-items: flex-start;
+  }
+
+  .video-background-theme.theme-grid .content-area {
+    padding: 0;
+  }
+
+  .video-background-theme.theme-grid .content-area > .demo-theme-switcher {
+    margin-top: var(--space-sm);
+  }
+
+  .scheduling-box {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: auto;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: visible;
+    box-sizing: border-box;
+  }
+
+  /* Prevent horizontal overflow */
+  .rhythm-theme-wrapper {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
+
+/* ============================================
+   RESPONSIVE — SHORT VIEWPORTS
+   ============================================ */
+
+/* Short screens — compact mode */
+@media (max-height: 600px) {
+  :where(html:not([data-embedded])) {
+    .video-background-theme {
+      padding: var(--space-sm);
+    }
+
+    .video-background-theme.theme-grid .content-area {
+      padding: var(--space-sm);
+    }
+
+    .slide-title {
+      font-size: var(--theme-font-size-lg);
+      margin-bottom: var(--space-xs);
+    }
+
+    .slide-actions {
+      padding-top: var(--space-xs);
+    }
+  }
+}
+
+/* Extremely short screens — minimal chrome */
+@media (max-height: 400px) {
+  :where(html:not([data-embedded])) {
+    .video-background-theme {
+      padding: var(--space-xs);
+    }
+
+    .video-background-theme.theme-grid .content-area {
+      padding: var(--space-xs);
+    }
+
+    .slide {
+      padding: var(--space-xs);
+    }
+
+    .slide-title {
+      font-size: var(--theme-font-size-md);
+      margin-bottom: var(--space-xs);
+    }
+
+    .meeting-summary {
+      padding: var(--space-xs);
+      gap: var(--space-3xs);
+    }
+  }
+}
+
+/* Bare minimum for extremely constrained viewports */
+@media (max-height: 350px) {
+  :where(html:not([data-embedded])) {
+    .slide-title {
+      font-size: var(--theme-font-size-sm);
+      margin-bottom: var(--space-hairline);
+    }
+
+    .slide-actions {
+      padding-top: var(--space-hairline);
+    }
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY & PERFORMANCE
+   ============================================ */
+
+/* Reduced motion — disable slide transitions */
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
+
+  .slide--enter.active {
+    animation: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .video-background-container {
+    display: none;
+  }
+
+  .scheduling-box {
+    background: white;
+    color: black;
+    box-shadow: none;
+    border: var(--border-width-thin) solid var(--print-line);
+  }
+
+  button {
+    display: none;
+  }
+}

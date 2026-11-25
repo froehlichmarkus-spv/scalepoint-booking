@@ -1,0 +1,481 @@
+defmodule Tymeslot.MeetingTypes.MeetingTypeQueries do
+  @moduledoc """
+  Database queries for meeting types.
+  """
+  import Ecto.Query, warn: false
+  alias Tymeslot.ContentTranslations
+  alias Tymeslot.Invitations.InvitationSchema
+  alias Tymeslot.MeetingTypes.MeetingTypeSchema
+  alias Tymeslot.Repo
+
+  @doc """
+  Gets all active meeting types for a user, ordered by sort_order.
+  """
+  @spec list_active_meeting_types(integer()) :: [MeetingTypeSchema.t()]
+  def list_active_meeting_types(user_id) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where: mt.user_id == ^user_id and mt.is_active == true,
+        order_by: [asc: mt.sort_order, asc: mt.name],
+        preload: [:video_integration, :calendar_integration]
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  The meeting types guests can book now: active and not archived, ordered as
+  `list_active_meeting_types/1` (which keeps archived types still marked active).
+  """
+  @spec get_bookable_meeting_types(integer()) :: [MeetingTypeSchema.t()]
+  def get_bookable_meeting_types(user_id) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where: mt.user_id == ^user_id and mt.is_active == true and mt.is_archived == false,
+        order_by: [asc: mt.sort_order, asc: mt.name],
+        preload: [:video_integration, :calendar_integration]
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  The longest booking window, in days, any of the user's active meeting types
+  sets for itself. Nil when none overrides its schedule's window.
+  """
+  @spec max_advance_booking_days_override(integer()) :: pos_integer() | nil
+  def max_advance_booking_days_override(user_id) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where: mt.user_id == ^user_id and mt.is_active == true,
+        select: max(mt.advance_booking_days)
+      )
+
+    Repo.one(query)
+  end
+
+  @doc """
+  Gets the publicly listed meeting types for a user (active, neither private
+  nor invitation-only), ordered by sort_order. Private types are reachable
+  only by their direct link, and invitation-only types only through a personal
+  invitation link, so both are excluded from the public overview this query
+  feeds.
+  """
+  @spec list_public_meeting_types(integer()) :: [MeetingTypeSchema.t()]
+  def list_public_meeting_types(user_id) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where:
+          mt.user_id == ^user_id and mt.is_active == true and mt.is_private == false and
+            mt.invitation_only == false,
+        order_by: [asc: mt.sort_order, asc: mt.name],
+        preload: [:video_integration, :calendar_integration]
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Gets all meeting types for a user (active and inactive), ordered by sort_order.
+  """
+  @spec list_all_meeting_types(integer()) :: [MeetingTypeSchema.t()]
+  def list_all_meeting_types(user_id) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where: mt.user_id == ^user_id,
+        order_by: [asc: mt.sort_order, asc: mt.name],
+        preload: [:video_integration, :calendar_integration]
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Gets a meeting type by ID and user ID.
+  """
+  @spec get_meeting_type(integer(), integer()) :: MeetingTypeSchema.t() | nil
+  def get_meeting_type(id, user_id) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where: mt.id == ^id and mt.user_id == ^user_id,
+        preload: [:video_integration, :calendar_integration]
+      )
+
+    Repo.one(query)
+  end
+
+  @doc """
+  The user's meeting types among `ids`, with their availability schedule
+  preloaded. Ids the user does not own are left out.
+  """
+  @spec list_with_schedules(integer(), [integer()]) :: [MeetingTypeSchema.t()]
+  def list_with_schedules(_user_id, []), do: []
+
+  def list_with_schedules(user_id, ids) do
+    query =
+      from(mt in MeetingTypeSchema,
+        where: mt.user_id == ^user_id and mt.id in ^ids,
+        preload: [:availability_schedule]
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Tagged-tuple variant of get_meeting_type/2.
+  Returns {:ok, meeting_type} or {:error, :not_found}.
+  """
+  @spec get_meeting_type_t(integer(), integer()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, :not_found}
+  def get_meeting_type_t(id, user_id) do
+    case get_meeting_type(id, user_id) do
+      nil -> {:error, :not_found}
+      mt -> {:ok, mt}
+    end
+  end
+
+  @doc """
+  Creates a new meeting type.
+
+  `opts` are forwarded to `MeetingTypeSchema.changeset/3` so callers can
+  thread payment-validation context (`:price_settable`,
+  `:host_charges_enabled`, `:currency_minimum_cents`) into the changeset.
+
+  The changeset never casts `translations`, which only
+  `Tymeslot.ContentTranslations` writes. A copy carries its source's in the
+  `:translations` option (`Tymeslot.MeetingTypes.Duplication.translations/1`),
+  pruned to the copy's own texts and checked
+  (`Tymeslot.ContentTranslations.put_copied/2`).
+  """
+  @spec create_meeting_type(map(), keyword()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, Ecto.Changeset.t()}
+  def create_meeting_type(attrs, opts \\ []) do
+    {translations, opts} = Keyword.pop(opts, :translations)
+
+    %MeetingTypeSchema{}
+    |> MeetingTypeSchema.changeset(attrs, opts)
+    |> ContentTranslations.put_copied(translations)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a meeting type.
+
+  `opts` are forwarded to `MeetingTypeSchema.changeset/3` (see
+  `create_meeting_type/2`).
+  """
+  @spec update_meeting_type(MeetingTypeSchema.t(), map(), keyword()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update_meeting_type(meeting_type, attrs, opts \\ []) do
+    meeting_type
+    |> MeetingTypeSchema.changeset(attrs, opts)
+    |> Repo.update()
+  end
+
+  @doc """
+  Toggles the active status of a meeting type.
+  Uses a simplified changeset that doesn't validate video integration requirements.
+  """
+  @spec toggle_meeting_type_status(MeetingTypeSchema.t(), map()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, Ecto.Changeset.t()}
+  def toggle_meeting_type_status(meeting_type, attrs) do
+    meeting_type
+    |> MeetingTypeSchema.toggle_active_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates a meeting type's private visibility using a focused changeset.
+  """
+  @spec set_visibility(MeetingTypeSchema.t(), map()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, Ecto.Changeset.t()}
+  def set_visibility(meeting_type, attrs) do
+    meeting_type
+    |> MeetingTypeSchema.visibility_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates a meeting type's custom booking slug using a focused changeset.
+  """
+  @spec update_slug(MeetingTypeSchema.t(), map()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, Ecto.Changeset.t()}
+  def update_slug(meeting_type, attrs) do
+    meeting_type
+    |> MeetingTypeSchema.slug_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a meeting type with its invitation links, keeping its meetings.
+
+  The invitations go first, in a statement of their own. Deleting the type
+  alone would reach a meeting booked through one of its invitations by two
+  paths at once (the type's link nilified, and the invitation's cascade
+  nilifying the meeting's), and Postgres applies only the first update to a
+  row within one statement, so the meeting would keep pointing at a deleted
+  invitation and the delete would fail on its foreign key.
+  """
+  @spec delete_meeting_type(MeetingTypeSchema.t()) ::
+          {:ok, MeetingTypeSchema.t()} | {:error, Ecto.Changeset.t()}
+  def delete_meeting_type(%MeetingTypeSchema{id: id} = meeting_type) do
+    Repo.transaction(fn ->
+      Repo.delete_all(from(i in InvitationSchema, where: i.meeting_type_id == ^id))
+
+      case Repo.delete(meeting_type) do
+        {:ok, deleted} -> deleted
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  @doc """
+  Inserts a user's default meeting types, skipping any whose name the user
+  already holds, so a repeated seed inserts nothing rather than failing.
+  Takes the repo so it can run in its caller's transaction.
+  """
+  @spec insert_defaults([map()], Ecto.Repo.t()) :: non_neg_integer()
+  def insert_defaults(attrs_list, repo \\ Repo) when is_list(attrs_list) do
+    {count, _rows} =
+      repo.insert_all(MeetingTypeSchema, attrs_list,
+        on_conflict: :nothing,
+        conflict_target: [:user_id, :name]
+      )
+
+    count
+  end
+
+  @doc """
+  Resets `payment_required` and `price_cents` on every meeting type owned
+  by the given user. Used when the host changes their Stripe Connect
+  default currency — paid prices recorded in the old currency must not
+  silently re-bill at the new one.
+  """
+  @spec clear_payments_for_user(integer()) :: {non_neg_integer(), nil}
+  def clear_payments_for_user(user_id) when is_integer(user_id) do
+    Repo.update_all(
+      from(mt in MeetingTypeSchema, where: mt.user_id == ^user_id),
+      set: [
+        payment_required: false,
+        price_cents: nil,
+        updated_at: DateTime.utc_now(:second)
+      ]
+    )
+  end
+
+  @doc """
+  The calendars of `calendar_integration_id` the user's meeting types name as
+  their booking calendar (`target_calendar_id`), each once.
+  """
+  @spec target_calendar_ids(integer(), integer()) :: [String.t()]
+  def target_calendar_ids(user_id, calendar_integration_id) do
+    Repo.all(
+      from(mt in MeetingTypeSchema,
+        where:
+          mt.user_id == ^user_id and mt.calendar_integration_id == ^calendar_integration_id and
+            not is_nil(mt.target_calendar_id),
+        distinct: true,
+        select: mt.target_calendar_id
+      )
+    )
+  end
+
+  @doc """
+  Whether the caller runs inside a transaction, so a write leaves what must
+  wait for the commit (dropping a cache) to the caller that commits.
+  """
+  @spec in_transaction?() :: boolean()
+  def in_transaction?, do: Repo.in_transaction?()
+
+  @doc """
+  Every `{calendar_integration_id, target_calendar_id}` pair the user's
+  meeting types name, each once.
+  """
+  @spec calendar_targets(integer()) :: [{integer(), String.t()}]
+  def calendar_targets(user_id) do
+    Repo.all(
+      from(mt in MeetingTypeSchema,
+        where:
+          mt.user_id == ^user_id and not is_nil(mt.calendar_integration_id) and
+            not is_nil(mt.target_calendar_id),
+        distinct: true,
+        select: {mt.calendar_integration_id, mt.target_calendar_id}
+      )
+    )
+  end
+
+  @doc """
+  Clears calendar references (`calendar_integration_id` and `target_calendar_id`)
+  on all meeting types pointing to the given calendar integration.
+
+  Called before deleting a calendar integration to prevent stale `target_calendar_id`
+  values (which is a plain string, not a FK, and would survive cascade).
+  """
+  @spec clear_calendar_references(integer()) :: {non_neg_integer(), nil}
+  def clear_calendar_references(calendar_integration_id)
+      when is_integer(calendar_integration_id) do
+    Repo.update_all(
+      from(mt in MeetingTypeSchema,
+        where: mt.calendar_integration_id == ^calendar_integration_id
+      ),
+      set: [
+        calendar_integration_id: nil,
+        target_calendar_id: nil,
+        updated_at: DateTime.utc_now(:second)
+      ]
+    )
+  end
+
+  @doc """
+  Checks if a user has at least one active meeting type.
+  """
+  @spec has_active_meeting_types?(integer()) :: boolean()
+  def has_active_meeting_types?(user_id) do
+    Repo.exists?(
+      from(mt in MeetingTypeSchema,
+        where: mt.user_id == ^user_id and mt.is_active == true
+      )
+    )
+  end
+
+  @doc "Checks if a user has at least one meeting type with a price set."
+  @spec has_priced_meeting_types?(integer()) :: boolean()
+  def has_priced_meeting_types?(user_id) do
+    Repo.exists?(
+      from(mt in MeetingTypeSchema,
+        where:
+          mt.user_id == ^user_id and mt.payment_required == true and not is_nil(mt.price_cents)
+      )
+    )
+  end
+
+  @doc """
+  Gets a meeting type by ID, raising if not found.
+  """
+  @spec get_meeting_type!(integer()) :: MeetingTypeSchema.t()
+  def get_meeting_type!(id) do
+    Repo.get!(MeetingTypeSchema, id)
+  end
+
+  @doc """
+  Updates all meeting types for a user with new sort orders.
+  """
+  @spec reorder_meeting_types(integer(), [integer()]) :: {:ok, any()} | {:error, any()}
+  def reorder_meeting_types(user_id, meeting_type_ids) when is_list(meeting_type_ids) do
+    now = DateTime.utc_now(:second)
+
+    Repo.transaction(fn ->
+      results =
+        Enum.with_index(meeting_type_ids, fn meeting_type_id, index ->
+          MeetingTypeSchema
+          |> where([mt], mt.id == ^meeting_type_id and mt.user_id == ^user_id)
+          |> Repo.update_all(set: [sort_order: index, updated_at: now])
+        end)
+
+      total_updated = Enum.sum(Enum.map(results, fn {count, _nil} -> count end))
+
+      if total_updated != length(meeting_type_ids) do
+        Repo.rollback(:partial_reorder)
+      else
+        results
+      end
+    end)
+  end
+
+  @doc """
+  The owner's meeting types that list `venue_id` in any of their in-person
+  locations, by name. The venue ids live inside the `locations` jsonb array,
+  so this is a containment test on each element; it matches JSON numbers
+  only, as `venue_usage_counts/1` counts them.
+  """
+  @spec list_using_venue(integer(), integer()) :: [MeetingTypeSchema.t()]
+  def list_using_venue(user_id, venue_id) do
+    user_id |> using_venue_query(venue_id) |> Repo.all()
+  end
+
+  @doc """
+  Takes `venue_id` off the in-person locations of the owner's meeting types
+  that list it (`MeetingTypeSchema.without_venue_changeset/2`), returning how
+  many were rewritten. The rows are locked for the transaction it runs in
+  (its own, or the caller's when nested in one, as the venue delete does),
+  so an edit of the same meeting type saved meanwhile is not overwritten
+  with the list read here. All or none are rewritten.
+  """
+  @spec remove_venue_from_locations(integer(), integer()) ::
+          {:ok, non_neg_integer()} | {:error, Ecto.Changeset.t()}
+  def remove_venue_from_locations(user_id, venue_id) do
+    Repo.transaction(fn ->
+      user_id
+      |> using_venue_query(venue_id)
+      |> lock("FOR UPDATE")
+      |> Repo.all()
+      |> Enum.reduce(0, fn meeting_type, count ->
+        case meeting_type
+             |> MeetingTypeSchema.without_venue_changeset(venue_id)
+             |> Repo.update() do
+          {:ok, _updated} -> count + 1
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end)
+    end)
+  end
+
+  defp using_venue_query(user_id, venue_id) do
+    from(mt in MeetingTypeSchema,
+      where: mt.user_id == ^user_id,
+      where:
+        fragment(
+          "EXISTS (SELECT 1 FROM unnest(?) AS loc WHERE loc ->> 'kind' = 'in_person' AND loc -> 'venue_ids' @> jsonb_build_array(?::bigint))",
+          mt.locations,
+          ^venue_id
+        ),
+      order_by: [asc: mt.name]
+    )
+  end
+
+  @doc """
+  For each venue the owner's meeting types list on an in-person location, how
+  many meeting types list it. A meeting type listing a venue on two of its
+  locations counts once. Only ids stored as JSON numbers count, the same ones
+  `list_using_venue/2` matches. Venues no meeting type lists are absent.
+  """
+  @spec venue_usage_counts(integer()) :: %{integer() => pos_integer()}
+  def venue_usage_counts(user_id) do
+    %{rows: rows} =
+      Repo.query!(
+        """
+        SELECT venue.id::text::bigint, count(DISTINCT mt.id)
+        FROM meeting_types AS mt
+        CROSS JOIN LATERAL unnest(mt.locations) AS loc
+        CROSS JOIN LATERAL jsonb_array_elements(
+          CASE WHEN jsonb_typeof(loc -> 'venue_ids') = 'array'
+            THEN loc -> 'venue_ids'
+            ELSE '[]'::jsonb
+          END
+        ) AS venue(id)
+        WHERE mt.user_id = $1
+          AND loc ->> 'kind' = 'in_person'
+          AND jsonb_typeof(venue.id) = 'number'
+          -- A fractional or oversized number is no venue id and would fail
+          -- the bigint cast.
+          AND venue.id::text ~ '^[0-9]{1,18}$'
+        GROUP BY venue.id
+        """,
+        [user_id]
+      )
+
+    Map.new(rows, fn [venue_id, count] -> {venue_id, count} end)
+  end
+
+  @doc "Of `user_ids`, those with at least one meeting type."
+  @spec user_ids_with_any([integer()]) :: [integer()]
+  def user_ids_with_any([]), do: []
+
+  def user_ids_with_any(user_ids) when is_list(user_ids) do
+    MeetingTypeSchema
+    |> where([mt], mt.user_id in ^user_ids)
+    |> distinct(true)
+    |> select([mt], mt.user_id)
+    |> Repo.all()
+  end
+end

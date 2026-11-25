@@ -1,0 +1,411 @@
+defmodule TymeslotWeb.Themes.MarkupContractTest do
+  @moduledoc """
+  The markup contract (`docs/THEME_DEVELOPMENT_GUIDE.md`, §"The markup
+  contract") on every registered theme's booking page: each moment, while it
+  is on screen, marks every fact it collects that the booking needs, and
+  the page marks its ways on. `TymeslotWeb.BookingDriver` finds a page's
+  controls by these attributes alone, so a theme that keeps them gets every
+  shared flow suite without a driver of its own.
+
+  The walk follows the theme's own journey (`socket.assigns.journey`) a
+  moment at a time, so a journey that groups the facts differently is held
+  to the same contract, and moves on as the driver does: through the way on
+  where the theme renders one, else by the next moment opening by itself.
+  The organiser offers two meeting types and the one booked asks two
+  questions, so the meeting-type and answers facts are required wherever a
+  journey collects them; a moment's questions are all answered, however
+  many it shows at a time, before the walk leaves it. Each theme is walked a
+  second time with the booked type offering three lengths, so a journey that
+  asks the length is held to marking it too, and a third with the booked
+  type offering a weekly series, so a journey that asks the series is held
+  to marking its session count.
+  """
+  use TymeslotWeb.LiveCase, async: false
+
+  @moduletag :themes
+  @moduletag :scheduling
+  @moduletag :integration
+
+  import Ecto.Query, only: [from: 2]
+  import Mox
+  import Tymeslot.ConfigTestHelpers, only: [setup_config: 2]
+  import Tymeslot.BookingTestHelpers, only: [seed_booking_account: 3]
+  import Tymeslot.Factory
+
+  alias Tymeslot.Infrastructure.AvailabilityCache
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.MeetingTypes.Lengths
+  alias Tymeslot.MeetingTypes.MeetingTypeSchema
+  alias Tymeslot.Repo
+  alias Tymeslot.TestMocks
+  alias TymeslotWeb.BookingDriver
+  alias TymeslotWeb.Themes.Shared.CustomQuestions.Engine
+  alias TymeslotWeb.Themes.Shared.Journey
+  alias TymeslotWeb.Themes.Shared.Journey.Progress
+  alias TymeslotWeb.ThemeTestMatrix
+
+  @timezone "Etc/UTC"
+  @max_moments 12
+  @answers %{"mc-company" => "Acme Corp", "mc-recorded" => true}
+  @length_picked 60
+  @series_picked 3
+
+  setup :verify_on_exit!
+
+  setup tags do
+    Mox.set_mox_from_context(tags)
+    AvailabilityCache.clear_all()
+    TestMocks.setup_email_mocks()
+    TestMocks.setup_subscription_mocks()
+
+    Tymeslot.CalendarMock
+    |> stub(:get_events_for_range_fresh, fn _user_id, _start, _end -> {:ok, []} end)
+    |> stub(:get_booking_integration_info, fn _user_id -> {:error, :no_integration} end)
+
+    :ok
+  end
+
+  for theme <- ThemeTestMatrix.registered() do
+    @tag :capture_log
+    test "#{theme.name}: every moment marks the facts it collects", %{conn: conn} do
+      {seen, _view, _user} =
+        walk_booking(conn, unquote(theme.id), "contract-#{unquote(theme.slug)}")
+
+      assert seen == [:answers, :attendee, :meeting_type, :slot]
+    end
+
+    # The type booked offers 15, 30 (its own) and 60 minutes. A journey with
+    # a moment asking the length must mark each choice with its minutes and
+    # take the pick through `select_length`, and the booking is stored for the
+    # length picked; every shipped theme asks it. A journey without such a
+    # moment (a fixture's) books the type's own length.
+    @tag :capture_log
+    test "#{theme.name}: a type offering several lengths marks each length", %{conn: conn} do
+      {seen, view, user} =
+        walk_booking(conn, unquote(theme.id), "contract-len-#{unquote(theme.slug)}", [60, 15])
+
+      asks_length? = Progress.moment_for(live_assigns(view).journey, :length) != nil
+      # Every shipped theme asks it; a fixture's journey may not.
+      unless unquote(theme.fixture), do: assert(asks_length?, "the theme never asks the length")
+
+      meeting = Repo.get_by!(MeetingSchema, organizer_user_id: user.id)
+
+      if asks_length? do
+        assert seen == [:answers, :attendee, :length, :meeting_type, :slot]
+        assert meeting.duration == @length_picked
+      else
+        assert seen == [:answers, :attendee, :meeting_type, :slot]
+        assert meeting.duration == 30
+      end
+
+      assert DateTime.diff(meeting.end_time, meeting.start_time, :minute) == meeting.duration
+    end
+
+    # The type booked is a weekly series of two to four sessions. A journey
+    # with a moment asking the series must mark the session count's controls
+    # and take a change through them, and the booking makes the sessions
+    # chosen; every shipped theme asks it. A journey without such a moment (a
+    # fixture's) books the one session picked.
+    @tag :capture_log
+    test "#{theme.name}: a type offering a series marks the series", %{conn: conn} do
+      setup_config(:tymeslot, feature_access_checker: Tymeslot.Features.DefaultAccessChecker)
+
+      {seen, view, user} =
+        walk_booking(conn, unquote(theme.id), "contract-series-#{unquote(theme.slug)}", [],
+          series: true
+        )
+
+      asks_series? = Progress.moment_for(live_assigns(view).journey, :series) != nil
+      unless unquote(theme.fixture), do: assert(asks_series?, "the theme never asks the series")
+
+      booked = Repo.all(from(m in MeetingSchema, where: m.organizer_user_id == ^user.id))
+
+      if asks_series? do
+        assert seen == [:answers, :attendee, :meeting_type, :series, :slot]
+        assert length(booked) == @series_picked
+      else
+        assert seen == [:answers, :attendee, :meeting_type, :slot]
+        assert length(booked) == 1
+      end
+    end
+  end
+
+  defp walk_booking(conn, theme_id, username, extra_lengths \\ [], opts \\ []) do
+    %{user: user, profile: profile} = seed_booking_account(theme_id, username, @timezone)
+
+    asked = ask_questions(user, extra_lengths, Keyword.get(opts, :series, false))
+    insert(:meeting_type, user: user, duration_minutes: 60, name: "Long Chat", is_active: true)
+
+    ctx = %{
+      offered: user |> meeting_types() |> Enum.map(&MeetingTypes.effective_slug/1) |> Enum.sort(),
+      booked: MeetingTypes.effective_slug(asked),
+      lengths: asked |> Lengths.offered() |> Enum.map(&Integer.to_string/1)
+    }
+
+    {:ok, view, _html} = live(conn, "/#{profile.username}?timezone=#{@timezone}")
+
+    seen = view |> walk(ctx, [], @max_moments) |> List.flatten() |> Enum.uniq() |> Enum.sort()
+
+    {seen, view, user}
+  end
+
+  # One moment at a time: the current moment marks what it collects, then the
+  # walk does what it asks and moves on as `BookingDriver.continue/1` does (the
+  # way on where the theme renders one, else the next moment having opened by
+  # itself), until an outcome is on screen.
+  defp walk(_view, _ctx, _seen, 0), do: flunk("the walk never reached an outcome")
+
+  defp walk(view, ctx, seen, moments_left) do
+    assigns = live_assigns(view)
+
+    case next_moment(assigns, List.flatten(seen)) do
+      nil ->
+        assert has_element?(view, "[data-intent='restart']"),
+               "the #{inspect(assigns.current_state)} outcome offers no fresh start"
+
+        seen
+
+      {moment, current?} ->
+        facts = required_facts(moment, assigns)
+
+        Enum.each(facts, &check_and_do(view, &1, ctx, assigns))
+
+        # The way on where the theme renders one; else the driver asserts that
+        # the next moment opened by itself, and fails by name if it did not.
+        # A moment the page already passed has no way on of its own to take.
+        if current? and :attendee not in facts, do: BookingDriver.continue(view)
+
+        walk(view, ctx, [facts | seen], moments_left - 1)
+    end
+  end
+
+  # The moment to check next: one still on screen whose facts the walk has
+  # not checked, which a page that moves on by itself can pass before the
+  # walk reaches it (a series every session of which its first check found
+  # available), else the current one; nil on an outcome.
+  defp next_moment(assigns, seen) do
+    journey = assigns.journey
+
+    case Enum.find(journey.moments, &(&1.key == assigns.current_state)) do
+      nil ->
+        nil
+
+      current ->
+        passed =
+          journey.navigator.visible(journey, assigns)
+          |> Enum.map(fn {moment, _state} -> moment end)
+          |> Enum.find(fn moment ->
+            moment.key != current.key and required_facts(moment, assigns) -- seen != []
+          end)
+
+        if passed, do: {passed, false}, else: {current, true}
+    end
+  end
+
+  defp required_facts(moment, assigns),
+    do: Enum.filter(moment.collects, &Map.fetch!(Journey.facts(), &1).required?(assigns))
+
+  defp check_and_do(view, :meeting_type, ctx, _assigns) do
+    assert Enum.sort(attribute(view, "[data-fact='meeting_type']", "data-value")) == ctx.offered,
+           "the meeting-type choices are not each marked once with their slug"
+
+    BookingDriver.choose_meeting_type(view, ctx.booked)
+  end
+
+  defp check_and_do(view, :length, ctx, _assigns) do
+    lengths = attribute(view, "[data-fact='length']", "data-value")
+
+    assert Enum.sort_by(lengths, &String.to_integer/1) == ctx.lengths,
+           "the length choices are not each marked once with their minutes"
+
+    events = attribute(view, "[data-fact='length']", "phx-click")
+
+    assert length(events) == length(lengths) and Enum.all?(events, &(&1 =~ "select_length")),
+           "a length choice does not send select_length"
+
+    BookingDriver.choose_length(view, @length_picked)
+
+    assert live_assigns(view).chosen_length_minutes == @length_picked,
+           "the length choice marked #{@length_picked} did not choose #{@length_picked} minutes"
+  end
+
+  defp check_and_do(view, :slot, _ctx, before) do
+    BookingDriver.load(view)
+    days = attribute(view, "[data-fact='date']:not([data-alternate])", "data-value")
+    slots = slot_pairs(view)
+
+    assert days ++ slots != [], "a moment collecting the slot marks no day and no slot"
+
+    # One control per value, checked on the first period the picker shows; a
+    # copy for another screen size is marked data-alternate and not counted.
+    assert days == Enum.uniq(days), "two day buttons share a data-value"
+    assert slots == Enum.uniq(slots), "two slot buttons share a day and a time"
+
+    assert Enum.all?(days, &match?({:ok, _date}, Date.from_iso8601(&1))),
+           "a day button's data-value is not an ISO date"
+
+    {day, time} = BookingDriver.pick_first_slot(view)
+    times = attribute(view, "[data-fact='time']", "data-value")
+
+    assert times == Enum.uniq(times), "two time buttons share a data-value"
+
+    # The control clicked said what it sends: the booking holds the day and
+    # the time its attributes named.
+    assigns = live_assigns(view)
+
+    assert {assigns.selected_date, assigns.selected_time} == {day, time},
+           "the time picked is not the day and time its marked control named"
+
+    # The picker marks the time picked among its choices (a time button
+    # belongs to the day picked; a slot button names its own) while it is on
+    # show, and always while its moment is still the one being answered. A
+    # page that answers the moment in its place once the time is picked (a
+    # transcript, moving on by itself) may show no picker.
+    marked = Enum.map(times, &{day, &1}) ++ slot_pairs(view)
+    must_mark = marked != [] or assigns.current_state == before.current_state
+
+    assert {day, time} in marked == must_mark,
+           "the time picked is marked neither as a time nor as a slot"
+  end
+
+  defp check_and_do(view, :answers, _ctx, _assigns),
+    do: answer_all(view, [], map_size(@answers) + 1)
+
+  defp check_and_do(view, :attendee, _ctx, _assigns) do
+    # Answers asked beside the details are confirmed by the way on before
+    # the form shows.
+    if not has_element?(view, "form[data-fact='attendee']") and
+         has_element?(view, "[data-intent='continue']"),
+       do: BookingDriver.continue(view)
+
+    forms =
+      view |> render() |> Floki.parse_document!() |> Floki.find("form[data-fact='attendee']")
+
+    assert length(forms) == 1,
+           "the attendee's moment does not render exactly one form[data-fact=attendee]"
+
+    assert has_element?(view, "[data-intent='submit']"), "the attendee's moment has no submit"
+
+    BookingDriver.submit(view, %{name: "Ada Lovelace", email: "contract@example.com", message: ""})
+
+    wait_until(fn -> has_element?(view, "[data-intent='restart']") end, 10_000)
+  end
+
+  # The series' check answers first; then each count control is marked with
+  # the count it sets and sends series_set_count, and one more session
+  # taken through its mark is the choice the booking holds.
+  defp check_and_do(view, :series, _ctx, _assigns) do
+    render_async(view)
+
+    counts = attribute(view, "[data-fact='series']", "data-value")
+    events = attribute(view, "[data-fact='series']", "phx-click")
+
+    assert counts != [], "a moment collecting the series marks no series choice"
+
+    assert length(events) == length(counts) and Enum.all?(events, &(&1 =~ "series_set_count")),
+           "a series count control does not send series_set_count"
+
+    view
+    |> element("[data-fact='series'][data-value='#{@series_picked}']")
+    |> render_click()
+
+    render_async(view)
+
+    assert live_assigns(view).series_choice.count == @series_picked,
+           "the series control marked #{@series_picked} did not choose #{@series_picked} sessions"
+  end
+
+  defp check_and_do(_view, fact, _ctx, _assigns),
+    do: flunk("the markup contract has no rule for the #{inspect(fact)} fact; add one here")
+
+  # Every question the moment shows, a round at a time: the question the
+  # engine is asking must be marked, and every unanswered question on screen
+  # is answered (one, on a page that asks one at a time; several, on one that
+  # shows them together). Between rounds the walk takes the way on to the next
+  # question; after the last answer it stops, leaving the moment to `walk/4`
+  # (a moment that also collects the attendee shows its form then, or once
+  # the answers are confirmed with its way on).
+  defp answer_all(_view, answered, 0),
+    do: flunk("the questions moment kept asking after #{inspect(answered)}")
+
+  defp answer_all(view, answered, rounds_left) do
+    question = Engine.current_definition(live_assigns(view).engine)["id"]
+    shown = view |> attribute("[data-fact='answer']", "data-question") |> Enum.uniq()
+
+    assert question in shown, "question #{question}, on screen, is not marked"
+
+    answered =
+      Enum.reduce(shown -- answered, answered, fn id, acc ->
+        BookingDriver.answer(view, id, Map.fetch!(@answers, id))
+        [id | acc]
+      end)
+
+    if Enum.sort(answered) == @answers |> Map.keys() |> Enum.sort() do
+      :ok
+    else
+      BookingDriver.continue(view)
+      answer_all(view, answered, rounds_left - 1)
+    end
+  end
+
+  defp ask_questions(user, extra_lengths, series?) do
+    meeting_type = Repo.get_by!(MeetingTypeSchema, user_id: user.id)
+
+    series =
+      if series?,
+        do: %{
+          "series_mode" => "recurring",
+          "series_frequency" => "weekly",
+          "series_interval" => 1,
+          "series_min_occurrences" => 2,
+          "series_max_occurrences" => 4,
+          # A journey without a series moment books the one session picked.
+          "series_required" => false
+        },
+        else: %{}
+
+    {:ok, meeting_type} =
+      MeetingTypes.update_meeting_type(
+        meeting_type,
+        Map.merge(series, %{
+          "extra_lengths_minutes" => extra_lengths,
+          "custom_fields" => [
+            %{
+              "id" => "mc-company",
+              "type" => "short_text",
+              "label" => "Company",
+              "required" => true,
+              "position" => 0
+            },
+            %{
+              "id" => "mc-recorded",
+              "type" => "yes_no",
+              "label" => "May we record the call?",
+              "required" => true,
+              "position" => 1
+            }
+          ]
+        })
+      )
+
+    meeting_type
+  end
+
+  defp meeting_types(user),
+    do: Repo.all(from(m in MeetingTypeSchema, where: m.user_id == ^user.id))
+
+  defp slot_pairs(view) do
+    doc = view |> render() |> Floki.parse_document!()
+
+    for node <- Floki.find(doc, "[data-fact='slot']") do
+      {node |> Floki.attribute("data-date") |> List.first(),
+       node |> Floki.attribute("data-time") |> List.first()}
+    end
+  end
+
+  defp attribute(view, selector, name),
+    do: view |> render() |> Floki.parse_document!() |> Floki.attribute(selector, name)
+
+  defp live_assigns(view), do: :sys.get_state(view.pid).socket.assigns
+end

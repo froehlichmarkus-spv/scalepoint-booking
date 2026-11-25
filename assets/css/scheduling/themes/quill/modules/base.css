@@ -1,0 +1,410 @@
+/* Base - Theme setup, containers, and core structure */
+
+/* Base Theme Styles — natural document flow, no viewport locking.
+   Content scrolls the page; background fills via min-height. */
+html.quill-theme {
+  min-height: 100%;
+}
+
+body.quill-theme {
+  min-height: 100%;
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--theme-background-color);
+}
+
+/* Theme wrapper: no forced height — the grid child sizes itself with
+   viewport units, so the wrapper just flows naturally. */
+.quill-theme-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.quill-theme-wrapper > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main gradient background */
+.main-gradient {
+  background: var(--theme-background);
+  min-width: 100%;
+  width: 100%;
+  position: relative;
+}
+
+/* Grid layout for integrated footer */
+.main-gradient.theme-grid {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main-gradient.theme-grid .content-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+  padding-bottom: 10vh;
+}
+
+/* When the SaaS branding banner occupies grid-row 2 it already provides the
+   bottom weight that biases the card upward — so the 10vh optical-centering
+   padding double-counts and pushes the banner past 100vh, leaving a persistent
+   scroll even when the booking content fits. Drop the bias when the banner is
+   present (the card's auto margins still leave a gap above it) so card + banner
+   share the viewport. Self-hosted Core has no banner (`:has` doesn't match), so
+   the full 10vh bias is kept there. The organiser's legal links
+   (shared/components/legal-links.css) are a footer row of the same kind, so
+   they drop the bias too; a page with neither keeps it. */
+.main-gradient.theme-grid:has(.branding-footer) .content-area,
+.main-gradient.theme-grid:has(.legal-links) .content-area {
+  padding-bottom: 0;
+}
+
+/* Very small vertical sizes: the SaaS branding banner is a dedicated grid row
+   (~58px) — a sixth of a 320px-tall viewport — that steals height the booking
+   flow needs. The promo is the most expendable element when space is scarce, so
+   drop it below this threshold; grid row 2 (`auto`) then collapses and the
+   booking card claims the full viewport. The banner still shows on the common
+   short laptop heights above this. Core owns the banner's grid slot, so the
+   responsive hide lives here, not in SaaS. */
+@media (max-height: 500px) {
+  :where(html:not([data-embedded])) {
+    .main-gradient.theme-grid .branding-footer {
+      display: none;
+    }
+  }
+}
+
+/* Short viewports: the 10vh optical bias is decorative — shrink it so the
+   viewport-bounded schedule card claims the reclaimed height instead of forcing
+   a page scroll. Two tiers keep the transition smooth as the window shortens. */
+@media (max-height: 800px) {
+  :where(html:not([data-embedded])) {
+    .main-gradient.theme-grid .content-area {
+      padding-bottom: var(--space-2xl);
+    }
+  }
+}
+
+@media (max-height: 640px) {
+  :where(html:not([data-embedded])) {
+    .main-gradient.theme-grid .content-area {
+      padding-bottom: var(--space-md);
+    }
+  }
+}
+
+/* Center the content vertically — optical centering biases upward
+   so the card feels balanced rather than sinking toward the bottom.
+   The bottom padding on content-area steals space from below, shifting
+   the auto-margin midpoint upward. */
+.main-gradient.theme-grid .content-area .quill-container {
+  flex: initial;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+/* A demo page's theme switcher (shared/components/preview-notice.css)
+   leads the column, centred, with the gap above it the language switcher's
+   row has at 640px and below; the card's auto margins centre it in the
+   space below. Where the language switcher floats in the corner,
+   language-switcher.css moves it down clear of it. */
+.main-gradient.theme-grid .content-area > .demo-theme-switcher {
+  flex-shrink: 0;
+  margin-top: var(--space-lg);
+}
+
+/* ===== Schedule Step — Viewport-Locked App Shell =====
+   Scoped to the schedule step only via `:has(.calendar-card)`; every other step
+   and page keeps the natural page-scroll model above.
+
+   The schedule step locks to the viewport so its calendar's internal scroll is
+   the SINGLE scroll region — never a page scroll on top of it (the "double
+   overflow"). The grid becomes exactly 100dvh with a *bounded* content row
+   (`minmax(0, 1fr)`) that can't grow past the viewport, and the centred wrapper
+   chain is stretched into a full-height flex column so the card's available
+   height is set by layout (viewport − step-nav − banner − gutters) rather than a
+   magic calc. The card then fills that space on short viewports (calendar scrolls
+   inside) and sits at its natural height, centred, on tall ones.
+
+   The booking markup leans on utility classes (`flex-1`, `flex-col`, `min-h-0`)
+   that the self-contained theme doesn't ship, so each link below is set
+   explicitly rather than assumed from the class names.
+
+   Standalone pages only. In an embed the viewport is the iframe, whose height
+   iframe_embed.js sets from the content: a content locked to 100dvh would
+   measure the iframe's current height and keep it, so the schedule step would
+   stay at the previous step's height with its slots hidden in a squeezed inner
+   scroll. There the step flows to its natural height and the host page
+   scrolls. */
+
+:where(html:not([data-embedded])) {
+  /* Lock the theme wrapper to the viewport. A viewport unit is definite regardless
+     of ancestor sizing, which gives the grid below a real height to fill — setting
+     `height: 100dvh` on the grid itself fails because it is a flex item whose
+     automatic min-content size wins. */
+  .quill-theme-wrapper:has(.calendar-card),
+  .quill-theme-wrapper:has(.calendar-card) > div {
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .main-gradient.theme-grid:has(.calendar-card) {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .main-gradient.theme-grid:has(.calendar-card) .content-area {
+    padding-bottom: 0;
+  }
+
+  /* Stretch the centred container into a full-height column (was margin-auto
+     centred + content-sized) so its descendants can flex-fill the row. */
+  .main-gradient.theme-grid:has(.calendar-card) .content-area .quill-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* page_layout (`flex-1 flex flex-col`) wraps the step-nav + stack. It grows
+     already but defaults to `min-height: auto` (min-content), which would refuse to
+     shrink below its tall content — so the bound never reaches the card. */
+  .main-gradient.theme-grid:has(.calendar-card) .content-area .quill-container > div {
+    min-height: 0;
+  }
+
+  .main-gradient.theme-grid:has(.calendar-card) .stack {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-gradient.theme-grid:has(.calendar-card) .schedule-content-area {
+    align-items: stretch;
+    min-height: 0;
+  }
+
+  /* Card wrapper: a full-height column that vertically centres the card, so the
+     card is natural-height-and-centred when it fits and fills-and-scrolls when it
+     doesn't. */
+  .main-gradient.theme-grid:has(.calendar-card) .schedule-content-area > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  /* The card is a shrinkable flex item of that wrapper: natural height when it
+     fits, shrunk to the wrapper's resolved height (calendar scrolls inside) when
+     it doesn't. `min-height: 0` lets it shrink past its content and overrides the
+     container-query minimums, which would otherwise pin it too tall to fit. */
+  .main-gradient.theme-grid:has(.calendar-card) .calendar-card {
+    flex: 0 1 auto;
+    min-height: 0;
+  }
+}
+
+/* Footer styling */
+.footer-gradient {
+  padding: var(--space-2xl) var(--space-lg);
+  text-align: center;
+  font-size: var(--theme-font-size-sm);
+  background: var(--theme-background);
+  border-top: var(--border-width-thin) solid var(--border-subtle);
+  color: var(--theme-text);
+}
+
+/* Step container: the root div of every booking step. It also carries
+   Tailwind's `container` utility, which supplies width: 100% and the
+   breakpoint max-widths. That utility is layered, so each cap set below wins,
+   and its 40rem cap applies only between 640px and 767px, where this file sets
+   none. Style the step container through .quill-container only: a .container
+   rule here would restyle every Tailwind container on the page. */
+.quill-container {
+  width: 100%;
+  margin: 0 auto;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+/* Section header (the per-step heading). Its responsive font-size lives with the
+   height tiers below; named text-colour utilities are in text-utilities.css and
+   motion utilities in animations.css. */
+.section-header {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-xs);
+  color: var(--text-opacity-high);
+  text-shadow: var(--shadow-xs);
+}
+
+/* ===== Container Breakpoints ===== */
+
+@media (max-width: 640px) {
+  .quill-container {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 767px) {
+  .quill-container {
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+  }
+}
+
+@media (min-width: 768px) {
+  .quill-container {
+    padding-left: var(--space-2xl);
+    padding-right: var(--space-2xl);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .quill-container {
+    max-width: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .quill-container {
+    padding-left: var(--space-2xl);
+    padding-right: var(--space-2xl);
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .quill-container {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .quill-container {
+    padding-left: var(--space-2xl);
+    padding-right: var(--space-2xl);
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+  .quill-container {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .quill-container {
+    padding-left: var(--space-2xl);
+    padding-right: var(--space-2xl);
+    max-width: 1536px;
+  }
+}
+
+/* ===== Height & Aspect Queries ===== */
+
+/* Medium short screens — reduce vertical padding */
+@media (max-height: 700px) and (min-height: 601px) {
+  :where(html:not([data-embedded])) {
+    .quill-container {
+      padding-top: var(--space-xs);
+      padding-bottom: var(--space-xs);
+    }
+
+    .section-header {
+      margin-bottom: var(--space-md);
+    }
+  }
+}
+
+/* Short screens — compact spacing */
+@media (max-height: 600px) {
+  :where(html:not([data-embedded])) {
+    .section-header {
+      font-size: var(--theme-font-size-md);
+      margin-bottom: var(--space-xs);
+    }
+
+    .content-area {
+      gap: var(--space-xs);
+    }
+  }
+}
+
+/* Extremely short screens — minimal chrome */
+@media (max-height: 400px) {
+  :where(html:not([data-embedded])) {
+    .section-header {
+      font-size: var(--theme-font-size-sm);
+    }
+
+    .quill-container {
+      padding-left: var(--space-xs);
+      padding-right: var(--space-xs);
+    }
+  }
+}
+
+/* ===== Mobile ===== */
+
+/* Prevent horizontal overflow on narrow screens */
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+    position: relative;
+  }
+}
+
+/* ===== Scrollable Containers ===== */
+
+.scroll-y {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scroll-y::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.scroll-y::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 3px;
+}
+
+.scroll-y::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.scroll-y::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ===== Print ===== */
+@media print {
+  .glass-morphism-card {
+    background: white;
+    color: black;
+    box-shadow: none;
+    border: var(--border-width-thin) solid var(--print-line);
+  }
+
+  button {
+    display: none;
+  }
+}

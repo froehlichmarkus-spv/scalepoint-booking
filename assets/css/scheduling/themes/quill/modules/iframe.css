@@ -1,0 +1,127 @@
+/* iframe.css — Quill's own overrides for iframe embeds.
+
+   The shell rules every theme shares (body sizing, the booker root sized to
+   content, the footer hidden, the slot scroll region released, full width
+   in the column layout) live in shared/embed.css, imported just before
+   this file. What follows is specific to Quill, starting with its page
+   grid, which is Quill's own markup.
+
+   Triggered by the [data-embedded] attribute set by iframe_embed.js. */
+
+/* ---------------------------------------------------------------------------
+   1. Layout containers — size to content, not viewport
+   --------------------------------------------------------------------------- */
+/* The page grid (.booker-page on the theme grid in Quill's wrapper): sized
+   to content. It must stay the first rule after shared/embed.css, where it
+   used to live, so its place in the cascade does not change. */
+html.scheduling-app[data-embedded] .booker-page {
+  min-height: auto;
+  grid-template-rows: auto;
+}
+
+html.quill-theme[data-embedded] .quill-theme-wrapper > div {
+  flex: initial;
+}
+
+html.quill-theme[data-embedded] .glass-morphism-card {
+  min-height: auto;
+}
+
+/* Hug the top — no wasted padding when the iframe sizes to content. */
+html.quill-theme[data-embedded] .main-gradient.theme-grid .content-area .quill-container {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+html.quill-theme[data-embedded] .main-gradient.theme-grid .content-area {
+  padding-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   1b. Schedule step — the iframe is the only scroller
+   ---------------------------------------------------------------------------
+   Standalone, the schedule card is a viewport-locked app shell whose middle
+   scrolls (calendar.css, time-slots.css). In an embed the card flows to its
+   natural height instead, so those regions never overflow; left as scroll
+   containers with `overscroll-behavior: contain`, they still swallow a wheel
+   or touch scroll that starts over them, and the frame never moves. Release
+   every one of them so a scroll anywhere scrolls the frame. The slot list
+   body clips sideways, which would turn its released `overflow-y` back into
+   `auto`, so it is released on both axes. */
+html.quill-theme[data-embedded] .schedule-scroll,
+html.quill-theme[data-embedded] .calendar-slots-container,
+html.quill-theme[data-embedded] .slot-list,
+html.quill-theme[data-embedded] .slot-list__body {
+  overflow: visible;
+  max-height: none;
+  overscroll-behavior: auto;
+}
+
+/* A popup caps the frame at the host's viewport, and below Quill's 768px
+   container width the slot list stacks under the calendar, so Next Step
+   ends up below the fold. Keep the actions pinned to the frame's bottom
+   edge on a frosted strip of the card's own glass, which reads as the card
+   over any page background and blurs the times passing under it; the strip
+   stretches over the body's side padding so nothing shows past its ends.
+   This is the one blurred layer that moves on scroll. */
+html.quill-theme[data-embedded] .schedule-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-inline: calc(-1 * var(--space-xs));
+  padding: var(--space-xs);
+  background: var(--surface-dark-medium);
+  backdrop-filter: blur(var(--glass-blur-sm));
+  -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+}
+
+/* A time scrolled into view (keyboard focus, a scripted click) must land
+   above the pinned actions, not under them. Their height: a touch-sized
+   button and the strip's padding, with room to spare. */
+html.quill-theme[data-embedded]:has(.schedule-actions) {
+  scroll-padding-bottom: calc(var(--min-touch-target) + var(--space-3xl));
+}
+
+/* Every time is its own blurred layer, repainted on each scroll frame inside
+   an iframe inside a modal, which is what makes the popup lag. Over the
+   card's dark ground the blur shows nothing, so drop it. */
+html.quill-theme[data-embedded] .slot-list__slot {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Hide Host-Page Chrome
+   --------------------------------------------------------------------------- */
+/* Hide video/gradient background — reduces load time inside the iframe. */
+html.quill-theme[data-embedded] .video-background {
+  display: none;
+}
+
+/* Language switcher: pulled tighter to the corner where it floats there
+   (from 641px); below, it keeps its own row (language-switcher.css). */
+@media (min-width: 641px) {
+  html.quill-theme[data-embedded] .lang-switcher {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   3. Column layout — wide-canvas variant for narrow embed containers
+   ---------------------------------------------------------------------------
+   Designed for WordPress columns and other constrained-width contexts.
+   The default glassmorphism card caps at 640px on tablets and 1024-1536px
+   on larger screens. shared/embed.css drops the cap on the card itself;
+   here it is dropped on the card's inner wrapper too, so the booker fills
+   the available container width. */
+html.quill-theme[data-embed-layout="column"] .glass-morphism-card > div {
+  max-width: 100%;
+  width: 100%;
+}
+
+html.quill-theme[data-embed-layout="column"] .main-gradient.theme-grid .content-area {
+  padding-left: 0;
+  padding-right: 0;
+}

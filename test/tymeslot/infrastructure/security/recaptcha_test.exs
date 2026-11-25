@@ -1,0 +1,413 @@
+defmodule Tymeslot.Infrastructure.Security.RecaptchaTest do
+  use Tymeslot.DataCase, async: false
+
+  @moduletag :infrastructure
+
+  alias Tymeslot.HTTPClientMock
+  alias Tymeslot.Infrastructure.Security.Recaptcha
+  alias Tymeslot.Infrastructure.Security.RecaptchaHelpers
+  alias Tymeslot.Test.LogCapture
+  import Mox
+
+  setup :set_mox_from_context
+  setup :verify_on_exit!
+
+  setup do
+    old_client = Application.get_env(:tymeslot, :http_client_module)
+    Application.put_env(:tymeslot, :http_client_module, HTTPClientMock)
+
+    # Save original secret key to restore it later
+    original_secret = System.get_env("RECAPTCHA_SECRET_KEY")
+    System.put_env("RECAPTCHA_SECRET_KEY", "test_secret")
+
+    on_exit(fn ->
+      if old_client do
+        Application.put_env(:tymeslot, :http_client_module, old_client)
+      else
+        Application.delete_env(:tymeslot, :http_client_module)
+      end
+
+      if original_secret do
+        System.put_env("RECAPTCHA_SECRET_KEY", original_secret)
+      else
+        System.delete_env("RECAPTCHA_SECRET_KEY")
+      end
+    end)
+
+    :ok
+  end
+
+  describe "verify/2" do
+    test "returns :ok with score when Google returns success" do
+      token = "valid_token"
+
+      response_body =
+        Jason.encode!(%{
+          "success" => true,
+          "score" => 0.9,
+          "action" => "login",
+          "hostname" => "localhost"
+        })
+
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 200, body: response_body}}
+      end)
+
+      assert {:ok, %{score: 0.9, action: "login", hostname: "localhost"}} =
+               Recaptcha.verify(token)
+    end
+
+    test "returns :error when score is below minimum" do
+      token = "low_score_token"
+
+      response_body =
+        Jason.encode!(%{
+          "success" => true,
+          "score" => 0.1,
+          "action" => "login",
+          "hostname" => "localhost"
+        })
+
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 200, body: response_body}}
+      end)
+
+      assert {:error, :recaptcha_score_too_low} = Recaptcha.verify(token, min_score: 0.5)
+    end
+
+    test "returns :error when action mismatches" do
+      token = "token"
+
+      response_body =
+        Jason.encode!(%{
+          "success" => true,
+          "score" => 0.9,
+          "action" => "wrong_action"
+        })
+
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 200, body: response_body}}
+      end)
+
+      assert {:error, :recaptcha_action_mismatch} =
+               Recaptcha.verify(token, expected_action: "login")
+    end
+
+    test "returns :error when hostname mismatches" do
+      token = "token"
+
+      response_body =
+        Jason.encode!(%{
+          "success" => true,
+          "score" => 0.9,
+          "hostname" => "wrong.com"
+        })
+
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 200, body: response_body}}
+      end)
+
+      assert {:error, :recaptcha_hostname_mismatch} =
+               Recaptcha.verify(token, expected_hostnames: ["correct.com"])
+    end
+
+    test "returns :error when token is too large" do
+      large_token = String.duplicate("a", 5001)
+      assert {:error, :invalid_token} = Recaptcha.verify(large_token)
+    end
+
+    test "reports an empty or nil token as missing, without calling Google" do
+      assert {:error, :missing_token} = Recaptcha.verify("")
+      assert {:error, :missing_token} = Recaptcha.verify(nil)
+    end
+
+    test "reports a non-binary token as invalid" do
+      assert {:error, :invalid_token} = Recaptcha.verify(123)
+    end
+
+    test "returns :error when secret key is missing" do
+      System.delete_env("RECAPTCHA_SECRET_KEY")
+      assert {:error, :recaptcha_configuration_error} = Recaptcha.verify("token")
+    end
+
+    test "handles Google API returning success: false" do
+      token = "invalid_token"
+
+      response_body =
+        Jason.encode!(%{
+          "success" => false,
+          "error-codes" => ["invalid-input-response"]
+        })
+
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 200, body: response_body}}
+      end)
+
+      assert {:error, :recaptcha_verification_failed} = Recaptcha.verify(token)
+    end
+
+    test "handles network errors" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:error, %RuntimeError{message: "Network error"}}
+      end)
+
+      assert {:error, :recaptcha_service_unavailable} = Recaptcha.verify("token")
+    end
+
+    test "reports a timeout as the service being unavailable" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:error, %Req.TransportError{reason: :timeout}}
+      end)
+
+      assert {:error, :recaptcha_service_unavailable} = Recaptcha.verify("token")
+    end
+
+    test "reports a 5xx from siteverify as the service being unavailable" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 503, body: ""}}
+      end)
+
+      assert {:error, :recaptcha_service_unavailable} = Recaptcha.verify("token")
+    end
+
+    test "does not report a 4xx from siteverify as the service being unavailable" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 400, body: ""}}
+      end)
+
+      assert {:error, :recaptcha_request_failed} = Recaptcha.verify("token")
+    end
+  end
+
+  describe "RecaptchaHelpers.any_active?/0" do
+    setup do
+      original_config = Application.get_env(:tymeslot, :recaptcha)
+      original_site_key = System.get_env("RECAPTCHA_SITE_KEY")
+      System.put_env("RECAPTCHA_SITE_KEY", "test_site_key")
+
+      on_exit(fn ->
+        if original_config,
+          do: Application.put_env(:tymeslot, :recaptcha, original_config),
+          else: Application.delete_env(:tymeslot, :recaptcha)
+
+        if original_site_key,
+          do: System.put_env("RECAPTCHA_SITE_KEY", original_site_key),
+          else: System.delete_env("RECAPTCHA_SITE_KEY")
+      end)
+    end
+
+    test "is false when neither booking nor signup checks are enabled" do
+      Application.put_env(:tymeslot, :recaptcha, booking_enabled: false, signup_enabled: false)
+
+      refute RecaptchaHelpers.any_active?()
+    end
+
+    test "is true when only booking checks are enabled" do
+      Application.put_env(:tymeslot, :recaptcha, booking_enabled: true, signup_enabled: false)
+
+      assert RecaptchaHelpers.any_active?()
+    end
+
+    test "is true when only signup checks are enabled" do
+      Application.put_env(:tymeslot, :recaptcha, booking_enabled: false, signup_enabled: true)
+
+      assert RecaptchaHelpers.any_active?()
+    end
+
+    test "is false when a check is enabled but the keys are missing" do
+      Application.put_env(:tymeslot, :recaptcha, booking_enabled: true, signup_enabled: true)
+      System.delete_env("RECAPTCHA_SITE_KEY")
+
+      refute RecaptchaHelpers.any_active?()
+    end
+  end
+
+  describe "RecaptchaHelpers.verify_failing_open/4" do
+    test "accepts without a verdict when siteverify cannot be reached" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:error, %Req.TransportError{reason: :nxdomain}}
+      end)
+
+      assert {:ok, :service_unavailable} =
+               RecaptchaHelpers.verify_failing_open("token", "test_unavailable", %{})
+    end
+
+    test "accepts without a verdict when siteverify answers with a 5xx" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 500, body: ""}}
+      end)
+
+      assert {:ok, :service_unavailable} =
+               RecaptchaHelpers.verify_failing_open("token", "test_unavailable", %{})
+    end
+
+    test "passes Google's verdict through, rejections included" do
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok,
+         %Req.Response{
+           status: 200,
+           body: Jason.encode!(%{"success" => true, "score" => 0.1})
+         }}
+      end)
+
+      assert {:error, :recaptcha_score_too_low} =
+               RecaptchaHelpers.verify_failing_open("token", "test_unavailable", %{},
+                 min_score: 0.5
+               )
+    end
+
+    test "rejects a missing token without asking Google" do
+      expect(HTTPClientMock, :post, 0, fn _url, _body, _headers, _opts -> :unused end)
+
+      assert {:error, :missing_token} =
+               RecaptchaHelpers.verify_failing_open("", "test_unavailable", %{})
+    end
+  end
+
+  describe "siteverify request" do
+    test "sends only the secret and the token, never the visitor's IP address" do
+      test_pid = self()
+
+      expect(HTTPClientMock, :post, fn _url, body, _headers, _opts ->
+        send(test_pid, {:siteverify_body, body})
+
+        {:ok,
+         %Req.Response{status: 200, body: Jason.encode!(%{"success" => true, "score" => 0.9})}}
+      end)
+
+      assert {:ok, _details} = Recaptcha.verify("token")
+
+      assert_received {:siteverify_body, body}
+      assert URI.decode_query(body) == %{"secret" => "test_secret", "response" => "token"}
+    end
+  end
+
+  describe "score logging" do
+    setup do
+      LogCapture.attach(logger_level: :info)
+      :ok
+    end
+
+    defp stub_scored_response(score) do
+      body = Jason.encode!(%{"success" => true, "score" => score, "action" => "booking_form"})
+
+      expect(HTTPClientMock, :post, fn _url, _body, _headers, _opts ->
+        {:ok, %Req.Response{status: 200, body: body}}
+      end)
+    end
+
+    test "logs the score and a passed outcome" do
+      stub_scored_response(0.7)
+
+      assert {:ok, _details} = Recaptcha.verify("token", min_score: 0.3)
+
+      meta = LogCapture.user_metadata(LogCapture.await_log("reCAPTCHA verification scored"))
+
+      assert %{
+               event: "recaptcha_verification",
+               outcome: :passed,
+               score: 0.7,
+               threshold: 0.3,
+               action: "booking_form"
+             } = meta
+    end
+
+    test "logs the score and the rejection reason when the score is too low" do
+      stub_scored_response(0.1)
+
+      assert {:error, :recaptcha_score_too_low} = Recaptcha.verify("token", min_score: 0.3)
+
+      meta = LogCapture.user_metadata(LogCapture.await_log("reCAPTCHA verification scored"))
+
+      assert %{outcome: :recaptcha_score_too_low, score: 0.1, threshold: 0.3} = meta
+    end
+  end
+
+  describe "validation helpers" do
+    test "validate_min_score/2" do
+      assert :ok = Recaptcha.validate_min_score(0.5, 0.4)
+      assert {:error, :recaptcha_score_too_low} = Recaptcha.validate_min_score(0.3, 0.4)
+
+      assert {:error, :recaptcha_invalid_score} =
+               Recaptcha.validate_min_score("not a number", 0.4)
+
+      assert {:error, :recaptcha_configuration_error} =
+               Recaptcha.validate_min_score(0.5, "not a number")
+    end
+
+    test "validate_expected_action/2" do
+      assert :ok = Recaptcha.validate_expected_action("signup_form", "signup_form")
+      assert :ok = Recaptcha.validate_expected_action("anything", nil)
+
+      assert {:error, :recaptcha_action_mismatch} =
+               Recaptcha.validate_expected_action("login_form", "signup_form")
+
+      # A missing action field (nil) is reported distinctly from a mismatch.
+      assert {:error, :recaptcha_missing_action} =
+               Recaptcha.validate_expected_action(nil, "signup_form")
+    end
+
+    test "validate_expected_hostname/2" do
+      assert :ok = Recaptcha.validate_expected_hostname("example.com", [])
+      assert :ok = Recaptcha.validate_expected_hostname("example.com", ["example.com"])
+
+      assert {:error, :recaptcha_hostname_mismatch} =
+               Recaptcha.validate_expected_hostname("evil.com", ["example.com"])
+
+      # A missing hostname field (nil) is reported distinctly from a mismatch.
+      assert {:error, :recaptcha_missing_hostname} =
+               Recaptcha.validate_expected_hostname(nil, ["example.com"])
+    end
+  end
+
+  describe "RecaptchaHelpers.verify/3 with protection on but no keys" do
+    setup do
+      old_cfg = Application.get_env(:tymeslot, :recaptcha)
+      old_site_key = System.get_env("RECAPTCHA_SITE_KEY")
+      Application.put_env(:tymeslot, :recaptcha, signup_enabled: true)
+      System.delete_env("RECAPTCHA_SITE_KEY")
+      throttle = {RecaptchaHelpers, :missing_keys_logged_at, :signup}
+      :persistent_term.erase(throttle)
+
+      on_exit(fn ->
+        :persistent_term.erase(throttle)
+
+        if old_cfg,
+          do: Application.put_env(:tymeslot, :recaptcha, old_cfg),
+          else: Application.delete_env(:tymeslot, :recaptcha)
+
+        if old_site_key, do: System.put_env("RECAPTCHA_SITE_KEY", old_site_key)
+      end)
+
+      %{throttle: throttle}
+    end
+
+    test "lets the form through and warns at most once a minute", %{throttle: throttle} do
+      LogCapture.with_capture([logger_level: :warning], fn ->
+        assert :ok = RecaptchaHelpers.verify(:signup, nil, %{ip: "203.0.113.7"})
+        assert :ok = RecaptchaHelpers.verify(:signup, nil, %{ip: "203.0.113.7"})
+      end)
+
+      assert [line] = missing_keys_warnings()
+      assert LogCapture.user_metadata(line)[:event] == "signup_recaptcha_disabled_missing_keys"
+
+      # A minute on, the next submission warns again.
+      :atomics.sub(:persistent_term.get(throttle), 1, 61)
+
+      LogCapture.with_capture([logger_level: :warning], fn ->
+        assert :ok = RecaptchaHelpers.verify(:signup, nil, %{})
+      end)
+
+      assert [_line] = missing_keys_warnings()
+    end
+
+    defp missing_keys_warnings do
+      Enum.filter(LogCapture.drain(), fn line ->
+        LogCapture.user_metadata(line)[:event] in [
+          "signup_recaptcha_disabled_missing_keys",
+          "booking_recaptcha_disabled_missing_keys"
+        ]
+      end)
+    end
+  end
+end

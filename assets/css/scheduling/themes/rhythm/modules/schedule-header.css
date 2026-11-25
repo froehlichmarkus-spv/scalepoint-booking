@@ -1,0 +1,251 @@
+/* Schedule Header + Timezone Selector — merged module.
+   Promoted from modules/schedule/schedule-header.css and
+   modules/schedule/timezone-selector.css; responsive and embedded
+   compaction rules consolidated here as container queries. */
+
+/* ============================================================================
+   SCHEDULE HEADER
+   ============================================================================ */
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+  padding-bottom: var(--space-xs);
+  border-bottom: var(--border-width-thin) solid var(--border-light);
+  position: relative;
+  z-index: 10;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* Small organizer profile variant for schedule header */
+.organizer-profile-small {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+}
+
+.avatar-image-small {
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--border-width-medium) solid var(--avatar-ring);
+}
+
+.organizer-info-small {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+/* The step's heading ("Schedule with" and the name), which takes the focus
+   when the visitor moves on to the step: laid out as the two lines were
+   before a heading held them, without the heading's own wrapping. */
+.organizer-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  text-wrap: inherit;
+  overflow-wrap: inherit;
+}
+
+.organizer-name {
+  color: var(--theme-text-secondary);
+}
+
+.organizer-name-full {
+  color: var(--theme-text);
+}
+
+.meeting-duration {
+  color: var(--theme-text-secondary);
+}
+
+/* The chosen meeting type, named before its length: a booker who opened one
+   of several types of the same length must still see which one this is. */
+.meeting-type-name {
+  color: var(--theme-text);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.meeting-type-name + .meeting-type-length::before {
+  content: " · ";
+}
+
+/* The type's description spans the header under the organiser row. A width,
+   not a flex-basis: the header is a column on most cards, where a 100% basis
+   would be a height and wrap the description into a second column. */
+.schedule-header__description {
+  width: 100%;
+  color: var(--theme-text-secondary);
+}
+
+/* ============================================================================
+   TIMEZONE SELECTOR
+   The picker's shared structure and --dropdown-surface are in
+   shared/components/timezone-picker.css; this section holds Rhythm's trigger
+   content and treatment.
+   ============================================================================ */
+
+.timezone-selector-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  max-width: none;
+}
+
+.timezone-label {
+  display: none;
+}
+
+.tz-picker__trigger {
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+  transition: background var(--transition-normal), border-color var(--transition-normal), transform var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3xs);
+  font-size: var(--theme-font-size-3xs);
+}
+
+.tz-picker__trigger:hover {
+  border-color: var(--theme-primary);
+  transform: translateY(-1px);
+}
+
+.tz-picker__panel {
+  border: var(--border-width-thin) solid var(--border-medium);
+  box-shadow: var(--shadow-lg);
+  width: var(--dropdown-width);
+  min-width: var(--dropdown-width);
+}
+
+.timezone-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.timezone-flag {
+  width: var(--icon-sm);
+  height: var(--flag-height);
+  flex-shrink: 0;
+  border-radius: var(--space-3xs);
+  object-fit: cover;
+}
+
+.timezone-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timezone-arrow {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  color: var(--theme-text-secondary);
+  flex-shrink: 0;
+  transition: transform var(--transition-normal);
+}
+
+.tz-picker__trigger:hover .timezone-arrow {
+  transform: translateY(1px);
+}
+
+.tz-picker__search-wrapper {
+  border-bottom: var(--border-width-thin) solid var(--border-subtle);
+}
+
+/* ============================================================================
+   RESPONSIVE — CONTAINER QUERIES
+   (replaces @media width queries in responsive.css and embedded.css §3)
+   ============================================================================ */
+
+/* Tablet-width container: stack header vertically */
+@container scheduling (max-width: 479px) {
+  .schedule-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
+
+  .avatar-image-small {
+    width: var(--avatar-size-sm);
+    height: var(--avatar-size-sm);
+  }
+
+  .organizer-profile-small {
+    gap: var(--space-xs);
+  }
+
+  /* Back in the flow so the stacked header puts the trigger under the
+     organiser: pinned to the corner, a long zone covers the organiser's name. */
+  .timezone-selector-container {
+    position: static;
+    align-self: flex-start;
+    max-width: 100%;
+  }
+
+  /* The trigger now starts at the card's left edge, so a panel aligned to its
+     right edge opens off-screen: align it left and keep it inside the card. */
+  .timezone-selector-container .tz-picker__panel {
+    right: auto;
+    left: 0;
+    min-width: 0;
+    width: min(var(--dropdown-width), 100cqi);
+  }
+}
+
+/* Tablet mid-range: stack header, keep trigger normal */
+@container scheduling (min-width: 480px) and (max-width: 767px) {
+  .schedule-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-md);
+  }
+
+  .tz-picker__trigger {
+    min-height: var(--min-touch-target);
+  }
+}
+
+/* ============================================================================
+   EMBEDDED COMPACTION
+   (replaces embedded.css §3 — float timezone into header corner)
+   ============================================================================ */
+
+/* Embedded: tighter header spacing */
+html.rhythm-theme[data-embedded] .schedule-header {
+  margin-bottom: var(--space-xs);
+  padding-bottom: var(--space-xs);
+}
+
+/* ============================================================================
+   HEIGHT-BASED MEDIA QUERY
+   (cannot be expressed as a container query — viewport height is not a
+   container dimension, so @media max-height stays here)
+   ============================================================================ */
+
+/* Bare minimum for extremely constrained viewports — hide the whole header */
+@media (max-height: 350px) {
+  :where(html:not([data-embedded])) {
+    .schedule-header {
+      display: none;
+    }
+  }
+}

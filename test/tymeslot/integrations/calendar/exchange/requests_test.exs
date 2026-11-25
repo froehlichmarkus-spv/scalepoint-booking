@@ -1,0 +1,424 @@
+defmodule Tymeslot.Integrations.Calendar.Exchange.RequestsTest do
+  use ExUnit.Case, async: true
+
+  import SweetXml, only: [sigil_x: 2]
+
+  @moduletag :integrations
+
+  alias Tymeslot.Integrations.Calendar.Exchange.EventNormaliser
+  alias Tymeslot.Integrations.Calendar.Exchange.Requests
+  alias Tymeslot.Integrations.Calendar.Exchange.Soap
+
+  @from ~U[2026-09-01 00:00:00Z]
+  @to ~U[2026-10-01 00:00:00Z]
+
+  @item_properties ~w(
+    item:Subject
+    calendar:Start
+    calendar:End
+    calendar:IsAllDayEvent
+    calendar:Location
+    calendar:UID
+    calendar:CalendarItemType
+    calendar:LegacyFreeBusyStatus
+    calendar:IsCancelled
+    calendar:StartTimeZone
+    item:ReminderIsSet
+    item:ReminderMinutesBeforeStart
+  )
+
+  # Every `t:` element `Exchange.EventNormaliser` reads off a calendar item,
+  # with the property that brings it back. `ItemId` comes with `IdOnly` itself.
+  @field_uri_by_element %{
+    "ItemId" => nil,
+    "Subject" => "item:Subject",
+    "Start" => "calendar:Start",
+    "End" => "calendar:End",
+    "IsAllDayEvent" => "calendar:IsAllDayEvent",
+    "Location" => "calendar:Location",
+    "UID" => "calendar:UID",
+    "CalendarItemType" => "calendar:CalendarItemType",
+    "LegacyFreeBusyStatus" => "calendar:LegacyFreeBusyStatus",
+    "IsCancelled" => "calendar:IsCancelled",
+    "StartTimeZone" => "calendar:StartTimeZone",
+    "ReminderIsSet" => "item:ReminderIsSet",
+    "ReminderMinutesBeforeStart" => "item:ReminderMinutesBeforeStart"
+  }
+
+  describe "find_folder/0" do
+    test "asks for calendar folders under the mailbox root with deep traversal" do
+      xml = Requests.find_folder()
+
+      assert xml =~ ~s(<m:FindFolder Traversal="Deep">)
+      assert xml =~ ~s(<t:DistinguishedFolderId Id="msgfolderroot"/>)
+      assert xml =~ ~s(<t:BaseShape>Default</t:BaseShape>)
+    end
+
+    test "is well-formed XML the enveloped values read back out of" do
+      assert {:ok, doc} = Requests.find_folder() |> Soap.envelope() |> Soap.parse()
+
+      assert Soap.xpath(doc, ~x"//m:FindFolder/@Traversal"s) == "Deep"
+      assert Soap.xpath(doc, ~x"//m:FindFolder/m:FolderShape/t:BaseShape/text()"s) == "Default"
+
+      assert Soap.xpath(doc, ~x"//m:ParentFolderIds/t:DistinguishedFolderId/@Id"s) ==
+               "msgfolderroot"
+    end
+  end
+
+  describe "find_item/3" do
+    test "builds a CalendarView over the given range for the given folder" do
+      xml = Requests.find_item("AAABBB==", @from, @to)
+
+      assert xml =~ ~s(<m:FindItem Traversal="Shallow">)
+      assert xml =~ ~s(<t:BaseShape>IdOnly</t:BaseShape>)
+      assert xml =~ ~s(StartDate="2026-09-01T00:00:00Z")
+      assert xml =~ ~s(EndDate="2026-10-01T00:00:00Z")
+      assert xml =~ ~s(<t:FolderId Id="AAABBB=="/>)
+    end
+
+    test "renders the range in UTC whatever zone it arrives in" do
+      berlin_from = DateTime.shift_zone!(@from, "Europe/Berlin")
+      berlin_to = DateTime.shift_zone!(@to, "Europe/Berlin")
+
+      xml = Requests.find_item(:calendar, berlin_from, berlin_to)
+
+      assert xml =~ ~s(StartDate="2026-09-01T00:00:00Z")
+      assert xml =~ ~s(EndDate="2026-10-01T00:00:00Z")
+    end
+
+    test "drops sub-second precision from the range" do
+      xml = Requests.find_item(:calendar, %{@from | microsecond: {123_456, 6}}, @to)
+
+      assert xml =~ ~s(StartDate="2026-09-01T00:00:00Z")
+    end
+
+    test "escapes XML metacharacters in the folder id" do
+      xml = Requests.find_item(~s(a"b&c<d>e'f), @from, @to)
+
+      assert xml =~ ~s(<t:FolderId Id="a&quot;b&amp;c&lt;d&gt;e&apos;f"/>)
+    end
+
+    test "targets the distinguished calendar folder when given :calendar" do
+      xml = Requests.find_item(:calendar, @from, @to)
+
+      assert xml =~ ~s(<t:DistinguishedFolderId Id="calendar"/>)
+    end
+
+    test "is well-formed XML the enveloped values read back out of" do
+      assert {:ok, doc} =
+               "AAABBB==" |> Requests.find_item(@from, @to) |> Soap.envelope() |> Soap.parse()
+
+      assert Soap.xpath(doc, ~x"//m:FindItem/@Traversal"s) == "Shallow"
+      assert Soap.xpath(doc, ~x"//m:FindItem/m:ItemShape/t:BaseShape/text()"s) == "IdOnly"
+      assert Soap.xpath(doc, ~x"//m:CalendarView/@StartDate"s) == "2026-09-01T00:00:00Z"
+      assert Soap.xpath(doc, ~x"//m:CalendarView/@EndDate"s) == "2026-10-01T00:00:00Z"
+      assert Soap.xpath(doc, ~x"//m:ParentFolderIds/t:FolderId/@Id"s) == "AAABBB=="
+    end
+
+    test "escapes the folder id into one the parser reads back unchanged" do
+      folder = ~s(a"b&c<d>e'f)
+
+      assert {:ok, doc} =
+               folder |> Requests.find_item(@from, @to) |> Soap.envelope() |> Soap.parse()
+
+      assert Soap.xpath(doc, ~x"//m:ParentFolderIds/t:FolderId/@Id"s) == folder
+    end
+
+    test "refuses a folder that is neither :calendar nor an id" do
+      # Produced at runtime rather than written as `:default`, which the type
+      # checker rejects against the guarded head before the guard under test
+      # is reached.
+      folder = Enum.random([:default])
+
+      assert_raise FunctionClauseError, fn -> Requests.find_item(folder, @from, @to) end
+    end
+  end
+
+  describe "get_item/1" do
+    test "batches every id into one request" do
+      xml = Requests.get_item([{"id-1", "ck-1"}, {"id-2", "ck-2"}])
+
+      assert xml =~ ~s(<t:ItemId Id="id-1" ChangeKey="ck-1"/>)
+      assert xml =~ ~s(<t:ItemId Id="id-2" ChangeKey="ck-2"/>)
+      assert xml =~ ~s(<t:BaseShape>IdOnly</t:BaseShape>)
+    end
+
+    test "escapes XML metacharacters in the ids" do
+      xml = Requests.get_item([{~s(a&b), ~s(c"d)}])
+
+      assert xml =~ ~s(<t:ItemId Id="a&amp;b" ChangeKey="c&quot;d"/>)
+    end
+
+    test "asks for exactly the properties the normaliser reads, so no event body comes back" do
+      # `BaseShape=Default` would add `t:Body`, every event's full HTML
+      # description, which nothing reads. A property left off this list is
+      # silently absent from the response rather than faulted.
+      assert {:ok, doc} =
+               [{"id-1", "ck-1"}] |> Requests.get_item() |> Soap.envelope() |> Soap.parse()
+
+      assert Soap.xpath(doc, ~x"//m:GetItem/m:ItemShape/t:BaseShape/text()"s) == "IdOnly"
+
+      assert Soap.xpath(
+               doc,
+               ~x"//m:GetItem/m:ItemShape/t:AdditionalProperties/t:FieldURI/@FieldURI"sl
+             ) == @item_properties
+    end
+
+    test "asks for every element the normaliser reads, and nothing else" do
+      # Scans the normaliser's own xpaths, so a newly read element fails here
+      # until it is both mapped below and added to the request.
+      read = normaliser_elements()
+      unmapped = Enum.reject(read, &Map.has_key?(@field_uri_by_element, &1))
+
+      assert "Subject" in read
+      assert unmapped == []
+
+      requested =
+        [{"id-1", "ck-1"}]
+        |> Requests.get_item()
+        |> Soap.envelope()
+        |> Soap.parse()
+        |> then(fn {:ok, doc} ->
+          Soap.xpath(
+            doc,
+            ~x"//m:GetItem/m:ItemShape/t:AdditionalProperties/t:FieldURI/@FieldURI"sl
+          )
+        end)
+
+      expected = read |> Enum.map(&@field_uri_by_element[&1]) |> Enum.reject(&is_nil/1)
+
+      assert Enum.sort(requested) == Enum.sort(expected)
+    end
+
+    test "does not request MIME content" do
+      xml = Requests.get_item([{"id-1", "ck-1"}])
+
+      refute xml =~ "IncludeMimeContent"
+    end
+
+    test "refuses to build a request for no items" do
+      # Emptied at runtime rather than written as `[]`, which the type checker
+      # rejects against the non-empty clause before the runtime guard under
+      # test is reached.
+      no_ids = Enum.take([{"id-1", "ck-1"}], 0)
+
+      assert_raise FunctionClauseError, fn -> Requests.get_item(no_ids) end
+    end
+
+    test "is well-formed XML however many ids the batch joins" do
+      for ids <- [[{"id-1", "ck-1"}], [{"id-1", "ck-1"}, {"id-2", "ck-2"}, {"id-3", "ck-3"}]] do
+        assert {:ok, doc} = ids |> Requests.get_item() |> Soap.envelope() |> Soap.parse()
+
+        assert Soap.xpath(doc, ~x"//m:ItemIds/t:ItemId/@Id"sl) == Enum.map(ids, &elem(&1, 0))
+
+        assert Soap.xpath(doc, ~x"//m:ItemIds/t:ItemId/@ChangeKey"sl) ==
+                 Enum.map(ids, &elem(&1, 1))
+
+        assert Soap.xpath(doc, ~x"//m:GetItem/m:ItemShape/t:BaseShape/text()"s) == "IdOnly"
+      end
+    end
+  end
+
+  describe "create_item/2" do
+    test "builds a well-formed request from pasted text carrying characters XML forbids" do
+      spec = %{
+        summary: "Planning\vcall",
+        description: "Agenda\fsee notes\x01",
+        location: "Room\x0B 4",
+        start_time: ~U[2026-09-03 09:00:00Z],
+        end_time: ~U[2026-09-03 10:00:00Z]
+      }
+
+      assert {:ok, doc} =
+               spec |> Requests.create_item(:calendar) |> Soap.envelope() |> Soap.parse()
+
+      assert Soap.xpath(doc, ~x"//t:CalendarItem/t:Subject/text()"s) == "Planningcall"
+      assert Soap.xpath(doc, ~x"//t:CalendarItem/t:Body/text()"s) == "Agendasee notes"
+      assert Soap.xpath(doc, ~x"//t:CalendarItem/t:Location/text()"s) == "Room 4"
+    end
+  end
+
+  describe "get_user_availability/3" do
+    test "asks one mailbox for a free/busy view over the given window" do
+      xml = Requests.get_user_availability("alex@example.com", @from, @to)
+
+      assert xml =~ ~s(<m:GetUserAvailabilityRequest>)
+      assert xml =~ ~s(<t:Address>alex@example.com</t:Address>)
+      assert xml =~ ~s(<t:AttendeeType>Required</t:AttendeeType>)
+      assert xml =~ ~s(<t:RequestedView>FreeBusy</t:RequestedView>)
+    end
+
+    test "does not ask for the detailed view, whose extra mailbox content is discarded" do
+      # `Detailed` returns the same intervals with the same busy types, and a
+      # server downgrades the request to `FreeBusy` regardless. All it adds is
+      # the subjects, locations and item ids that the reader throws away.
+      xml = Requests.get_user_availability("alex@example.com", @from, @to)
+
+      refute xml =~ "Detailed"
+    end
+
+    test "renders the window without a zone suffix, since the request names one" do
+      # A `FreeBusyViewOptions` bound is an unqualified local time read in the
+      # request's `t:TimeZone`. A `Z` on it violates the schema, and a schema
+      # violation here is answered with an empty body rather than a fault.
+      xml = Requests.get_user_availability("alex@example.com", @from, @to)
+
+      assert xml =~ ~s(<t:StartTime>2026-09-01T00:00:00</t:StartTime>)
+      assert xml =~ ~s(<t:EndTime>2026-10-01T00:00:00</t:EndTime>)
+      refute xml =~ ~s(00:00:00Z</t:StartTime>)
+      refute xml =~ ~s(00:00:00Z</t:EndTime>)
+    end
+
+    test "renders the window in UTC whatever zone it arrives in" do
+      berlin_from = DateTime.shift_zone!(@from, "Europe/Berlin")
+      berlin_to = DateTime.shift_zone!(@to, "Europe/Berlin")
+
+      xml = Requests.get_user_availability("alex@example.com", berlin_from, berlin_to)
+
+      assert xml =~ ~s(<t:StartTime>2026-09-01T00:00:00</t:StartTime>)
+      assert xml =~ ~s(<t:EndTime>2026-10-01T00:00:00</t:EndTime>)
+    end
+
+    test "drops sub-second precision from the window" do
+      xml =
+        Requests.get_user_availability(
+          "alex@example.com",
+          %{@from | microsecond: {123_456, 6}},
+          @to
+        )
+
+      assert xml =~ ~s(<t:StartTime>2026-09-01T00:00:00</t:StartTime>)
+    end
+
+    test "escapes XML metacharacters in the address" do
+      xml = Requests.get_user_availability(~s(a"b&c<d>e'f@example.com), @from, @to)
+
+      assert xml =~ ~s(<t:Address>a&quot;b&amp;c&lt;d&gt;e&apos;f@example.com</t:Address>)
+    end
+
+    test "sends a complete standard-time rule, since a partial one is answered with nothing" do
+      doc = enveloped("alex@example.com")
+
+      assert time_rule(doc, "StandardTime") == %{
+               bias: "0",
+               time: "02:00:00",
+               day_order: "5",
+               month: "10",
+               day_of_week: "Sunday"
+             }
+    end
+
+    test "sends a complete daylight-time rule, since a partial one is answered with nothing" do
+      doc = enveloped("alex@example.com")
+
+      assert time_rule(doc, "DaylightTime") == %{
+               bias: "0",
+               time: "02:00:00",
+               day_order: "5",
+               month: "3",
+               day_of_week: "Sunday"
+             }
+    end
+
+    test "gives the two rules different transitions, which Exchange requires of a valid zone" do
+      # Identical rules are a daylight period that starts and ends at the
+      # same moment: Exchange 2019 faults "The specified time zone isn't
+      # valid." (GitHub issue #200), while grommunio accepts them.
+      doc = enveloped("alex@example.com")
+
+      transition = &Map.delete(time_rule(doc, &1), :bias)
+
+      assert transition.("StandardTime") != transition.("DaylightTime")
+    end
+
+    test "biases the time zone to zero so the window and the answer are both UTC" do
+      doc = enveloped("alex@example.com")
+
+      assert Soap.xpath(doc, ~x"//m:GetUserAvailabilityRequest/t:TimeZone/t:Bias/text()"s) == "0"
+    end
+
+    test "orders the request's elements as the schema's sequence demands" do
+      # xmerl accepts any order; the server does not, and answers a body with
+      # no response code rather than a fault when the order is wrong.
+      xml = Requests.get_user_availability("alex@example.com", @from, @to)
+
+      assert xml =~
+               ~r{<t:TimeZone>\s*<t:Bias>.*</t:Bias>\s*<t:StandardTime>.*</t:StandardTime>\s*<t:DaylightTime>.*</t:DaylightTime>\s*</t:TimeZone>\s*<m:MailboxDataArray>.*</m:MailboxDataArray>\s*<t:FreeBusyViewOptions>}s
+    end
+
+    test "orders each time rule's children as the schema's sequence demands" do
+      xml = Requests.get_user_availability("alex@example.com", @from, @to)
+
+      assert xml =~
+               ~r{<t:StandardTime>\s*<t:Bias>.*</t:Bias>\s*<t:Time>.*</t:Time>\s*<t:DayOrder>.*</t:DayOrder>\s*<t:Month>.*</t:Month>\s*<t:DayOfWeek>.*</t:DayOfWeek>\s*</t:StandardTime>}s
+    end
+
+    test "is well-formed XML the enveloped values read back out of" do
+      doc = enveloped("alex@example.com")
+
+      assert Soap.xpath(doc, ~x"//m:MailboxDataArray/t:MailboxData/t:Email/t:Address/text()"s) ==
+               "alex@example.com"
+
+      assert Soap.xpath(doc, ~x"//t:FreeBusyViewOptions/t:RequestedView/text()"s) == "FreeBusy"
+
+      assert Soap.xpath(doc, ~x"//t:FreeBusyViewOptions/t:TimeWindow/t:StartTime/text()"s) ==
+               "2026-09-01T00:00:00"
+
+      assert Soap.xpath(doc, ~x"//t:FreeBusyViewOptions/t:TimeWindow/t:EndTime/text()"s) ==
+               "2026-10-01T00:00:00"
+    end
+
+    test "escapes the address into one the parser reads back unchanged" do
+      address = ~s(a"b&c<d>e'f@example.com)
+
+      assert Soap.xpath(
+               enveloped(address),
+               ~x"//m:MailboxDataArray/t:MailboxData/t:Email/t:Address/text()"s
+             ) == address
+    end
+
+    test "refuses an address that is not a string" do
+      # Produced at runtime rather than written as an atom, which the type
+      # checker rejects against the guarded head before the guard is reached.
+      address = Enum.random([:alex])
+
+      assert_raise FunctionClauseError, fn ->
+        Requests.get_user_availability(address, @from, @to)
+      end
+    end
+  end
+
+  defp enveloped(address) do
+    {:ok, doc} =
+      address
+      |> Requests.get_user_availability(@from, @to)
+      |> Soap.envelope()
+      |> Soap.parse()
+
+    doc
+  end
+
+  # Every child is read rather than the rule's presence: an incomplete
+  # `SerializableTimeZoneTime` is what makes the server answer an empty body
+  # with no fault and no response code, which reads as a free calendar.
+  defp time_rule(doc, rule) do
+    base = "//m:GetUserAvailabilityRequest/t:TimeZone/t:#{rule}"
+
+    %{
+      bias: Soap.xpath(doc, ~x"#{base}/t:Bias/text()"s),
+      time: Soap.xpath(doc, ~x"#{base}/t:Time/text()"s),
+      day_order: Soap.xpath(doc, ~x"#{base}/t:DayOrder/text()"s),
+      month: Soap.xpath(doc, ~x"#{base}/t:Month/text()"s),
+      day_of_week: Soap.xpath(doc, ~x"#{base}/t:DayOfWeek/text()"s)
+    }
+  end
+
+  defp normaliser_elements do
+    source = File.read!(EventNormaliser.module_info(:compile)[:source])
+
+    ~r{~x"\./t:(\w+)}
+    |> Regex.scan(source, capture: :all_but_first)
+    |> List.flatten()
+    |> Enum.uniq()
+  end
+end

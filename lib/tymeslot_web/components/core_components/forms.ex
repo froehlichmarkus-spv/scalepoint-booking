@@ -1,0 +1,608 @@
+defmodule TymeslotWeb.Components.CoreComponents.Forms do
+  @moduledoc """
+  Unified form components for the entire application.
+
+  For forms that need "clear-on-type, validate-on-blur" error UX — where an
+  error disappears as soon as the user starts typing and reappears only on
+  blur or save — pair these components with
+  `TymeslotWeb.Live.Shared.FormValidationHelpers` and pass each input an
+  explicit `errors={FormValidationHelpers.field_errors(...)}` attribute.
+  Do not use the `field=` shortcut for that UX, because `field.errors` will
+  re-add errors from the live changeset and defeat the clear-on-type
+  behaviour.
+
+  `required` renders on the control so assistive technology announces it, but
+  forms set `novalidate` so the browser does not block the submit with its own
+  bubble, in the browser's language rather than the user's: the submission
+  reaches the server, which answers with the app's inline error. A form that
+  does so must render an inline error for every constraint it carries:
+  `novalidate` switches off every native check, not only `required`, so
+  `type="email"` and `type="url"`, `minlength`, `pattern` and `min`/`max`/`step`
+  go unchecked too and the server must validate each one itself. `maxlength`
+  still limits typing. `CredoChecks.NoBrowserValidation` keeps it that way.
+  """
+  use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Security.FieldValidators.PasswordValidator
+  alias Tymeslot.Security.Honeypot
+  alias Tymeslot.Utils.ChangesetErrors
+
+  # ========== UNIFIED INPUT ==========
+
+  @doc """
+  Renders a unified input field with label, icons, and error handling.
+  Replaces all legacy input components (Auth, FormSystem, etc.)
+
+  ## Examples
+
+      <.input field={@form[:email]} type="email" label="Email" icon="hero-envelope" />
+      <.input name="search" value="" label="Search" placeholder="Search..." />
+      <.input type="text" value={@token} readonly aria-label="Token" />
+
+  A `radio` renders the bare control, with no field wrapper and no id derived
+  from `name`: every radio in a group shares that name. Given a `label`, the
+  control sits inside an inline `<label>` with the text beside it; without
+  one, the caller supplies the surrounding label, which is how a radio with a
+  title and an explanation is built. `checked` selects it and `value` is
+  posted as given.
+
+      <label class="flex items-start gap-2">
+        <.input type="radio" name="choice" value="full" checked={@choice == "full"} />
+        <span><strong>Full refund.</strong> Refunds the remaining balance.</span>
+      </label>
+  """
+  attr :id, :any,
+    default: nil,
+    doc: "defaults to one derived from `name` when the field has a label"
+
+  attr :name, :any
+  attr :label, :string, default: nil
+  attr :value, :any
+
+  attr :type, :string,
+    default: "text",
+    values: ~w(checkbox color email file number password range radio search tel text textarea url)
+
+  attr :field, Phoenix.HTML.FormField,
+    doc: "a form field struct retrieved from the form, for example: @form[:email]"
+
+  attr :errors, :list, default: []
+  attr :checked, :boolean, doc: "the checked flag for checkbox and radio inputs"
+
+  attr :required, :boolean, default: false
+  attr :disabled, :boolean, default: false
+
+  attr :readonly, :boolean,
+    default: false,
+    doc:
+      "shows a value that cannot be edited but stays focusable and announced, unlike `disabled`"
+
+  attr :placeholder, :string, default: nil
+  attr :icon, :string, default: nil, doc: "optional hero icon name rendered inside the input"
+
+  attr :validate_on_blur, :boolean,
+    default: false,
+    doc: "when true, triggers validation on blur rather than on change"
+
+  attr :class, :string, default: nil
+  attr :rows, :integer, default: 4, doc: "the number of rows for textarea inputs"
+
+  attr :hidden_input, :boolean,
+    default: true,
+    doc: "whether to render a hidden input for checkboxes"
+
+  attr :min, :any
+  attr :max, :any
+  attr :step, :any
+  attr :minlength, :any
+  attr :maxlength, :any
+  attr :pattern, :any
+  attr :rest, :global, include: ~w(autocomplete)
+
+  slot :inner_block
+  slot :leading_icon
+  slot :trailing_icon
+  slot :description, doc: "Optional helper text rendered between the label and the input."
+
+  slot :label_suffix,
+    doc: "Marks shown after the label, outside it, such as a field's translation status"
+
+  @spec input(map()) :: Phoenix.LiveView.Rendered.t()
+  def input(%{type: "select"}) do
+    raise ArgumentError, ~s|<.input type="select"> is gone: use <.select> instead|
+  end
+
+  def input(%{type: type}) when type in ~w(date time datetime-local month week) do
+    raise ArgumentError,
+          ~s|<.input type="#{type}"> is gone: use <.date_picker>, <.time_picker> or <.datetime_picker>|
+  end
+
+  def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
+    assigns
+    |> assign(field: nil, id: assigns[:id] || field.id)
+    |> assign(name: assigns[:name] || field.name)
+    |> assign(value: assigns[:value] || field.value)
+    |> assign(errors: (assigns[:errors] || []) ++ field.errors)
+    |> input()
+  end
+
+  def input(%{type: "radio"} = assigns) do
+    assigns =
+      assigns
+      |> assign_new(:name, fn -> nil end)
+      |> assign_new(:id, fn -> nil end)
+      |> assign_new(:value, fn -> nil end)
+      |> assign_new(:checked, fn -> false end)
+
+    assigns =
+      assign(
+        assigns,
+        :rest,
+        assigns.errors
+        |> error_aria(nil)
+        |> disabled_attr(assigns.disabled)
+        |> required_attr(assigns.required)
+        |> Map.merge(assigns.rest)
+      )
+
+    ~H"""
+    <label :if={@label} class={["flex items-center gap-2 text-token-sm text-tymeslot-800", @class]}>
+      <.radio_element id={@id} name={@name} value={@value} checked={@checked} rest={@rest} />
+      {@label}
+    </label>
+    <.radio_element
+      :if={!@label}
+      id={@id}
+      name={@name}
+      value={@value}
+      checked={@checked}
+      class={@class}
+      rest={@rest}
+    />
+    """
+  end
+
+  def input(assigns) do
+    assigns =
+      assigns
+      |> assign_new(:name, fn -> nil end)
+      |> assign_new(:id, fn -> nil end)
+      |> default_id()
+      |> assign_new(:checked, fn -> nil end)
+      |> assign_new(:value, fn -> nil end)
+      |> assign_new(:maxlength, fn -> nil end)
+
+    error_id = assigns.id && assigns.errors != [] && "#{assigns.id}-error"
+
+    assigns =
+      assigns
+      |> assign(:error_id, error_id)
+      |> assign(
+        :rest,
+        assigns.errors
+        |> error_aria(error_id)
+        |> Map.merge(html_constraints(assigns))
+        |> Map.merge(number_keypad(assigns))
+        |> disabled_attr(assigns.disabled)
+        |> required_attr(assigns.required)
+        |> readonly_attr(assigns.readonly)
+        |> Map.merge(assigns.rest)
+      )
+
+    ~H"""
+    <div class={["form-field-wrapper", @class]}>
+      <%= if @label do %>
+        <div :if={@label_suffix != []} class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+          <.label for={@id} class="mb-0">
+            {@label}
+            <span :if={@required} class="text-red-500 ml-0.5">*</span>
+          </.label>
+          {render_slot(@label_suffix)}
+        </div>
+        <.label :if={@label_suffix == []} for={@id}>
+          {@label}
+          <%= if @required do %>
+            <span class="text-red-500 ml-0.5">*</span>
+          <% end %>
+        </.label>
+      <% end %>
+
+      <%= if @description != [] do %>
+        <p class="text-token-xs text-tymeslot-500 font-medium normal-case tracking-normal -mt-1 mb-2">
+          {render_slot(@description)}
+        </p>
+      <% end %>
+
+      <div class="relative group">
+        <%= if @icon || render_slot(@leading_icon) do %>
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-tymeslot-400 group-hover:text-turquoise-600 transition-colors duration-300 pointer-events-none">
+            <%= if @icon do %>
+              <TymeslotWeb.Components.CoreComponents.Icons.icon name={@icon} class="w-5 h-5" />
+            <% else %>
+              {render_slot(@leading_icon)}
+            <% end %>
+          </div>
+        <% end %>
+
+        <.input_element
+          id={@id}
+          name={@name}
+          type={@type}
+          value={@value}
+          checked={@checked}
+          placeholder={@placeholder}
+          errors={@errors}
+          has_leading_icon={@icon || render_slot(@leading_icon)}
+          has_trailing_icon={render_slot(@trailing_icon)}
+          validate_on_blur={@validate_on_blur}
+          hidden_input={@hidden_input}
+          maxlength={@maxlength}
+          rows={@rows}
+          rest={@rest}
+        />
+
+        <%= if render_slot(@trailing_icon) do %>
+          <div class="absolute right-4 top-1/2 -translate-y-1/2 text-tymeslot-400 group-hover:text-turquoise-600 transition-colors duration-300 pointer-events-none">
+            {render_slot(@trailing_icon)}
+          </div>
+        <% end %>
+
+        {render_slot(@inner_block)}
+      </div>
+
+      <.field_error errors={@errors} id={@error_id} />
+    </div>
+    """
+  end
+
+  # A labelled field needs an id for `<label for>` (and for its error message)
+  # to point at, so one given only a `name` takes an id derived from it, the
+  # way Phoenix derives one from a form field. Unlabelled fields are left
+  # alone: a name repeated across a page (a checkbox group, one row per day)
+  # would repeat the id too, and nothing needs it there.
+  defp default_id(%{id: nil, label: label, name: name} = assigns)
+       when is_binary(label) and is_binary(name) do
+    assign(assigns, :id, name |> String.replace(~r/[^\w-]+/, "_") |> String.trim("_"))
+  end
+
+  defp default_id(assigns), do: assigns
+
+  # Associates a field's error message with the control for assistive tech.
+  # `aria-invalid` flags the failed state; `aria-describedby` points screen
+  # readers at the `<.field_error>` region (which carries the same id).
+  defp error_aria([], _error_id), do: %{}
+  defp error_aria(_errors, nil), do: %{"aria-invalid" => "true"}
+
+  defp error_aria(_errors, error_id),
+    do: %{"aria-invalid" => "true", "aria-describedby" => error_id}
+
+  defp input_element(%{type: "textarea"} = assigns) do
+    assigns = assign_new(assigns, :rest, fn -> %{} end)
+
+    ~H"""
+    <textarea
+      id={@id}
+      name={@name}
+      rows={@rows}
+      placeholder={@placeholder}
+      maxlength={@maxlength}
+      class={[
+        "input py-3",
+        @has_leading_icon && "input-with-icon",
+        @has_trailing_icon && "input-with-trailing-icon",
+        @errors != [] && "input-error"
+      ]}
+      {@rest}
+    >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
+    """
+  end
+
+  defp input_element(%{type: "checkbox"} = assigns) do
+    assigns =
+      assigns
+      |> assign(:is_choice, String.ends_with?(assigns[:name] || "", "[]"))
+      |> assign_new(:checked, fn -> false end)
+      |> assign_new(:unchecked_value, fn -> "false" end)
+      |> assign_new(:checked_value, fn -> "true" end)
+      |> assign_new(:rest, fn -> %{} end)
+
+    ~H"""
+    <input :if={@hidden_input && !@is_choice} type="hidden" name={@name} value={@unchecked_value} />
+    <input
+      type="checkbox"
+      id={@id}
+      name={@name}
+      value={if @is_choice, do: @value || "", else: @checked_value}
+      checked={
+        if @is_choice do
+          @checked == true
+        else
+          Phoenix.HTML.Form.normalize_value("checkbox", @value) ==
+            Phoenix.HTML.Form.normalize_value("checkbox", @checked_value)
+        end
+      }
+      class="checkbox w-5 h-5"
+      {@rest}
+    />
+    """
+  end
+
+  defp input_element(assigns) do
+    assigns = assign_new(assigns, :rest, fn -> %{} end)
+
+    ~H"""
+    <input
+      type={@type}
+      id={@id}
+      name={@name}
+      value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+      placeholder={@placeholder}
+      maxlength={@maxlength}
+      class={[
+        "input",
+        @has_leading_icon && "input-with-icon",
+        @has_trailing_icon && "input-with-trailing-icon",
+        @errors != [] && "input-error"
+      ]}
+      {@rest}
+    />
+    """
+  end
+
+  attr :id, :any, default: nil
+  attr :name, :any, default: nil
+  attr :value, :any, default: nil
+  attr :checked, :boolean, default: false
+  attr :class, :string, default: nil
+  attr :rest, :map, default: %{}
+
+  defp radio_element(assigns) do
+    ~H"""
+    <input
+      type="radio"
+      id={@id}
+      name={@name}
+      value={@value}
+      checked={@checked == true}
+      class={["radio w-4 h-4", @class]}
+      {@rest}
+    />
+    """
+  end
+
+  # The HTML constraint attributes are *declared*, so `:global` never collects
+  # them and they would otherwise be dropped on the floor: `input_element/1`
+  # spreads `@rest` and nothing else. Folding them into `@rest` here is what
+  # makes `maxlength={60}` reach the rendered input. Unset ones stay out of the
+  # map rather than rendering as empty attributes.
+  @html_constraints [:min, :max, :step, :minlength, :maxlength, :pattern]
+
+  # `disabled` is a form attribute, not one of Phoenix's HTML globals, so it has
+  # to be declared and threaded through by hand. Only the true case is merged:
+  # `disabled={false}` must leave no attribute behind at all.
+  defp disabled_attr(rest, true), do: Map.put(rest, :disabled, true)
+  defp disabled_attr(rest, _disabled), do: rest
+
+  # `required` is declared for the label's `*`, so it has to be threaded into
+  # `@rest` the same way, or neither the browser nor assistive technology ever
+  # learns the field is required. See the moduledoc for `novalidate`.
+  defp required_attr(rest, true), do: Map.put(rest, :required, true)
+  defp required_attr(rest, _required), do: rest
+
+  # `readonly` is not a Phoenix global either. It keeps a displayed value
+  # (a token, a link, a locked setting) focusable and announced, which a
+  # disabled field is not.
+  defp readonly_attr(rest, true), do: Map.put(rest, :readonly, true)
+  defp readonly_attr(rest, _readonly), do: rest
+
+  # A phone picks its keypad from `inputmode`. A field that can go negative
+  # asks for none, because the numeric and decimal pads on iOS have no minus
+  # key; `type="number"` alone gets a keyboard that does.
+  defp number_keypad(%{type: "number"} = assigns) do
+    cond do
+      not non_negative?(assigns[:min]) -> %{}
+      fractional_step?(assigns[:step]) -> %{inputmode: "decimal"}
+      true -> %{inputmode: "numeric"}
+    end
+  end
+
+  defp number_keypad(_assigns), do: %{}
+
+  defp non_negative?(nil), do: false
+
+  defp non_negative?(min) do
+    case Float.parse(to_string(min)) do
+      {number, _rest} -> number >= 0
+      :error -> false
+    end
+  end
+
+  defp fractional_step?(nil), do: false
+  defp fractional_step?(step), do: to_string(step) == "any" or to_string(step) =~ "."
+
+  defp html_constraints(assigns) do
+    Map.reject(
+      Map.new(@html_constraints, &{&1, assigns[&1]}),
+      fn {_key, value} -> is_nil(value) end
+    )
+  end
+
+  # ========== HELPERS ==========
+
+  @doc """
+  Renders a label.
+  """
+  attr :id, :any, default: nil
+  attr :for, :any, default: nil
+  attr :class, :any, default: nil, doc: "Layout classes only"
+  slot :inner_block, required: true
+
+  @spec label(map()) :: Phoenix.LiveView.Rendered.t()
+  def label(assigns) do
+    ~H"""
+    <label id={@id} for={@for} class={["label", @class]}>
+      {render_slot(@inner_block)}
+    </label>
+    """
+  end
+
+  @doc """
+  Renders a field error message.
+  """
+  attr :errors, :list, default: []
+  attr :id, :any, default: nil, doc: "id for aria-describedby association with the field"
+
+  @spec field_error(map()) :: Phoenix.LiveView.Rendered.t()
+  def field_error(assigns) do
+    ~H"""
+    <%= if Enum.any?(@errors) do %>
+      <div
+        id={@id}
+        role="alert"
+        class="form-field-error mt-2 flex items-start gap-2 text-red-600 font-bold text-sm"
+      >
+        <%!-- Top-aligned and never shrunk, so a message that wraps keeps a
+              full-size icon beside its first line; mt-0.5 centres the 16px
+              icon in that line's 20px. --%>
+        <TymeslotWeb.Components.CoreComponents.Icons.icon
+          name="hero-exclamation-circle-solid"
+          class="w-4 h-4 shrink-0 mt-0.5"
+        />
+        <div class="flex flex-col">
+          <%= for error <- @errors do %>
+            <span>{translate_error(error)}</span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+    """
+  end
+
+  @doc """
+  Translates an error message in the `errors` domain
+  (`Tymeslot.Utils.ChangesetErrors.translate/1`, shared with the domain).
+  """
+  @spec translate_error(any()) :: String.t()
+  def translate_error({msg, opts}), do: ChangesetErrors.translate({msg, opts})
+
+  def translate_error(msg) when is_binary(msg), do: msg
+  def translate_error(other), do: inspect(other)
+
+  # ========== PASSWORD REQUIREMENTS ==========
+
+  @doc """
+  Renders the password requirements checklist.
+
+  Driven by `PasswordValidator.rules/0` so the list always states exactly what
+  the server enforces, and each item carries its pattern for the browser-side
+  live ticking (see `assets/js/password_toggle.js`).
+  """
+  attr :class, :string, default: nil
+
+  @spec password_requirements(map()) :: Phoenix.LiveView.Rendered.t()
+  def password_requirements(assigns) do
+    assigns = assign(assigns, :rules, PasswordValidator.rules())
+
+    ~H"""
+    <div id="password-requirements" class={["mt-2 text-xs sm:text-sm space-y-1.5", @class]}>
+      <p class="text-tymeslot-500 font-bold uppercase tracking-wider text-token-2xs">
+        {dgettext("common", "Password must contain:")}
+      </p>
+      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 sm:gap-x-4">
+        <li
+          :for={rule <- @rules}
+          id={"req-#{rule.key}"}
+          data-password-rule={rule.key}
+          data-password-pattern={rule.pattern}
+          class="flex items-center text-tymeslot-600 font-medium"
+        >
+          <%!-- Both states are rendered; password_toggle.js shows one as the rule is met --%>
+          <TymeslotWeb.Components.CoreComponents.Icons.icon
+            name="circle"
+            data-rule-unmet
+            class="w-3.5 h-3.5 mr-1.5 shrink-0"
+          />
+          <TymeslotWeb.Components.CoreComponents.Icons.icon
+            name="hero-check"
+            data-rule-met
+            class="hidden w-3.5 h-3.5 mr-1.5 shrink-0 stroke-2"
+          />
+          <span class="text-xs">{password_rule_label(rule.key)}</span>
+        </li>
+      </ul>
+    </div>
+    """
+  end
+
+  defp password_rule_label(:length),
+    do: dgettext("common", "At least %{count} characters", count: PasswordValidator.min_length())
+
+  defp password_rule_label(:lowercase), do: dgettext("common", "One lowercase letter")
+  defp password_rule_label(:uppercase), do: dgettext("common", "One uppercase letter")
+  defp password_rule_label(:number), do: dgettext("common", "One number")
+  defp password_rule_label(:special), do: dgettext("common", "One special character")
+
+  # ========== FORM LAYOUT ==========
+
+  @doc """
+  Form wrapper with consistent styling and submission handling.
+  """
+  attr :for, :any, required: true
+  attr :id, :string, default: nil
+  attr :class, :string, default: ""
+
+  attr :novalidate, :boolean,
+    default: true,
+    doc: "false leaves the browser's own validation bubbles on; see the moduledoc"
+
+  attr :rest, :global, include: ~w(phx-change phx-submit phx-target)
+  slot :inner_block, required: true
+
+  @spec form_wrapper(map()) :: Phoenix.LiveView.Rendered.t()
+  def form_wrapper(assigns) do
+    ~H"""
+    <.form
+      for={@for}
+      id={@id}
+      class={["space-y-6", @class]}
+      novalidate={@novalidate}
+      {@rest}
+    >
+      {render_slot(@inner_block, @for)}
+    </.form>
+    """
+  end
+
+  # ========== HONEYPOT ==========
+
+  @doc """
+  Renders the honeypot field `Tymeslot.Security.Honeypot` checks.
+
+  Hidden from sighted users by `sr-only`, from assistive technology by
+  `aria-hidden`, from keyboard users by `tabindex="-1"`, and from autofill by
+  `autocomplete="off"`. Bots that fill every field fill this one too. `sr-only`
+  is a Tailwind utility, so the field stays hidden under every stylesheet that
+  scans Core's web layer: the dashboard's, each booking theme's and SaaS's.
+
+  `param_root` nests the input under the form's params (`booking[website]`);
+  leave it out for a form that posts flat params.
+  """
+  attr :id, :string, required: true
+  attr :param_root, :string, default: nil
+
+  @spec honeypot_field(map()) :: Phoenix.LiveView.Rendered.t()
+  def honeypot_field(assigns) do
+    assigns = assign(assigns, :name, honeypot_name(assigns.param_root))
+
+    ~H"""
+    <div class="sr-only" aria-hidden="true">
+      <label for={@id}>Website</label>
+      <input id={@id} type="text" name={@name} tabindex="-1" autocomplete="off" value="" />
+    </div>
+    """
+  end
+
+  defp honeypot_name(nil), do: Honeypot.field()
+  defp honeypot_name(param_root), do: "#{param_root}[#{Honeypot.field()}]"
+end

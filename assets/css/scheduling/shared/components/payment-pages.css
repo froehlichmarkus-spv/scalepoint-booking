@@ -1,0 +1,66 @@
+/* Payment return pages (processing, cancelled): structure shared. Each
+   theme draws them inside its booking page's own wrapper, so the background,
+   palette and language switcher are the booking page's, and around its own
+   card (Quill's glass card, Rhythm's scheduling box); the ink and link
+   treatment come from each theme's --payment-* tokens. */
+
+/* Centres the card in the wrapper's content area, as the booking card sits;
+   the side gutters are the theme's step container's. */
+.payment-page-layout {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-block: auto;
+  padding-block: var(--space-lg);
+}
+
+/* Inner width constraint */
+.payment-page-inner {
+  width: 100%;
+  max-width: var(--payment-page-max-width);
+}
+
+/* The confirmation step's badge, centred above the heading. */
+.payment-page-badge {
+  margin: 0 auto var(--space-md);
+}
+
+/* Card body padding — replaces p-8 text-center */
+.payment-page-card-body {
+  padding: var(--space-2xl);
+  text-align: center;
+}
+
+/* Display heading — replaces text-3xl font-bold + style="color: white;" */
+.payment-page-heading {
+  font-size: var(--theme-font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--payment-heading-ink);
+  margin-bottom: var(--space-sm);
+  margin-top: 0;
+}
+
+/* Body text — replaces text-lg + an inline colour style */
+.payment-page-body {
+  font-size: var(--theme-font-size-lg);
+  color: var(--payment-body-ink);
+  margin: 0;
+}
+
+/* Return-to-booking link shown after a cancelled checkout so the attendee
+   has a clear path back to the booking page. Styled as a primary action. */
+.payment-page-link {
+  display: inline-block;
+  margin-top: var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--theme-primary-solid);
+  color: var(--theme-on-primary);
+  border-radius: var(--payment-link-radius);
+  font-weight: var(--payment-link-weight);
+  text-decoration: none;
+  transition: var(--payment-link-transition);
+}
+
+.payment-page-link:hover {
+  background: var(--theme-primary-solid-hover);
+}

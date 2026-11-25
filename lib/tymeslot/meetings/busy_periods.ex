@@ -1,0 +1,100 @@
+defmodule Tymeslot.Meetings.BusyPeriods do
+  @moduledoc """
+  The organiser's own bookings, shaped so the availability engine can weigh
+  them alongside provider calendar events.
+
+  Provider calendar events alone would not block a booking's own slot until
+  `Tymeslot.Workers.CalendarEventWorker` had mirrored it onto a provider
+  calendar: never, for a host with no calendar connected, not yet during the
+  sync window, and not at all while a paid booking sits in `awaiting_payment`
+  (whose calendar side effects are deferred until Stripe confirms). The submit
+  refuses from the meetings table itself, through
+  `MeetingConflictQueries.count_conflicts/4`, so a grid built from provider
+  events alone would offer times the submit then rejects. Merging the two
+  sources here makes the display path and the submit answer from the same
+  facts, and
+  `MeetingListQueries.list_for_organizer_in_range/4`, with
+  `include_hidden: true`, selects on the same `MeetingState.where_slot_live/1`
+  the submit's count does, so they cannot drift.
+
+  ## A booking outranks its own mirror
+
+  Once the provider event exists, a booking and its mirror are one busy period
+  described twice. Overlap checking is idempotent, so a plain union would still
+  compute the right slots today, but the two copies can disagree: a host who
+  marks the event free in Google, or edits its time before sync reconciles it,
+  would otherwise have that softer copy decide what the page offers. The
+  meeting is the record the submit locks, so the mirror is dropped and the
+  booking stands. `Tymeslot.Meetings.CalendarEventLink` owns which event that
+  is, because the identifier the two sides share differs by provider family.
+  """
+
+  alias Tymeslot.Availability.Schedules
+  alias Tymeslot.Meetings.CalendarEventLink
+  alias Tymeslot.Meetings.MeetingListQueries
+
+  @doc """
+  Returns `calendar_events` with the organiser's live bookings overlapping
+  `[from, to)` merged in, each mirrored event replaced by the booking it
+  mirrors.
+
+  Bookings are projected to the plain `start_time` / `end_time` map the
+  fresh-fetch providers already return, which
+  `Tymeslot.Availability.Events.convert_events_to_timezone/3` consumes
+  directly. The projection deliberately carries no `status` or `transparency`:
+  those are the two fields `CalendarEvent.blocking?/1` can clear an event on,
+  and a live booking blocks unconditionally — the decision was already taken by
+  the query that selected it.
+
+  Both identifiers travel with the projection so that a caller excluding one
+  meeting from its own offer, as a reschedule page does through
+  `Tymeslot.Meetings.ExternalCalendar.reject_calendar_event_mirrors/2`, drops the booking as
+  well as its mirror.
+  """
+  @spec merge(Enumerable.t(), pos_integer(), DateTime.t(), DateTime.t()) :: [map()]
+  def merge(calendar_events, organizer_user_id, %DateTime{} = from, %DateTime{} = to)
+      when is_integer(organizer_user_id) do
+    # Unverified and unpaid holds are hidden from the organiser but keep their
+    # slot, so the offer must count them exactly as the submit's check does.
+    meetings =
+      MeetingListQueries.list_for_organizer_in_range(organizer_user_id, from, to,
+        include_hidden: true
+      )
+
+    booked_identifiers = CalendarEventLink.identifier_set(meetings)
+
+    calendar_events
+    |> Enum.reject(&CalendarEventLink.linked?(&1, booked_identifiers))
+    |> Enum.concat(buffered(meetings, organizer_user_id))
+  end
+
+  @doc """
+  The organiser's `meetings` as busy periods, each carrying its meeting type's
+  `buffers`, resolved for all of them at once.
+  """
+  @spec buffered([map()], pos_integer()) :: [map()]
+  def buffered([], _organizer_user_id), do: []
+
+  def buffered(meetings, organizer_user_id) do
+    buffers =
+      Schedules.buffers_by_meeting_type(
+        organizer_user_id,
+        Enum.map(meetings, & &1.meeting_type_id)
+      )
+
+    Enum.map(meetings, &to_busy_period(&1, Map.fetch!(buffers, &1.meeting_type_id)))
+  end
+
+  # Shaped as a calendar event, so it carries the booking's calendar identity:
+  # `calendar_uid` is what its mirror is keyed by, and the booking's own `uid`
+  # has no business in a list of busy periods.
+  defp to_busy_period(meeting, buffers) do
+    %{
+      uid: meeting.calendar_uid,
+      provider_event_id: meeting.provider_event_id,
+      start_time: meeting.start_time,
+      end_time: meeting.end_time,
+      buffers: buffers
+    }
+  end
+end

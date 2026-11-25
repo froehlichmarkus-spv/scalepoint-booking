@@ -1,0 +1,605 @@
+defmodule TymeslotWeb.Dashboard.ServiceSettingsComponent do
+  @moduledoc """
+  LiveComponent for managing meeting settings in the dashboard.
+  """
+  use TymeslotWeb, :live_component
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.BookingPages
+  alias Tymeslot.Dashboard.DashboardContext
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.MeetingPayments
+  alias Tymeslot.Meetings.PlannedSessions
+  alias Tymeslot.MeetingTypes
+  alias Tymeslot.MeetingTypes.{FixedDates, OfferedTimes}
+  alias Tymeslot.Security.RateLimiter
+  alias Tymeslot.Utils.ChangesetErrors
+  alias TymeslotWeb.Dashboard.BookingLinkShare
+  alias TymeslotWeb.Dashboard.MeetingSettings.EventsListComponent
+  alias TymeslotWeb.Dashboard.MeetingSettings.Helpers
+  alias TymeslotWeb.Dashboard.ServiceSettings.ComponentView
+  alias TymeslotWeb.Live.Shared.RateLimit
+  require Logger
+
+  # The two values a visibility switch sends as `listed`.
+  @listed_values ~w(true false)
+
+  @impl Phoenix.LiveComponent
+  def mount(socket) do
+    {:ok,
+     socket
+     |> assign(:meeting_types, [])
+     |> assign(:events, [])
+     |> assign(:next_dates, %{})
+     |> assign(:show_add_form, false)
+     |> assign(:editing_type, nil)
+     |> assign(:show_edit_overlay, false)
+     |> assign(:form_id, nil)
+     |> assign(:video_integrations, [])
+     |> assign(:venues, [])
+     |> assign(:toggling_type_id, nil)
+     |> assign(:custom_questions_allowed, true)
+     |> assign(:group_bookings_allowed, true)
+     |> assign(:recurring_bookings_allowed, true)
+     |> assign(:payments_accepted, true)
+     |> assign(:slug_draft, "")
+     |> assign(:delete_sign_ups, {0, 0})
+     |> ModalHook.mount_modal(delete_meeting_type: false, slug: false)}
+  end
+
+  @impl Phoenix.LiveComponent
+  def update(%{meeting_type_created: meeting_type}, socket) do
+    # Sent by the open form once it has created its meeting type. The form
+    # has already switched itself to edit mode; this makes the new record the
+    # one being edited, keeping `form_id` so the same form instance (and its
+    # state) carries on rather than being remounted.
+    send(self(), {:meeting_type_changed})
+
+    {:ok,
+     assign(socket,
+       editing_type: meeting_type,
+       show_add_form: false,
+       show_edit_overlay: true
+     )}
+  end
+
+  def update(assigns, socket) do
+    socket = assign(socket, assigns)
+
+    # Always ensure we have the latest profile data
+    socket = Helpers.maybe_reload_profile(socket)
+
+    # Load meeting settings data directly (own your data)
+    # Use socket.assigns to handle partial updates from send_update
+    user_id = socket.assigns.current_user.id
+    data = DashboardContext.get_meeting_settings_data(user_id)
+
+    socket =
+      socket
+      |> assign(:meeting_types, data.meeting_types)
+      |> assign(:events, EventsListComponent.rows(data.meeting_types))
+      |> assign(:next_dates, next_dates(data.meeting_types))
+      |> refresh_editing_type(data.meeting_types)
+      |> assign(:video_integrations, data.video_integrations)
+      |> assign(:venues, data.venues)
+      |> assign(:calendar_integrations, data.calendar_integrations)
+      |> assign(:payment_currency, price_currency(data.meeting_types, user_id))
+      |> assign(:payments_accepted, payments_accepted?(data.meeting_types, user_id))
+      |> assign(:booking_pages, BookingPages.list(socket.assigns.profile.id))
+      |> assign(:page_memberships, BookingPages.memberships(socket.assigns.profile.id))
+      |> assign(:pages_editable, BookingPages.editable?(user_id))
+
+    {:ok, socket}
+  end
+
+  # For each fixed-date type, the start of its next session open for
+  # registration, or of its next offered time for a one-to-one type, or nil:
+  # the card says when that is, or that the type is off the booking page for
+  # want of one.
+  defp next_dates(meeting_types) do
+    sessions =
+      meeting_types
+      |> Enum.filter(&FixedDates.sessions?/1)
+      |> PlannedSessions.next_open_by_type()
+      |> Map.new(fn {id, session} -> {id, session && session.start_time} end)
+
+    offered =
+      meeting_types
+      |> Enum.filter(&FixedDates.offered_times?/1)
+      |> OfferedTimes.next_by_type()
+
+    Map.merge(sessions, offered)
+  end
+
+  # The open editor is handed `editing_type` on every render, and it saves
+  # against whatever it was handed last. A reload must therefore hand it the
+  # type as now stored, or its next save would diff against the version from
+  # when the editor opened and skip a change back to that version's value.
+  defp refresh_editing_type(%{assigns: %{editing_type: %{id: id}}} = socket, meeting_types) do
+    case Enum.find(meeting_types, &(&1.id == id)) do
+      nil -> socket
+      fresh -> assign(socket, :editing_type, fresh)
+    end
+  end
+
+  defp refresh_editing_type(socket, _meeting_types), do: socket
+
+  # The currency stored prices are in (the account's, supported or not),
+  # used only to format the price token on paid meeting type cards. Resolved
+  # only when at least one meeting type is actually paid: unpaid lists render
+  # no price, so they skip the query and take the unused fallback.
+  defp price_currency(meeting_types, user_id) do
+    if Enum.any?(meeting_types, & &1.payment_required) do
+      MeetingPayments.account_currency(user_id)
+    else
+      MeetingPayments.account_currency(nil)
+    end
+  end
+
+  # Whether the host's paid meeting types can be sold, for the card warning
+  # that the booking page leaves them out. Asked only when one is paid.
+  defp payments_accepted?(meeting_types, user_id) do
+    not Enum.any?(meeting_types, & &1.payment_required) or
+      MeetingPayments.accepting_payments?(user_id)
+  end
+
+  @impl Phoenix.LiveComponent
+  def handle_event("booking_link_copied", _params, socket),
+    do: {:noreply, BookingLinkShare.record(socket, socket.assigns.profile, "settings")}
+
+  def handle_event("toggle_add_form", _params, socket) do
+    show_add_form = !socket.assigns.show_add_form
+
+    {:noreply,
+     assign(socket,
+       show_add_form: show_add_form,
+       editing_type: nil,
+       form_id: if(show_add_form, do: "meeting-type-form-new")
+     )}
+  end
+
+  def handle_event("edit_type", %{"id" => id}, socket) do
+    with_type_id(id, socket, fn type_id ->
+      case Enum.find(socket.assigns.meeting_types, &(&1.id == type_id)) do
+        nil ->
+          Flash.error(dgettext("dashboard_integrations", "Meeting type not found"))
+          {:noreply, socket}
+
+        type ->
+          {:noreply,
+           assign(socket,
+             editing_type: type,
+             show_add_form: false,
+             show_edit_overlay: true,
+             form_id: "meeting-type-form-edit-#{type.id}"
+           )}
+      end
+    end)
+  end
+
+  def handle_event("duplicate_type", %{"id" => id}, socket) do
+    user_id = socket.assigns.current_user.id
+
+    with_type_id(id, socket, fn type_id ->
+      RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+        do_duplicate_type(socket, type_id, user_id)
+      end)
+    end)
+  end
+
+  def handle_event("cancel_edit", _params, socket) do
+    {:noreply, close_form(socket)}
+  end
+
+  def handle_event("close_edit_overlay", _params, socket) do
+    # Edits auto-save as they happen, so closing only tears down the overlay.
+    # Refresh the list view from the database so it reflects the saved state
+    # — the data is already persisted regardless of how the user leaves.
+    send(self(), {:meeting_type_changed})
+
+    {:noreply, close_form(socket)}
+  end
+
+  def handle_event("toggle_type", %{"id" => id}, socket) do
+    user_id = socket.assigns.current_user.id
+
+    with_type_id(id, socket, fn
+      type_id when type_id == socket.assigns.toggling_type_id ->
+        {:noreply, socket}
+
+      type_id ->
+        RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+          socket
+          |> assign(:toggling_type_id, type_id)
+          |> do_toggle_type(type_id, user_id)
+        end)
+    end)
+  end
+
+  # Both visibility switches send the state they ask for (`listed`), as the
+  # host saw it, rather than flipping whatever is stored: another tab may
+  # have changed it since this one rendered. Sent by hand without a
+  # `listed` or a page it can read, either is ignored.
+  def handle_event("toggle_private", %{"id" => id, "listed" => listed}, socket)
+      when listed in @listed_values do
+    user_id = socket.assigns.current_user.id
+
+    with_type_id(id, socket, fn type_id ->
+      RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+        do_toggle_private(socket, type_id, listed == "true", user_id)
+      end)
+    end)
+  end
+
+  def handle_event(
+        "toggle_page_membership",
+        %{"id" => id, "page" => page_id, "listed" => listed},
+        socket
+      )
+      when is_binary(page_id) and listed in @listed_values do
+    user_id = socket.assigns.current_user.id
+
+    with_type_id(id, socket, fn type_id ->
+      RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+        do_toggle_page_membership(socket, type_id, page_id, listed == "true", user_id)
+      end)
+    end)
+  end
+
+  def handle_event("toggle_invitation_only", %{"id" => id, "invitation_only" => on}, socket)
+      when on in @listed_values do
+    user_id = socket.assigns.current_user.id
+
+    with_type_id(id, socket, fn type_id ->
+      RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+        do_toggle_invitation_only(socket, type_id, on == "true", user_id)
+      end)
+    end)
+  end
+
+  def handle_event(event, _params, socket)
+      when event in ~w(toggle_private toggle_page_membership toggle_invitation_only),
+      do: {:noreply, socket}
+
+  def handle_event("open_slug_modal", _params, socket) do
+    case socket.assigns.editing_type do
+      nil ->
+        {:noreply, socket}
+
+      type ->
+        {:noreply,
+         socket
+         |> ModalHook.show_modal(:slug, type)
+         |> assign(:slug_draft, MeetingTypes.effective_slug(type))}
+    end
+  end
+
+  def handle_event("close_slug_modal", _params, socket) do
+    {:noreply, hide_slug_modal(socket)}
+  end
+
+  def handle_event("slug_draft_changed", %{"slug" => slug}, socket) do
+    {:noreply, assign(socket, :slug_draft, slug)}
+  end
+
+  def handle_event("randomise_slug", _params, socket) do
+    user_id = socket.assigns.current_user.id
+    {:noreply, assign(socket, :slug_draft, MeetingTypes.generate_random_slug(user_id))}
+  end
+
+  def handle_event("confirm_slug_change", _params, socket) do
+    user_id = socket.assigns.current_user.id
+
+    ModalHook.with_modal_data(socket, :slug, fn type ->
+      RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+        do_confirm_slug_change(socket, type, user_id)
+      end)
+    end)
+  end
+
+  def handle_event("show_delete_modal", %{"id" => id}, socket) do
+    with_type_id(id, socket, fn type_id ->
+      case MeetingTypes.get_meeting_type(type_id, socket.assigns.current_user.id) do
+        nil ->
+          Flash.error(dgettext("dashboard_integrations", "Meeting type not found"))
+          {:noreply, socket}
+
+        type ->
+          {:noreply,
+           socket
+           |> assign(:delete_sign_ups, MeetingTypes.upcoming_sign_ups(type))
+           |> ModalHook.show_modal(:delete_meeting_type, type)}
+      end
+    end)
+  end
+
+  def handle_event("hide_delete_modal", _params, socket) do
+    {:noreply, ModalHook.hide_modal(socket, :delete_meeting_type)}
+  end
+
+  def handle_event("confirm_delete_meeting_type", _params, socket) do
+    user_id = socket.assigns.current_user.id
+
+    RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+      ModalHook.with_modal_data(socket, :delete_meeting_type, fn type ->
+        case MeetingTypes.delete_meeting_type(type) do
+          {:ok, _result} ->
+            send(self(), {:meeting_type_changed})
+            Flash.info(dgettext("dashboard_integrations", "Meeting type deleted"))
+            {:noreply, ModalHook.hide_modal(socket, :delete_meeting_type)}
+
+          {:error, _reason} ->
+            Flash.error(dgettext("dashboard_integrations", "Failed to delete meeting type"))
+            {:noreply, ModalHook.hide_modal(socket, :delete_meeting_type)}
+        end
+      end)
+    end)
+  end
+
+  def handle_event("reorder_meeting_types", %{"ids" => ids}, socket) when is_list(ids) do
+    user_id = socket.assigns.current_user.id
+
+    RateLimit.with_rate_limit(RateLimiter.check(:meeting_type_write, user_id), socket, fn ->
+      # The client may send ids as strings; anything unparsable is dropped.
+      meeting_type_ids =
+        ids
+        |> Enum.map(fn
+          id when is_integer(id) ->
+            id
+
+          id when is_binary(id) ->
+            case Integer.parse(id) do
+              {int, _value} -> int
+              :error -> nil
+            end
+
+          _other ->
+            nil
+        end)
+        |> Enum.reject(&is_nil/1)
+
+      case MeetingTypes.reorder_meeting_types(user_id, meeting_type_ids) do
+        {:ok, _result} ->
+          send(self(), {:meeting_type_changed})
+          Flash.info(dgettext("dashboard_integrations", "Meeting types reordered"))
+          {:noreply, socket}
+
+        {:error, reason} ->
+          Logger.error("Failed to reorder meeting types", reason: LogFormat.reason(reason))
+          Flash.error(dgettext("dashboard_integrations", "Failed to reorder meeting types"))
+          {:noreply, socket}
+      end
+    end)
+  end
+
+  # Private functions
+
+  # Meeting type ids arrive as client strings; anything that is not one is a
+  # hand-sent event and is ignored rather than crashing the dashboard.
+  defp with_type_id(id, socket, fun) when is_binary(id) do
+    case Integer.parse(id) do
+      {type_id, ""} -> fun.(type_id)
+      _not_an_id -> {:noreply, socket}
+    end
+  end
+
+  defp with_type_id(_id, socket, _fun), do: {:noreply, socket}
+
+  defp do_toggle_type(socket, type_id, user_id) do
+    case MeetingTypes.get_meeting_type(type_id, user_id) do
+      nil ->
+        Flash.error(dgettext("dashboard_integrations", "Meeting type not found"))
+        {:noreply, assign(socket, :toggling_type_id, nil)}
+
+      type ->
+        case MeetingTypes.toggle_meeting_type_status(type, %{is_active: !type.is_active}) do
+          {:ok, updated_type} ->
+            send(self(), {:meeting_type_changed})
+            Flash.info(dgettext("dashboard_integrations", "Meeting type status updated"))
+
+            updated_meeting_types =
+              Enum.map(socket.assigns.meeting_types, fn
+                t when t.id == updated_type.id -> updated_type
+                t -> t
+              end)
+
+            {:noreply,
+             assign(socket, meeting_types: updated_meeting_types, toggling_type_id: nil)}
+
+          {:error, _reason} ->
+            Flash.error(dgettext("dashboard_integrations", "Failed to update meeting type"))
+            {:noreply, assign(socket, :toggling_type_id, nil)}
+        end
+    end
+  end
+
+  defp do_toggle_private(socket, type_id, listed?, user_id) do
+    case MeetingTypes.get_meeting_type(type_id, user_id) do
+      nil ->
+        Flash.error(dgettext("dashboard_integrations", "Meeting type not found"))
+        {:noreply, socket}
+
+      type ->
+        case MeetingTypes.set_private(type, not listed?) do
+          {:ok, _updated} ->
+            send(self(), {:meeting_type_changed})
+            Flash.info(dgettext("dashboard_integrations", "Visibility updated"))
+            {:noreply, reload_editing_type(socket, type_id, user_id)}
+
+          {:error, _reason} ->
+            Flash.error(dgettext("dashboard_integrations", "Failed to update visibility"))
+            {:noreply, socket}
+        end
+    end
+  end
+
+  # A refusal names its reason (a group type cannot be invitation-only).
+  defp do_toggle_invitation_only(socket, type_id, on?, user_id) do
+    with %{} = type <- MeetingTypes.get_meeting_type(type_id, user_id),
+         {:ok, _updated} <- MeetingTypes.set_invitation_only(type, on?) do
+      send(self(), {:meeting_type_changed})
+      Flash.info(dgettext("dashboard_integrations", "Visibility updated"))
+      {:noreply, reload_editing_type(socket, type_id, user_id)}
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        Flash.error(
+          ChangesetErrors.first(changeset, &ChangesetErrors.translate/1) ||
+            dgettext("dashboard_integrations", "Failed to update visibility")
+        )
+
+        {:noreply, socket}
+
+      nil ->
+        Flash.error(dgettext("dashboard_integrations", "Meeting type not found"))
+        {:noreply, socket}
+    end
+  end
+
+  # A booking page's listing. A type or page deleted meanwhile (in another
+  # tab) fails like a refused write: an error flash, nothing changed. A plan
+  # that no longer allows changing booking pages says so.
+  defp do_toggle_page_membership(socket, type_id, page_id, listed?, user_id) do
+    profile_id = socket.assigns.profile.id
+
+    with %{} = type <- MeetingTypes.get_meeting_type(type_id, user_id),
+         {:ok, page} <- BookingPages.fetch(profile_id, page_id),
+         :ok <- BookingPages.set_meeting_type(page, type.id, listed?) do
+      send(self(), {:meeting_type_changed})
+      Flash.info(dgettext("dashboard_integrations", "Visibility updated"))
+      {:noreply, assign(socket, :page_memberships, BookingPages.memberships(profile_id))}
+    else
+      {:error, :upgrade_required} ->
+        Flash.error(BookingPages.locked_message())
+
+        {:noreply,
+         assign(socket,
+           page_memberships: BookingPages.memberships(profile_id),
+           pages_editable: BookingPages.editable?(user_id)
+         )}
+
+      _not_found_or_failed ->
+        Flash.error(dgettext("dashboard_integrations", "Failed to update visibility"))
+        {:noreply, socket}
+    end
+  end
+
+  defp do_confirm_slug_change(socket, type, user_id) do
+    case MeetingTypes.update_slug(type, socket.assigns.slug_draft) do
+      {:ok, _updated} ->
+        send(self(), {:meeting_type_changed})
+        Flash.info(dgettext("dashboard_integrations", "Booking link updated"))
+
+        {:noreply,
+         socket
+         |> reload_editing_type(type.id, user_id)
+         |> hide_slug_modal()}
+
+      {:error, :slug_taken} ->
+        Flash.error(
+          dgettext("dashboard_integrations", "That link is already taken. Please choose another.")
+        )
+
+        {:noreply, socket}
+
+      {:error, %Ecto.Changeset{}} ->
+        Flash.error(
+          dgettext(
+            "dashboard_integrations",
+            "That link isn't valid. Use lowercase letters, numbers and hyphens."
+          )
+        )
+
+        {:noreply, socket}
+    end
+  end
+
+  # Re-fetches the (preloaded) type and refreshes both the open editor and the
+  # underlying list entry so the UI reflects the saved state immediately.
+  defp reload_editing_type(socket, type_id, user_id) do
+    updated = MeetingTypes.get_meeting_type(type_id, user_id)
+
+    meeting_types =
+      Enum.map(socket.assigns.meeting_types, fn
+        t when t.id == type_id -> updated
+        t -> t
+      end)
+
+    socket
+    |> assign(:meeting_types, meeting_types)
+    |> assign(:editing_type, updated)
+  end
+
+  # The copy opens in the editor straight away, since renaming it is almost
+  # always the next step. The list reload this triggers swaps the bare
+  # inserted record for the preloaded one (`refresh_editing_type/2`).
+  defp do_duplicate_type(socket, type_id, user_id) do
+    with %{} = source <- MeetingTypes.get_meeting_type(type_id, user_id),
+         {:ok, copy} <- MeetingTypes.duplicate_meeting_type(source) do
+      send(self(), {:meeting_type_changed})
+      Flash.info(duplicated_message(copy))
+
+      {:noreply,
+       assign(socket,
+         editing_type: copy,
+         show_add_form: false,
+         show_edit_overlay: true,
+         form_id: "meeting-type-form-edit-#{copy.id}"
+       )}
+    else
+      nil ->
+        Flash.error(dgettext("dashboard_integrations", "Meeting type not found"))
+        {:noreply, socket}
+
+      {:error, reason} ->
+        Flash.error(duplicate_error_message(reason))
+        {:noreply, socket}
+    end
+  end
+
+  defp duplicated_message(copy) do
+    if copy.fixed_dates do
+      dgettext(
+        "dashboard_integrations",
+        "Meeting type duplicated and switched off. Add its dates, then switch it on."
+      )
+    else
+      dgettext(
+        "dashboard_integrations",
+        "Meeting type duplicated and switched off. Switch it on when it is ready."
+      )
+    end
+  end
+
+  defp duplicate_error_message(reason)
+       when reason in [
+              :insufficient_plan,
+              :group_bookings_not_allowed,
+              :recurring_bookings_not_allowed,
+              :feature_disabled
+            ],
+       do:
+         dgettext(
+           "dashboard_integrations",
+           "This meeting type uses a feature your current plan does not include, so it cannot be duplicated."
+         )
+
+  defp duplicate_error_message(_reason),
+    do:
+      dgettext(
+        "dashboard_integrations",
+        "Could not duplicate this meeting type. Check its settings, then try again."
+      )
+
+  defp close_form(socket) do
+    assign(socket, editing_type: nil, show_edit_overlay: false, form_id: nil)
+  end
+
+  defp hide_slug_modal(socket) do
+    socket
+    |> ModalHook.hide_modal(:slug)
+    |> assign(:slug_draft, "")
+  end
+
+  @impl Phoenix.LiveComponent
+  def render(assigns), do: ComponentView.settings(assigns)
+end

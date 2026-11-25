@@ -1,0 +1,431 @@
+defmodule Tymeslot.Meetings.ApprovalExpiryTest do
+  @moduledoc """
+  The clock behind the approval gate: the scheduled expiry, the cron sweep,
+  and the job cancellation that stops both once a host has answered.
+
+  The user-visible failure these guard against is a request that resolves to
+  nothing. An invitee told their time is held until Thursday and then never
+  told anything again is worse than a decline, and it is exactly what a lost
+  expiry job produces. Hence two independent paths to the same release, and
+  tests that each one works when the other does not.
+  """
+
+  use Tymeslot.DataCase, async: false
+  use Oban.Testing, repo: Tymeslot.Repo
+
+  import Tymeslot.Factory
+
+  @moduletag :bookings
+  @moduletag :meetings
+
+  alias Ecto.UUID
+  alias Oban.Job
+  alias Tymeslot.Emails.EmailScheduler.MeetingScheduler
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.Meetings.ApprovalJobs
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Meetings.Workers.ApprovalExpiryWorker
+  alias Tymeslot.Meetings.Workers.ApprovalSweepWorker
+  alias Tymeslot.Repo
+  alias Tymeslot.Workers.CalendarEventWorker
+  alias Tymeslot.Workers.EmailWorker
+
+  defp held_meeting(attrs \\ %{}) do
+    user = insert(:user)
+
+    defaults = %{
+      status: :awaiting_approval,
+      organizer_user: user,
+      organizer_user_id: user.id,
+      approval_requested_at: DateTime.utc_now(:second),
+      approval_deadline_at: DateTime.add(DateTime.utc_now(:second), 24, :hour)
+    }
+
+    insert(:meeting, Map.merge(defaults, attrs))
+  end
+
+  defp overdue_meeting(attrs \\ %{}) do
+    held_meeting(
+      Map.merge(
+        %{approval_deadline_at: DateTime.add(DateTime.utc_now(:second), -1, :hour)},
+        attrs
+      )
+    )
+  end
+
+  defp reload(meeting), do: Repo.get!(MeetingSchema, meeting.id)
+
+  describe "ApprovalJobs.schedule_expiry/1" do
+    test "schedules the release for the deadline, not for now" do
+      meeting = held_meeting()
+
+      assert :ok = ApprovalJobs.schedule_expiry(meeting)
+
+      assert_enqueued(worker: ApprovalExpiryWorker, args: %{"meeting_id" => meeting.id})
+
+      job = Repo.get_by!(Job, worker: "Tymeslot.Meetings.Workers.ApprovalExpiryWorker")
+      assert DateTime.compare(job.scheduled_at, meeting.approval_deadline_at) == :eq
+    end
+
+    test "a request with no deadline is held until somebody answers" do
+      meeting = held_meeting(%{approval_deadline_at: nil})
+
+      assert :ok = ApprovalJobs.schedule_expiry(meeting)
+
+      refute_enqueued(worker: ApprovalExpiryWorker)
+    end
+
+    test "re-scheduling replaces the old job rather than losing to its uniqueness" do
+      meeting = held_meeting()
+      :ok = ApprovalJobs.schedule_expiry(meeting)
+
+      new_deadline = DateTime.add(meeting.approval_deadline_at, 11, :hour)
+      rearmed = %{meeting | approval_deadline_at: new_deadline}
+      assert :ok = ApprovalJobs.schedule_expiry(rearmed)
+
+      jobs =
+        Enum.filter(
+          Repo.all(Job),
+          &(&1.worker == "Tymeslot.Meetings.Workers.ApprovalExpiryWorker")
+        )
+
+      assert [only_job] = jobs
+      assert DateTime.compare(only_job.scheduled_at, new_deadline) == :eq
+    end
+  end
+
+  describe "ApprovalJobs.cancel/1" do
+    test "removes a pending expiry" do
+      meeting = held_meeting()
+      :ok = ApprovalJobs.schedule_expiry(meeting)
+
+      assert :ok = ApprovalJobs.cancel(meeting)
+
+      refute_enqueued(worker: ApprovalExpiryWorker)
+    end
+
+    test "leaves another meeting's expiry alone" do
+      mine = held_meeting()
+      theirs = held_meeting()
+      :ok = ApprovalJobs.schedule_expiry(mine)
+      :ok = ApprovalJobs.schedule_expiry(theirs)
+
+      :ok = ApprovalJobs.cancel(mine)
+
+      refute_enqueued(worker: ApprovalExpiryWorker, args: %{"meeting_id" => mine.id})
+      assert_enqueued(worker: ApprovalExpiryWorker, args: %{"meeting_id" => theirs.id})
+    end
+  end
+
+  describe "answering the request clears its clock" do
+    test "approving cancels the expiry that would have released the slot" do
+      meeting = held_meeting()
+      :ok = ApprovalJobs.schedule_expiry(meeting)
+
+      {:ok, _confirmed} = Approval.approve(meeting)
+
+      refute_enqueued(worker: ApprovalExpiryWorker, args: %{"meeting_id" => meeting.id})
+    end
+
+    test "declining cancels it too" do
+      meeting = held_meeting()
+      :ok = ApprovalJobs.schedule_expiry(meeting)
+
+      {:ok, _declined} = Approval.decline(meeting, "Away that week")
+
+      refute_enqueued(worker: ApprovalExpiryWorker, args: %{"meeting_id" => meeting.id})
+    end
+
+    test "declining also cancels the nudge, so nobody is asked to re-decide" do
+      meeting = held_meeting()
+
+      :ok =
+        MeetingScheduler.schedule_approval_nudge(
+          meeting.id,
+          DateTime.add(DateTime.utc_now(:second), 12, :hour),
+          nil
+        )
+
+      {:ok, _declined} = Approval.decline(meeting, nil)
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_booking_approval_nudge", "meeting_id" => meeting.id}
+      )
+    end
+  end
+
+  describe "the time a release records" do
+    test "an expiry that runs long after the deadline is dated to the deadline" do
+      deadline = DateTime.add(DateTime.utc_now(:second), -90, :day)
+      start = DateTime.add(deadline, 1, :day)
+
+      meeting =
+        overdue_meeting(%{
+          approval_deadline_at: deadline,
+          start_time: start,
+          end_time: DateTime.add(start, 1, :hour)
+        })
+
+      assert {:ok, %{expired: 1}} = perform_job(ApprovalSweepWorker, %{})
+
+      expired = reload(meeting)
+      assert expired.status == :expired
+      assert DateTime.compare(expired.cancelled_at, deadline) == :eq
+      assert DateTime.compare(expired.approval_resolved_at, deadline) == :eq
+
+      # The meeting it asked for is long past, so the invitee is not told.
+      [outcome] = all_enqueued(worker: EmailWorker, args: %{"variant" => "expired"})
+      assert {:discard, "No longer relevant"} = perform_job(EmailWorker, outcome.args)
+    end
+
+    test "the expiry email of a meeting weeks ahead stays owed until it starts" do
+      start = DateTime.add(DateTime.utc_now(:second), 30, :day)
+      meeting = overdue_meeting(%{start_time: start, end_time: DateTime.add(start, 1, :hour)})
+
+      {:ok, _expired} = Approval.expire(meeting)
+
+      [outcome] = all_enqueued(worker: EmailWorker, args: %{"variant" => "expired"})
+      assert outcome.args["relevant_until"] == DateTime.to_iso8601(meeting.start_time)
+    end
+
+    test "the expiry email of a request due at its start stays owed for a week past it" do
+      start = DateTime.add(DateTime.utc_now(:second), -1, :hour)
+
+      meeting =
+        overdue_meeting(%{
+          start_time: start,
+          end_time: DateTime.add(start, 1, :hour),
+          approval_deadline_at: start
+        })
+
+      {:ok, _expired} = Approval.expire(meeting)
+
+      [outcome] = all_enqueued(worker: EmailWorker, args: %{"variant" => "expired"})
+      assert outcome.args["relevant_until"] == DateTime.to_iso8601(DateTime.add(start, 7, :day))
+    end
+
+    test "the expiry email of a booking moved back into the gate is owed however late" do
+      meeting =
+        overdue_meeting(%{
+          start_time: DateTime.add(DateTime.utc_now(:second), -30, :day),
+          end_time: DateTime.add(DateTime.utc_now(:second), -30 * 86_400 + 3600, :second),
+          first_announced_at: DateTime.add(DateTime.utc_now(:second), -60, :day)
+        })
+
+      {:ok, _expired} = Approval.expire(meeting)
+
+      [outcome] = all_enqueued(worker: EmailWorker, args: %{"variant" => "expired"})
+      assert outcome.args["relevant_until"] == nil
+    end
+
+    test "a decline email is owed however late" do
+      meeting = held_meeting()
+
+      {:ok, _declined} = Approval.decline(meeting, nil)
+
+      [outcome] = all_enqueued(worker: EmailWorker, args: %{"variant" => "declined"})
+      assert outcome.args["relevant_until"] == nil
+    end
+
+    test "an expiry run before its deadline is dated to when it ran, not to the future" do
+      meeting = held_meeting()
+      before = DateTime.utc_now(:second)
+
+      {:ok, expired} = Approval.expire(meeting)
+
+      assert DateTime.compare(expired.cancelled_at, before) != :lt
+      assert DateTime.compare(expired.cancelled_at, meeting.approval_deadline_at) == :lt
+    end
+
+    test "a decline is dated to when the host declined, however long after the deadline" do
+      meeting =
+        overdue_meeting(%{
+          approval_deadline_at: DateTime.add(DateTime.utc_now(:second), -9, :day)
+        })
+
+      before = DateTime.utc_now(:second)
+
+      {:ok, declined} = Approval.decline(meeting, nil)
+
+      assert DateTime.compare(declined.cancelled_at, before) != :lt
+      assert declined.cancelled_at == declined.approval_declined_at
+    end
+  end
+
+  describe "releasing a request tells the invitee" do
+    test "a decline schedules the declined email" do
+      meeting = held_meeting()
+
+      {:ok, _declined} = Approval.decline(meeting, "Not this month")
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{
+          "action" => "send_booking_request_outcome",
+          "meeting_id" => meeting.id,
+          "variant" => "declined"
+        }
+      )
+    end
+
+    test "an expiry schedules the expired email, which says something different" do
+      meeting = overdue_meeting()
+
+      {:ok, _expired} = Approval.expire(meeting)
+
+      assert_enqueued(
+        worker: EmailWorker,
+        args: %{
+          "action" => "send_booking_request_outcome",
+          "meeting_id" => meeting.id,
+          "variant" => "expired"
+        }
+      )
+    end
+
+    test "a decline takes the tentative hold off the host's calendar" do
+      # The hold is the whole reason the slot was unbookable. Leaving it behind
+      # would keep the time blocked for a booking that is not happening.
+      meeting = held_meeting()
+
+      {:ok, _declined} = Approval.decline(meeting, nil)
+
+      assert_enqueued(
+        worker: CalendarEventWorker,
+        args: %{"action" => "delete", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "an expiry takes the hold off too" do
+      meeting = overdue_meeting()
+
+      {:ok, _expired} = Approval.expire(meeting)
+
+      assert_enqueued(
+        worker: CalendarEventWorker,
+        args: %{"action" => "delete", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "an approval leaves the calendar event in place to be confirmed" do
+      meeting = held_meeting()
+
+      {:ok, _confirmed} = Approval.approve(meeting)
+
+      refute_enqueued(
+        worker: CalendarEventWorker,
+        args: %{"action" => "delete", "meeting_id" => meeting.id}
+      )
+    end
+
+    test "an approval sends no outcome email — the confirmation is the news" do
+      meeting = held_meeting()
+
+      {:ok, _confirmed} = Approval.approve(meeting)
+
+      refute_enqueued(
+        worker: EmailWorker,
+        args: %{"action" => "send_booking_request_outcome", "meeting_id" => meeting.id}
+      )
+    end
+  end
+
+  describe "ApprovalExpiryWorker" do
+    test "releases a request still held at its deadline" do
+      meeting = overdue_meeting()
+
+      assert :ok = perform_job(ApprovalExpiryWorker, %{"meeting_id" => meeting.id})
+
+      assert reload(meeting).status == :expired
+    end
+
+    test "leaves a request the host already approved alone" do
+      meeting = held_meeting()
+      {:ok, _confirmed} = Approval.approve(meeting)
+
+      assert {:discard, reason} =
+               perform_job(ApprovalExpiryWorker, %{"meeting_id" => meeting.id})
+
+      assert reload(meeting).status == :confirmed
+      # The host answering first is the normal race, not a fault.
+      assert ApprovalExpiryWorker.expected_outcome?(reason)
+    end
+
+    test "discards rather than retries when the meeting is gone" do
+      assert {:discard, reason} =
+               perform_job(ApprovalExpiryWorker, %{"meeting_id" => UUID.generate()})
+
+      # A stale job outliving its deleted meeting is not a fault.
+      assert ApprovalExpiryWorker.expected_outcome?(reason)
+    end
+
+    # The meeting id is detail after the reason, never part of it, so one
+    # missing meeting after another stays a single error group.
+    test "keeps the missing meeting's id out of the reason's leading text" do
+      id = UUID.generate()
+
+      assert {:discard, "Meeting not found: " <> ^id} =
+               perform_job(ApprovalExpiryWorker, %{"meeting_id" => id})
+    end
+
+    test "discards a stale job whose meeting was re-armed with a later deadline" do
+      # Still held, but the deadline this job carries is not the one on the
+      # meeting any more — the request was re-scheduled after this job was
+      # enqueued and its own replacement was lost.
+      meeting =
+        held_meeting(%{approval_deadline_at: DateTime.add(DateTime.utc_now(:second), 6, :hour)})
+
+      assert {:discard, "Request not due yet: " <> _deadline = reason} =
+               perform_job(ApprovalExpiryWorker, %{"meeting_id" => meeting.id})
+
+      assert reload(meeting).status == :awaiting_approval
+      # A stale job means a replacement's delete was lost, which the operator
+      # should hear about: recorded, as one error group.
+      refute ApprovalExpiryWorker.expected_outcome?(reason)
+    end
+  end
+
+  describe "ApprovalSweepWorker" do
+    test "releases requests whose scheduled expiry never fired" do
+      overdue = overdue_meeting()
+
+      # The per-meeting job is deliberately absent: this is the case the sweep
+      # exists for.
+      refute_enqueued(worker: ApprovalExpiryWorker)
+
+      assert {:ok, %{expired: 1}} = perform_job(ApprovalSweepWorker, %{})
+
+      assert reload(overdue).status == :expired
+    end
+
+    test "does not touch a request still inside its window" do
+      inside = held_meeting()
+
+      assert {:ok, %{expired: 0, skipped: 0}} = perform_job(ApprovalSweepWorker, %{})
+
+      assert reload(inside).status == :awaiting_approval
+    end
+
+    test "works through a backlog rather than stopping at the first" do
+      overdue = Enum.map(1..3, fn _each -> overdue_meeting() end)
+
+      assert {:ok, %{expired: 3}} = perform_job(ApprovalSweepWorker, %{})
+
+      assert Enum.map(overdue, &reload(&1).status) == [:expired, :expired, :expired]
+    end
+
+    # Answered by declining rather than approving: the sweep only ever sees
+    # overdue requests, and `approve/1` refuses one whose deadline has already
+    # passed. What this test is really about is the sweep's query, which
+    # selects on "awaiting_approval" — any answer takes the row out of reach.
+    test "an answered request is out of the sweep's reach entirely" do
+      answered = overdue_meeting()
+      {:ok, _declined} = Approval.decline(answered)
+
+      assert {:ok, %{expired: 0, skipped: 0}} = perform_job(ApprovalSweepWorker, %{})
+
+      assert reload(answered).status == :cancelled
+    end
+  end
+end

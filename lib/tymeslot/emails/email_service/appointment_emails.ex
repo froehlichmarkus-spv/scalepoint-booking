@@ -1,0 +1,441 @@
+defmodule Tymeslot.Emails.EmailService.AppointmentEmails do
+  @moduledoc "Appointment confirmation, request, reminder, and cancellation emails."
+
+  require Logger
+
+  alias Swoosh.Email
+  alias Tymeslot.Emails.Delivery
+  alias Tymeslot.Emails.RecipientLocale
+  alias Tymeslot.Integrations.Calendar.IcsGenerator
+
+  alias Tymeslot.Emails.Templates.{
+    AppointmentCancellation,
+    AppointmentConfirmation,
+    AppointmentReminder,
+    AppointmentRescheduled,
+    BookingApprovalRequest,
+    BookingEmailVerification,
+    BookingRequestOutcome,
+    BookingRequestReceived,
+    MeetingEndChanged,
+    RegistrationClosed,
+    RescheduleRequestExpired,
+    SeatUpdateForOrganizer
+  }
+
+  alias Tymeslot.Meetings.MeetingSchema, as: Meeting
+  alias Tymeslot.Meetings.ParticipantSchema
+
+  @doc """
+  Sends an appointment confirmation email to the organizer.
+  """
+  @spec send_appointment_confirmation_to_organizer(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_appointment_confirmation_to_organizer(organizer_email, appointment_details) do
+    Delivery.deliver(
+      AppointmentConfirmation.render(:organizer, organizer_email, appointment_details)
+    )
+  end
+
+  @doc """
+  Sends an appointment confirmation email to the attendee.
+  """
+  @spec send_appointment_confirmation_to_attendee(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_appointment_confirmation_to_attendee(attendee_email, appointment_details) do
+    Delivery.deliver(
+      AppointmentConfirmation.render(:attendee, attendee_email, appointment_details)
+    )
+  end
+
+  @doc """
+  Tells the invitee their booking request has been received and is not yet
+  confirmed. Takes the meeting rather than the built appointment details: the
+  request emails are about a booking that has not happened, so the confirmation
+  vocabulary (video links, calendar files, payment receipts) does not apply.
+  """
+  @spec send_booking_request_received(Meeting.t(), keyword()) :: {:ok, any()} | {:error, any()}
+  def send_booking_request_received(%Meeting{} = meeting, opts \\ []) do
+    Delivery.deliver(BookingRequestReceived.render(meeting, opts))
+  end
+
+  @doc """
+  Asks the attendee to confirm their email address before the booking counts.
+
+  `verify_url` carries the signed token and is built by the caller at send
+  time. The email has no calendar file and no cancel, reschedule or manage
+  link: until the address is verified, nothing in it may open the booking.
+  """
+  @spec send_booking_email_verification(Meeting.t(), String.t()) ::
+          {:ok, any()} | {:error, any()}
+  def send_booking_email_verification(%Meeting{} = meeting, verify_url) do
+    Delivery.deliver(BookingEmailVerification.render(meeting, verify_url))
+  end
+
+  @doc """
+  Asks a group booker to confirm their email address before their seat counts.
+  Same rules as `send_booking_email_verification/2`; the recipient, language
+  and timezone are the seat's.
+  """
+  @spec send_seat_email_verification(Meeting.t(), ParticipantSchema.t(), String.t()) ::
+          {:ok, any()} | {:error, any()}
+  def send_seat_email_verification(%Meeting{} = slot, %ParticipantSchema{} = seat, verify_url) do
+    Delivery.deliver(BookingEmailVerification.render_seat(slot, seat, verify_url))
+  end
+
+  @doc """
+  Tells the invitee a booking request will not happen, and why.
+
+  Closes the loop the acknowledgement opened. `variant` is `:declined` when
+  the host refused and `:expired` when nobody answered; the two are not
+  interchangeable, because only one of them is a decision a person made.
+  """
+  @spec send_booking_request_outcome(BookingRequestOutcome.variant(), Meeting.t()) ::
+          {:ok, any()} | {:error, any()}
+  def send_booking_request_outcome(variant, %Meeting{} = meeting) do
+    Delivery.deliver(BookingRequestOutcome.render(variant, meeting))
+  end
+
+  @doc """
+  Tells the host a confirmed booking was cancelled because the invitee's
+  request to move it lapsed unanswered.
+  """
+  @spec send_reschedule_request_expired(Meeting.t(), String.t()) ::
+          {:ok, any()} | {:error, any()}
+  def send_reschedule_request_expired(%Meeting{} = meeting, locale) do
+    Delivery.deliver(RescheduleRequestExpired.render(meeting, locale))
+  end
+
+  @doc """
+  Asks the host to approve or decline a booking request, or reminds them.
+
+  `locale` is the host's, not the invitee's: this is the one meeting email
+  addressed to the account owner in their own language.
+  """
+  @spec send_booking_approval_request(
+          BookingApprovalRequest.variant(),
+          Meeting.t(),
+          map(),
+          String.t(),
+          keyword()
+        ) :: {:ok, any()} | {:error, any()}
+  def send_booking_approval_request(variant, %Meeting{} = meeting, urls, locale, opts \\ []) do
+    Delivery.deliver(BookingApprovalRequest.render(variant, meeting, urls, locale, opts))
+  end
+
+  @doc """
+  Sends an appointment confirmation email to a meeting guest, with accept/decline
+  RSVP buttons. `appointment_details` must carry `:guest_name`,
+  `:guest_accept_url` and `:guest_decline_url`.
+  """
+  @spec send_guest_confirmation(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_guest_confirmation(guest_email, appointment_details) do
+    Delivery.deliver(AppointmentConfirmation.render(:guest, guest_email, appointment_details))
+  end
+
+  @doc """
+  Sends the move-my-seat notice to a group participant.
+
+  The email is the attendee reschedule notice (`AppointmentRescheduled`, its
+  `:seat_move` wording: the participant's spot moved, not the meeting) for
+  the new seat, which carries that seat's own links and calendar entry, with
+  one extra attachment: a cancellation of the old seat's entry, on its UID at
+  `SEQUENCE: old_ical_sequence + 1`, so the participant's calendar drops it
+  (see `Tymeslot.Meetings.AttendeeNotifications.IcalMethod`: the move is an
+  `:event_deleted` on the old seat's UID plus an `:event_created` on the new
+  one, never an `:event_updated`, because the UID changes). The cancellation
+  is the same file a solo cancellation carries
+  (`IcsGenerator.generate_ics_cancel_attachment/4`).
+
+  `old_event` is `%{uid:, ical_sequence:, start_time:, end_time:}`, plus
+  `:start_time_attendee_tz`, the old time in the participant's timezone,
+  which the email states as the time the spot moved from.
+  """
+  @spec send_seat_reschedule_to_participant(String.t(), map(), map()) ::
+          {:ok, any()} | {:error, any()}
+  def send_seat_reschedule_to_participant(participant_email, appointment_details, old_event) do
+    locale = RecipientLocale.attendee_locale(appointment_details)
+
+    old_event_details =
+      Map.merge(appointment_details, %{
+        uid: old_event.uid,
+        start_time: old_event.start_time,
+        end_time: old_event.end_time
+      })
+
+    cancel_attachment =
+      IcsGenerator.generate_ics_cancel_attachment(
+        old_event_details,
+        old_event.ical_sequence + 1,
+        locale,
+        "appointment-#{old_event.uid}.ics"
+      )
+
+    moved_details =
+      Map.merge(appointment_details, %{
+        seat_move: true,
+        original_start_time: old_event.start_time,
+        original_start_time_attendee_tz: Map.get(old_event, :start_time_attendee_tz)
+      })
+
+    email =
+      :attendee
+      |> AppointmentRescheduled.render(participant_email, moved_details)
+      |> Email.attachment(cancel_attachment)
+
+    Delivery.deliver(email)
+  end
+
+  @doc """
+  Tells the organiser about one seat of a group meeting: booked, cancelled by
+  its participant, or moved to another time. See
+  `Tymeslot.Emails.Templates.SeatUpdateForOrganizer`.
+  """
+  @spec send_seat_update_to_organizer(
+          SeatUpdateForOrganizer.variant(),
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) :: {:ok, any()} | {:error, any()}
+  def send_seat_update_to_organizer(variant, organizer_email, appointment_details) do
+    Delivery.deliver(SeatUpdateForOrganizer.render(variant, organizer_email, appointment_details))
+  end
+
+  @doc """
+  Sends the organiser a planned session's participant list when its
+  registration closes. See `Tymeslot.Emails.Templates.RegistrationClosed`.
+  """
+  @spec send_registration_closed(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details(),
+          [RegistrationClosed.entry()]
+        ) :: {:ok, any()} | {:error, any()}
+  def send_registration_closed(organizer_email, appointment_details, roster) do
+    Delivery.deliver(RegistrationClosed.render(organizer_email, appointment_details, roster))
+  end
+
+  @doc """
+  Sends appointment confirmations to both organizer and attendee.
+  """
+  @spec send_appointment_confirmations(Tymeslot.Emails.EmailService.appointment_details()) ::
+          {{:ok, any()} | {:error, any()}, {:ok, any()} | {:error, any()}}
+  def send_appointment_confirmations(appointment_details) do
+    Logger.info("Sending appointment confirmations")
+
+    organizer_result =
+      send_appointment_confirmation_to_organizer(
+        appointment_details.organizer_email,
+        appointment_details
+      )
+
+    attendee_result =
+      send_appointment_confirmation_to_attendee(
+        appointment_details.attendee_email,
+        appointment_details
+      )
+
+    Logger.info("Appointment confirmations sent",
+      organizer_sent: match?({:ok, _}, organizer_result),
+      attendee_sent: match?({:ok, _}, attendee_result)
+    )
+
+    {organizer_result, attendee_result}
+  end
+
+  @doc """
+  Sends a reschedule notice to a meeting guest, asking again whether they can
+  attend. `appointment_details` must carry the guest keys named at
+  `send_guest_confirmation/2`, plus the reschedule context of
+  `Tymeslot.Emails.AppointmentBuilder.for_reschedule/2`.
+  """
+  @spec send_guest_reschedule(String.t(), Tymeslot.Emails.EmailService.appointment_details()) ::
+          {:ok, any()} | {:error, any()}
+  def send_guest_reschedule(guest_email, appointment_details) do
+    Delivery.deliver(AppointmentRescheduled.render(:guest, guest_email, appointment_details))
+  end
+
+  @doc """
+  Sends a cancellation notice to a meeting guest. `appointment_details` must
+  carry `:guest_name`.
+  """
+  @spec send_guest_cancellation(String.t(), Tymeslot.Emails.EmailService.appointment_details()) ::
+          {:ok, any()} | {:error, any()}
+  def send_guest_cancellation(guest_email, appointment_details) do
+    Delivery.deliver(AppointmentCancellation.render(:guest, guest_email, appointment_details))
+  end
+
+  @doc """
+  Sends a reschedule notice to the organizer.
+  """
+  @spec send_reschedule_email_to_organizer(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_reschedule_email_to_organizer(organizer_email, appointment_details) do
+    Delivery.deliver(
+      AppointmentRescheduled.render(:organizer, organizer_email, appointment_details)
+    )
+  end
+
+  @doc """
+  Tells the attendee, or one group participant, that the meeting's end moved
+  in the host's calendar, with an updated calendar entry.
+  """
+  @spec send_end_change_to_attendee(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) :: {:ok, any()} | {:error, any()}
+  def send_end_change_to_attendee(attendee_email, appointment_details) do
+    Delivery.deliver(MeetingEndChanged.render(:attendee, attendee_email, appointment_details))
+  end
+
+  @doc """
+  Tells a guest that the meeting's end moved in the host's calendar, with an
+  updated calendar entry.
+  """
+  @spec send_guest_end_change(String.t(), Tymeslot.Emails.EmailService.appointment_details()) ::
+          {:ok, any()} | {:error, any()}
+  def send_guest_end_change(guest_email, appointment_details) do
+    Delivery.deliver(MeetingEndChanged.render(:guest, guest_email, appointment_details))
+  end
+
+  @doc """
+  Sends a reschedule notice to the attendee.
+  """
+  @spec send_reschedule_email_to_attendee(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_reschedule_email_to_attendee(attendee_email, appointment_details) do
+    Delivery.deliver(
+      AppointmentRescheduled.render(:attendee, attendee_email, appointment_details)
+    )
+  end
+
+  @doc """
+  Sends an appointment reminder email to the organizer.
+  """
+  @spec send_appointment_reminder_to_organizer(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_appointment_reminder_to_organizer(organizer_email, appointment_details) do
+    Delivery.deliver(AppointmentReminder.render(:organizer, organizer_email, appointment_details))
+  end
+
+  @doc """
+  Sends an appointment reminder email to the attendee.
+  """
+  @spec send_appointment_reminder_to_attendee(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_appointment_reminder_to_attendee(attendee_email, appointment_details) do
+    Delivery.deliver(AppointmentReminder.render(:attendee, attendee_email, appointment_details))
+  end
+
+  @doc """
+  Sends the reminder for an upcoming meeting to a guest. `appointment_details`
+  must carry `:guest_name` and the guest's own RSVP links.
+  """
+  @spec send_guest_reminder(String.t(), Tymeslot.Emails.EmailService.appointment_details()) ::
+          {:ok, any()} | {:error, any()}
+  def send_guest_reminder(guest_email, appointment_details) do
+    Delivery.deliver(AppointmentReminder.render(:guest, guest_email, appointment_details))
+  end
+
+  @doc """
+  Sends appointment reminders to both organizer and attendee.
+  Takes a time_until parameter (e.g., "30 minutes", "1 hour", "24 hours").
+  """
+  @spec send_appointment_reminders(
+          Tymeslot.Emails.EmailService.appointment_details(),
+          String.t()
+        ) ::
+          {{:ok, any()} | {:error, any()}, {:ok, any()} | {:error, any()}}
+  def send_appointment_reminders(appointment_details, time_until) do
+    Logger.info("Sending appointment reminders",
+      time_until: time_until
+    )
+
+    appointment_details_with_time = Map.put(appointment_details, :time_until, time_until)
+
+    organizer_result =
+      send_appointment_reminder_to_organizer(
+        appointment_details.organizer_email,
+        appointment_details_with_time
+      )
+
+    attendee_result =
+      send_appointment_reminder_to_attendee(
+        appointment_details.attendee_email,
+        appointment_details_with_time
+      )
+
+    Logger.info("Appointment reminders sent",
+      organizer_sent: match?({:ok, _}, organizer_result),
+      attendee_sent: match?({:ok, _}, attendee_result)
+    )
+
+    {organizer_result, attendee_result}
+  end
+
+  @doc """
+  Sends a cancellation email to the attendee.
+  """
+  @spec send_cancellation_email_to_attendee(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_cancellation_email_to_attendee(attendee_email, appointment_details) do
+    Logger.info("Sending appointment cancellation to attendee")
+
+    result =
+      Delivery.deliver(
+        AppointmentCancellation.render(:attendee, attendee_email, appointment_details)
+      )
+
+    Logger.info("Cancellation email sent to attendee",
+      sent: match?({:ok, _}, result)
+    )
+
+    result
+  end
+
+  @doc """
+  Sends a cancellation email to the organizer.
+  """
+  @spec send_cancellation_email_to_organizer(
+          String.t(),
+          Tymeslot.Emails.EmailService.appointment_details()
+        ) ::
+          {:ok, any()} | {:error, any()}
+  def send_cancellation_email_to_organizer(organizer_email, appointment_details) do
+    Logger.info("Sending appointment cancellation to organizer")
+
+    result =
+      Delivery.deliver(
+        AppointmentCancellation.render(:organizer, organizer_email, appointment_details)
+      )
+
+    Logger.info("Cancellation email sent to organizer",
+      sent: match?({:ok, _}, result)
+    )
+
+    result
+  end
+end

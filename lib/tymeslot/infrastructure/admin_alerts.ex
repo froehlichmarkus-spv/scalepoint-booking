@@ -1,0 +1,222 @@
+defmodule Tymeslot.Infrastructure.AdminAlerts do
+  @moduledoc """
+  Behaviour and dispatcher for sending administrative alerts.
+
+  This allows the application to trigger alerts without knowing how they are
+  delivered. The default implementation (`EmailNotifier`) uses Core's standard
+  email delivery infrastructure: it logs every alert, and additionally sends an
+  email to the configured admin recipient when the feature is enabled.
+
+  ## Configuration
+
+  Alerts are gated behind two settings:
+
+    * `:tymeslot, :admin_alerts_enabled` — boolean feature flag (default `false`)
+    * `:tymeslot, :admin_alert_email` — recipient address (default `nil`)
+
+  Both must be set for emails to actually be delivered. Both can be controlled
+  at runtime via the `ADMIN_ALERTS_ENABLED` and `ADMIN_ALERT_EMAIL` environment
+  variables. SaaS deployments override `:admin_alerts_enabled` to `true` in
+  config and supply the email address via the deployment environment.
+
+  Self-hosters can enable this to receive error reports for their own debugging
+  or to share with the project — see `CONTRIBUTING.md` for details.
+  """
+
+  @typedoc """
+  An alert type registered in `Tymeslot.Infrastructure.AdminAlerts.AlertTypes`,
+  which holds each one's category and severity. An unregistered type is
+  still sent, as a generic warning, and logged as unregistered.
+  """
+  @type alert_type :: atom()
+
+  @callback send_alert(alert_type(), map()) :: :ok | {:error, any()}
+
+  alias Tymeslot.Infrastructure.AdminAlerts.AlertTypes
+  alias Tymeslot.Infrastructure.AdminAlerts.ReasonNormaliser
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+
+  require Logger
+
+  @doc """
+  Reports an administrative alert using the canonical call shape.
+
+  This is the preferred entrypoint for application code. Call sites supply:
+
+    * `:summary` (required) — a one-line description of what happened
+    * `:reason` (optional) — any term; normalised into `reason_code` /
+      `reason_message` flat keys before dispatch
+    * `:context` (optional) — a map of domain fields to include verbatim
+
+  The normalised reason and context are merged with `:summary` and passed to
+  `send_alert/2`. `send_alert/2` remains the low-level primitive for tests
+  and future non-standard callers; new production code should use
+  `report/2`.
+  """
+  @spec report(alert_type(), keyword()) :: :ok | {:error, term()}
+  def report(type, opts) when is_list(opts) do
+    summary = Keyword.fetch!(opts, :summary)
+    reason = Keyword.get(opts, :reason)
+    context = Keyword.get(opts, :context, %{})
+
+    payload =
+      context
+      |> Map.new()
+      |> maybe_put_reason(reason)
+      |> Map.put(:summary, summary)
+
+    send_alert(type, payload)
+  end
+
+  @doc """
+  Sends an administrative alert using the configured implementation.
+
+  Errors raised by the implementation are caught and logged so that alert
+  failures never propagate up and break the calling code path.
+  """
+  @spec send_alert(alert_type(), map()) :: :ok | {:error, any()}
+  def send_alert(type, metadata) do
+    if is_nil(AlertTypes.get(type)) do
+      # Formatted, not raw: a caller can pass any term here, and the
+      # unregistered ones are exactly the ones nothing has vetted.
+      Logger.warning("Admin alert type is not registered in AlertTypes",
+        alert_type: LogFormat.reason(type)
+      )
+    end
+
+    impl().send_alert(type, metadata)
+  rescue
+    exception ->
+      Logger.error("Failed to send admin alert",
+        type: type,
+        error: Exception.message(exception),
+        stacktrace: __STACKTRACE__
+      )
+
+      {:error, exception}
+  catch
+    kind, reason ->
+      Logger.error("Failed to send admin alert",
+        type: type,
+        error: {kind, reason},
+        stacktrace: __STACKTRACE__
+      )
+
+      {:error, {kind, reason}}
+  end
+
+  @doc """
+  Returns true if the given value is a syntactically plausible email address.
+
+  Used to gate admin alert email delivery — a malformed or empty address means
+  no email is sent, even if the feature flag is enabled.
+  """
+  @spec valid_email?(term()) :: boolean()
+  def valid_email?(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> Kernel.=~(~r/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+  end
+
+  def valid_email?(_other), do: false
+
+  @doc """
+  Checks the admin alert configuration and logs what would stop alerts
+  arriving. Never raises.
+
+    * Logs one `:error` when admin alerts are enabled but no valid recipient
+      is configured, so that every alert email would be dropped.
+    * Logs one `:warning` when the recipient is also the email from address or
+      the contact recipient: a mail provider suppressing that address would
+      then block the alert that reports the suppression.
+
+  Logs nothing otherwise. Called at boot, once DB-backed settings have been
+  applied, and after each admin settings save.
+  """
+  @spec check_config() :: :ok
+  def check_config do
+    recipient = recipient()
+
+    cond do
+      not enabled?() -> :ok
+      not valid_email?(recipient) -> log_missing_recipient()
+      true -> warn_if_shared(recipient)
+    end
+
+    :ok
+  end
+
+  @doc """
+  Logs, at `:error`, that admin alerts are enabled without a valid recipient,
+  naming both places the recipient can be set. `metadata` is passed through to
+  the log call.
+  """
+  @spec log_missing_recipient(keyword()) :: :ok
+  def log_missing_recipient(metadata \\ []) do
+    Logger.error(
+      "Admin alerts are enabled but no valid recipient is configured, so alert emails are " <>
+        "dropped: set the ADMIN_ALERT_EMAIL environment variable or the " <>
+        "\"Admin alert recipient\" admin setting",
+      metadata
+    )
+  end
+
+  defp warn_if_shared(recipient) do
+    case shared_roles(recipient) do
+      [] -> :ok
+      roles -> log_shared_recipient(roles)
+    end
+  end
+
+  defp log_shared_recipient(roles) do
+    Logger.warning(
+      "The admin alert recipient is also the #{Enum.join(roles, " and the ")}, so a mail " <>
+        "provider suppressing that address would also block the alert reporting it: set " <>
+        "ADMIN_ALERT_EMAIL to a mailbox on a different domain and mail provider"
+    )
+  end
+
+  # The other jobs the alert recipient's address does, as named in the warning.
+  defp shared_roles(recipient) do
+    email_config = Application.get_env(:tymeslot, :email, [])
+
+    [from_email: "email from address", contact_recipient: "contact recipient"]
+    |> Enum.filter(fn {key, _role} -> same_address?(recipient, email_config[key]) end)
+    |> Enum.map(fn {_key, role} -> role end)
+  end
+
+  defp same_address?(a, b) when is_binary(b), do: normalise_address(a) == normalise_address(b)
+  defp same_address?(_a, _b), do: false
+
+  defp normalise_address(address), do: address |> String.trim() |> String.downcase()
+
+  @doc """
+  Whether admin alert emails are switched on (`:admin_alerts_enabled`).
+  """
+  @spec enabled?() :: boolean()
+  def enabled?, do: Application.get_env(:tymeslot, :admin_alerts_enabled, false) == true
+
+  @doc """
+  The configured admin alert recipient (`:admin_alert_email`), unvalidated.
+  """
+  @spec recipient() :: term()
+  def recipient, do: Application.get_env(:tymeslot, :admin_alert_email)
+
+  defp impl do
+    Application.get_env(
+      :tymeslot,
+      :admin_alerts_impl,
+      Tymeslot.Infrastructure.AdminAlerts.EmailNotifier
+    )
+  end
+
+  defp maybe_put_reason(payload, nil), do: payload
+
+  defp maybe_put_reason(payload, reason) do
+    %{code: code, message: message} = ReasonNormaliser.normalise(reason)
+
+    payload
+    |> Map.put(:reason_code, code)
+    |> Map.put(:reason_message, message)
+  end
+end

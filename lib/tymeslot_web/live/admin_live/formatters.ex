@@ -1,0 +1,412 @@
+defmodule TymeslotWeb.AdminLive.Formatters do
+  @moduledoc """
+  Pure formatting helpers shared across the admin tabs.
+
+  Centralised here so labels and value rendering stay consistent between the
+  overview, settings, and users tabs.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Locales
+
+  @doc "Human-readable label for an `AppSettings` key."
+  @spec humanise(atom()) :: String.t()
+  def humanise(:registration_enabled), do: dgettext("dashboard_admin", "Registration enabled")
+  def humanise(:password_auth_enabled), do: dgettext("dashboard_admin", "Password authentication")
+  def humanise(:google_auth_enabled), do: dgettext("dashboard_admin", "Google login")
+  def humanise(:github_auth_enabled), do: dgettext("dashboard_admin", "GitHub login")
+  def humanise(:oauth_auth_enabled), do: dgettext("dashboard_admin", "Generic OIDC login")
+  def humanise(:recaptcha_signup_enabled), do: dgettext("dashboard_admin", "reCAPTCHA on signup")
+
+  def humanise(:recaptcha_booking_enabled),
+    do: dgettext("dashboard_admin", "reCAPTCHA on booking")
+
+  def humanise(:recaptcha_signup_min_score), do: dgettext("dashboard_admin", "Signup min score")
+  def humanise(:recaptcha_booking_min_score), do: dgettext("dashboard_admin", "Booking min score")
+  def humanise(:admin_alerts_enabled), do: dgettext("dashboard_admin", "Admin alerts")
+  def humanise(:admin_alert_email), do: dgettext("dashboard_admin", "Admin alert recipient")
+  def humanise(:meeting_payments_enabled), do: dgettext("dashboard_admin", "Meeting payments")
+  def humanise(:booking_analytics_enabled), do: dgettext("dashboard_admin", "Booking analytics")
+  def humanise(:email_brand_accent), do: dgettext("dashboard_admin", "Email accent colour")
+  def humanise(:email_brand_name), do: dgettext("dashboard_admin", "Email brand name")
+  def humanise(:email_logo_path), do: dgettext("dashboard_admin", "Email logo")
+
+  def humanise(:admin_default_locale),
+    do: dgettext("dashboard_admin", "Dashboard fallback language")
+
+  def humanise(:booking_default_locale),
+    do: dgettext("dashboard_admin", "Booking page fallback language")
+
+  def humanise(key),
+    do: key |> Atom.to_string() |> String.replace("_", " ") |> String.capitalize()
+
+  @doc """
+  Confirmation shown after an admin switches a boolean setting on or off.
+
+  Each key has its own whole sentence rather than a label slotted into an
+  "enabled"/"disabled" frame: a label such as "Registration enabled" reads
+  as nonsense inside that frame, and the participle cannot agree with the
+  label in languages that inflect. A boolean key without its own pair
+  raises, and the formatters test fails for it first.
+  """
+  @spec toggled(atom(), boolean()) :: String.t()
+  def toggled(:registration_enabled, true),
+    do: dgettext("dashboard_admin", "Registration turned on.")
+
+  def toggled(:registration_enabled, false),
+    do: dgettext("dashboard_admin", "Registration turned off.")
+
+  def toggled(:password_auth_enabled, true),
+    do: dgettext("dashboard_admin", "Password authentication turned on.")
+
+  def toggled(:password_auth_enabled, false),
+    do: dgettext("dashboard_admin", "Password authentication turned off.")
+
+  def toggled(:google_auth_enabled, true),
+    do: dgettext("dashboard_admin", "Google login turned on.")
+
+  def toggled(:google_auth_enabled, false),
+    do: dgettext("dashboard_admin", "Google login turned off.")
+
+  def toggled(:github_auth_enabled, true),
+    do: dgettext("dashboard_admin", "GitHub login turned on.")
+
+  def toggled(:github_auth_enabled, false),
+    do: dgettext("dashboard_admin", "GitHub login turned off.")
+
+  def toggled(:oauth_auth_enabled, true),
+    do: dgettext("dashboard_admin", "Generic OIDC login turned on.")
+
+  def toggled(:oauth_auth_enabled, false),
+    do: dgettext("dashboard_admin", "Generic OIDC login turned off.")
+
+  def toggled(:recaptcha_signup_enabled, true),
+    do: dgettext("dashboard_admin", "reCAPTCHA on signup turned on.")
+
+  def toggled(:recaptcha_signup_enabled, false),
+    do: dgettext("dashboard_admin", "reCAPTCHA on signup turned off.")
+
+  def toggled(:recaptcha_booking_enabled, true),
+    do: dgettext("dashboard_admin", "reCAPTCHA on booking turned on.")
+
+  def toggled(:recaptcha_booking_enabled, false),
+    do: dgettext("dashboard_admin", "reCAPTCHA on booking turned off.")
+
+  def toggled(:admin_alerts_enabled, true),
+    do: dgettext("dashboard_admin", "Admin alerts turned on.")
+
+  def toggled(:admin_alerts_enabled, false),
+    do: dgettext("dashboard_admin", "Admin alerts turned off.")
+
+  def toggled(:meeting_payments_enabled, true),
+    do: dgettext("dashboard_admin", "Meeting payments turned on.")
+
+  def toggled(:meeting_payments_enabled, false),
+    do: dgettext("dashboard_admin", "Meeting payments turned off.")
+
+  def toggled(:booking_analytics_enabled, true),
+    do: dgettext("dashboard_admin", "Booking analytics turned on.")
+
+  def toggled(:booking_analytics_enabled, false),
+    do: dgettext("dashboard_admin", "Booking analytics turned off.")
+
+  @doc """
+  Short, human-readable description of what a setting controls. Shown
+  beneath the setting name on the admin settings page.
+
+  The recommended value is rendered separately by `recommended/1` so the
+  UI can give it its own visual treatment.
+  """
+  @spec describe(atom()) :: String.t()
+  def describe(:registration_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Allow new users to sign up via the public registration page. Disable for a private install where admins create accounts manually."
+    )
+  end
+
+  def describe(:password_auth_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Allow log-in with email and password. When disabled, users can only authenticate through configured OAuth providers."
+    )
+  end
+
+  def describe(:google_auth_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Show the \"Continue with Google\" button on login and signup. Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to be set in the environment."
+    )
+  end
+
+  def describe(:github_auth_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Show the \"Continue with GitHub\" button on login and signup. Requires GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to be set in the environment."
+    )
+  end
+
+  def describe(:oauth_auth_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Enable generic OAuth 2.0 / OIDC single sign-on (Keycloak, Authentik, Lemonldap, etc.). Requires the OAUTH_* environment variables to be set."
+    )
+  end
+
+  def describe(:recaptcha_signup_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Require a passing reCAPTCHA v3 score on the public signup form. Requires RECAPTCHA_SITE_KEY and RECAPTCHA_SECRET_KEY to be set in the environment - when keys are missing the toggle is honoured but verification is silently skipped."
+    )
+  end
+
+  def describe(:recaptcha_booking_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Require a passing reCAPTCHA v3 score on the public booking form. Requires RECAPTCHA_SITE_KEY and RECAPTCHA_SECRET_KEY to be set in the environment - when keys are missing the toggle is honoured but verification is silently skipped."
+    )
+  end
+
+  def describe(:recaptcha_signup_min_score) do
+    dgettext(
+      "dashboard_admin",
+      "Minimum reCAPTCHA v3 score (0.0–1.0) required to accept a signup. Lower values are more permissive; 0.3 is the default and matches Google's recommendation for forms with low abuse risk."
+    )
+  end
+
+  def describe(:recaptcha_booking_min_score) do
+    dgettext(
+      "dashboard_admin",
+      "Minimum reCAPTCHA v3 score (0.0–1.0) required to accept a booking. Lower values are more permissive; 0.3 is the default and matches Google's recommendation for forms with low abuse risk."
+    )
+  end
+
+  def describe(:admin_alerts_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Email operational alerts (webhook failures, integration health issues, background job errors) to the admin alert recipient. Requires a recipient address to be set below."
+    )
+  end
+
+  def describe(:admin_alert_email) do
+    dgettext(
+      "dashboard_admin",
+      "Email address that receives admin alerts when the toggle above is enabled. Leave blank to send no alert emails."
+    )
+  end
+
+  def describe(:meeting_payments_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps the scheduler's access to their Stripe account until it is set."
+    )
+  end
+
+  def describe(:booking_analytics_enabled) do
+    dgettext(
+      "dashboard_admin",
+      "Collect privacy-friendly analytics for booking pages on this instance: page views, traffic source (UTM/referrer), and conversion. Counts unique visitors with a daily-rotating, cookieless fingerprint - no raw IP is stored. Off by default; review your privacy policy before enabling."
+    )
+  end
+
+  def describe(:email_brand_accent) do
+    dgettext(
+      "dashboard_admin",
+      "Accent colour used across transactional emails: buttons, links, the confirmation banner, and badge backgrounds. The darker and lighter shades of the family are derived from it. Amber and red are not affected - they signal \"needs attention\" and \"cancelled\", and recolouring them would make a cancellation read as a confirmation. Leave blank for the stock turquoise."
+    )
+  end
+
+  def describe(:email_brand_name) do
+    dgettext(
+      "dashboard_admin",
+      "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
+    )
+  end
+
+  def describe(:email_logo_path) do
+    dgettext(
+      "dashboard_admin",
+      "Logo shown at the top of every transactional email. Converted to a PNG in your browser before upload and attached inline, so it renders even in clients that block remote images. SVG, PNG, JPEG, and WebP sources are all accepted."
+    )
+  end
+
+  def describe(:admin_default_locale) do
+    dgettext(
+      "dashboard_admin",
+      "Language the dashboard, account pages, and account emails fall back to. Detection still comes first: a signed-in user's own language setting and the browser's Accept-Language header both win, and this is only what resolves when neither offers a language this install supports. Left unset it resolves to %{language}, this install's configured default.",
+      language: default_locale_name()
+    )
+  end
+
+  def describe(:booking_default_locale) do
+    dgettext(
+      "dashboard_admin",
+      "Language public booking pages fall back to, along with booking emails and calendar invites for an attendee whose language is unknown. Detection still comes first: a visitor whose browser asks for a language this install supports gets that language regardless of this setting. Left unset it resolves to %{language}, this install's configured default.",
+      language: default_locale_name()
+    )
+  end
+
+  def describe(_other), do: ""
+
+  @doc """
+  The recommended value for a setting, or `nil` if there is no recommendation.
+  Rendered as a separate chip beneath the description.
+  """
+  @spec recommended(atom()) :: term() | nil
+  def recommended(:registration_enabled), do: true
+  def recommended(:password_auth_enabled), do: true
+  def recommended(_other), do: nil
+
+  @doc "Human-readable label for a recommended boolean value."
+  @spec recommended_label(boolean()) :: String.t()
+  def recommended_label(true), do: dgettext("dashboard_admin", "Enabled")
+  def recommended_label(false), do: dgettext("dashboard_admin", "Disabled")
+
+  @doc """
+  Label for the "no override" option: the locale a cleared setting actually
+  falls back to, named rather than described.
+
+  Not called "Automatic", because detection runs either way - that word would
+  describe the whole resolution chain rather than this one option in it. And
+  not left as a bare "instance default": that value comes from `:locales` in
+  the application config, so it is neither visible nor changeable from this
+  page, and naming it is the only way the option means anything to an admin.
+  """
+  @spec unset_locale_label() :: String.t()
+  def unset_locale_label do
+    dgettext("dashboard_admin", "Install default (%{language})", language: default_locale_name())
+  end
+
+  defp default_locale_name do
+    code = Locales.default_locale()
+
+    case Enum.find(Locales.supported(), &(&1.code == code)) do
+      %{name: name} -> name
+      nil -> code
+    end
+  end
+
+  @doc """
+  Categorises a setting key so the UI knows which control to render.
+
+    * `:boolean` — two-state Enabled/Disabled toggle (existing pattern).
+    * `:score` — numeric input bounded 0.0–1.0 (reCAPTCHA thresholds).
+    * `:email` — text input with email validation.
+    * `:colour` — hex colour input with a native swatch picker.
+    * `:text` — free-text input.
+    * `:logo` — image upload with a preview and a remove action.
+    * `:locale` — select over the supported languages, with a blank option
+      meaning "no override".
+  """
+  @spec kind(atom()) :: :boolean | :score | :email | :colour | :text | :logo | :locale
+  def kind(:recaptcha_signup_min_score), do: :score
+  def kind(:recaptcha_booking_min_score), do: :score
+  def kind(:admin_alert_email), do: :email
+  def kind(:email_brand_accent), do: :colour
+  def kind(:email_brand_name), do: :text
+  def kind(:email_logo_path), do: :logo
+  def kind(:admin_default_locale), do: :locale
+  def kind(:booking_default_locale), do: :locale
+  def kind(_other), do: :boolean
+
+  @doc """
+  Section heading a setting row belongs under. Used to group the settings
+  page into Authentication / reCAPTCHA / Admin alerts blocks.
+  """
+  @spec section(atom()) ::
+          :authentication
+          | :recaptcha
+          | :payments
+          | :analytics
+          | :admin_alerts
+          | :email_branding
+          | :localisation
+  def section(:registration_enabled), do: :authentication
+  def section(:password_auth_enabled), do: :authentication
+  def section(:google_auth_enabled), do: :authentication
+  def section(:github_auth_enabled), do: :authentication
+  def section(:oauth_auth_enabled), do: :authentication
+  def section(:recaptcha_signup_enabled), do: :recaptcha
+  def section(:recaptcha_booking_enabled), do: :recaptcha
+  def section(:recaptcha_signup_min_score), do: :recaptcha
+  def section(:recaptcha_booking_min_score), do: :recaptcha
+  def section(:meeting_payments_enabled), do: :payments
+  def section(:booking_analytics_enabled), do: :analytics
+  def section(:admin_alerts_enabled), do: :admin_alerts
+  def section(:admin_alert_email), do: :admin_alerts
+  def section(:email_brand_accent), do: :email_branding
+  def section(:email_brand_name), do: :email_branding
+  def section(:email_logo_path), do: :email_branding
+  def section(:admin_default_locale), do: :localisation
+  def section(:booking_default_locale), do: :localisation
+
+  @doc "Human-readable label for a section."
+  @spec section_label(atom()) :: String.t()
+  def section_label(:authentication), do: dgettext("dashboard_admin", "Authentication")
+  def section_label(:recaptcha), do: dgettext("dashboard_admin", "reCAPTCHA")
+  def section_label(:payments), do: dgettext("dashboard_admin", "Payments")
+  def section_label(:analytics), do: dgettext("dashboard_admin", "Analytics")
+  def section_label(:admin_alerts), do: dgettext("dashboard_admin", "Admin alerts")
+  def section_label(:email_branding), do: dgettext("dashboard_admin", "Email branding")
+  def section_label(:localisation), do: dgettext("dashboard_admin", "Localisation")
+
+  @doc """
+  When a setting is only meaningful while another setting is enabled, this
+  returns the parent setting key — otherwise `nil`. The UI greys out and
+  disables the dependent control when the parent's effective value is `false`.
+
+  Example: `admin_alert_email` is meaningless while `admin_alerts_enabled`
+  is off, so the recipient input is disabled until alerts are turned on.
+  """
+  @spec depends_on(atom()) :: atom() | nil
+  def depends_on(:admin_alert_email), do: :admin_alerts_enabled
+  def depends_on(_other), do: nil
+
+  @doc """
+  Explanation shown to an admin for why a particular setting state is
+  currently locked. Returns `nil` when the transition is not blocked. The
+  string is used both as a tooltip on the disabled toggle and as the flash
+  message when a race-conditioned write reaches `AppSettings.update/1`.
+  """
+  @spec lock_reason(atom(), term()) :: String.t() | nil
+  def lock_reason(:password_auth_enabled, false) do
+    dgettext(
+      "dashboard_admin",
+      "Cannot disable password authentication while at least one admin signs in with email and password - doing so would lock them out. Demote those admins or have them switch to an OAuth login first."
+    )
+  end
+
+  def lock_reason(:google_auth_enabled, false), do: sso_lock_reason()
+  def lock_reason(:github_auth_enabled, false), do: sso_lock_reason()
+  def lock_reason(:oauth_auth_enabled, false), do: sso_lock_reason()
+
+  def lock_reason(:meeting_payments_enabled, true) do
+    dgettext(
+      "dashboard_admin",
+      "Set STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET in the environment to enable meeting payments. Also set STRIPE_CONNECT_CLIENT_ID, or no new host can connect a Stripe account."
+    )
+  end
+
+  def lock_reason(_key, _state), do: nil
+
+  @doc """
+  Why a setting fixed by the environment variable `env_var` cannot be changed
+  from the admin page.
+  """
+  @spec pinned_reason(String.t()) :: String.t()
+  def pinned_reason(env_var) do
+    dgettext(
+      "dashboard_admin",
+      "Set by the %{variable} environment variable. To change it here, remove the variable and restart Tymeslot.",
+      variable: env_var
+    )
+  end
+
+  defp sso_lock_reason do
+    dgettext(
+      "dashboard_admin",
+      "Cannot disable this login provider while it is the only working sign-in path for admins. Enable password authentication or another credentialed SSO provider first."
+    )
+  end
+end

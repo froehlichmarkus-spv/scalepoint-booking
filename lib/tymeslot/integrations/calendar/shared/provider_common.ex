@@ -1,0 +1,342 @@
+defmodule Tymeslot.Integrations.Calendar.Shared.ProviderCommon do
+  @moduledoc """
+  Utilities shared across calendar provider implementations.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Integrations.Calendar.CalDAV.Family
+  alias Tymeslot.Integrations.Calendar.CalendarEntry
+  alias Tymeslot.Integrations.Calendar.CalendarIntegrationSchema
+  alias Tymeslot.Integrations.Calendar.ProviderConfig
+  alias Tymeslot.Integrations.Calendar.Providers.CaldavCommon
+  alias Tymeslot.Integrations.Calendar.Runtime.CalendarPathResolver
+  alias Tymeslot.Integrations.Calendar.Selection
+  alias Tymeslot.Integrations.Calendar.Shared.ErrorMessages
+  alias Tymeslot.Integrations.Shared.ReauthHandling
+  alias Tymeslot.Security.SsrfGuard
+  alias Tymeslot.Security.UrlValidation
+
+  @doc """
+  The reason a connection test reports when an OAuth provider refused the
+  stored credentials, given the calendar client's error message.
+
+  A revoked or expired grant becomes `:token_expired`, anything else
+  `:unauthorized`. Both are permanent credential failures, but only the first
+  tells the owner to look in their provider account. The message text does not
+  travel further, so the distinction has to survive as an atom: the health
+  check hands this reason to `ReauthHandling.rejection_cause/1`, which reads
+  `:token_expired` as an expired grant and any other atom as rejected
+  credentials.
+  """
+  @spec unauthorized_reason(String.t()) :: :token_expired | :unauthorized
+  def unauthorized_reason(message) do
+    case ReauthHandling.rejection_cause(message) do
+      :expired_grant -> :token_expired
+      :rejected_credentials -> :unauthorized
+    end
+  end
+
+  @doc """
+  Validates a calendar server URL for format and SSRF safety.
+
+  Beyond requiring a well-formed http/https URL with a host, this rejects
+  plain HTTP for public hosts and any URL pointing at a private, loopback, or
+  link-local address — matching the persistence posture in
+  `CalendarIntegrationSchema`. An authenticated user must not be able to probe
+  internal hosts via a provider's connection/discovery test any more than they
+  can save such a URL.
+
+  The private-IP block can be lifted for trusted in-process callers (e.g.
+  integration tests against a local server) by passing `allow_private_ips: true`
+  in `opts`, or for the whole deployment by the operator's
+  `ALLOW_PRIVATE_IPS_FOR_CALENDAR` opt-out, read via
+  `Tymeslot.Security.SsrfGuard.allow_private_for_calendar?/0`. The production default is
+  `false` in both cases. Lifting it also lets plain HTTP reach a server on an
+  internal name (a single label such as a Docker service name, or a name under
+  `.local`, `.lan`, `.internal` or `.home.arpa`).
+  """
+  @spec validate_url(String.t(), keyword()) :: :ok | {:error, String.t()}
+  def validate_url(url, opts \\ []) do
+    invalid_message =
+      Keyword.get(
+        opts,
+        :message,
+        dgettext("integrations_calendar", "Invalid URL format")
+      )
+
+    allow_private = Keyword.get(opts, :allow_private_ips, SsrfGuard.allow_private_for_calendar?())
+
+    UrlValidation.validate_http_url(url,
+      invalid_message: invalid_message,
+      disallowed_protocol_error: invalid_message,
+      enforce_https_for_public: true,
+      internal_names_local: allow_private,
+      block_private_ips: not allow_private,
+      https_error_message:
+        dgettext("integrations_calendar", "Use HTTPS for non-local calendar servers"),
+      private_ip_error_message:
+        dgettext(
+          "integrations_calendar",
+          "Private or local network addresses are not allowed"
+        )
+    )
+  end
+
+  @doc """
+  Validates the server URL submitted for a CalDAV-family provider.
+
+  A provider with a fixed address in `CalDAV.Family` accepts that address
+  and nothing else, so the lock holds wherever a configuration is submitted,
+  not only in the form that renders the field greyed out. Every other member
+  goes through `validate_url/2`, with `invalid_message` as its wording.
+
+  Only submitted configurations are validated: a client built for a stored
+  integration skips validation, so a row saved before an address was fixed
+  keeps syncing until it is reconnected.
+  """
+  @spec validate_caldav_url(Family.member(), term(), String.t()) :: :ok | {:error, String.t()}
+  def validate_caldav_url(member, url, invalid_message) do
+    case Family.row!(member).fixed_url do
+      nil -> validate_url(url, message: invalid_message)
+      %{url: fixed} -> if same_url?(url, fixed), do: :ok, else: {:error, invalid_message}
+    end
+  end
+
+  defp same_url?(url, fixed) when is_binary(url),
+    do: url |> String.trim() |> String.trim_trailing("/") == fixed
+
+  defp same_url?(_url, _fixed), do: false
+
+  @doc """
+  Helper for providers to format calendars returned from their API.
+
+  `mapper` normalises each raw provider calendar into a `CalendarEntry`
+  struct, so this always returns the canonical discovery shape.
+  """
+  @spec discover_calendars(
+          CalendarIntegrationSchema.t(),
+          (CalendarIntegrationSchema.t() -> {:ok, [map()]} | {:error, term()}),
+          (map() -> CalendarEntry.t())
+        ) ::
+          {:ok, [CalendarEntry.t()]} | {:error, term()}
+  def discover_calendars(integration, list_fun, mapper) do
+    case list_fun.(integration) do
+      {:ok, calendars} -> {:ok, Enum.map(calendars, mapper)}
+      {:error, reason, _detail} -> {:error, reason}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  @doc """
+  Tests connection to a CalDAV server with provider-specific error messages.
+
+  This helper encapsulates the common pattern used by CalDAV-based providers
+  (Radicale, Zimbra, Nextcloud, etc.) for testing connections.
+
+  Refused credentials are the one failure reported as a reason rather than as
+  copy: `{:error, :unauthorized}`, exactly as the generic CalDAV provider
+  reports it. The scheduled health probe classifies what comes back
+  (`HealthCheck.ErrorAnalysis.classify_error/1`), and it recognises the atom as
+  a permanent failure but not a sentence about app-specific passwords, which
+  falls through its string branch and is recorded as transient. That leaves
+  `consecutive_hard_failures` at zero for ever and puts the auto-pause fast
+  trigger out of reach, so the distinction has to survive this far as an atom.
+  The sentence the account owner reads is written once in
+  `Shared.ErrorHandler.sanitize_error_message/2`, on the paths that show one.
+
+  ## Options
+    * `:success_message` - Message to return on successful connection
+    * `:not_found_message` - Message to return when server not found
+    * `:error_formatter` - Function to format other errors (receives reason, returns string)
+  """
+  @spec test_caldav_provider_connection(
+          %{
+            required(:base_url) => String.t(),
+            required(:username) => String.t() | nil,
+            required(:password) => String.t() | nil,
+            required(:calendar_paths) => [String.t()] | nil,
+            required(:provider) => atom()
+          },
+          keyword()
+        ) ::
+          {:ok, String.t()} | {:error, term()}
+  def test_caldav_provider_connection(integration, opts) do
+    success_msg = Keyword.fetch!(opts, :success_message)
+    not_found_msg = Keyword.fetch!(opts, :not_found_message)
+    error_formatter = Keyword.fetch!(opts, :error_formatter)
+
+    client =
+      CaldavCommon.build_client(
+        %{
+          base_url: integration.base_url,
+          username: integration.username,
+          password: integration.password,
+          calendar_paths: integration.calendar_paths || []
+        },
+        provider: normalize_provider(integration.provider)
+      )
+
+    case CaldavCommon.test_connection(client) do
+      {:ok, _response} ->
+        {:ok, success_msg}
+
+      {:error, :unauthorized} = refused ->
+        refused
+
+      {:error, :forbidden} ->
+        {:error, error_formatter.(:forbidden)}
+
+      {:error, :not_found} ->
+        {:error, not_found_msg}
+
+      {:error, reason} ->
+        {:error, format_reason(reason, client.provider, error_formatter)}
+    end
+  end
+
+  # A provider's `error_formatter` is a fallback: it knows the brand name, not
+  # the failure. Where `ErrorMessages` has copy written for this exact reason,
+  # that copy wins. The formatters flatten an unrecognised reason either to
+  # "an unexpected error occurred" or to `inspect(reason)` rendered into the
+  # flash, and both discard advice that was written to be shown here.
+  #
+  # Doing this once, where the reason meets the formatter, is what keeps the
+  # two formatter shapes from having to agree: a reason given specific copy
+  # reaches every CalDAV provider's connection test, whichever shape it uses.
+  defp format_reason(reason, provider, error_formatter) do
+    ErrorMessages.specific_message(reason, provider) || error_formatter.(reason)
+  end
+
+  @doc """
+  Common implementation of `discover_calendars_for_integration/1` for
+  CalDAV-based providers that store encrypted credentials.
+
+  Decrypts the integration's username/password, builds a config map, and
+  calls `provider_module.new/1` + `provider_module.discover_calendars/1`.
+  Used by Radicale, Zimbra, MailboxOrg, Apple, and Baikal — providers whose
+  discovery shim is otherwise identical apart from the module being
+  dispatched to.
+
+  Pure I/O — rate limiting and caching this call is the caller's job
+  (`Tymeslot.Integrations.Calendar.Discovery`, the single choke point that
+  wraps every CalDAV provider's `discover_calendars_for_integration/1`),
+  not this shim's.
+  """
+  @spec caldav_discover_from_integration(module(), map()) ::
+          {:ok, [CalendarEntry.t()]} | {:error, term()}
+  def caldav_discover_from_integration(provider_module, integration) do
+    decrypted = CalendarIntegrationSchema.decrypt_credentials(integration)
+
+    config = %{
+      base_url: integration.base_url,
+      username: decrypted.username,
+      password: decrypted.password,
+      calendar_paths: integration.calendar_paths
+    }
+
+    provider_module.discover_calendars(provider_module.new(config))
+  end
+
+  @doc """
+  Returns one CalDAV client config per selected calendar path on the
+  integration. Drives the multi-calendar fetch path in `ClientManager`,
+  availability included.
+
+  Honors `integration.calendar_list` selection when present, falling back to
+  `integration.calendar_paths` (the legacy path-only representation).
+  A read-only calendar the organiser selected gets a client too: it cannot
+  take a booking, but its events still block time, as Google's and a
+  subscribed feed's do. Every config carries only the writable paths as
+  `:writable_calendar_paths`, so a write never targets a read-only one.
+  """
+  @spec caldav_build_client_configs(map()) :: [map()]
+  def caldav_build_client_configs(integration) do
+    writable_paths = caldav_writable_paths(integration)
+
+    integration
+    |> caldav_selected_paths()
+    |> Enum.map(&caldav_path_config(integration, &1, writable_paths))
+  end
+
+  @doc """
+  The selected collections of a CalDAV-family integration shared with the
+  account as busy times only (`CalendarEntry.free_busy_only`), which a read
+  reaches through the free-busy-query REPORT and a sync skips.
+  """
+  @spec caldav_free_busy_paths(map()) :: [String.t()]
+  def caldav_free_busy_paths(%{calendar_list: list}) when is_list(list) do
+    for entry <- Selection.selected_calendars(list),
+        entry.free_busy_only,
+        path = entry.path || entry.id,
+        is_binary(path),
+        do: path
+  end
+
+  # Predating calendar selection, nothing is known to be free/busy only.
+  def caldav_free_busy_paths(_integration), do: []
+
+  @doc """
+  Returns a single CalDAV client config for the booking flow, scoped to the
+  path resolved by `CalendarPathResolver`. Returns `nil` when no path is
+  resolvable for the integration.
+  """
+  @spec caldav_build_booking_client_config(map()) :: map() | nil
+  def caldav_build_booking_client_config(integration) do
+    case CalendarPathResolver.resolve(integration) do
+      nil ->
+        nil
+
+      path ->
+        caldav_path_config(integration, path, caldav_writable_paths(integration))
+    end
+  end
+
+  @doc """
+  The collections of a CalDAV-family integration a write may be aimed at:
+  its selected calendars that are not read-only, or its stored paths when it
+  predates calendar selection.
+  """
+  @spec caldav_writable_paths(map()) :: [String.t()]
+  def caldav_writable_paths(integration),
+    do: caldav_paths(integration, &Selection.writable_calendars/1)
+
+  # Every selected collection, read-only ones included, or the stored paths
+  # when the integration predates calendar selection.
+  defp caldav_selected_paths(integration),
+    do: caldav_paths(integration, &Selection.selected_calendars/1)
+
+  defp caldav_paths(integration, pick) do
+    if integration.calendar_list && integration.calendar_list != [] do
+      integration.calendar_list
+      |> pick.()
+      |> Enum.map(&(&1.path || &1.id))
+      |> Enum.reject(&is_nil/1)
+    else
+      integration.calendar_paths || []
+    end
+  end
+
+  # Every client of an integration carries the same writable paths, the booking
+  # client and the per-calendar read clients alike. `EventOperations` merges
+  # the two sets and de-duplicates them by value, so a booking client that
+  # alone knew its writable paths would no longer match the read client of the
+  # same collection, and that collection would be visited twice.
+  defp caldav_path_config(integration, path, writable_paths) do
+    %{
+      base_url: integration.base_url,
+      username: integration.username,
+      password: integration.password,
+      calendar_path: path,
+      calendar_paths: [path],
+      writable_calendar_paths: writable_paths,
+      free_busy_paths: Enum.filter(caldav_free_busy_paths(integration), &(&1 == path)),
+      calendar_integration_id: Map.get(integration, :id)
+    }
+  end
+
+  defp normalize_provider(provider) do
+    {:ok, provider} = ProviderConfig.parse_known(provider)
+    provider
+  end
+end

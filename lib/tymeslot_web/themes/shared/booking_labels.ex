@@ -1,0 +1,73 @@
+defmodule TymeslotWeb.Themes.Shared.BookingLabels do
+  @moduledoc """
+  Labels shared by every theme's booking form.
+
+  Every theme asks the same two questions of the same data (what does the
+  submit button say, and what do we call the organiser). They live here, with
+  only the label for an ungated meeting type left to each theme, because the
+  approval branches of the submit label's `cond` are where private copies
+  drift: a wording fix applied to one theme would silently leave the other
+  behind.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.Profiles
+  alias Tymeslot.Themes.Catalog
+  alias TymeslotWeb.Themes.Shared.Voice
+
+  @doc """
+  The submit button's label, in the voice of the theme with key `theme_key`
+  where it has one.
+
+  A gated meeting type submits a request rather than a booking, and says so, so
+  that nobody presses a button reading "Book meeting" and receives a held
+  request instead. `ungated_label` is the theme's own wording for the ordinary
+  case ("Book meeting", "Submit"), passed in already translated so each theme
+  keeps its own literal at its own call site for extraction; a voice wording
+  `:submit` replaces it. A paid meeting type names the payment that follows
+  (`:submit_paid`, "Continue to payment"), unless it is a request or a
+  reschedule.
+  """
+  @spec submit_label(boolean(), term(), String.t(), Catalog.theme_key() | nil) :: String.t()
+  def submit_label(is_rescheduling, meeting_type, ungated_label, theme_key \\ nil) do
+    voice = Voice.of(theme_key)
+
+    cond do
+      Approval.required?(meeting_type) and is_rescheduling ->
+        Voice.line(voice, :submit_request_reschedule, %{}, fn ->
+          dgettext("booking", "Request new time")
+        end)
+
+      Approval.required?(meeting_type) ->
+        Voice.line(voice, :submit_request, %{}, fn -> dgettext("booking", "Request meeting") end)
+
+      is_rescheduling ->
+        Voice.line(voice, :submit_reschedule, %{}, fn ->
+          dgettext("booking", "Reschedule Meeting")
+        end)
+
+      paid?(meeting_type) ->
+        Voice.line(voice, :submit_paid, %{}, fn -> dgettext("booking", "Continue to payment") end)
+
+      true ->
+        Voice.line(voice, :submit, %{}, fn -> ungated_label end)
+    end
+  end
+
+  @doc """
+  The organiser's display name, falling back to the username the page was
+  reached by when the profile carries no name.
+  """
+  @spec organizer_display_name(term(), String.t() | nil) :: String.t() | nil
+  def organizer_display_name(organizer_profile, username_context) do
+    Profiles.display_name(organizer_profile) || username_context
+  end
+
+  # The visitor goes on to a checkout after this submit. A request to an
+  # organiser who approves each booking says it is a request first, and a
+  # move of a booked meeting charges nothing again.
+  defp paid?(%{payment_required: true}), do: true
+  defp paid?(_meeting_type), do: false
+end

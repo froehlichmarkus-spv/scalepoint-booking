@@ -1,0 +1,286 @@
+defmodule Tymeslot.Webhooks.PayloadBuilder do
+  @moduledoc """
+  Builds standardized webhook payloads for different event types.
+
+  Ensures consistent payload structure across all webhook deliveries,
+  making it easy for users to parse in their automation tools (n8n, Zapier, etc.).
+  """
+
+  alias Tymeslot.BookingPages.BookingPageSchema
+  alias Tymeslot.Bookings.MeetingLinks
+  alias Tymeslot.CustomFields.AnswerRenderer
+  alias Tymeslot.Meetings.Approval
+  alias Tymeslot.Meetings.HostManaged
+  alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Profiles.ProfileSchema
+  alias Tymeslot.Utils.UrlBuilder
+
+  @doc """
+  Builds a webhook payload for a meeting event.
+
+  `series` is the event's `series` object
+  (`Tymeslot.BookingSeries.Automation`), shipped as `data.series`: the whole
+  series on the series events (`meeting.series_created`,
+  `meeting.series_cancelled`, `meeting.series_requested`,
+  `meeting.series_declined`, `meeting.series_request_expired`, whose
+  `data.meeting` is the first session they concern), the session's place in its
+  series (`id`, `position`, `count`) on any other event about a session of
+  one, and `null` for a booking outside any series.
+  """
+  @spec build_payload(String.t(), MeetingSchema.t(), String.t(), map() | nil) :: %{
+          required(:event) => String.t(),
+          required(:timestamp) => String.t(),
+          required(:webhook_id) => String.t(),
+          required(:data) => %{required(:meeting) => term(), required(:series) => map() | nil}
+        }
+  def build_payload(event_type, meeting, webhook_id, series \\ nil) do
+    %{
+      event: event_type,
+      timestamp: DateTime.to_iso8601(DateTime.utc_now()),
+      webhook_id: webhook_id,
+      data: %{
+        meeting: build_meeting_data(meeting),
+        series: series
+      }
+    }
+  end
+
+  @doc """
+  Builds a test payload for connection testing.
+  """
+  @spec build_test_payload() :: %{
+          required(:event) => String.t(),
+          required(:timestamp) => String.t(),
+          required(:webhook_id) => String.t(),
+          required(:data) => %{required(:message) => String.t(), required(:test) => boolean()}
+        }
+  def build_test_payload do
+    %{
+      event: "webhook.test",
+      timestamp: DateTime.to_iso8601(DateTime.utc_now()),
+      webhook_id: "test",
+      data: %{
+        message:
+          "This is a test webhook from Tymeslot. If you receive this, your webhook is configured correctly!",
+        test: true
+      }
+    }
+  end
+
+  # Private functions
+
+  defp build_meeting_data(%MeetingSchema{} = meeting) do
+    %{
+      id: meeting.id,
+      uid: meeting.uid,
+      title: meeting.title,
+      summary: meeting.summary,
+      description: meeting.description,
+      start_time: format_datetime(meeting.start_time),
+      end_time: format_datetime(meeting.end_time),
+      duration: meeting.duration,
+      status: Atom.to_string(meeting.status),
+      meeting_type: meeting.meeting_type,
+      location: meeting.location,
+      # What `location` names: "video", "in_person", "phone" or "custom".
+      location_kind: meeting.location_kind && Atom.to_string(meeting.location_kind),
+      # Only the host moves or cancels such a meeting, and its `attendee` is
+      # the first of its guests rather than someone who booked it.
+      managed_by_host: HostManaged.managed?(meeting),
+      organizer: build_organizer_data(meeting),
+      attendee: build_attendee_data(meeting),
+      guests: build_guests_data(meeting),
+      urls: build_urls(meeting),
+      booking_page: build_booking_page_data(meeting),
+      video: build_video_data(meeting),
+      created_at: format_datetime(meeting.inserted_at),
+      updated_at: format_datetime(meeting.updated_at)
+    }
+    |> maybe_add_approval_data(meeting)
+    |> maybe_add_cancellation_data(meeting)
+    |> maybe_add_seat_data(meeting)
+  end
+
+  defp build_organizer_data(meeting) do
+    %{
+      name: meeting.organizer_name,
+      email: meeting.organizer_email,
+      title: meeting.organizer_title,
+      user_id: meeting.organizer_user_id,
+      note: meeting.organizer_note
+    }
+  end
+
+  defp build_attendee_data(meeting) do
+    %{
+      name: meeting.attendee_name,
+      email: meeting.attendee_email,
+      phone: meeting.attendee_phone,
+      company: meeting.attendee_company,
+      timezone: meeting.attendee_timezone,
+      message: meeting.attendee_message,
+      custom_field_answers: build_custom_field_answers(meeting)
+    }
+  end
+
+  # Every question the meeting type asked, from the booking's snapshot, with
+  # the raw answer (`nil` where the booker left it blank) for routing on, and
+  # its rendered form for display.
+  defp build_custom_field_answers(meeting) do
+    answers = meeting.custom_field_answers || %{}
+
+    Enum.map(meeting.custom_fields_snapshot || [], fn field ->
+      value = answers[field["id"]]
+
+      %{
+        id: field["id"],
+        label: field["label"],
+        type: field["type"],
+        value: value,
+        display: AnswerRenderer.render(field, value)
+      }
+    end)
+  end
+
+  # Guests are read from the loaded association rather than fetched here, so
+  # this module stays a pure function of the struct it is handed — which is how
+  # its tests build meetings, without a database. `WebhookWorker` loads them.
+  # A meeting arriving without the association yields an empty list rather than
+  # a crash, and the worker's own test covers the path that must not be empty.
+  defp build_guests_data(%MeetingSchema{guests: guests}) when is_list(guests) do
+    Enum.map(guests, fn guest ->
+      %{
+        email: guest.email,
+        name: guest.name,
+        status: Atom.to_string(guest.status),
+        responded_at: format_datetime(guest.responded_at)
+      }
+    end)
+  end
+
+  defp build_guests_data(_meeting), do: []
+
+  # The booking page the booking came through, read from the loaded
+  # association as guests are (`WebhookWorker` loads it with the page's
+  # profile, whose username the page's address sits under). `nil` for the
+  # host's own page, for a page deleted since, and for a meeting arriving
+  # without the association.
+  defp build_booking_page_data(%MeetingSchema{
+         booking_page: %BookingPageSchema{profile: %ProfileSchema{username: username}} = page
+       }) do
+    %{
+      name: page.name,
+      slug: page.slug,
+      url: UrlBuilder.booking_url(username && username <> "/" <> page.slug)
+    }
+  end
+
+  defp build_booking_page_data(_meeting), do: nil
+
+  defp build_urls(meeting) do
+    links = MeetingLinks.for_meeting(meeting)
+
+    %{
+      view: links.view_url,
+      reschedule: links.reschedule_url,
+      cancel: links.cancel_url,
+      meeting: meeting.meeting_url
+    }
+  end
+
+  defp build_video_data(meeting) do
+    if meeting.video_room_enabled do
+      %{
+        enabled: true,
+        room_id: meeting.video_room_id,
+        organizer_url: meeting.organizer_video_url,
+        attendee_url: meeting.attendee_video_url,
+        created_at: format_datetime(meeting.video_room_created_at),
+        expires_at: format_datetime(meeting.video_room_expires_at)
+      }
+    else
+      %{enabled: false}
+    end
+  end
+
+  # Present whenever a booking has passed through the approval gate
+  # (`Tymeslot.Meetings.Approval`): `meeting.requested`, `meeting.declined`,
+  # `meeting.request_expired`, and a `meeting.created` fired by the host's
+  # approval all set `approval_requested_at`. An ordinary booking that never
+  # needed approval leaves it nil, so this key is simply absent from those
+  # payloads rather than shipping as null noise, keeping them byte-compatible.
+  defp maybe_add_approval_data(
+         data,
+         %MeetingSchema{approval_requested_at: %DateTime{}} = meeting
+       ) do
+    Map.put(data, :approval, %{
+      requested_at: format_datetime(meeting.approval_requested_at),
+      deadline_at: format_datetime(meeting.approval_deadline_at),
+      resolved_at: format_datetime(meeting.approval_resolved_at)
+    })
+  end
+
+  defp maybe_add_approval_data(data, _meeting), do: data
+
+  # A decline and an ordinary cancellation share `status: :cancelled` (see
+  # the comment on `MeetingSchema.approval_declined_at`), but they mean
+  # different things to a consumer: a decline is the host refusing a request
+  # that was never accepted, not the withdrawal of one that was. Only
+  # `Approval.declined?/1` separates them; `approval_resolved_at` does not,
+  # because an approval stamps it too, so a booking the host approved and then
+  # cancelled would ship a `decline` block and lose the `cancellation` one
+  # subscribers already parse. The reason comes from `decline_reason` — the
+  # field the host actually filled in — rather than the unrelated
+  # `cancellation_reason`.
+  defp maybe_add_cancellation_data(data, %MeetingSchema{status: :cancelled} = meeting) do
+    if Approval.declined?(meeting) do
+      Map.put(data, :decline, %{
+        declined_at: format_datetime(meeting.approval_declined_at),
+        reason: meeting.decline_reason
+      })
+    else
+      Map.put(data, :cancellation, %{
+        cancelled_at: format_datetime(meeting.cancelled_at),
+        reason: meeting.cancellation_reason
+      })
+    end
+  end
+
+  defp maybe_add_cancellation_data(data, _meeting), do: data
+
+  # Present on every event about a seat of a group meeting
+  # (`Tymeslot.Meetings.SeatView`), each of which describes that seat's
+  # booking: `attendee` and `guests` are the seat's participant and the
+  # guests they invited. `id` is the seat's own id; a move gives the seat a
+  # new one (and usually a new meeting id), so a `meeting.rescheduled` for a
+  # moved seat names the seat it replaced under `previous`, which is `nil`
+  # on every other event. `seats_taken` counts participants and their guests
+  # when the event fired. A solo booking has no seat, so the key is absent
+  # from its payloads, the same way `approval` is.
+  defp maybe_add_seat_data(data, %MeetingSchema{seat: %{} = seat} = meeting) do
+    Map.put(data, :seat, %{
+      id: seat.participant_id,
+      capacity: meeting.capacity,
+      seats_taken: seat.seats_taken,
+      previous: previous_seat_data(Map.get(seat, :previous))
+    })
+  end
+
+  defp maybe_add_seat_data(data, _meeting), do: data
+
+  defp previous_seat_data(nil), do: nil
+
+  defp previous_seat_data(previous) do
+    %{
+      seat_id: previous.seat_id,
+      meeting_id: previous.meeting_id,
+      start_time: format_datetime(previous.start_time)
+    }
+  end
+
+  defp format_datetime(nil), do: nil
+
+  defp format_datetime(%DateTime{} = dt) do
+    DateTime.to_iso8601(dt)
+  end
+end

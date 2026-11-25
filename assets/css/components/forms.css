@@ -1,0 +1,541 @@
+/* ===================================
+   FORM COMPONENTS
+   =================================== */
+
+/* Every form rule sits in the components layer, below Tailwind's utilities,
+   as the buttons and cards do, so a caller's utilities (a narrower width, a
+   read-only tint, tighter padding) apply instead of losing to an unlayered
+   rule. Scoped overrides elsewhere, such as the weekday rows' compact selects
+   in dashboard.css, stay unlayered and still win. */
+@layer components {
+  /* Input Fields - Modern Branding */
+  .input {
+    @apply block w-full text-sm font-medium text-tymeslot-900 bg-tymeslot-50/50 border-2 border-tymeslot-100 rounded-token-2xl transition-all duration-300;
+    @apply focus:outline-hidden focus:border-turquoise-400 focus:bg-white focus:shadow-xl focus:shadow-turquoise-500/10;
+    @apply hover:border-tymeslot-200 hover:bg-tymeslot-50;
+    padding: 0.75rem 1rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Number fields have no browser spinner: its arrows overlap units set beside
+     the value, and no in-house stepper replaces them yet. Selected by type, not
+     through .input, so the bare boxes in sentence-style rows get it too.
+     The Up and Down keys still step the value. */
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Input with leading icon - accounts for icon space */
+  .input.input-with-icon {
+    padding-left: 3.5rem; /* 1rem (icon left offset) + 1.25rem (icon width) + 1.25rem (gap) = 3.5rem */
+  }
+
+  /* Override for custom text prefixes (like username URL prefix) */
+  .input.input-with-icon[style*="--leading-icon-width"] {
+    padding-left: calc(1rem + var(--leading-icon-width) + 1.25rem);
+  }
+
+  .input-with-trailing-icon {
+    @apply pr-14;
+  }
+
+  .input::placeholder {
+    @apply text-tymeslot-400 font-medium;
+  }
+
+  /* Disabled: visible but inert. The hover and focus rules above match at the
+     same specificity, so these have to come after them to win, and the explicit
+     :disabled:hover keeps a greyed-out field from lighting up under the pointer. */
+  .input:disabled {
+    @apply text-tymeslot-600 bg-tymeslot-100/60 border-tymeslot-100 shadow-none cursor-not-allowed;
+  }
+
+  .input:disabled:hover {
+    @apply border-tymeslot-100 bg-tymeslot-100/60;
+  }
+
+  /* A disabled field's placeholder often shows the value that applies instead
+     (a default wording), so it stays readable: tymeslot-500 clears 4.5:1 on the
+     disabled fill. */
+  .input:disabled::placeholder {
+    @apply text-tymeslot-500;
+  }
+
+  /* Read-only: a value shown for copying or reference. It keeps the focus ring,
+     since it stays reachable by keyboard, but does not light up on hover. */
+  .input[readonly] {
+    @apply text-tymeslot-600 cursor-default;
+  }
+
+  /* :not(:focus), because a bare .input[readonly] matches .input:focus in
+     specificity and, coming later, would hide the focus border. */
+  .input[readonly]:not(:focus),
+  .input[readonly]:not(:focus):hover {
+    @apply border-tymeslot-100 bg-tymeslot-50;
+  }
+
+  /* Input Variants */
+  .input-error {
+    @apply border-red-200 bg-red-50 text-red-900;
+    @apply focus:border-red-400 focus:bg-white focus:shadow-red-500/10;
+  }
+
+  /* Label - Modern Typography */
+  .label {
+    @apply block text-sm font-black text-tymeslot-800 uppercase tracking-wider mb-2;
+  }
+
+  .form-error {
+    @apply mt-2 text-sm font-semibold text-red-600;
+  }
+
+  /* Checkbox Styling */
+  .checkbox {
+    @apply rounded border-2 border-tymeslot-200 text-turquoise-600 focus:ring-turquoise-500 transition-all;
+  }
+
+  /* Radio Styling. The ring is tymeslot-500 so an unchecked radio clears the
+     3:1 contrast a control's boundary needs against a white surface. */
+  .radio {
+    @apply border-tymeslot-500 text-turquoise-600 focus:ring-turquoise-500 transition-all;
+  }
+
+  /* Textarea */
+  .textarea {
+    @apply block w-full px-4 py-3 text-sm font-medium text-tymeslot-900 bg-tymeslot-50/50 border-2 border-tymeslot-100 rounded-token-2xl transition-all duration-300 min-h-[120px] resize-y;
+    @apply focus:outline-hidden focus:border-turquoise-400 focus:bg-white focus:shadow-xl focus:shadow-turquoise-500/10;
+  }
+
+  /* Select (`<.select>`). The chevron is an `<.icon>` overlaid on the field;
+     bg-none drops the one the forms plugin paints on every select. */
+  select.input {
+    @apply cursor-pointer pr-10 bg-none transition-all;
+  }
+
+  .select-trigger {
+    @apply cursor-pointer pr-10 text-left;
+  }
+
+  .select-trigger:disabled {
+    @apply cursor-not-allowed;
+  }
+
+  .select-value {
+    display: block;
+    min-height: 1lh;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .select-value--placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  /* `<.date_picker>`, `<.time_picker>` and `<.datetime_picker>`: a typed field
+     with its button laid over the end of it. The panel is a `.select-panel`,
+     so only the month grid inside it needs rules of its own. */
+  .date-time-picker-fields {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .date-time-picker-control {
+    @apply relative flex-1 min-w-[10rem];
+  }
+
+  .date-time-picker-text {
+    @apply pr-10;
+  }
+
+  .date-time-picker-trigger {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-token-md text-tymeslot-500 cursor-pointer transition-colors duration-200;
+  }
+
+  .date-time-picker-trigger:hover,
+  .date-time-picker-trigger:focus-visible {
+    @apply text-turquoise-600 bg-tymeslot-100;
+  }
+
+  .date-time-picker-trigger:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .date-time-picker-icon {
+    @apply w-5 h-5;
+  }
+
+  .date-picker-panel {
+    @apply w-auto;
+    max-height: none;
+    padding: var(--spacing-3);
+  }
+
+  .date-picker-header {
+    @apply flex items-center justify-between mb-2 gap-2;
+  }
+
+  .date-picker-month {
+    @apply text-token-sm font-semibold text-tymeslot-800;
+  }
+
+  .date-picker-nav {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-token-md text-tymeslot-500 cursor-pointer;
+  }
+
+  .date-picker-nav:hover {
+    @apply bg-tymeslot-100 text-tymeslot-800;
+  }
+
+  .date-picker-grid {
+    @apply border-separate;
+    border-spacing: 2px;
+  }
+
+  .date-picker-grid th {
+    @apply text-center text-token-2xs font-medium text-tymeslot-400 uppercase pb-1;
+  }
+
+  .date-picker-day {
+    @apply flex items-center justify-center w-9 h-9 rounded-token-md text-token-xs font-medium text-tymeslot-700 cursor-pointer;
+  }
+
+  .date-picker-day:hover {
+    @apply bg-tymeslot-100;
+  }
+
+  .date-picker-day:focus-visible {
+    @apply outline-2 outline-turquoise-500 outline-offset-1;
+  }
+
+  .date-picker-day--outside {
+    @apply text-tymeslot-300;
+  }
+
+  .date-picker-day[aria-current="date"] {
+    @apply ring-1 ring-turquoise-400 text-turquoise-700 font-semibold;
+  }
+
+  .date-picker-day.is-selected {
+    @apply bg-turquoise-700 text-white font-semibold;
+  }
+
+  .date-picker-day[aria-disabled="true"] {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  /* The option list `<.select>` opens (floating_panel.js places it). */
+  .select-panel {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    box-sizing: border-box;
+    width: max-content;
+    max-height: 20rem;
+    padding: var(--spacing-1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--dropdown-divider);
+    border-radius: var(--radius-lg);
+    background: var(--dropdown-bg);
+    color: var(--color-text-secondary);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .select-panel:focus {
+    outline: none;
+  }
+
+  .select-option {
+    padding: var(--dropdown-item-py) var(--dropdown-item-px);
+    border-radius: var(--dropdown-item-radius);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .select-option.is-active {
+    background-color: var(--dropdown-item-hover-bg);
+    color: var(--dropdown-item-hover-text);
+  }
+
+  .select-option[aria-selected="true"] {
+    color: var(--color-primary-600);
+    font-weight: 700;
+  }
+
+  .select-option--placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  .select-option[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .select-group-label {
+    padding: var(--spacing-2) var(--dropdown-item-px) var(--spacing-1);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Range slider — dark background variant (used on marketing calculator) */
+  .slider-dark {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    cursor: pointer;
+    outline: none;
+    /* Initial background set by SliderInputHook; this is the fallback */
+    background: var(--color-neutral-700);
+  }
+
+  .slider-dark::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-primary-500);
+    cursor: pointer;
+    box-shadow: 0 0 10px color-mix(in oklab, var(--color-primary-500) 45%, transparent);
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .slider-dark::-webkit-slider-thumb:hover {
+    background: var(--color-primary-400);
+    transform: scale(1.15);
+  }
+
+  .slider-dark::-moz-range-track {
+    height: 6px;
+    border-radius: 9999px;
+    /* Transparent so the input's inline fill gradient shows through. */
+    background: transparent;
+  }
+
+  .slider-dark::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    background: var(--color-primary-500);
+    cursor: pointer;
+    box-shadow: 0 0 10px color-mix(in oklab, var(--color-primary-500) 45%, transparent);
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .slider-dark::-moz-range-thumb:hover {
+    background: var(--color-primary-400);
+    transform: scale(1.15);
+  }
+
+  /* Inline field-level validation message (legacy twin of .form-error above) */
+  .field-error {
+    @apply text-red-600 text-token-sm mt-1;
+  }
+
+  /* ===================================
+     DROPDOWN PANEL
+     =================================== */
+
+  /* Standard clickable row inside a dropdown panel */
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    width: 100%;
+    text-align: left;
+    padding: var(--dropdown-item-py) var(--dropdown-item-px);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--dropdown-item-radius);
+    transition: background-color 0.15s ease, color 0.15s ease;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .dropdown-item:hover {
+    background-color: var(--dropdown-item-hover-bg);
+    color: var(--dropdown-item-hover-text);
+  }
+
+  .dropdown-item--danger {
+    color: var(--dropdown-item-danger-text);
+  }
+
+  .dropdown-item--danger:hover {
+    background-color: var(--dropdown-item-danger-hover-bg);
+    color: var(--dropdown-item-danger-text);
+  }
+
+  /* Icon inside a dropdown item */
+  .dropdown-item__icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--color-text-tertiary);
+  }
+
+  .dropdown-item--danger .dropdown-item__icon {
+    color: var(--dropdown-item-danger-text);
+    opacity: 0.7;
+  }
+
+  /* Thin horizontal separator inside a dropdown panel */
+  .dropdown-divider {
+    border: none;
+    border-top: 1px solid var(--dropdown-divider);
+    margin: var(--spacing-1) 0;
+  }
+}
+
+/* Native on touch: the option list is the system's, the field the same box.
+   Outside the layer, like the icon utilities it must beat. */
+.select-native {
+  display: none;
+}
+
+.select-field[data-select-force-native] .select-native {
+  display: block;
+}
+
+.select-field[data-select-force-native] .select-trigger,
+.select-field[data-select-force-native] .select-panel {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .select-native {
+    display: block;
+  }
+
+  .select-trigger {
+    display: none;
+  }
+}
+
+/* Native on touch and without popovers, as for the select. */
+.date-time-picker-native {
+  display: none;
+}
+
+.date-time-picker[data-picker-force-native] .date-time-picker-native {
+  display: block;
+}
+
+.date-time-picker[data-picker-force-native] .date-time-picker-control {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .date-time-picker-native {
+    display: block;
+  }
+
+  .date-time-picker-control {
+    display: none;
+  }
+}
+
+/* A row of inline controls. */
+.date-time-picker--compact .input {
+  border-radius: var(--radius-md);
+  padding: 0.25rem 2rem 0.25rem 0.5rem;
+  font-size: var(--font-size-xs);
+}
+
+.date-time-picker--compact .date-time-picker-native {
+  padding-right: 0.5rem;
+}
+
+.date-time-picker--compact .date-time-picker-control {
+  min-width: 8rem;
+}
+
+.date-time-picker--compact .date-time-picker-trigger {
+  right: 0.125rem;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* A field set in a sentence: plain text that shows an underline on hover. */
+.date-time-picker--inline {
+  display: inline-block;
+}
+
+.date-time-picker--inline .date-time-picker-control {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  flex: none;
+}
+
+.date-time-picker--inline .input {
+  width: 6.5rem;
+  border-width: 0 0 1px;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 0;
+  box-shadow: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-700);
+  font-weight: 500;
+}
+
+.date-time-picker--inline [data-picker-part="time"] .input {
+  width: 4.5rem;
+}
+
+/* The system control draws its own icon and needs the width for it. */
+.date-time-picker--inline .date-time-picker-native {
+  width: auto;
+}
+
+.date-time-picker--inline .input:hover {
+  border-color: var(--color-neutral-300);
+}
+
+.date-time-picker--inline .input:focus {
+  border-color: var(--color-primary-500);
+  outline: none;
+}
+
+.date-time-picker--inline .date-time-picker-trigger {
+  position: static;
+  transform: none;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.date-time-picker--inline .date-time-picker-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* The small size, for a select inside a row of inline controls. The padding
+   and the chevron move together, or the value runs underneath the arrow. */
+.select-field--compact .input {
+  border-radius: var(--radius-md);
+  padding: 0.25rem 1.625rem 0.25rem 0.5rem;
+  font-size: var(--font-size-xs);
+}
+
+.select-field--compact .select-chevron {
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+}

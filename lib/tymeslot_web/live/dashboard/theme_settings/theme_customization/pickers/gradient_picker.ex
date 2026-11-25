@@ -1,0 +1,50 @@
+defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomization.Pickers.GradientPicker do
+  @moduledoc """
+  Function component for selecting gradient backgrounds in theme customization.
+  """
+  use TymeslotWeb, :html
+
+  @doc """
+  Renders the gradient picker.
+  Expects assigns: option, customization, presets (the group's gradients as `{id, preset}`, in order), myself
+  """
+  @spec gradient_picker(map()) :: Phoenix.LiveView.Rendered.t()
+  def gradient_picker(assigns) do
+    ~H"""
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <%= for {gradient_id, gradient} <- @presets do %>
+        <button
+          type="button"
+          class={[
+            "group/gradient relative h-32 rounded-token-2xl overflow-hidden border-4 transition-all duration-500",
+            if(@customization.settings["background_value"] == gradient_id,
+              do: "border-turquoise-400 shadow-2xl shadow-turquoise-500/20 scale-[1.02]",
+              else: "border-white hover:border-turquoise-200"
+            )
+          ]}
+          style={"background: #{gradient.value}"}
+          phx-click="theme:set_option"
+          phx-value-option={@option}
+          phx-value-field="gradient"
+          phx-value-choice={gradient_id}
+          phx-target={@myself}
+        >
+          <div class="absolute inset-0 bg-black/0 group-hover/gradient:bg-black/10 transition-colors">
+          </div>
+          <div class="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-token-xl border border-white shadow-lg">
+            <p class="text-token-2xs font-black uppercase tracking-[0.1em] text-tymeslot-900 text-center truncate">
+              {gradient.name}
+            </p>
+          </div>
+
+          <%= if @customization.settings["background_value"] == gradient_id do %>
+            <div class="absolute top-3 right-3 w-6 h-6 bg-turquoise-500 text-white rounded-token-full flex items-center justify-center shadow-lg">
+              <.icon name="hero-check" class="w-4 h-4" />
+            </div>
+          <% end %>
+        </button>
+      <% end %>
+    </div>
+    """
+  end
+end

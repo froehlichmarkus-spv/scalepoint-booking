@@ -1,0 +1,125 @@
+/* Video Background System */
+
+/* Video background support for main gradient */
+.main-gradient.has-video-background {
+  background: transparent;
+}
+
+/* Darkening veil over any image or solid colour background. The glass
+   content is white ink on translucent dark glass, tuned for the dark default
+   gradient, so a bright photo or a light colour (white, yellow) turns the glass
+   mid-grey and leaves card text, the step band, and the floating chrome
+   under-contrasted. Veiling the page rather than flooring each surface keeps
+   the glass translucent and covers everything that sits straight on the page
+   (the step band, the heading, the chrome) in one rule. `isolation` turns the
+   background layer into a stacking context, so the z-index:-1 veil sits above
+   the background but below every piece of content, with no per-element
+   z-index needed. A gradient preset is drawn with `background:` and is
+   neither matched nor veiled. */
+.main-gradient:is([style*="background-image"], [style*="background-color"]) {
+  isolation: isolate;
+}
+
+.main-gradient:is([style*="background-image"], [style*="background-color"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--background-media-scrim);
+}
+
+/* A solid colour is known, so its veil can follow its lightness: none on a
+   dark colour, which already reads like the default gradient, up to the
+   strongest on white or yellow (--background-colour-scrim). Browsers without
+   relative colours keep the fixed media veil above. */
+@supports (color: oklch(from red l c h)) {
+  .main-gradient[style*="background-color"]::after {
+    background: var(--background-colour-scrim);
+  }
+}
+
+/* Video Background */
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: -1;
+  background: var(--theme-background);
+}
+
+/* The same veil over a playing video — an overlay above the <video> child but
+   below the page content (the video layer owns its own stacking context at
+   z-index: -1, so this never covers the booking card). */
+.video-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--background-media-scrim);
+  pointer-events: none;
+}
+
+/* Fit an image background, which the page sets inline */
+.video-background[style*="background-image"] {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.video-background video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  opacity: 1;
+}
+
+/* Scale video to prevent edges showing on different aspect ratios */
+@media (min-aspect-ratio: 16/9) {
+  :where(html:not([data-embedded])) {
+    .video-background video {
+      width: 100vw;
+      height: auto;
+      min-height: 100vh;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+}
+
+@media (max-aspect-ratio: 16/9) {
+  :where(html:not([data-embedded])) {
+    .video-background video {
+      width: auto;
+      height: 100vh;
+      min-width: 100vw;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/* Hide video for users with reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .video-background video {
+    display: none;
+  }
+}
+
+/* Hide video background when printing */
+@media print {
+  .video-background {
+    display: none;
+  }
+}
+
+/* Ensure content is properly layered above video */
+.quill-theme-wrapper > div:not(.video-background) {
+  position: relative;
+  z-index: 1;
+}

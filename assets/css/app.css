@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+/* Import design tokens */
+@import "./base/variables.css";
+@import "./base/typography.css";
+@import "./base/base.css";
+
+/* The booking themes' self-hosted fonts and stacks, so the dashboard's font
+   picker can show each choice in its own face. A face downloads only when
+   something renders in it. */
+@import "./scheduling/shared/fonts.css";
+
+/* Import design token utility classes */
+@import "./design-tokens.css";
+
+/* Import layout utilities */
+@import "./layout/utilities.css";
+
+/* Import animations */
+@import "./animations/keyframes.css";
+@import "./animations/animate-enter.css";
+
+/* Import components */
+@import "./components/buttons.css";
+@import "./components/forms.css";
+@import "./components/cards.css";
+@import "./components/misc.css";
+@import "./components/token-page.css";
+@import "./components/dashboard.css";
+@import "./components/calendar-surface.css";
+@import "./components/calendar-editing.css";
+@import "./components/calendar-booking.css";
+@import "./components/calendar-views.css";
+@import "./components/calendar-phone.css";
+@import "./components/calendar-touch.css";
+@import "./components/calendar-power.css";
+@import "./components/theme-customization.css";
+@import "./components/embed-cards.css";
+@import "./components/onboarding.css";
+@import "./components/tour.css";
+@import "./modal.css";
+
+/* Import glass morphism components */
+@import "./components/glass-morphism.css";
+@import "./components/background-motion.css";
+
+/* Import auth-specific styles */
+@import "./auth/auth-video.css";
+@import "./auth/auth-buttons.css";
+
+/* Import reCAPTCHA styles */
+@import "./recaptcha.css";
+
+/* ===========================================================================
+   Tailwind v4 CSS-first configuration
+   ---------------------------------------------------------------------------
+   The standalone v4 CLI cannot load a legacy JS config via @config (it fails
+   transpiling it), so the former tailwind.config.js theme.extend / plugins /
+   content / safelist are expressed here in CSS instead. All @import statements
+   must precede every at-rule below.
+   =========================================================================== */
+
+/* Plugins. @tailwindcss/forms is bundled inside the v4 standalone binary.
+   Heroicons are no longer a Tailwind plugin: they render as inline SVG from
+   TymeslotWeb.Components.CoreComponents.Heroicons, so there is no .hero-* mask
+   utility to compile and no hero-* safelist to maintain. */
+@plugin "@tailwindcss/forms";
+
+/* LiveView state variants (formerly addVariant() plugins in tailwind.config.js).
+   Lets classes like `phx-submit-loading:opacity-50` apply while the parent
+   carries the matching LiveView class. The block form with @slot is required:
+   the inline array form `([".sel&", ".sel &"])` is emitted verbatim as a literal
+   selector by the v4 standalone CLI instead of being expanded, so the variant
+   never matches. */
+@custom-variant phx-click-loading {
+  .phx-click-loading& { @slot; }
+  .phx-click-loading & { @slot; }
+}
+@custom-variant phx-submit-loading {
+  .phx-submit-loading& { @slot; }
+  .phx-submit-loading & { @slot; }
+}
+@custom-variant phx-change-loading {
+  .phx-change-loading& { @slot; }
+  .phx-change-loading & { @slot; }
+}
+/* While files are dragged over a `phx-drop-target`. */
+@custom-variant phx-drop-target-active {
+  .phx-drop-target-active& { @slot; }
+  .phx-drop-target-active & { @slot; }
+}
+
+/* Content sources (formerly the `content` globs). v4 auto-detects file
+   extensions; paths are relative to this file. */
+@source "../js";
+@source "../../lib/tymeslot_web.ex";
+@source "../../lib/tymeslot_web";
+
+/* Safelist (formerly `safelist`). These classes are produced by runtime string
+   interpolation or live only in SaaS templates, so static scanning misses them. */
+@source inline("display-xl display-lg display-md");
+@source inline("bg-calendar-{1,2,3,4,5,6,7,8} bg-calendar-fallback");
+@source inline("bg-calendar-{tomato,tangerine,banana,sage,peacock,blueberry,grape,graphite}");
+@source inline("w-6 h-6 w-8 h-8 w-10 h-10 h-16 h-20 box-border");
+/* Poll response-bar segments. These are returned as bare strings from
+   `PollResults.bar_segment_class/1` rather than written into a template, and the
+   scanner does not extract class names from Elixir string literals — three of
+   the four only resolved because unrelated templates happened to use the same
+   shades. Listed here so the bar owns its own colours. */
+@source inline("bg-green-500 bg-amber-400 bg-red-400 bg-tymeslot-200");
+
+@theme {
+  /* --- Brand + extended palette (formerly theme.extend.colors) --- */
+  --color-brand: #fd4f00;
+
+  --color-turquoise-50: #f0fdfa;
+  --color-turquoise-100: #ccfbf1;
+  --color-turquoise-200: #99f6e4;
+  --color-turquoise-300: #5eead4;
+  --color-turquoise-400: #2dd4bf;
+  --color-turquoise-500: #14b8a6;
+  --color-turquoise-600: #0d9488;
+  --color-turquoise-700: #0f766e;
+  --color-turquoise-800: #115e59;
+  --color-turquoise-900: #134e4a;
+  --color-turquoise-950: #042f2e;
+
+  --color-cyan-50: #ecfeff;
+  --color-cyan-100: #cffafe;
+  --color-cyan-200: #a5f3fc;
+  --color-cyan-300: #67e8f9;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+  --color-cyan-800: #155e75;
+  --color-cyan-900: #164e63;
+  --color-cyan-950: #083344;
+
+  --color-tymeslot-50: #fafafa;
+  --color-tymeslot-100: #f4f4f5;
+  --color-tymeslot-200: #e4e4e7;
+  --color-tymeslot-300: #d4d4d8;
+  --color-tymeslot-400: #a1a1aa;
+  --color-tymeslot-500: #71717a;
+  --color-tymeslot-600: #52525b;
+  --color-tymeslot-700: #3f3f46;
+  --color-tymeslot-800: #27272a;
+  --color-tymeslot-900: #18181b;
+  --color-tymeslot-950: #09090b;
+
+  /* Glass background colours reference the design tokens (distinct names, so no
+     self-reference). Enables bg-glass-light, bg-glass-card, etc. */
+  --color-glass-light: var(--color-glass-bg-light);
+  --color-glass-medium: var(--color-glass-bg-medium);
+  --color-glass-strong: var(--color-glass-bg-strong);
+  --color-glass-card: var(--color-glass-bg-card);
+  --color-glass-card-enhanced: var(--color-glass-bg-card-enhanced);
+  --color-glass-overlay: var(--color-glass-bg-overlay);
+  --color-glass-overlay-enhanced: var(--color-glass-bg-overlay-enhanced);
+
+  /* Calendar integration colours. The v4 utility var name collides with the
+     design token of the same name, so the values are inlined here (kept in sync
+     with base/variables.css) to avoid a circular reference. */
+  --color-calendar-1: #14b8a6;
+  --color-calendar-2: #3b82f6;
+  --color-calendar-3: #a855f7;
+  --color-calendar-4: #0d9488;
+  --color-calendar-5: #06b6d4;
+  --color-calendar-6: #6366f1;
+  --color-calendar-7: #f43f5e;
+  --color-calendar-8: #f59e0b;
+  --color-calendar-fallback: #a1a1aa;
+
+  /* Calendar palette colours — the pickable ones, named rather than numbered.
+     Same inlining rationale as the rotation above. */
+  --color-calendar-tomato: #f43f5e;
+  --color-calendar-tangerine: #f97316;
+  --color-calendar-banana: #eab308;
+  --color-calendar-sage: #65a30d;
+  --color-calendar-peacock: #06b6d4;
+  --color-calendar-blueberry: #3b82f6;
+  --color-calendar-grape: #a855f7;
+  --color-calendar-graphite: #71717a;
+
+  /* --- Token font sizes → text-token-* (formerly theme.extend.fontSize) --- */
+  --text-token-2xs: var(--font-size-2xs);
+  --text-token-xs: var(--font-size-xs);
+  --text-token-sm: var(--font-size-sm);
+  --text-token-base: var(--font-size-base);
+  --text-token-lg: var(--font-size-lg);
+  --text-token-xl: var(--font-size-xl);
+  --text-token-2xl: var(--font-size-2xl);
+  --text-token-3xl: var(--font-size-3xl);
+  --text-token-4xl: var(--font-size-4xl);
+  --text-token-5xl: var(--font-size-5xl);
+  --text-token-6xl: var(--font-size-6xl);
+  --text-token-7xl: var(--font-size-7xl);
+
+  /* --- Token radii → rounded-token-* (formerly theme.extend.borderRadius) --- */
+  --radius-token-sm: var(--radius-sm);
+  --radius-token-md: var(--radius-md);
+  --radius-token-lg: var(--radius-lg);
+  --radius-token-xl: var(--radius-xl);
+  --radius-token-2xl: var(--radius-2xl);
+  --radius-token-3xl: var(--radius-3xl);
+  --radius-token-4xl: var(--radius-4xl);
+  --radius-token-5xl: var(--radius-5xl);
+  --radius-token-full: var(--radius-full);
+
+  /* --- Glass shadows → shadow-glass-* (values inlined to avoid the
+     self-referential collision with the --shadow-glass-* design tokens) --- */
+  --shadow-glass-sm: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-glass-md: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-glass-lg: 0 8px 24px rgba(20, 20, 40, 0.4);
+  --shadow-glass-xl: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glass-card: var(--shadow-glass-card-enhanced);
+
+  /* --- Glass backdrop blur → backdrop-blur-glass-* (raw lengths; v4 wraps
+     them in blur()) --- */
+  --blur-glass-light: 10px;
+  --blur-glass-medium: 15px;
+  --blur-glass-strong: 20px;
+  --blur-glass-heavy: 25px;
+
+  /* --- Glass transition property → transition-glass --- */
+  --transition-property-glass: var(--transition-glass);
+
+  /* v4 compatibility: restore v3's 3px blue-500 default ring (v4 defaults to
+     1px currentColor). */
+  --default-ring-width: 3px;
+  --default-ring-color: var(--color-blue-500);
+}
+
+/* v4 compatibility: v4 changed the default border colour from gray-200 to
+   currentColor. Restore the v3 default so existing un-coloured borders render
+   unchanged. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}

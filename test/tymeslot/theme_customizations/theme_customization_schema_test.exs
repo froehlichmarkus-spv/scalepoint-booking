@@ -1,0 +1,149 @@
+defmodule Tymeslot.ThemeCustomizations.ThemeCustomizationSchemaTest do
+  use Tymeslot.DataCase, async: true
+
+  @moduletag :database
+  @moduletag :schema
+
+  alias Tymeslot.Repo
+  alias Tymeslot.ThemeCustomizations.ThemeCustomizationSchema
+
+  describe "background validation business rules" do
+    test "uploaded video backgrounds require video path" do
+      profile = insert(:profile)
+
+      # Custom video without path - should fail
+      attrs = %{
+        profile_id: profile.id,
+        # Rhythm theme ID
+        theme_id: "2",
+        color_scheme: "default",
+        background_type: "video",
+        # Not a preset
+        background_value: "custom"
+      }
+
+      changeset = ThemeCustomizationSchema.changeset(%ThemeCustomizationSchema{}, attrs)
+
+      refute changeset.valid?
+
+      assert "is required for an uploaded video background" in errors_on(changeset).background_video_path
+    end
+
+    test "uploaded image backgrounds require image path" do
+      profile = insert(:profile)
+
+      # Custom image without path - should fail
+      attrs = %{
+        profile_id: profile.id,
+        # Rhythm theme ID
+        theme_id: "2",
+        color_scheme: "default",
+        background_type: "image",
+        # Not a preset
+        background_value: "custom"
+      }
+
+      changeset = ThemeCustomizationSchema.changeset(%ThemeCustomizationSchema{}, attrs)
+
+      refute changeset.valid?
+
+      assert "is required for an uploaded image background" in errors_on(changeset).background_image_path
+    end
+
+    test "preset backgrounds work without upload paths" do
+      profile = insert(:profile)
+
+      # Preset video - should succeed without path
+      attrs = %{
+        profile_id: profile.id,
+        # Rhythm theme ID
+        theme_id: "2",
+        color_scheme: "default",
+        background_type: "video",
+        background_value: "preset:rhythm-default"
+      }
+
+      changeset = ThemeCustomizationSchema.changeset(%ThemeCustomizationSchema{}, attrs)
+
+      assert changeset.valid?
+    end
+
+    test "gradient background with nil background_value is invalid" do
+      profile = insert(:profile)
+
+      attrs = %{
+        profile_id: profile.id,
+        theme_id: "1",
+        color_scheme: "default",
+        background_type: "gradient",
+        background_value: nil
+      }
+
+      changeset = ThemeCustomizationSchema.changeset(%ThemeCustomizationSchema{}, attrs)
+
+      refute changeset.valid?
+      assert errors_on(changeset).background_value != []
+    end
+
+    test "color background with nil background_value is invalid" do
+      profile = insert(:profile)
+
+      attrs = %{
+        profile_id: profile.id,
+        theme_id: "1",
+        color_scheme: "default",
+        background_type: "color",
+        background_value: nil
+      }
+
+      changeset = ThemeCustomizationSchema.changeset(%ThemeCustomizationSchema{}, attrs)
+
+      refute changeset.valid?
+      assert errors_on(changeset).background_value != []
+    end
+  end
+
+  describe "unique constraint format" do
+    test "duplicate profile_id + theme_id produces a unique constraint changeset error" do
+      profile = insert(:profile)
+
+      attrs = %{
+        profile_id: profile.id,
+        theme_id: "1",
+        color_scheme: "default",
+        background_type: "gradient",
+        background_value: "gradient_1"
+      }
+
+      {:ok, _first} =
+        %ThemeCustomizationSchema{}
+        |> ThemeCustomizationSchema.changeset(attrs)
+        |> Repo.insert()
+
+      {:error, changeset} =
+        %ThemeCustomizationSchema{}
+        |> ThemeCustomizationSchema.changeset(attrs)
+        |> Repo.insert()
+
+      # A plain insert that meets the row is refused on :profile_id, so no
+      # write can add a second customisation of a theme. Saves never get
+      # here: they insert with ON CONFLICT DO NOTHING and update the row
+      # they then lock (ThemeCustomizationQueries.create/1).
+      assert Enum.any?(changeset.errors, fn {field, {_msg, opts}} ->
+               field == :profile_id and Keyword.get(opts, :constraint) == :unique
+             end)
+    end
+  end
+
+  describe "profile association" do
+    test "a profile holds one customisation per theme" do
+      profile = insert(:profile)
+      insert(:theme_customization, profile: profile, theme_id: "1")
+      insert(:theme_customization, profile: profile, theme_id: "2")
+
+      loaded = Repo.preload(profile, :theme_customizations)
+
+      assert loaded.theme_customizations |> Enum.map(& &1.theme_id) |> Enum.sort() == ["1", "2"]
+    end
+  end
+end

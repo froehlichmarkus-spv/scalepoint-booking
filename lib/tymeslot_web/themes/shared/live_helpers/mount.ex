@@ -1,0 +1,456 @@
+defmodule TymeslotWeb.Themes.Shared.LiveHelpers.Mount do
+  @moduledoc """
+  Mounting a theme's scheduling LiveView and applying URL parameters to it:
+  the initial state, the booker's timezone, the organiser, the owner-preview
+  gate, and the calendar subscription that keeps availability fresh. The theme
+  customisation is not loaded here: `MountHelpers.prepare_theme_context/3`
+  loads it once per mount, before the theme's own mount runs.
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  import Phoenix.Component, only: [assign: 3]
+  import Phoenix.LiveView, only: [connected?: 1, push_navigate: 2]
+
+  alias Tymeslot.Integrations.Calendar
+  alias Tymeslot.Onboarding
+
+  alias TymeslotWeb.Live.Scheduling.{
+    AvailabilityHelpers,
+    CalendarHelpers,
+    EntryRefusal,
+    OrganizerHelpers,
+    PageAddress,
+    PreviewMode,
+    PreviewToken,
+    ThemeUtils
+  }
+
+  alias TymeslotWeb.Live.Scheduling.Handlers.SlotFetchingHandlerComponent
+  alias TymeslotWeb.Themes.Shared.ChoicesInUrl
+  alias TymeslotWeb.Themes.Shared.ChosenLength
+  alias TymeslotWeb.Themes.Shared.Journey.Facts.Series
+  alias TymeslotWeb.Themes.Shared.Journey.Runtime
+  alias TymeslotWeb.Themes.Shared.LiveHelpers.StepEntry
+  alias TymeslotWeb.Themes.Shared.PathHandlers
+  alias TymeslotWeb.Themes.Shared.ReschedulePin
+  alias TymeslotWeb.Themes.Shared.SchedulingInit
+  alias TymeslotWeb.Themes.Shared.SeatMoveLink
+  alias TymeslotWeb.Themes.Shared.TimezoneHelpers
+
+  @doc """
+  Mounts a theme's scheduling LiveView: initial state, timezone, theme and
+  organiser, owner preview, calendar subscription, and (on the connected
+  mount) the entry into the step the route names.
+  """
+  @spec mount_scheduling_view(Phoenix.LiveView.Socket.t(), map()) ::
+          Phoenix.LiveView.Socket.t()
+  def mount_scheduling_view(socket, params) do
+    initial_state = entry(socket)
+
+    socket =
+      socket
+      |> SchedulingInit.assign_theme_state()
+      |> assign(:entry_action, socket.assigns[:live_action])
+      |> TimezoneHelpers.assign_user_timezone(params)
+      |> ThemeUtils.assign_attendee_prefill()
+      |> ThemeUtils.assign_theme_with_preview(params)
+
+    # Resolve the username context (which sets meeting_types) unless the
+    # dispatcher already resolved it before delegating to this mount
+    socket =
+      if socket.assigns[:organizer_profile] do
+        socket
+      else
+        OrganizerHelpers.handle_username_resolution(socket, PageAddress.address(params))
+      end
+
+    # The week start falls back to the organiser's own, so it needs them
+    # resolved; the calendar then opens on the booker's today (after the
+    # timezone) in a week that starts on it.
+    socket =
+      socket
+      |> SchedulingInit.assign_week_start()
+      |> CalendarHelpers.anchor_on_today()
+
+    # Verify an owner-preview token now that the organiser (and so the page
+    # owner's user id) is resolved. Gates simulate-vs-persist downstream.
+    # An embed refused at the entry was sent here with its reason in the URL,
+    # since its flash cannot travel (`EntryRefusal`).
+    socket =
+      socket
+      |> assign_owner_preview(params)
+      |> assign_refused_calendars()
+      |> announce_handoff(params)
+      |> EntryRefusal.flash(params)
+
+    # Subscribe to calendar event updates for the organiser so availability refreshes on sync
+    socket = maybe_subscribe_to_calendar_events(socket)
+
+    # The reschedule uid must reach the socket before the first entry handler
+    # runs: it builds the questions engine and then memoises it on the
+    # definitions, so one built without the uid is the one `handle_params`
+    # finds and keeps. `handle_param_updates/2` is too late, running only once
+    # `handle_params` does.
+    socket =
+      StepEntry.maybe_assign_from_params(
+        socket,
+        :reschedule_meeting_uid,
+        params["reschedule_meeting_uid"]
+      )
+
+    # Finally setup initial state. Only on the connected mount — handle_params
+    # (which always runs immediately after mount, on both the static and
+    # connected passes) calls the same entry handler, so doing it here too on
+    # the static pass would throw the result away and query twice for nothing.
+    # The booking or seat being moved is loaded for that entry, and the
+    # `handle_params` straight after keeps the load (`reload_reschedule/2`).
+    # The entry is pinned to its type as `handle_params` pins it: resolved
+    # from the slug instead, a slug naming no type turned a reschedule away,
+    # and a seat move with it, dropping the token; one naming another type
+    # seeded the location and the carried answers from the wrong type until
+    # `handle_params` pinned it.
+    socket =
+      if connected?(socket) do
+        socket
+        |> load_reschedule(params["reschedule_seat_token"])
+        |> assign(:reschedule_loaded_at_mount, true)
+        |> pin_reschedule_meeting_type()
+        |> Runtime.transition_to(initial_state, params)
+      else
+        socket
+      end
+
+    # Pre-fetch month availability so it's ready for the schedule step. Only on
+    # the connected mount — the static render would throw the result away, and
+    # the calendar degrades gracefully to business-hours availability until the
+    # socket connects.
+    if connected?(socket) do
+      AvailabilityHelpers.fetch_month_availability_async(socket)
+    else
+      socket
+    end
+  end
+
+  @doc """
+  `handle_scheduling_params/2`, given the request's `url`: a patch the page
+  made itself, moving its address to its facts (`Runtime.follow_url/1`), is
+  not a new arrival and changes nothing; any other request records the
+  address and is handled as an arrival.
+  """
+  @spec handle_scheduling_params(Phoenix.LiveView.Socket.t(), map(), String.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_scheduling_params(socket, params, url) do
+    address = address(url)
+
+    if follows_facts?(socket) and address == socket.assigns[:journey_url] do
+      {:noreply, assign(socket, :page_query_params, PathHandlers.query_params(params))}
+    else
+      socket
+      |> remember_address(address)
+      |> handle_scheduling_params(params)
+    end
+  end
+
+  @doc """
+  Applies the URL parameters and enters the moment the route opens on.
+
+  On the payment wait (`:awaiting_payment`) it applies nothing: a client may
+  patch this socket to any URL the page serves, and only the payment webhook
+  (`:paid`, `:expired`) ends the wait. A reload is a fresh mount, not this.
+
+  Nor does it apply the page's own patch (`ChoicesInUrl`), which carries the
+  choices the socket already holds: entered again, the route would send the
+  visitor back to its first moment after every choice.
+
+  A URL naming a moment of a paged journey (`step`, which `ChoicesInUrl`
+  writes) resumes on it, when the choices the URL carries reach it
+  (`Runtime.resume/2`).
+  """
+  @spec handle_scheduling_params(Phoenix.LiveView.Socket.t(), map()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
+  def handle_scheduling_params(%{assigns: %{current_state: :awaiting_payment}} = socket, _params),
+    do: {:noreply, socket}
+
+  def handle_scheduling_params(socket, params) do
+    if ChoicesInUrl.own_patch?(socket, params) do
+      {:noreply, assign(socket, :page_query_params, PathHandlers.query_params(params))}
+    else
+      apply_params(ChoicesInUrl.forget(socket), params)
+    end
+  end
+
+  defp apply_params(socket, params) do
+    initial_state = entry(socket)
+    socket = socket |> handle_param_updates(params) |> leave_empty_confirmation()
+
+    # A spent seat link, and a declared journey's thank-you address with no
+    # booking behind it, are sent on to a fresh booking before any moment is
+    # entered for them (`SeatMoveLink.leave_if_spent/2`,
+    # `leave_empty_confirmation/1`).
+    if socket.redirected do
+      {:noreply, socket}
+    else
+      socket =
+        socket
+        |> ThemeUtils.assign_theme_with_preview(params)
+        |> assign_owner_preview(params)
+        |> resume_overview_entry(params)
+        |> Runtime.transition_to(initial_state, params)
+        |> Runtime.resume(params)
+
+      if socket.redirected do
+        {:noreply, socket}
+      else
+        {:ok, socket} = SlotFetchingHandlerComponent.maybe_reload_slots(socket)
+        {:noreply, socket}
+      end
+    end
+  end
+
+  # A journey whose address follows its facts leaves the overview's route,
+  # so a visit that came through it carries `via=overview`
+  # (`PathHandlers.facts_address/1`) and a reconnect keeps the way back to
+  # the meeting types. Honoured only for a type the overview lists: on a
+  # private type's link it opens nothing, and the type stays locked.
+  defp resume_overview_entry(socket, %{"via" => "overview"}) do
+    if follows_facts?(socket) and listed_on_overview?(socket.assigns),
+      do: socket |> assign(:entered_via_overview, true) |> assign(:entry_action, :overview),
+      else: socket
+  end
+
+  defp resume_overview_entry(socket, _params), do: socket
+
+  defp listed_on_overview?(%{meeting_type: %{id: nil}}), do: false
+
+  defp listed_on_overview?(%{meeting_type: %{id: id}} = assigns),
+    do: Enum.any?(assigns[:meeting_types] || [], &(&1.id == id))
+
+  defp listed_on_overview?(_assigns), do: false
+
+  # Owner-preview gate: a booking submitted on a page loaded with a valid,
+  # owner-bound preview token is SIMULATED rather than persisted. The booking
+  # page is public, so a bare `?preview=true` is not enough — only a token
+  # signed in the owner's authenticated session and bound to this page's owner
+  # flips the gate. Sticky once true so internal multi-step navigation (which
+  # does not re-carry the query param) can't silently drop it back to a real
+  # booking. Defaults to false, so any path that never sets it fails closed.
+  defp assign_owner_preview(socket, params) do
+    verified_token = verified_preview_token(socket, params)
+
+    socket
+    |> assign(:owner_preview, socket.assigns[:owner_preview] || verified_token != nil)
+    |> assign(:preview_token, socket.assigns[:preview_token] || verified_token)
+  end
+
+  # The onboarding's last step shows the host a QR code of their own page
+  # with `handoff=1`; opening it on a phone counts as keeping the link
+  # (`Tymeslot.Onboarding.broadcast_preview_opened/1`). Only a verified,
+  # owner-bound token may announce it, and only the connected mount, so the
+  # static render and a forged link never do. The step's own iframe carries
+  # a valid token but never `handoff`.
+  defp announce_handoff(socket, %{"handoff" => "1"} = params) do
+    if connected?(socket) and verified_preview_token(socket, params) do
+      Onboarding.broadcast_preview_opened(socket.assigns.organizer_user_id)
+    end
+
+    socket
+  end
+
+  defp announce_handoff(socket, _params), do: socket
+
+  # The calendars whose credentials were refused, by name, for the page's own
+  # organiser alone: they read every slot fetch as failing until they
+  # reconnect, and the guest copy says nothing they could act on. The owner is
+  # whoever the signed session says is signed in as them, or holds a verified
+  # preview token, never anything a query parameter claims; anyone else gets
+  # `[]` without a lookup. Read once, on the connected mount.
+  defp assign_refused_calendars(socket) do
+    assign(socket, :refused_calendars, refused_calendars(socket))
+  end
+
+  defp refused_calendars(socket) do
+    with true <- PreviewMode.organiser_viewing?(socket) and connected?(socket),
+         {:credentials_refused, names} <-
+           Calendar.booking_page_health(socket.assigns.organizer_user_id) do
+      names
+    else
+      _taking_bookings_or_not_the_owner -> []
+    end
+  end
+
+  # The token itself is kept, not just the boolean it produced, because a locale
+  # switch redirects out of this LiveView entirely and every assign is lost. The
+  # replacement page can only be told it is still a preview through the query
+  # string, so `PathHandlers` needs the original token to put back. Carried
+  # forward as-is rather than re-signed: switching language should not extend a
+  # preview session past the expiry the owner started it with.
+  defp verified_preview_token(socket, params) do
+    token = params["preview_token"]
+
+    if PreviewToken.owner?(token, socket.assigns[:organizer_user_id]), do: token
+  end
+
+  @doc """
+  Applies the URL parameters to the socket: the meeting type, day and time
+  they name, the reschedule or seat move they carry, and the page's own query
+  (`:page_query_params`, which a restart keeps). A spent seat-move token is
+  dropped and the page sent on to a fresh booking (`SeatMoveLink`).
+  """
+  @spec handle_param_updates(Phoenix.LiveView.Socket.t(), map()) :: Phoenix.LiveView.Socket.t()
+  def handle_param_updates(socket, params) do
+    seat_token = params["reschedule_seat_token"]
+
+    socket
+    |> assign(:page_query_params, PathHandlers.query_params(params))
+    |> StepEntry.maybe_assign_from_params(:duration, StepEntry.normalize_duration_param(params))
+    |> StepEntry.maybe_assign_from_params(
+      :selected_duration,
+      StepEntry.normalize_duration_param(params)
+    )
+    |> StepEntry.maybe_assign_from_params(:selected_date, StepEntry.date_param(params))
+    |> StepEntry.maybe_assign_from_params(:selected_time, params["time"])
+    # Checked against the day's times once they arrive (`InfoHandlers`).
+    |> assign(:carried_time, if(is_binary(params["time"]), do: params["time"]))
+    # For the slot just applied; checked again when the series opens.
+    |> Series.carry(params["series"])
+    |> assign_reschedule_uid(params)
+    |> reload_reschedule(seat_token)
+    |> assign_rescheduling(params)
+    |> ChosenLength.from_params(params)
+    |> pin_reschedule_meeting_type()
+    |> resolve_named_meeting_type(params)
+    |> handle_confirmation_params(params)
+    |> SeatMoveLink.leave_if_spent(seat_token)
+    |> ReschedulePin.leave_if_refused()
+  end
+
+  # The booking (`ReschedulePin`) and the seat (`SeatMoveLink`) the URL names,
+  # loaded once each time the page applies it. The connected mount loads them
+  # for its own first entry, and the `handle_params` straight after applies
+  # the same URL, so it keeps that load; every later one loads afresh, so a
+  # booking cancelled or a seat given up since is caught as on arrival.
+  defp load_reschedule(socket, seat_token) do
+    socket
+    |> ReschedulePin.load_context()
+    |> SeatMoveLink.assign_from_url(seat_token)
+  end
+
+  defp reload_reschedule(%{assigns: %{reschedule_loaded_at_mount: true}} = socket, _seat_token),
+    do: assign(socket, :reschedule_loaded_at_mount, false)
+
+  defp reload_reschedule(socket, seat_token), do: load_reschedule(socket, seat_token)
+
+  # The URL decides whether the page is a reschedule (`assign_rescheduling/2`),
+  # so the booking it names follows it: a URL without one (browser history
+  # back across "Schedule another meeting") leaves the reschedule behind
+  # rather than keeping an earlier URL's booking for a fresh booking.
+  defp assign_reschedule_uid(socket, params) do
+    uid = params["reschedule_meeting_uid"]
+    assign(socket, :reschedule_meeting_uid, if(is_binary(uid), do: uid))
+  end
+
+  # A whole-meeting reschedule names the meeting; a group participant moving
+  # their own seat carries a live seat token instead.
+  defp assign_rescheduling(socket, params) do
+    assign(
+      socket,
+      :is_rescheduling,
+      is_binary(params["reschedule_meeting_uid"]) or socket.assigns.reschedule_seat_token != nil
+    )
+  end
+
+  # A reschedule is pinned to the type it booked; `ReschedulePin` says why.
+  defp pin_reschedule_meeting_type(socket) do
+    case ReschedulePin.meeting_type(socket) do
+      nil ->
+        ReschedulePin.unpin(socket, socket.assigns[:live_action] == :overview)
+
+      meeting_type ->
+        socket |> StepEntry.assign_meeting_type(meeting_type) |> ReschedulePin.pin(meeting_type)
+    end
+  end
+
+  # The type a `?duration=` names, resolved as soon as the URL is applied,
+  # whichever navigator the theme uses and whatever moment the page opens on.
+  # Carried only as `:selected_duration`, it lets the journey move past the
+  # offer while the submit has no type to book under. A reschedule's pin
+  # (above) and a type's own link (`StepEntry`) are resolved already; only
+  # a type this page offers is taken, and one it does not is sent on to its
+  # own address (`StepEntry.resolve_duration_link/2`). A type's own link
+  # names it in the path, which `StepEntry` resolves on entering the step, so
+  # only a page whose path names no type is sent on.
+  defp resolve_named_meeting_type(%{assigns: %{meeting_type: %{}}} = socket, _params), do: socket
+
+  defp resolve_named_meeting_type(socket, %{"slug" => slug}) when is_binary(slug),
+    do: StepEntry.maybe_assign_meeting_type(socket, socket.assigns[:selected_duration])
+
+  defp resolve_named_meeting_type(socket, _params),
+    do: StepEntry.resolve_duration_link(socket, socket.assigns[:selected_duration])
+
+  defp handle_confirmation_params(socket, params) do
+    if socket.assigns[:live_action] == :confirmation do
+      name =
+        case params["name"] do
+          val when is_binary(val) -> URI.decode(val)
+          _missing -> dgettext("booking", "Guest")
+        end
+
+      socket
+      |> assign(:name, name)
+      |> assign(:email, params["email"] || "")
+      |> assign(:meeting_uid, params["meeting_uid"] || "")
+    else
+      socket
+    end
+  end
+
+  # The moment, or outcome, the route opens on: the journey's navigator
+  # decides (`Navigator.entry/3`). `SchedulingLive` assigns the journey
+  # before it calls this module.
+  defp entry(socket) do
+    journey = socket.assigns.journey
+    journey.navigator.entry(journey, socket.assigns[:live_action], socket.assigns)
+  end
+
+  defp follows_facts?(socket), do: match?(%{url: :facts}, socket.assigns[:journey])
+
+  # A declared journey's `/thank-you` is only ever the address of a booking
+  # just made on this page. Reached on its own (a reload, a shared link) it
+  # names no meeting, and the confirmation would thank a "Guest" for
+  # nothing, so the visitor starts a booking instead, with the page's own
+  # query and never a name or an email. The classic journey keeps showing
+  # its confirmation there.
+  defp leave_empty_confirmation(%{redirected: redirected} = socket) when redirected != nil,
+    do: socket
+
+  defp leave_empty_confirmation(socket) do
+    if follows_facts?(socket) and socket.assigns[:live_action] == :confirmation and
+         socket.assigns[:meeting_uid] in [nil, ""],
+       do: push_navigate(socket, to: PathHandlers.facts_start(socket.assigns)),
+       else: socket
+  end
+
+  # Only a journey whose address follows its facts keeps its address, so the
+  # classic journey's assigns are what they were.
+  defp remember_address(socket, address) do
+    if follows_facts?(socket), do: assign(socket, :journey_url, address), else: socket
+  end
+
+  defp address(url) do
+    %URI{path: path, query: query} = URI.parse(url)
+    if query in [nil, ""], do: path, else: "#{path}?#{query}"
+  end
+
+  defp maybe_subscribe_to_calendar_events(socket) do
+    organizer_user_id = socket.assigns[:organizer_user_id]
+
+    if connected?(socket) && is_integer(organizer_user_id) &&
+         !socket.assigns[:calendar_pubsub_subscribed] do
+      Phoenix.PubSub.subscribe(Tymeslot.PubSub, "calendar_events:#{organizer_user_id}")
+      assign(socket, :calendar_pubsub_subscribed, true)
+    else
+      socket
+    end
+  end
+end

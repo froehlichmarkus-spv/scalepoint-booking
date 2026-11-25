@@ -1,0 +1,529 @@
+defmodule Tymeslot.Integrations.Calendar.Providers.CaldavCommon do
+  @moduledoc """
+  Shared CalDAV-family provider mechanics.
+
+  Centralizes connection testing, discovery, event fetching, and CRUD wrappers
+  used by CalDAV-compatible providers (e.g., generic CalDAV, Radicale).
+  """
+
+  use Gettext, backend: TymeslotWeb.Gettext
+
+  alias Tymeslot.Infrastructure.Tasks
+
+  alias Tymeslot.Integrations.Calendar.CalDAV.{
+    Base,
+    Client,
+    Discovery,
+    Events,
+    Http,
+    UrlBuilder
+  }
+
+  alias Tymeslot.Integrations.Calendar.CalendarEntry
+  alias Tymeslot.Integrations.Calendar.CreatedEvent
+  alias Tymeslot.Integrations.Calendar.ICalNormaliser
+  alias Tymeslot.Integrations.Calendar.Shared.EventSearch
+  alias Tymeslot.Integrations.Calendar.Shared.FetchAggregate
+  alias Tymeslot.Integrations.Calendar.Shared.FetchAggregate.Outcome
+  alias Tymeslot.Utils.UriUtils
+
+  @type caldav_client :: Client.t()
+
+  @doc "See `CalDAV.Client.normalize_url/1`."
+  defdelegate normalize_url(url), to: Client
+
+  @doc "See `CalDAV.Client.build_provider_client/4`."
+  defdelegate build_provider_client(config, provider, base_url, calendar_paths), to: Client
+
+  @doc "See `CalDAV.Client.build_client/2`."
+  defdelegate build_client(config, opts), to: Client
+
+  @doc "See `CalDAV.Client.client_for_integration/1`."
+  defdelegate client_for_integration(integration), to: Client
+
+  @doc """
+  Quick connectivity probe via a PROPFIND request with a short timeout.
+
+  Sends a minimal PROPFIND to the first configured calendar path (or `/`) to
+  verify that the server is reachable and credentials are accepted. Used by the
+  audit runner and diagnostic tooling, and by `test_connection/2` itself once a
+  client has stored calendar paths to probe.
+
+  Call it directly only with a non-empty `:calendar_paths`. Its `/` fallback is
+  a last resort for the audit runner, and a server whose DAV root answers 405
+  fails it while syncing perfectly.
+
+  Returns `{:ok, %{status: :ok}}` on success, or `{:error, reason}`.
+  """
+  @spec check_connectivity(caldav_client()) :: {:ok, map()} | {:error, term()}
+  def check_connectivity(client) do
+    with :ok <- validate_credentials(client) do
+      path = List.first(client.calendar_paths || []) || "/"
+
+      # Use the same URL builder as create/read/delete so server-root-relative
+      # paths (e.g. Nextcloud's "/remote.php/dav/calendars/...") aren't
+      # double-prefixed when the client's base_url already contains a CalDAV
+      # principal path.
+      url = UrlBuilder.build_calendar_url(client.base_url, path)
+
+      case Http.propfind(url, client.username, client.password,
+             depth: "0",
+             timeout: 5_000
+           ) do
+        {:ok, _response} -> {:ok, %{status: :ok}}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  @doc """
+  Tests a connection, probing whichever URL this client can actually be
+  expected to reach.
+
+  Returns `{:ok, message}` or `{:error, reason}` (reason is passed through).
+  """
+  @spec test_connection(caldav_client(), keyword()) :: {:ok, String.t()} | {:error, term()}
+  def test_connection(client, opts \\ []) do
+    with :ok <- validate_credentials(client) do
+      case probe(client, opts) do
+        {:ok, _result} -> {:ok, success_message(client.provider)}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  # A client carrying stored calendar paths has already been through discovery
+  # once and had that path validated, and it is the same path `CalDAV.Sync`
+  # builds every request from. Probe it, rather than re-deriving a URL from
+  # `UrlBuilder`'s naming heuristic on every check: where the heuristic guesses
+  # wrong and the server also refuses a PROPFIND at its origin root (405, as
+  # some self-hosted setups answer), the full discovery chain dead-ends and
+  # reports a calendar that is syncing perfectly as unreachable, and the
+  # periodic health check would then alert on an integration that works.
+  #
+  # With no stored paths there is nothing to probe — this is onboarding, before
+  # discovery has run — so the guess-then-RFC4791 chain is the only option.
+  # `check_connectivity/1` must not be used there: with an empty path list it
+  # falls back to probing `/`, which is exactly the request those servers
+  # refuse, so new users on such a server would fail to connect at all.
+  defp probe(%{calendar_paths: [_first | _rest]} = client, _opts), do: check_connectivity(client)
+  defp probe(client, opts), do: Discovery.test_connection(client, opts)
+
+  @doc """
+  Discovers available calendars via `Discovery.discover_calendars/2`.
+  """
+  @spec discover_calendars(caldav_client(), keyword()) ::
+          {:ok, [CalendarEntry.t()]} | {:error, term()}
+  def discover_calendars(client, opts \\ []) do
+    with :ok <- validate_credentials(client) do
+      Discovery.discover_calendars(client, opts)
+    end
+  end
+
+  @doc """
+  Implements the `Provider` `list_events/2` contract for CalDAV-family providers.
+
+  Extracts `:start_time` and `:end_time` from `opts` and delegates to
+  `get_events/3`. Returns `{:error, :missing_time_range}` when either value is
+  absent or not a `DateTime`.
+  """
+  @spec list_events(caldav_client(), keyword()) :: {:ok, list()} | {:error, term()}
+  def list_events(client, opts) do
+    case {opts[:start_time], opts[:end_time]} do
+      {%DateTime{} = start_time, %DateTime{} = end_time} ->
+        get_events(client, start_time, end_time)
+
+      _missing_range ->
+        {:error, :missing_time_range}
+    end
+  end
+
+  @doc """
+  Fetch events for default current month.
+  """
+  @spec get_events(caldav_client()) :: {:ok, list()} | {:error, term()}
+  def get_events(client) do
+    now = DateTime.utc_now()
+    {:ok, start_time} = DateTime.new(Date.beginning_of_month(now), ~T[00:00:00], "Etc/UTC")
+    {:ok, end_time} = DateTime.new(Date.end_of_month(now), ~T[23:59:59], "Etc/UTC")
+    get_events(client, start_time, end_time)
+  end
+
+  @doc """
+  Fetch events for a given time window across all configured calendars in parallel.
+
+  Answers `{:error, %FetchAggregate.Outcome{}}` when some calendars were read
+  and at least one could not be, and the first error when none could be.
+  """
+  @spec get_events(caldav_client(), DateTime.t(), DateTime.t()) ::
+          {:ok, list()} | {:error, Outcome.t()} | {:error, term()}
+  def get_events(client, start_time, end_time) do
+    paths = get_calendar_paths(client)
+
+    if Enum.empty?(paths) do
+      {:error, "No calendars configured"}
+    else
+      do_fetch_events(client, paths, start_time, end_time)
+    end
+  end
+
+  defp do_fetch_events(client, paths, start_time, end_time) do
+    tasks =
+      Enum.map(paths, fn path ->
+        {path,
+         Tasks.async(Tymeslot.TaskSupervisor, fn ->
+           fetch_path(client, path, start_time, end_time)
+         end)}
+      end)
+
+    results =
+      Enum.map(tasks, fn {path, task} ->
+        {path, Task.await(task, Base.task_await_timeout_ms())}
+      end)
+
+    {successes, errors} =
+      Enum.split_with(results, fn {_path, r} -> match?({:ok, _result}, r) end)
+
+    handle_fetch_results(client, successes, errors)
+  end
+
+  # A collection shared as busy times only answers calendar-query with 403;
+  # its busy periods come through the free-busy-query REPORT instead.
+  defp fetch_path(client, path, start_time, end_time) do
+    if path in Map.get(client, :free_busy_paths, []),
+      do: Events.fetch_free_busy(client, path, start_time, end_time),
+      else: Events.fetch_events(client, path, start_time, end_time)
+  end
+
+  # If every calendar path errored, surface the first error — callers must be
+  # able to distinguish "no events in range" from "reads silently failed". A
+  # timed-out REPORT must not turn into an empty list, or an event just
+  # created looks as if it was never stored.
+  defp handle_fetch_results(_client, [], [_head | _tail] = errors) do
+    {_path, {:error, reason}} = List.first(errors)
+    {:error, reason}
+  end
+
+  # At least one path succeeded. A path that could not be read has unknown
+  # busy time, not none, so any hard failure answers the per-path `Outcome`
+  # rather than the union of the readable calendars: offering slots from
+  # those alone would hide conflicts on the unreadable one. The policy is
+  # `FetchAggregate.require_complete/1`'s, applied once at the availability
+  # boundary, as for Google and Outlook (`MultiCalendarFetch`).
+  #
+  # A collection the server answers 404 for is confirmed absent, not
+  # unreadable: its owner deleted it, so it contributes no events and no
+  # failure. The sync path deselects such a calendar on its own. Any other
+  # refusal, a 410 included (the REPORT has no meaning of its own for one,
+  # so it arrives as `{:unexpected_status, 410}`), fails closed.
+  #
+  # We deliberately don't expand recurrences here: the caller expands them,
+  # through `ICalNormaliser` on both the sync and the live availability read
+  # (`EventsRead`). Expanding in both places produces N×N occurrences because
+  # each first-pass occurrence still carries the master RRULE and gets
+  # re-expanded.
+  defp handle_fetch_results(client, successes, errors) do
+    (successes ++ errors)
+    |> FetchAggregate.collect(&classify_path_result/1,
+      calendar_integration_id: Map.get(client, :calendar_integration_id),
+      provider: Map.get(client, :provider)
+    )
+    |> dedupe_outcome_events()
+    |> to_result()
+  end
+
+  defp classify_path_result({_path, {:ok, events}}), do: {:ok, events}
+
+  defp classify_path_result({_path, {:error, :not_found}}), do: :absent
+
+  defp classify_path_result({path, {:error, reason}}), do: {:error, path, reason}
+
+  # De-duplicated on the pair that identifies a VEVENT, not on the UID alone:
+  # a recurring event's overrides share the master's UID by RFC 5545, so
+  # keying on the UID collapsed a whole series back to one event and undid
+  # the parser keeping them.
+  defp dedupe_outcome_events(%Outcome{events: events} = outcome),
+    do: %{outcome | events: Enum.uniq_by(events, &{&1.uid, &1[:recurrence_id]})}
+
+  defp to_result(%Outcome{failed: []} = outcome), do: {:ok, outcome.events}
+  defp to_result(%Outcome{} = outcome), do: {:error, outcome}
+
+  @doc """
+  Create an event in the calendar the payload asks for, or in the client's own
+  calendar when it asks for none.
+
+  Answers a `CreatedEvent` carrying the uid, the collection and href the
+  resource was written to and the ETag the server assigned it, so the caller
+  can cache the event's identity without waiting for a sync to supply it.
+  """
+  @spec create_event(caldav_client(), map()) :: {:ok, CreatedEvent.t()} | {:error, term()}
+  def create_event(client, event_data) do
+    case create_path(client, event_data) do
+      nil -> {:error, "No calendar configured for creating events"}
+      path -> Events.create_calendar_event(client, path, event_data)
+    end
+  end
+
+  # The booking flow chooses no calendar, so the client's own collection is the
+  # default. The calendar grid does choose one, read from
+  # `event_data[:calendar_id]`.
+  #
+  # The choice is honoured only when it names a collection the integration
+  # lists as writable. `event_data` is caller-supplied, and a path taken from
+  # it unchecked is a URL taken from a payload.
+  defp create_path(client, event_data) do
+    chosen = Map.get(event_data, :calendar_id) || Map.get(event_data, "calendar_id")
+
+    client
+    |> writable_calendar_paths()
+    |> Enum.find(&UriUtils.uri_safe_match?(&1, chosen))
+    |> Kernel.||(primary_calendar_path(client))
+  end
+
+  defp writable_calendar_paths(%{writable_calendar_paths: paths}) when is_list(paths), do: paths
+  defp writable_calendar_paths(_client), do: []
+
+  @doc """
+  Diagnostic-only: PUT a hand-crafted iCalendar payload into the primary
+  calendar. The caller is responsible for producing a valid RFC 5545 document
+  and for cleaning up afterwards. Used by `mix calendar_audit`.
+
+  Because the PUT uses `If-None-Match: *`, sending an existing UID returns
+  `{:error, "Precondition failed - event may already exist"}` (HTTP 412).
+  Callers must either delete the event before re-using a UID or generate a
+  fresh UID per attempt.
+  """
+  @spec put_raw_event(caldav_client(), String.t(), String.t()) ::
+          {:ok, CreatedEvent.t()} | {:error, term()}
+  def put_raw_event(client, uid, ical_data) do
+    case primary_calendar_path(client) do
+      nil -> {:error, "No calendar configured for creating events"}
+      path -> Events.put_raw_event(client, path, uid, ical_data)
+    end
+  end
+
+  @doc """
+  The URL of the event `uid` in the primary configured calendar, the
+  resource `put_raw_event/3` writes. `nil` when no calendar is configured.
+  """
+  @spec primary_event_url(caldav_client(), String.t()) :: String.t() | nil
+  def primary_event_url(client, uid) do
+    case primary_calendar_path(client) do
+      nil -> nil
+      path -> UrlBuilder.build_event_url(client.base_url, path, uid)
+    end
+  end
+
+  @doc """
+  Update an event by UID in the primary configured calendar.
+
+  `opts` may carry `:etag` (the caller's cached ETag for the event, used
+  directly as `If-Match` without a HEAD probe) and any options accepted by
+  `Events.update_calendar_event/5`.
+
+  When `event_data` carries the event's last-synced `:raw_ical` (and the
+  `:etag` it came with), that document is patched property by property rather
+  than rebuilt from the payload, so everything the scheduler does not model — the
+  `ATTENDEE` block above all — survives the write.
+
+  When `event_data` carries `colour_only: true` (the colour write-back
+  path), dispatches to `Events.update_event_colour/5` instead — patching only
+  the `COLOR` property on the event's cached `raw_ical` rather than rebuilding
+  the VEVENT from a reduced payload, which would silently drop
+  RRULE/ATTENDEE/VALARM data.
+
+  When `event_data` carries an `:occurrence` (see `Events.occurrence/0`, with
+  its `:changes`), only that one occurrence of the series is edited, by
+  writing its override into the resource at its href
+  (`Events.update_occurrence/4`); with `scope: :all` every occurrence is
+  edited through the series' master instead (`Events.update_series/4`), and
+  with `scope: :following` the series is split in two at the occurrence and
+  the edit written to the second half (`Events.split_series/4`). The answer
+  is then `{:ok, %{document: document}}` with the document now on the
+  server, and for a split the new resource under `:tail`; the rest of the
+  payload is not read.
+  """
+  @spec update_event(caldav_client(), String.t(), map(), keyword()) ::
+          :ok
+          | {:ok, %{required(:document) => String.t(), optional(:tail) => map()}}
+          | {:error, term()}
+  def update_event(client, uid, event_data, opts \\ [])
+
+  def update_event(client, _uid, %{occurrence: %{scope: :all} = occurrence}, opts),
+    do: Events.update_series(client, primary_calendar_path(client), occurrence, opts)
+
+  def update_event(client, _uid, %{occurrence: %{scope: :following} = occurrence}, opts),
+    do: Events.split_series(client, primary_calendar_path(client), occurrence, opts)
+
+  def update_event(client, _uid, %{occurrence: %{} = occurrence}, opts),
+    do: Events.update_occurrence(client, primary_calendar_path(client), occurrence, opts)
+
+  def update_event(client, uid, %{colour_only: true, colour: colour} = event_data, opts) do
+    case primary_calendar_path(client) do
+      nil ->
+        {:error, "Event not found"}
+
+      path ->
+        colour_opts =
+          Keyword.merge(opts,
+            raw_ical: Map.get(event_data, :raw_ical),
+            provider_event_id: Map.get(event_data, :provider_event_id),
+            etag: Map.get(event_data, :etag)
+          )
+
+        Events.update_event_colour(client, path, uid, colour, colour_opts)
+    end
+  end
+
+  def update_event(client, uid, event_data, opts) do
+    case primary_calendar_path(client) do
+      nil -> {:error, "Event not found"}
+      path -> Events.update_calendar_event(client, path, uid, event_data, opts)
+    end
+  end
+
+  @doc """
+  Delete an event by UID.
+
+  When `opts[:provider_event_id]` is set, the event's server-side href is used
+  directly — required when the event lives on a calendar other than the first
+  configured path. Otherwise falls back to the primary calendar path and
+  constructs the URL from the UID.
+
+  When `opts[:occurrence]` is set (see `Events.occurrence/0`), only that one
+  occurrence of the series is deleted, by rewriting the resource at its href
+  (`Events.delete_occurrence/4`), and the answer is
+  `{:ok, %{document: document}}` with the document now on the server, `nil`
+  once nothing of the series was left and the resource was deleted.
+  """
+  @spec delete_event(caldav_client(), String.t(), keyword()) ::
+          :ok | {:ok, %{document: String.t() | nil}} | {:error, term()}
+  def delete_event(client, uid, opts \\ []) do
+    case {opts[:occurrence], primary_calendar_path(client)} do
+      {%{} = occurrence, path} -> Events.delete_occurrence(client, path, occurrence, opts)
+      {nil, nil} -> :ok
+      {nil, path} -> Events.delete_calendar_event(client, path, uid, opts)
+    end
+  end
+
+  @doc """
+  Fetches one event straight from the server (see the provider behaviour's
+  `fetch_event/2`), by its href in `provider_event_id` or else by `uid` in the
+  client's calendar. A resource whose every component is `STATUS:CANCELLED`
+  holds no live event and is `{:error, :not_found}`, as a cancelled event is
+  for Google and Outlook.
+  """
+  @spec fetch_event(caldav_client(), map()) ::
+          {:ok, list()} | {:error, :not_found} | {:error, term()}
+  def fetch_event(client, event_ref) do
+    href = Map.get(event_ref, :provider_event_id)
+    # CalDAV hrefs are paths, or on some servers absolute URLs. Any other
+    # identifier (a Google or Outlook id) does not address a resource here.
+    href = if is_binary(href) and String.starts_with?(href, ["/", "http"]), do: href
+
+    path = primary_calendar_path(client)
+
+    with {:ok, raw_events} <-
+           Events.fetch_calendar_event(client, path, Map.get(event_ref, :uid), href) do
+      normalise_live(client, raw_events, path, event_ref)
+    end
+  end
+
+  @doc """
+  Looks for an event in every calendar of the account (see the provider
+  behaviour's `find_moved_event/2`), by its iCalendar UID in `uid`: a move
+  between calendars changes the event's href, and the client that moved it
+  need not keep the resource's name. Every calendar discovery finds that the
+  organiser can write to is asked, those `fetch_event/2` already asked
+  included, since it asked them by the old href.
+
+  A calendar discovery reports read-only (a colleague's shared calendar, a
+  subscription) is never asked: an event can only be moved into a calendar
+  its organiser can write to, and asking one would let its 403 leave the
+  event's absence unproven for ever. Nor does a copy of the event whose every
+  component is `STATUS:CANCELLED` count as found, since that is what an
+  attendee's calendar keeps of a cancelled invitation; the search goes on to
+  the next calendar, so a live copy anywhere still wins.
+  """
+  @spec find_moved_event(caldav_client(), map()) ::
+          {:ok, list()} | {:error, :not_found} | {:error, term()}
+  def find_moved_event(client, %{uid: uid} = event_ref) when is_binary(uid) and uid != "" do
+    with {:ok, calendars} <- discover_calendars(client) do
+      calendars
+      |> Enum.reject(& &1.read_only)
+      |> Enum.map(& &1.path)
+      |> Enum.reject(&(&1 in [nil, ""]))
+      |> Enum.uniq()
+      |> EventSearch.first_found(fn path ->
+        with {:ok, raw_events} <- Events.find_calendar_event(client, path, uid) do
+          normalise_live(client, raw_events, path, event_ref)
+        end
+      end)
+    end
+  end
+
+  def find_moved_event(_client, _event_ref), do: {:error, :unaddressable}
+
+  # A resource whose every component is cancelled holds no live event. One
+  # cancelled occurrence of a live series leaves the master live.
+  defp normalise_live(client, raw_events, path, event_ref) do
+    if Enum.all?(raw_events, &cancelled?/1),
+      do: {:error, :not_found},
+      else: normalise_fetched(client, raw_events, path, event_ref)
+  end
+
+  defp cancelled?(%{status: status}) when is_binary(status),
+    do: String.upcase(String.trim(status)) == "CANCELLED"
+
+  defp cancelled?(_raw_event), do: false
+
+  defp normalise_fetched(client, raw_events, path, event_ref) do
+    ICalNormaliser.normalise_events(
+      raw_events,
+      %{
+        calendar_integration_id: Map.get(event_ref, :calendar_integration_id),
+        provider_calendar_id: path || "",
+        synced_at: DateTime.utc_now()
+      },
+      Map.get(client, :provider, :caldav)
+    )
+  end
+
+  # Helpers
+
+  # Client configs are built atom-keyed in this application but arrive
+  # string-keyed when they have been round-tripped through JSON, so both
+  # shapes are answered here once.
+  defp get_calendar_paths(%{calendar_paths: paths}) when is_list(paths), do: paths
+  defp get_calendar_paths(%{"calendar_paths" => paths}) when is_list(paths), do: paths
+  defp get_calendar_paths(_client), do: []
+
+  defp primary_calendar_path(client) do
+    client
+    |> get_calendar_paths()
+    |> List.first()
+  end
+
+  # Same msgids the provider modules themselves use, so the message a user
+  # sees does not depend on which of the two paths produced it.
+  defp success_message(:nextcloud),
+    do: dgettext("integrations_calendar", "Nextcloud connection successful")
+
+  defp success_message(:radicale),
+    do: dgettext("integrations_calendar", "Radicale connection successful")
+
+  defp success_message(_arg),
+    do: dgettext("integrations_calendar", "CalDAV connection successful")
+
+  # Matches on the fields rather than on `%Client{}`: the redaction guarantee
+  # comes from `build_client/2` constructing the struct, not from strictness
+  # here, and several callers still hand this a bare client-shaped map.
+  defp validate_credentials(%{username: username, password: password}) do
+    if is_binary(username) and String.trim(username) != "" and
+         is_binary(password) and String.trim(password) != "" do
+      :ok
+    else
+      {:error, :invalid_credentials}
+    end
+  end
+end

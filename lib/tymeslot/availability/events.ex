@@ -1,0 +1,167 @@
+defmodule Tymeslot.Availability.Events do
+  @moduledoc """
+  Pure functions for event processing and timezone conversion.
+  """
+
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Utils.DateTimeUtils
+
+  require Logger
+
+  @doc """
+  Converts a list of `CalendarEvent` structs to a specific timezone, returning
+  lightweight maps with `start_time` / `end_time` (both `DateTime`) that
+  downstream conflict-checking code can consume directly. The source event's
+  `uid` is carried through unchanged (falling back to a string-keyed `"uid"`
+  for OAuth fresh-fetch plain maps), so callers can identify and selectively
+  exclude a specific event without a second lookup — see
+  `Tymeslot.Availability.Conflicts`'s `:ignore_event_uids` option. A booking's
+  own `buffers` (see `Tymeslot.Meetings.BusyPeriods`) are carried through too,
+  so the conflict check can keep them clear.
+
+  - **All-day events** (`all_day: true`): dates are anchored to midnight in the
+    owner's timezone, then shifted to the target timezone.
+  - **Timed events** (`all_day: false`): `start_at` / `end_at` are shifted to
+    the target timezone via `DateTime.shift_zone/2`.
+
+  - **Events without an end** block thirty minutes when timed and their whole
+    day when date-only.
+
+  Events that cannot be converted (e.g. invalid timezone data) are dropped.
+  """
+  @spec convert_events_to_timezone([CalendarEvent.t()], String.t(), String.t()) :: [map()]
+  def convert_events_to_timezone(events, owner_timezone, target_timezone) do
+    events
+    |> Enum.map(&convert_event(&1, owner_timezone, target_timezone))
+    |> Enum.reject(&is_nil/1)
+  end
+
+  @doc """
+  The UTC `{start, end}` instants an event blocks, with an all-day event
+  anchored to midnight in the owner's timezone.
+
+  This is the one conversion every consumer of calendar events goes through
+  (the booking page, the submit-time re-check, the free/busy feed, a poll's
+  slot health), so an all-day event covers the same stretch of time
+  everywhere. Accepts `CalendarEvent` structs and the plain maps the
+  fresh-fetch path returns (see `convert_events_to_timezone/3`). Returns
+  `:error` for an event whose times are missing or cannot be converted.
+  """
+  @spec to_interval(CalendarEvent.t() | map(), String.t()) ::
+          {:ok, {DateTime.t(), DateTime.t()}} | :error
+  def to_interval(event, owner_timezone), do: interval(event, owner_timezone, "Etc/UTC")
+
+  defp convert_event(event, owner_timezone, target_timezone) do
+    case interval(event, owner_timezone, target_timezone) do
+      {:ok, {s, e}} ->
+        event
+        |> Map.take([:buffers])
+        |> Map.merge(%{
+          start_time: s,
+          end_time: e,
+          uid: Map.get(event, :uid) || Map.get(event, "uid")
+        })
+
+      :error ->
+        nil
+    end
+  end
+
+  defp interval(event, owner_timezone, target_timezone) do
+    {start_val, end_val} = event |> bounds() |> with_default_end()
+
+    with {:ok, s} <- shift_safe(start_val, owner_timezone, target_timezone),
+         {:ok, e} <- shift_safe(end_val, owner_timezone, target_timezone) do
+      {:ok, {s, e}}
+    else
+      _other -> :error
+    end
+  end
+
+  # Plain maps from the OAuth / CalDAV fresh-fetch path carry start_time/end_time
+  # directly. Timed events have DateTime values; all-day events typically have
+  # Date values (anchored to midnight in the owner's timezone before shifting).
+  #
+  # Some CalDAV servers (Radicale, Zimbra) emit all-day events as a pair of
+  # VALUE=DATE-TIME DTSTART/DTEND values at UTC midnight rather than VALUE=DATE.
+  # Treating those as genuine timed events would offset the 24h block by the
+  # owner's UTC offset (e.g. 12h wrong for Pacific/Fiji). When the provider
+  # explicitly sets `all_day: true` on the plain map, detect the pattern and
+  # re-anchor to owner-local midnight instead. Events without `all_day: true`
+  # (or with `all_day: false`) are passed through as timed events so that a
+  # genuine 24-hour timed slot starting at UTC midnight is never mis-classified.
+  defp bounds(%CalendarEvent{all_day: true} = event), do: {event.start_date, event.end_date}
+  defp bounds(%CalendarEvent{all_day: false} = event), do: {event.start_at, event.end_at}
+
+  defp bounds(%{start_time: _start_time, end_time: _end_time} = event) when not is_struct(event),
+    do: maybe_reanchor_utc_midnight(event)
+
+  defp bounds(_other), do: {nil, nil}
+
+  # An event without an end still blocks: a timed one for thirty minutes, and
+  # an all-day one for its day, as RFC 5545 reads a date-only DTSTART with no
+  # DTEND. Applied here so the booking page and the booking submit read such
+  # an event the same way.
+  defp with_default_end({%Date{} = start_date, nil}), do: {start_date, Date.add(start_date, 1)}
+
+  defp with_default_end({%DateTime{} = start_time, nil}),
+    do: {start_time, DateTime.add(start_time, 30, :minute)}
+
+  defp with_default_end(bounds), do: bounds
+
+  defp shift_safe(nil, _owner_timezone, _target_timezone), do: {:error, nil}
+
+  defp shift_safe(%DateTime{} = dt, _owner_timezone, target_timezone) do
+    if dt.time_zone == target_timezone do
+      {:ok, dt}
+    else
+      DateTime.shift_zone(dt, target_timezone)
+    end
+  rescue
+    error ->
+      Logger.warning("Timezone shift raised while converting a calendar event",
+        source_timezone: dt.time_zone,
+        target_timezone: target_timezone,
+        error: LogFormat.reason(error)
+      )
+
+      {:error, :invalid_timezone}
+  end
+
+  defp shift_safe(%Date{} = date, owner_timezone, target_timezone) do
+    date
+    |> DateTimeUtils.create_datetime_safe(~T[00:00:00], owner_timezone)
+    |> shift_safe(owner_timezone, target_timezone)
+  end
+
+  # The Radicale/Zimbra all-day-as-UTC-midnight convention (see `bounds/1`
+  # for why it is gated on `all_day: true`): a pair of UTC DateTimes where
+  # both sides sit exactly on a whole-day boundary and the span is an integer
+  # number of days.
+  defp maybe_reanchor_utc_midnight(%{
+         all_day: true,
+         start_time: %DateTime{} = s,
+         end_time: %DateTime{} = e
+       }) do
+    if utc_midnight?(s) and utc_midnight?(e) and DateTime.compare(e, s) == :gt do
+      {DateTime.to_date(s), DateTime.to_date(e)}
+    else
+      {s, e}
+    end
+  end
+
+  defp maybe_reanchor_utc_midnight(%{start_time: start_val, end_time: end_val}),
+    do: {start_val, end_val}
+
+  defp utc_midnight?(%DateTime{
+         time_zone: "Etc/UTC",
+         hour: 0,
+         minute: 0,
+         second: 0,
+         microsecond: {0, _precision}
+       }),
+       do: true
+
+  defp utc_midnight?(_other), do: false
+end

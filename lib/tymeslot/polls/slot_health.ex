@@ -1,0 +1,118 @@
+defmodule Tymeslot.Polls.SlotHealth do
+  @moduledoc """
+  Advisory conflict check for a poll's candidate slots against the host's calendar.
+
+  Powers the host's results view: each candidate slot is flagged `:ok` or
+  `:conflict` depending on whether it overlaps a blocking event on the host's
+  calendar. This is a hint only, **not** an authoritative gate. The binding
+  conflict check happens at confirmation time in
+  `Tymeslot.Meetings.Scheduling.create_meeting_with_conflict_check/2`, which,
+  like this hint, counts only what overlaps the slot itself.
+
+  Because it is advisory, it degrades gracefully: any failure fetching the
+  host's calendar events returns every slot as `:ok` and never blocks anything.
+  """
+
+  alias Tymeslot.Availability.Bookability
+  alias Tymeslot.Availability.Events
+  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Infrastructure.Tasks
+  alias Tymeslot.Integrations.Calendar.CalendarEvent
+  alias Tymeslot.Integrations.Calendar.Events, as: CalendarEvents
+  alias Tymeslot.Profiles
+  alias Tymeslot.Utils.TimeRange
+
+  require Logger
+
+  @task_supervisor Tymeslot.TaskSupervisor
+
+  @type slot_status :: :ok | :conflict
+
+  @doc """
+  Returns a `%{slot_id => :ok | :conflict}` map for every slot in the poll.
+
+  The poll's `time_slots` association must be loaded. A poll with no slots
+  returns an empty map.
+  """
+  @spec check(map()) :: %{binary() => slot_status()}
+  def check(%{time_slots: []}), do: %{}
+
+  def check(%{time_slots: slots} = poll) when is_list(slots) do
+    dates = slots |> slot_range() |> fetch_dates()
+
+    case fetch_events(poll.user_id, dates) do
+      {:ok, events} ->
+        busy = busy_intervals(events, poll.user_id, dates)
+        Map.new(slots, &{&1.id, slot_status(&1, busy)})
+
+      {:error, reason} ->
+        Logger.warning("Poll slot-health calendar fetch failed; treating all slots as available",
+          poll_id: poll.id,
+          reason: LogFormat.reason(reason)
+        )
+
+        Map.new(slots, &{&1.id, :ok})
+    end
+  end
+
+  @doc """
+  `check/1`, given at most `timeout` milliseconds. A check that runs longer,
+  or crashes, is abandoned and every slot comes back `:ok`, like a failed
+  calendar fetch.
+
+  Runs the check in a supervised task, so the caller is not linked to it.
+  """
+  @spec check_within(map(), timeout()) :: %{binary() => slot_status()}
+  def check_within(poll, timeout) do
+    task = Tasks.async_nolink(@task_supervisor, fn -> check(poll) end)
+
+    case Task.yield(task, timeout) || Task.shutdown(task) do
+      {:ok, health} -> health
+      _timeout_or_crash -> Map.new(poll.time_slots, &{&1.id, :ok})
+    end
+  end
+
+  # Padded by a day each side: an all-day event blocks the host's local day,
+  # which can sit in the UTC day before or after a slot's, and a provider asked
+  # only about the slots' UTC days would not return it.
+  @spec fetch_dates({DateTime.t(), DateTime.t()}) :: {Date.t(), Date.t()}
+  defp fetch_dates({range_start, range_end}) do
+    {
+      range_start |> DateTime.to_date() |> Date.add(-1),
+      range_end |> DateTime.to_date() |> Date.add(1)
+    }
+  end
+
+  @spec fetch_events(integer(), {Date.t(), Date.t()}) :: {:ok, list()} | {:error, term()}
+  defp fetch_events(user_id, {first, last}),
+    do: CalendarEvents.get_events_for_range_fresh(user_id, first, last)
+
+  @spec slot_range([map()]) :: {DateTime.t(), DateTime.t()}
+  defp slot_range(slots) do
+    {
+      slots |> Enum.map(& &1.start_time) |> Enum.min(DateTime),
+      slots |> Enum.map(& &1.end_time) |> Enum.max(DateTime)
+    }
+  end
+
+  # All-day events arrive as bare dates; they block the host's local day, the
+  # same stretch the booking page and the booking submit block. Which events
+  # block is the booking page's rule too: the organiser's "Treat as" choices
+  # (`Bookability.apply_to_busy/3`), then `CalendarEvent.blocking?/1`.
+  @spec busy_intervals(list(), integer(), {Date.t(), Date.t()}) :: [map()]
+  defp busy_intervals(events, user_id, dates) do
+    events
+    |> Bookability.apply_to_busy(user_id, dates)
+    |> Enum.filter(&CalendarEvent.blocking?/1)
+    |> Events.convert_events_to_timezone(Profiles.get_user_timezone(user_id), "Etc/UTC")
+  end
+
+  @spec slot_status(map(), [map()]) :: slot_status()
+  defp slot_status(slot, blocking_events) do
+    if TimeRange.has_conflict_with_events?(slot.start_time, slot.end_time, blocking_events) do
+      :conflict
+    else
+      :ok
+    end
+  end
+end
