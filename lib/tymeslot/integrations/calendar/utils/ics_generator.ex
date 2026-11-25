@@ -459,6 +459,9 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     location = Map.get(meeting_details, :location)
 
     cond do
+      named = BookingRequestLocation.video_label(%{location: location, location_kind: :video}) ->
+        named
+
       is_binary(meeting_url) and meeting_url != "" ->
         dgettext("emails", "Video Call")
 

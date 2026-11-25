@@ -66,11 +66,6 @@ msgstr "O nome do convidado é obrigatório"
 msgid "Meeting with %{name}"
 msgstr "Reunião com %{name}"
 
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "This calendar is read-only. Events on it can't be changed from Tymeslot."
-msgstr "Este calendário é somente leitura. Os eventos dele não podem ser alterados pelo Tymeslot."
-
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Could not change the video link - changes reverted"
@@ -251,11 +246,6 @@ msgstr "A exclusão falhou; nova tentativa na próxima sincronização. Os parti
 #, elixir-autogen, elixir-format
 msgid "Too many new meetings. Please wait a moment."
 msgstr "Muitas reuniões novas. Aguarde um momento."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Outra pessoa organiza esta reunião, então o the scheduler não pode mover nem dividir a série: você só recebeu o convite."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -484,3 +474,13 @@ msgstr "Evento excluído, mas não foi possível avisar os participantes."
 #, elixir-autogen, elixir-format
 msgid "Syncing with your calendar. Open the event to change the whole series."
 msgstr "Sincronizando com seu calendário. Abra o evento para alterar a série inteira."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+msgstr "Outra pessoa organiza esta reunião, então o the scheduler não pode mover nem dividir a série: você só recebeu o convite."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar is read-only. Events on it can't be changed from here."
+msgstr "Este calendário é somente leitura. Os eventos dele não podem ser alterados pelo Tymeslot."

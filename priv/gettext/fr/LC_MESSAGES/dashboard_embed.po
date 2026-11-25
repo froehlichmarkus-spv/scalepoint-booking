@@ -383,11 +383,6 @@ msgstr "Par défaut : centré avec une largeur maximale d’environ 640 px (styl
 
 #: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
 #, elixir-autogen, elixir-format
-msgid "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
-msgstr "Installez le plugin officiel the scheduler pour intégrer votre page de réservation à l’aide d’un bloc ou d’un shortcode, sans code."
-
-#: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
-#, elixir-autogen, elixir-format
 msgid "Updates every snippet below. Defaults work for most embeds - adjust when your site needs them."
 msgstr "Met à jour tous les extraits ci-dessous. Les valeurs par défaut conviennent à la plupart des intégrations : ajustez-les si votre site en a besoin."
 
@@ -452,3 +447,8 @@ msgstr "Besoin d’aide ? Consultez le %{guide} pour des instructions étape par
 #, elixir-autogen, elixir-format
 msgid "Booking page"
 msgstr "Page de réservation"
+
+#: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
+#, elixir-autogen, elixir-format
+msgid "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
+msgstr "Installez le plugin officiel the scheduler pour intégrer votre page de réservation à l’aide d’un bloc ou d’un shortcode, sans code."

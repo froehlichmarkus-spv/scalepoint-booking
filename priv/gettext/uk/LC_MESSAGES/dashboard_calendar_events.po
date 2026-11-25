@@ -66,11 +66,6 @@ msgstr "Ім’я гостя є обов’язковим"
 msgid "Meeting with %{name}"
 msgstr "Зустріч із %{name}"
 
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "This calendar is read-only. Events on it can't be changed from Tymeslot."
-msgstr "Цей календар доступний лише для перегляду. Події в ньому не можна змінювати з Tymeslot."
-
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Could not change the video link - changes reverted"
@@ -253,11 +248,6 @@ msgstr "Помилка видалення - додано в чергу для п
 #, elixir-autogen, elixir-format
 msgid "Too many new meetings. Please wait a moment."
 msgstr "Забагато нових зустрічей. Будь ласка, зачекайте."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Цю зустріч організовує хтось інший, тому the scheduler не може перенести чи розділити серію, до якої вас лише запросили."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -490,3 +480,13 @@ msgstr "Подію видалено, але учасників не вдалос
 #, elixir-autogen, elixir-format
 msgid "Syncing with your calendar. Open the event to change the whole series."
 msgstr "Триває синхронізація з вашим календарем. Відкрийте подію, щоб змінити всю серію."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+msgstr "Цю зустріч організовує хтось інший, тому the scheduler не може перенести чи розділити серію, до якої вас лише запросили."
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar is read-only. Events on it can't be changed from here."
+msgstr "Цей календар доступний лише для перегляду. Події в ньому не можна змінювати з Tymeslot."

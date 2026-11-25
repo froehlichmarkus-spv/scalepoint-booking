@@ -239,11 +239,6 @@ msgstr "Nombre de usuario"
 msgid "Username is required"
 msgstr "El nombre de usuario es obligatorio"
 
-#: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your account is now set up."
-msgstr "¡Te damos la bienvenida a the scheduler! Tu cuenta ya está configurada."
-
 #: lib/tymeslot_web/live/onboarding_live/profile_step.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking link"
@@ -919,3 +914,8 @@ msgstr "Su correo electrónico (opcional)"
 #, elixir-autogen, elixir-format
 msgid "%{minutes} min"
 msgstr "%{minutes} min"
+
+#: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to the scheduler! Your account is now set up."
+msgstr "¡Te damos la bienvenida a the scheduler! Tu cuenta ya está configurada."

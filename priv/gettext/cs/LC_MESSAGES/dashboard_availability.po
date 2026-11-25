@@ -597,3 +597,18 @@ msgstr "Přestávka %{break} se už do této pracovní doby nevejde. Nejprve ji 
 #, elixir-autogen, elixir-format
 msgid "The %{break} break on %{day} falls outside that day's hours. Move or delete it, then try again."
 msgstr "Přestávka %{break} (%{day}) leží mimo pracovní dobu tohoto dne. Přesuňte ji nebo smažte a pak to zkuste znovu."
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times on these calendars are kept off your booking page."
+msgstr "Busy times on these calendars are kept off your booking page."
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Connected calendars"
+msgstr "Connected calendars"
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "No calendar connected yet."
+msgstr "No calendar connected yet."

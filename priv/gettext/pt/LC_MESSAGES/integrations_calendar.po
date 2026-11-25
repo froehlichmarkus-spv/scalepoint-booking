@@ -163,11 +163,6 @@ msgstr "O serviço de calendário não está respondendo. Tente novamente mais t
 msgid "Calendar subscription"
 msgstr "Assinatura de calendário"
 
-#: lib/tymeslot/integrations/calendar/ics/feed.ex
-#, elixir-autogen, elixir-format
-msgid "Calendar subscription sync failed while saving a fetched event. the scheduler will try again on the next sync."
-msgstr "A sincronização da assinatura de calendário falhou ao salvar um evento recebido. O the scheduler vai tentar de novo na próxima sincronização."
-
 #: lib/tymeslot/integrations/calendar/shared/error_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Check that Radicale is running and accessible at the specified URL and port"
@@ -491,11 +486,6 @@ msgstr "Esse feed de calendário é grande demais para processar."
 
 #: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
 #, elixir-autogen, elixir-format
-msgid "The Exchange server answered the free/busy request with nothing the scheduler could read. Retrying rather than treating your diary as free."
-msgstr "O servidor Exchange respondeu ao pedido de livre/ocupado com algo que o the scheduler não conseguiu ler. Tentando de novo, em vez de tratar sua agenda como livre."
-
-#: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
-#, elixir-autogen, elixir-format
 msgid "The Exchange server rejected the request."
 msgstr "O servidor Exchange recusou a requisição."
 
@@ -555,21 +545,6 @@ msgstr "O feed de calendário devolveu um erro."
 msgid "The calendar server answered this address but does not accept calendar requests there. Please check the server URL."
 msgstr "O servidor de calendário respondeu neste endereço, mas não aceita requisições de calendário aí. Confira a URL do servidor."
 
-#: lib/tymeslot/integrations/calendar/shared/error_messages.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server at %{url} listed more items than the scheduler can process at once. If this address points at a single calendar, enter your account's server address instead, and the scheduler will find your calendars there."
-msgstr "O servidor de calendário em %{url} listou mais itens do que o the scheduler consegue processar de uma vez. Se este endereço aponta para um único calendário, digite no lugar dele o endereço do servidor da sua conta, e o the scheduler encontrará seus calendários ali."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server did not respond. the scheduler will retry automatically."
-msgstr "O servidor de calendário não respondeu. O the scheduler vai tentar de novo automaticamente."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server is rate-limiting Tymeslot. the scheduler will retry automatically."
-msgstr "O servidor de calendário está limitando as requisições do Tymeslot. O the scheduler vai tentar de novo automaticamente."
-
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
 msgid "The calendar server refused access to this calendar."
@@ -585,27 +560,6 @@ msgstr "O servidor de calendário recusou a requisição."
 msgid "The calendar server rejected the stored credentials. Please reconnect the calendar."
 msgstr "O servidor de calendário recusou as credenciais armazenadas. Reconecte o calendário."
 
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server reported an error. the scheduler will retry automatically."
-msgstr "O servidor de calendário informou um erro. O the scheduler vai tentar de novo automaticamente."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server returned a response the scheduler could not understand."
-msgstr "O servidor de calendário devolveu uma resposta que o the scheduler não entendeu."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#: lib/tymeslot/integrations/calendar/shared/error_messages.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server returned more data than the scheduler can process at once."
-msgstr "O servidor de calendário devolveu mais dados do que o the scheduler consegue processar de uma vez."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "The calendar server took too long to respond. the scheduler will retry automatically."
-msgstr "O servidor de calendário demorou demais para responder. O the scheduler vai tentar de novo automaticamente."
-
 #: lib/tymeslot/integrations/calendar/shared/error_handler.ex
 #: lib/tymeslot/integrations/calendar/shared/error_messages.ex
 #, elixir-autogen, elixir-format
@@ -616,11 +570,6 @@ msgstr "O serviço de calendário encontrou um erro. Tente novamente mais tarde.
 #, elixir-autogen, elixir-format
 msgid "The calendar service is temporarily unavailable. Please try again later."
 msgstr "O serviço de calendário está temporariamente indisponível. Tente novamente mais tarde."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "The event changed on the calendar server since the scheduler last synced it."
-msgstr "O evento mudou no servidor de calendário desde a última sincronização do Tymeslot."
 
 #: lib/tymeslot/integrations/calendar/caldav/errors.ex
 #, elixir-autogen, elixir-format
@@ -666,31 +615,6 @@ msgstr "Muitas requisições. Aguarde um momento e tente de novo."
 #, elixir-autogen, elixir-format
 msgid "Try using an app password instead of your regular password. You can create one in Nextcloud's security settings"
 msgstr "Tente usar uma senha de app no lugar da sua senha normal. Você pode criar uma nas configurações de segurança do Nextcloud"
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler could not complete the request against the calendar server."
-msgstr "O the scheduler não conseguiu completar a requisição no servidor de calendário."
-
-#: lib/tymeslot/integrations/calendar/caldav/errors.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler could not reach the calendar server. the scheduler will retry automatically."
-msgstr "O the scheduler não conseguiu acessar o servidor de calendário. O the scheduler vai tentar de novo automaticamente."
-
-#: lib/tymeslot/integrations/calendar/auth/jobs/token_refresh_job.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler could not renew its access to this calendar. It will try again shortly."
-msgstr "O the scheduler não conseguiu renovar o acesso a este calendário. Ele vai tentar de novo em instantes."
-
-#: lib/tymeslot/integrations/calendar/caldav/offline_queue.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler could not send this change to the calendar server."
-msgstr "O the scheduler não conseguiu enviar esta mudança ao servidor de calendário."
-
-#: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler needs the mailbox's email address to read its free/busy time. Please reconnect the integration and provide it."
-msgstr "O the scheduler precisa do endereço de e-mail da caixa de correio para ler os horários ocupados dela. Reconecte a integração e informe o endereço."
 
 #: lib/tymeslot/integrations/calendar/shared/error_messages.ex
 #, elixir-autogen, elixir-format
@@ -808,11 +732,6 @@ msgstr "Conexão com o mailbox.org bem-sucedida"
 msgid "%{provider} refused the change. The connection is working, but the calendar would not accept this request."
 msgstr "%{provider} recusou a alteração. A conexão está funcionando, mas o calendário não aceitou esta requisição."
 
-#: lib/tymeslot/integrations/calendar/domain/management.ex
-#, elixir-autogen, elixir-format
-msgid "Your calendar connection does not allow the scheduler to add bookings to it. Please reconnect the integration and allow the scheduler to create and edit events."
-msgstr "A conexão do seu calendário não permite que o the scheduler adicione agendamentos a ele. Reconecte a integração e permita que o the scheduler crie e edite eventos."
-
 #: lib/tymeslot/workers/sync_caldav_calendar_worker.ex
 #, elixir-autogen, elixir-format
 msgid "Nextcloud refused the stored app password. It was most likely revoked, or the account password was changed. Create a new app password and reconnect."
@@ -827,3 +746,84 @@ msgstr "O iCloud recusou a senha específica do app armazenada. Provavelmente el
 #, elixir-autogen, elixir-format
 msgid "%{provider} did not respond in time. If the server is only reachable from your organisation's network or over a VPN, the scheduler cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes."
 msgstr "O %{provider} não respondeu a tempo. Se o servidor só puder ser acessado pela rede da sua organização ou por VPN, o the scheduler não consegue se conectar a ele: peça ao seu administrador para tornar o endereço do calendário acessível pela internet. Caso contrário, o servidor pode estar sobrecarregado; tente de novo em alguns minutos."
+
+#: lib/tymeslot/integrations/calendar/ics/feed.ex
+#, elixir-autogen, elixir-format
+msgid "Calendar subscription sync failed while saving a fetched event. the scheduler will try again on the next sync."
+msgstr "A sincronização da assinatura de calendário falhou ao salvar um evento recebido. O the scheduler vai tentar de novo na próxima sincronização."
+
+#: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
+#, elixir-autogen, elixir-format
+msgid "The Exchange server answered the free/busy request with nothing the scheduler could read. Retrying rather than treating your diary as free."
+msgstr "O servidor Exchange respondeu ao pedido de livre/ocupado com algo que o the scheduler não conseguiu ler. Tentando de novo, em vez de tratar sua agenda como livre."
+
+#: lib/tymeslot/integrations/calendar/shared/error_messages.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server at %{url} listed more items than the scheduler can process at once. If this address points at a single calendar, enter your account's server address instead, and the scheduler will find your calendars there."
+msgstr "O servidor de calendário em %{url} listou mais itens do que o the scheduler consegue processar de uma vez. Se este endereço aponta para um único calendário, digite no lugar dele o endereço do servidor da sua conta, e o the scheduler encontrará seus calendários ali."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server did not respond. the scheduler will retry automatically."
+msgstr "O servidor de calendário não respondeu. O the scheduler vai tentar de novo automaticamente."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server is rate-limiting this booking page. It will retry automatically."
+msgstr "O servidor de calendário está limitando as requisições do Tymeslot. O the scheduler vai tentar de novo automaticamente."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server reported an error. the scheduler will retry automatically."
+msgstr "O servidor de calendário informou um erro. O the scheduler vai tentar de novo automaticamente."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server returned a response the scheduler could not understand."
+msgstr "O servidor de calendário devolveu uma resposta que o the scheduler não entendeu."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#: lib/tymeslot/integrations/calendar/shared/error_messages.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server returned more data than the scheduler can process at once."
+msgstr "O servidor de calendário devolveu mais dados do que o the scheduler consegue processar de uma vez."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "The calendar server took too long to respond. the scheduler will retry automatically."
+msgstr "O servidor de calendário demorou demais para responder. O the scheduler vai tentar de novo automaticamente."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "The event changed on the calendar server since the scheduler last synced it."
+msgstr "O evento mudou no servidor de calendário desde a última sincronização do Tymeslot."
+
+#: lib/tymeslot/integrations/calendar/domain/management.ex
+#, elixir-autogen, elixir-format
+msgid "Your calendar connection does not allow the scheduler to add bookings to it. Please reconnect the integration and allow the scheduler to create and edit events."
+msgstr "A conexão do seu calendário não permite que o the scheduler adicione agendamentos a ele. Reconecte a integração e permita que o the scheduler crie e edite eventos."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler could not complete the request against the calendar server."
+msgstr "O the scheduler não conseguiu completar a requisição no servidor de calendário."
+
+#: lib/tymeslot/integrations/calendar/caldav/errors.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler could not reach the calendar server. the scheduler will retry automatically."
+msgstr "O the scheduler não conseguiu acessar o servidor de calendário. O the scheduler vai tentar de novo automaticamente."
+
+#: lib/tymeslot/integrations/calendar/auth/jobs/token_refresh_job.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler could not renew its access to this calendar. It will try again shortly."
+msgstr "O the scheduler não conseguiu renovar o acesso a este calendário. Ele vai tentar de novo em instantes."
+
+#: lib/tymeslot/integrations/calendar/caldav/offline_queue.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler could not send this change to the calendar server."
+msgstr "O the scheduler não conseguiu enviar esta mudança ao servidor de calendário."
+
+#: lib/tymeslot/workers/sync_exchange_calendar_worker.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler needs the mailbox's email address to read its free/busy time. Please reconnect the integration and provide it."
+msgstr "O the scheduler precisa do endereço de e-mail da caixa de correio para ler os horários ocupados dela. Reconecte a integração e informe o endereço."

@@ -101,11 +101,6 @@ msgstr "Помилка"
 msgid "Error Details"
 msgstr "Деталі помилки"
 
-#: lib/tymeslot/emails/templates/calendar_sync_error.ex
-#, elixir-autogen, elixir-format
-msgid "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in the scheduler and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar."
-msgstr "Не вдалося додати цю зустріч до вашого календаря. Її успішно підтверджено в the scheduler, і ви та інший учасник отримали листи з підтвердженням. Однак вам потрібно буде додати її до свого календаря вручну."
-
 #: lib/tymeslot/emails/templates/calendars_removed.ex
 #: lib/tymeslot/emails/templates/integration_paused.ex
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
@@ -224,19 +219,6 @@ msgstr "Відкрити налаштування календаря"
 
 #: lib/tymeslot/emails/templates/calendars_removed.ex
 #, elixir-autogen, elixir-format
-msgid "These calendars are no longer on your calendar server, so the scheduler has stopped using them:"
-msgstr "Ці календарі зникли з вашого сервера календаря, тому the scheduler більше їх не використовує:"
-
-#: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
-msgid_plural "the scheduler checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
-msgstr[0] "the scheduler перевірив інтеграцію %{integration}: календаря, зазначеного вище, на сервері більше немає. Зазвичай це означає, що його видалили на сервері або перестали надавати вам до нього доступ. Інших ваших календарів в інтеграції %{integration} це не стосується."
-msgstr[1] "the scheduler перевірив інтеграцію %{integration}: календарів, зазначених вище, на сервері більше немає. Зазвичай це означає, що їх видалили на сервері або перестали надавати вам до них доступ. Інших ваших календарів в інтеграції %{integration} це не стосується."
-msgstr[2] "the scheduler перевірив інтеграцію %{integration}: календарів, зазначених вище, на сервері більше немає. Зазвичай це означає, що їх видалили на сервері або перестали надавати вам до них доступ. Інших ваших календарів в інтеграції %{integration} це не стосується."
-
-#: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format
 msgid "You get this email once each time a calendar disappears. The notice in your calendar settings stays until you dismiss it."
 msgstr "Коли календар зникає, ви отримуєте про це лише один лист. Повідомлення в налаштуваннях календаря залишається, доки ви його не закриєте."
 
@@ -244,11 +226,6 @@ msgstr "Коли календар зникає, ви отримуєте про �
 #, elixir-autogen, elixir-format
 msgid "“%{calendar}” is no longer on your calendar server"
 msgstr "Календар «%{calendar}» зник з вашого сервера календаря"
-
-#: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "Календар «%{calendar}» зник з вашого сервера календаря, тому the scheduler більше його не використовує."
 
 #: lib/tymeslot/emails/templates/calendar_sync_error.ex
 #, elixir-autogen, elixir-format
@@ -264,11 +241,6 @@ msgstr "⚠️ Помилка синхронізації календаря – 
 #, elixir-autogen, elixir-format
 msgid "%{provider} calendar"
 msgstr "%{provider} (календар)"
-
-#: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format
-msgid "%{provider} needs reconnecting before the scheduler can use it again."
-msgstr "Доки ви не перепідключите %{provider}, the scheduler не зможе працювати з цією інтеграцією."
 
 #: lib/tymeslot/emails/shared/integration_labels.ex
 #, elixir-autogen, elixir-format
@@ -432,16 +404,6 @@ msgstr "Це сповіщення надсилається, коли інтег�
 msgid "This notification is sent when an integration remains unhealthy for 48+ hours. It will not repeat for 30 days."
 msgstr "Це сповіщення надсилається, коли інтеграція працює з перебоями понад 48 годин. Протягом 30 днів воно не повторюватиметься."
 
-#: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected."
-msgstr "the scheduler більше не може використовувати вашу інтеграцію %{integration} і не зможе, доки ви її не перепідключите. Причину вказано вище. Наявних бронювань це не стосується."
-
-#: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected."
-msgstr "the scheduler більше не може використовувати вашу інтеграцію %{integration} і не зможе, доки ви не оновите її налаштування. Причину вказано вище. Наявних бронювань це не стосується."
-
 #: lib/tymeslot/emails/templates/integration_unhealthy.ex
 #, elixir-autogen, elixir-format
 msgid "Visit your integration settings to test the connection"
@@ -546,10 +508,48 @@ msgstr "Ваш календарний сервіс був недоступний
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
 #, elixir-autogen, elixir-format
+msgid "%{provider} needs reconnecting before the scheduler can use it again."
+msgstr "Доки ви не перепідключите %{provider}, the scheduler не зможе працювати з цією інтеграцією."
+
+#: lib/tymeslot/emails/templates/calendar_sync_error.ex
+#, elixir-autogen, elixir-format
+msgid "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in the scheduler and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar."
+msgstr "Не вдалося додати цю зустріч до вашого календаря. Її успішно підтверджено в the scheduler, і ви та інший учасник отримали листи з підтвердженням. Однак вам потрібно буде додати її до свого календаря вручну."
+
+#: lib/tymeslot/emails/templates/calendars_removed.ex
+#, elixir-autogen, elixir-format
+msgid "These calendars are no longer on your calendar server, so the scheduler has stopped using them:"
+msgstr "Ці календарі зникли з вашого сервера календаря, тому the scheduler більше їх не використовує:"
+
+#: lib/tymeslot/emails/templates/integration_reauth_required.ex
+#, elixir-autogen, elixir-format
 msgid "the scheduler can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Until then your booking page may not offer times or take bookings, because the scheduler will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
 msgstr "the scheduler більше не може використовувати вашу інтеграцію %{integration} і не зможе, доки ви її не перепідключите. Причину вказано вище. До того часу ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань, бо the scheduler не пропонує час, який не може звірити з цим календарем або внести до нього. Наявних бронювань це не стосується."
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
 #, elixir-autogen, elixir-format
+msgid "the scheduler can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected."
+msgstr "the scheduler більше не може використовувати вашу інтеграцію %{integration} і не зможе, доки ви її не перепідключите. Причину вказано вище. Наявних бронювань це не стосується."
+
+#: lib/tymeslot/emails/templates/integration_reauth_required.ex
+#, elixir-autogen, elixir-format
 msgid "the scheduler can no longer use your %{integration} integration, and it will stay that way until you replace it. The reason is shown above. Until then your booking page may not offer times or take bookings, because the scheduler will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
 msgstr "the scheduler більше не може використовувати вашу інтеграцію %{integration} і не зможе, доки ви її не заміните. Причину вказано вище. До того часу ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань, бо the scheduler не пропонує час, який не може звірити з цим календарем або внести до нього. Наявних бронювань це не стосується."
+
+#: lib/tymeslot/emails/templates/integration_reauth_required.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected."
+msgstr "the scheduler більше не може використовувати вашу інтеграцію %{integration} і не зможе, доки ви не оновите її налаштування. Причину вказано вище. Наявних бронювань це не стосується."
+
+#: lib/tymeslot/emails/templates/calendars_removed.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
+msgid_plural "the scheduler checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
+msgstr[0] "the scheduler перевірив інтеграцію %{integration}: календаря, зазначеного вище, на сервері більше немає. Зазвичай це означає, що його видалили на сервері або перестали надавати вам до нього доступ. Інших ваших календарів в інтеграції %{integration} це не стосується."
+msgstr[1] "the scheduler перевірив інтеграцію %{integration}: календарів, зазначених вище, на сервері більше немає. Зазвичай це означає, що їх видалили на сервері або перестали надавати вам до них доступ. Інших ваших календарів в інтеграції %{integration} це не стосується."
+msgstr[2] "the scheduler перевірив інтеграцію %{integration}: календарів, зазначених вище, на сервері більше немає. Зазвичай це означає, що їх видалили на сервері або перестали надавати вам до них доступ. Інших ваших календарів в інтеграції %{integration} це не стосується."
+
+#: lib/tymeslot/emails/templates/calendars_removed.ex
+#, elixir-autogen, elixir-format
+msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
+msgstr "Календар «%{calendar}» зник з вашого сервера календаря, тому the scheduler більше його не використовує."

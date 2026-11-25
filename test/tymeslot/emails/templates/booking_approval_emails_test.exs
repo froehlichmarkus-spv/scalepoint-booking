@@ -544,6 +544,6 @@ defmodule Tymeslot.Emails.Templates.BookingApprovalEmailsTest do
       assert address == instance_address()
     end
 
-    defp instance_address, do: Application.get_env(:tymeslot, :email)[:from_email]
+    defp instance_address, do: Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()
   end
 end

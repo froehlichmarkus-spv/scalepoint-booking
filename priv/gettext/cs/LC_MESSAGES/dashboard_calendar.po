@@ -696,11 +696,6 @@ msgstr "Tento kalendář neblokuje rezervace"
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "This calendar doesn't take repeat rules from Tymeslot."
-msgstr "Tento kalendář nepřijímá pravidla opakování z aplikace Tymeslot."
-
-#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
-#, elixir-autogen, elixir-format
 msgid "This event is moving to another calendar. Please make the change once it has moved."
 msgstr ""
 "Tato událost se přesouvá do jiného kalendáře. Proveďte prosím změnu, až bude"
@@ -727,11 +722,6 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Too late to undo: “%{title}” has already been deleted."
 msgstr "Na vrácení je pozdě: událost „%{title}“ už byla smazána."
-
-#: lib/tymeslot_web/live/dashboard/calendar/preview.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Rezervace the scheduler"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format
@@ -830,3 +820,13 @@ msgstr "Barvu se nepodařilo uložit. Zkuste to prosím znovu."
 #, elixir-autogen, elixir-format
 msgid "Colour of %{calendar}"
 msgstr "Barva kalendáře %{calendar}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
+#, elixir-autogen, elixir-format
+msgid "This calendar doesn't take repeat rules from this booking page."
+msgstr "Tento kalendář nepřijímá pravidla opakování z aplikace Tymeslot."
+
+#: lib/tymeslot_web/live/dashboard/calendar/preview.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler booking"
+msgstr "Rezervace the scheduler"

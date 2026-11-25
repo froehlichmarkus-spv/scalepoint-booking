@@ -91,11 +91,6 @@ msgstr "Jeśli spór zostanie rozstrzygnięty na twoją korzyść, rezerwacja zo
 msgid "Meeting:"
 msgstr "Spotkanie:"
 
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
-msgstr "Gdy Stripe uzna sprawę za wyjaśnioną, status twojego konta zaktualizuje się automatycznie. Po stronie the scheduler nie trzeba nic więcej robić."
-
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -249,11 +244,6 @@ msgstr "Szczegóły zwrotu"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
-msgstr "Zwróć pieniądze uczestnikowi w swoich płatnościach w the scheduler lub w panelu Stripe albo daj mu znać, co dalej."
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
 msgstr "NIE DOKONANO ZWROTU ZA SERIĘ"
 
@@ -301,3 +291,13 @@ msgstr "Co zrobić"
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
 msgstr "Pozostałe sesje serii zostały odwołane, ale nie udało się zwrócić uczestnikowi %{amount}. Sesje pozostają odwołane."
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
+msgstr "Gdy Stripe uzna sprawę za wyjaśnioną, status twojego konta zaktualizuje się automatycznie. Po stronie the scheduler nie trzeba nic więcej robić."
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format
+msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
+msgstr "Zwróć pieniądze uczestnikowi w swoich płatnościach w the scheduler lub w panelu Stripe albo daj mu znać, co dalej."

@@ -58,7 +58,9 @@ defmodule Tymeslot.Emails.Templates.SocialSignupConfirmation do
     TemplateHelper.compile_system_template(
       mjml_content,
       dgettext("emails_account", "Account Verification"),
-      dgettext("emails_account", "Confirm your email to finish signing up for Tymeslot."),
+      dgettext("emails_account", "Confirm your email to finish signing up for %{product}.",
+        product: Tymeslot.Brands.product_name()
+      ),
       intent: @intent,
       eyebrow: dgettext("emails_account", "Welcome"),
       stage_title: dgettext("emails_account", "One step to go"),

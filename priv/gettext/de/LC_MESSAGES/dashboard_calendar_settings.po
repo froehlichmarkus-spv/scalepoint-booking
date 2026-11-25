@@ -68,11 +68,6 @@ msgstr "Konfigurationsformular für diesen Anbieter nicht verfügbar."
 msgid "Connect a calendar"
 msgstr "Kalender verbinden"
 
-#: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
-#, elixir-autogen, elixir-format
-msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
-msgstr "Verbinden Sie einen Kalender, damit the scheduler Ihre Verfügbarkeit lesen und verhindern kann, dass Termine gebucht werden, während Sie bereits beschäftigt sind."
-
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
 msgid "Connection issues"
@@ -109,6 +104,7 @@ msgid "Free/busy feed"
 msgstr "Frei/Gebucht-Feed"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Healthy"
 msgstr "Fehlerfrei"
@@ -144,6 +140,7 @@ msgid "Not a Google Calendar"
 msgstr "Kein Google Calendar"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Paused"
 msgstr "Pausiert"
@@ -154,6 +151,7 @@ msgid "Paused Calendars"
 msgstr "Pausierte Kalender"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Reconnect"
 msgstr "Erneut verbinden"
@@ -367,13 +365,6 @@ msgstr[1] "Zuletzt synchronisiert vor %{count} Minuten"
 msgid "Last synced just now"
 msgstr "Gerade eben synchronisiert"
 
-#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
-#, elixir-autogen, elixir-format
-msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
-msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
-msgstr[0] "%{count} Kalender ist auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler ihn nicht mehr: %{calendars}"
-msgstr[1] "%{count} Kalender sind auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler sie nicht mehr: %{calendars}"
-
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
 msgid "Dismiss"
@@ -383,11 +374,6 @@ msgstr "Ausblenden"
 #, elixir-autogen, elixir-format
 msgid "Dismiss the notice about calendars no longer on the server"
 msgstr "Hinweis zu Kalendern ausblenden, die nicht mehr auf dem Server vorhanden sind"
-
-#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
-#, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "Der Kalender „%{calendar}“ ist auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler ihn nicht mehr."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
@@ -441,3 +427,25 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Turn on Block to use this: a calendar that doesn't block busy times has nothing for it to change"
 msgstr "Wählen Sie „Blockieren“, um diese Option zu nutzen: Bei einem Kalender, der belegte Zeiten nicht blockiert, ändert sie nichts"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
+msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
+msgstr[0] "%{count} Kalender ist auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler ihn nicht mehr: %{calendars}"
+msgstr[1] "%{count} Kalender sind auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler sie nicht mehr: %{calendars}"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
+msgstr "Verbinden Sie einen Kalender, damit the scheduler Ihre Verfügbarkeit lesen und verhindern kann, dass Termine gebucht werden, während Sie bereits beschäftigt sind."
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Needs attention"
+msgstr "Needs attention"
+
+#: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
+#, elixir-autogen, elixir-format
+msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
+msgstr "Der Kalender „%{calendar}“ ist auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler ihn nicht mehr."

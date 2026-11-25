@@ -8,14 +8,14 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
     test "goes to the operator, under a subject carrying the severity" do
       email = AdminAlert.render("ops@example.com", "Payments", :warning, "Payment failed", %{})
 
-      assert email.to == [{"Tymeslot Operator", "ops@example.com"}]
-      assert email.subject == "[WARNING] Tymeslot: Payments"
+      assert email.to == [{"the scheduler Operator", "ops@example.com"}]
+      assert email.subject == "[WARNING] the scheduler: Payments"
     end
 
     test "marks an error with the warning sign" do
       email = AdminAlert.render("ops@example.com", "Payments", :error, "Payment failed", %{})
 
-      assert email.subject == "[ERROR] ⚠️ Tymeslot: Payments"
+      assert email.subject == "[ERROR] ⚠️ the scheduler: Payments"
     end
 
     test "stays in English whatever the process locale" do
@@ -24,7 +24,8 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
           AdminAlert.render("ops@example.com", "General", :info, "Notice", %{})
         end)
 
-      assert email.text_body =~ "TYMESLOT ADMIN ALERT"
+      assert email.text_body =~ "ADMIN ALERT"
+      refute email.text_body =~ "Tymeslot"
       assert email.html_body =~ "No additional context"
     end
   end
@@ -55,7 +56,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
         AdminAlert.render("ops@example.com", "General", :warning, "Test alert", %{}).html_body
 
       assert html =~ "<!doctype html>"
-      assert html =~ "<title>Tymeslot Admin Alert</title>"
+      assert html =~ "<title>the scheduler Admin Alert</title>"
       assert html =~ "Test alert"
       assert String.ends_with?(String.trim(html), "</html>")
     end
@@ -158,7 +159,8 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
     test "opens with the standard header" do
       text = AdminAlert.render("ops@example.com", "General", :warning, "Test", %{}).text_body
 
-      assert text =~ "TYMESLOT ADMIN ALERT"
+      assert text =~ "ADMIN ALERT"
+      refute text =~ "Tymeslot"
       assert text =~ "Test"
     end
   end

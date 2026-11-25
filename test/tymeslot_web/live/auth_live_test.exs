@@ -299,13 +299,13 @@ defmodule TymeslotWeb.AuthLiveTest do
     # actually claims to be.
     @indexable_auth_pages [
       {"login", "/auth/login", "Log In · Tymeslot",
-       "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."},
+       "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."},
       {"signup", "/auth/signup", "Create an Account · Tymeslot",
-       "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."},
+       "Create a the scheduler account and start sharing your availability in minutes. No credit card required."},
       {"reset password", "/auth/reset-password", "Reset Password · Tymeslot",
-       "Enter your email to receive a password reset link for your Tymeslot account."},
+       "Enter your email to receive a password reset link for your the scheduler account."},
       {"reset password form", :token, "Choose a New Password · Tymeslot",
-       "Choose a strong new password for your Tymeslot account."}
+       "Choose a strong new password for your the scheduler account."}
     ]
 
     for {name, path, title, description} <- @indexable_auth_pages do
@@ -338,7 +338,7 @@ defmodule TymeslotWeb.AuthLiveTest do
         })
 
       {:ok, view, html} = live(conn, ~p"/auth/complete-registration")
-      assert page_title(view) == "Schedule a Meeting · Tymeslot"
+      assert page_title(view) == "Schedule a Meeting · ScalePoint Growth OS · Booking"
       refute html =~ ~s(<meta name="description")
     end
   end

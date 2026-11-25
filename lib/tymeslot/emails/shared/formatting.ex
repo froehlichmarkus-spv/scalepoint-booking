@@ -400,7 +400,16 @@ defmodule Tymeslot.Emails.Shared.Formatting do
           optional(:location) => String.t() | nil,
           optional(atom()) => term()
         }) :: String.t()
-  def format_location(%{location_type: :video}), do: dgettext("emails", "Video Call")
+  def format_location(%{location_type: :video} = details) do
+    case BookingRequestLocation.video_label(%{
+           location: details[:location],
+           location_kind: :video
+         }) do
+      nil -> dgettext("emails", "Video Call")
+      place -> place
+    end
+  end
+
   # A phone location chosen from a meeting type's list stores the host's label
   # with the number to call ("Phone call (+44 20 7946 0000)"), and that number
   # is the whole point of the line. Only the bare English literal older

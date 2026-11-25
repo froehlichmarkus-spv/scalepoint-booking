@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingRemindersTest do
   @moduledoc """
-  The reminder emails of a Tymeslot meeting booked from the side panel are
+  The reminder emails of a the scheduler meeting booked from the side panel are
   chosen with the reminder picker the meeting type form uses: the common
   lead times a click away, any other typed with its unit, up to the limit a
   meeting type has. A lead time typed but never added goes in with Create,

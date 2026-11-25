@@ -269,11 +269,6 @@ msgstr ""
 msgid "Hi, your payment of %{amount} has been refunded in full."
 msgstr ""
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr ""
-
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #, elixir-autogen, elixir-format
 msgid "If you added the meeting to your calendar, the attached file removes it there."
@@ -391,16 +386,6 @@ msgstr ""
 msgid "Partial Refund Issued - %{amount}"
 msgstr ""
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "Please review and update the booking in Tymeslot."
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "Please review the group meeting in Tymeslot."
-msgstr ""
-
 #: lib/tymeslot/emails/templates/booking_payment_refunded.ex
 #, elixir-autogen, elixir-format
 msgid "REFUND DETAILS:"
@@ -496,34 +481,9 @@ msgstr ""
 msgid "The attendee has been notified of the cancellation."
 msgstr ""
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
-msgstr ""
-
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
 msgid "The last participant cancelled their spot"
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was deleted from your external calendar but is still active in Tymeslot."
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was deleted from your external calendar. the scheduler still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking - please review the details and update or cancel it accordingly."
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking shown below."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
@@ -547,16 +507,6 @@ msgid "Their guest was emailed too."
 msgid_plural "Their %{count} guests were emailed too."
 msgstr[0] ""
 msgstr[1] ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in Tymeslot. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -653,11 +603,6 @@ msgstr ""
 msgid "Would you like to schedule a new appointment?"
 msgstr ""
 
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "You changed when \"%{title}\" ends in your external calendar, so the scheduler updated the booking: it now ends at %{to} instead of %{from}."
-msgstr ""
-
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #, elixir-autogen, elixir-format
 msgid "You don't need to do anything. If you added the meeting to your calendar, the attached file marks it as cancelled there."
@@ -681,11 +626,6 @@ msgstr ""
 #: lib/tymeslot/emails/templates/booking_payment_refunded.ex
 #, elixir-autogen, elixir-format
 msgid "your host"
-msgstr ""
-
-#: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format
-msgid "This meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: the scheduler then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
@@ -721,4 +661,64 @@ msgstr ""
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "Please review and update the booking in %{product}."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "Please review the group meeting in %{product}."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was deleted from your external calendar but is still active in %{product}."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was deleted from your external calendar. the scheduler still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking - please review the details and update or cancel it accordingly."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking shown below."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "This meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: the scheduler then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/external_booking_change.ex
+#, elixir-autogen, elixir-format
+msgid "You changed when \"%{title}\" ends in your external calendar, so the scheduler updated the booking: it now ends at %{to} instead of %{from}."
 msgstr ""

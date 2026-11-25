@@ -56,11 +56,6 @@ msgstr "Aprovando…"
 msgid "Add a meeting type"
 msgstr "Adicionar um tipo de reunião"
 
-#: lib/tymeslot_web/live/dashboard/calendar/treat_as.ex
-#, elixir-autogen, elixir-format
-msgid "Affects the scheduler bookings only. Your calendar doesn't change."
-msgstr "Afeta apenas os agendamentos do Tymeslot. Seu calendário não muda."
-
 #: lib/tymeslot_web/live/dashboard/calendar/bookable_strings.ex
 #, elixir-autogen, elixir-format
 msgid "Block this time"
@@ -390,11 +385,6 @@ msgstr "Considerado ocupado para agendamentos. Os convidados não podem agendar 
 msgid "Treated as free for bookings. Guests can book this time."
 msgstr "Considerado livre para agendamentos. Os convidados podem agendar esse horário."
 
-#: lib/tymeslot_web/live/dashboard/calendar/preview.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler booking · %{calendar}"
-msgstr "Agendamento do the scheduler · %{calendar}"
-
 #: lib/tymeslot_web/live/dashboard/calendar/block_time.ex
 #, elixir-autogen, elixir-format
 msgid "Unblocked. Guests can book this time again."
@@ -455,6 +445,11 @@ msgstr "Você pode bloquear no máximo uma semana por vez."
 msgid "Moving…"
 msgstr "Movendo…"
 
+#: lib/tymeslot_web/live/dashboard/calendar/treat_as.ex
+#, elixir-autogen, elixir-format
+msgid "Affects the scheduler bookings only. Your calendar doesn't change."
+msgstr "Afeta apenas os agendamentos do Tymeslot. Seu calendário não muda."
+
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar to add events, or use More options to send a the scheduler meeting."
@@ -464,3 +459,8 @@ msgstr "Conecte um calendário para adicionar eventos ou use Mais opções para 
 #, elixir-autogen, elixir-format
 msgid "Your calendars are read-only. Connect one you can write to, or use More options to send a the scheduler meeting."
 msgstr "Seus calendários são somente leitura. Conecte um em que você possa gravar ou use Mais opções para enviar uma reunião Tymeslot."
+
+#: lib/tymeslot_web/live/dashboard/calendar/preview.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler booking · %{calendar}"
+msgstr "Agendamento do the scheduler · %{calendar}"

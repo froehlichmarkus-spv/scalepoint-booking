@@ -26,7 +26,7 @@ defmodule Tymeslot.Emails.Templates.CalendarSyncErrorTest do
       email = CalendarSyncError.render(meeting, :network_error)
 
       assert email.to == [
-               {"Calendar Owner", Application.get_env(:tymeslot, :email)[:from_email]}
+               {"Calendar Owner", Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()}
              ]
     end
   end

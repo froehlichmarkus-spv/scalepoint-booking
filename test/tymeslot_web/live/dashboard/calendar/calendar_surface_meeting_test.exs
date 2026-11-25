@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingTest do
   @moduledoc """
-  "Send as a Tymeslot meeting" in the side panel's New event state, on a
+  "Send as a the scheduler meeting" in the side panel's New event state, on a
   desktop and on a phone (where the panel is a sheet): offered once the
   draft has a guest, it turns the draft into an ad hoc booking with the
   guest's name, the language of its emails, a note and reminder emails,

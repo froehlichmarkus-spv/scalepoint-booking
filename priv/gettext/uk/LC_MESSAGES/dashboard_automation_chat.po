@@ -386,11 +386,6 @@ msgstr "Немає інтеграцій зі Slack"
 msgid "No Telegram Integrations"
 msgstr "Немає інтеграцій з Telegram"
 
-#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
-#, elixir-autogen, elixir-format
-msgid "No channels available. Invite the the scheduler bot to at least one channel in Slack, then click Refresh."
-msgstr "Немає доступних каналів. Запросіть бота the scheduler принаймні в один канал у Slack, а потім натисніть «Оновити»."
-
 #: lib/tymeslot_web/live/dashboard/automation/telegram_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Open in Telegram"
@@ -411,11 +406,6 @@ msgstr "Призупинено"
 #, elixir-autogen, elixir-format
 msgid "Pick a channel"
 msgstr "Виберіть канал"
-
-#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
-#, elixir-autogen, elixir-format
-msgid "Pick a channel for the scheduler to post booking notifications to."
-msgstr "Виберіть канал, куди the scheduler надсилатиме сповіщення про бронювання."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_card.ex
 #, elixir-autogen, elixir-format
@@ -670,11 +660,6 @@ msgstr "Щоб дізнатися свій ID чату, напишіть %{bot} 
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the the scheduler bot in Slack (%{command}), then click Refresh."
-msgstr "the scheduler надсилатиме сповіщення про бронювання в цей канал. Публічні канали відображаються автоматично; щоб додати приватний канал, запросіть бота the scheduler у Slack (%{command}), а потім натисніть «Оновити»."
-
-#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
-#, elixir-autogen, elixir-format
 msgid "Display-only label shown in your dashboard. It does not change where messages are delivered - that is set by the webhook URL itself."
 msgstr "Ця назва відображається лише на панелі керування. Вона не впливає на те, куди надсилаються повідомлення - це визначається самою URL-адресою вебхука."
 
@@ -682,11 +667,6 @@ msgstr "Ця назва відображається лише на панелі 
 #, elixir-autogen, elixir-format
 msgid "Slack connected - pick a channel to finish setup."
 msgstr "Slack підключено - виберіть канал, щоб завершити налаштування."
-
-#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}."
-msgstr "the scheduler надсилає сповіщення на цю URL-адресу. Цільовий канал закріплюється у Slack під час створення вебхука - повну інструкцію з налаштування дивіться на %{guide}."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_tab.ex
 #, elixir-autogen, elixir-format
@@ -800,11 +780,6 @@ msgstr "Не вдалося зберегти інтеграцію Slack."
 
 #: lib/tymeslot/slack/error_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Channel not accessible. If it's a private channel, invite the the scheduler bot first."
-msgstr "Канал недоступний. Якщо це приватний канал, спочатку запросіть бота Tymeslot."
-
-#: lib/tymeslot/slack/error_messages.ex
-#, elixir-autogen, elixir-format
 msgid "Slack authorisation was revoked. Reconnect to continue."
 msgstr "Авторизацію Slack відкликано. Підключіть Slack повторно, щоб продовжити."
 
@@ -869,3 +844,28 @@ msgstr "Призупинено: ваш тариф не включає автом
 #, elixir-autogen, elixir-format
 msgid "Failed to initialise integration. Please try again."
 msgstr "Не вдалося ініціалізувати інтеграцію. Будь ласка, спробуйте ще раз."
+
+#: lib/tymeslot/slack/error_messages.ex
+#, elixir-autogen, elixir-format
+msgid "Channel not accessible. If it's a private channel, invite the the scheduler bot first."
+msgstr "Канал недоступний. Якщо це приватний канал, спочатку запросіть бота Tymeslot."
+
+#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
+#, elixir-autogen, elixir-format
+msgid "No channels available. Invite the the scheduler bot to at least one channel in Slack, then click Refresh."
+msgstr "Немає доступних каналів. Запросіть бота the scheduler принаймні в один канал у Slack, а потім натисніть «Оновити»."
+
+#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
+#, elixir-autogen, elixir-format
+msgid "Pick a channel for the scheduler to post booking notifications to."
+msgstr "Виберіть канал, куди the scheduler надсилатиме сповіщення про бронювання."
+
+#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}."
+msgstr "the scheduler надсилає сповіщення на цю URL-адресу. Цільовий канал закріплюється у Slack під час створення вебхука - повну інструкцію з налаштування дивіться на %{guide}."
+
+#: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the the scheduler bot in Slack (%{command}), then click Refresh."
+msgstr "the scheduler надсилатиме сповіщення про бронювання в цей канал. Публічні канали відображаються автоматично; щоб додати приватний канал, запросіть бота the scheduler у Slack (%{command}), а потім натисніть «Оновити»."

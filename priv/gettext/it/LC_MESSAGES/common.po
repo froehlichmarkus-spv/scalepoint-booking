@@ -131,11 +131,6 @@ msgstr "Questa applicazione richiede JavaScript per funzionare. Abilitalo nelle 
 msgid "This timezone will be used for your availability and scheduling."
 msgstr "Questo fuso orario verrà utilizzato per la tua disponibilità e per la pianificazione."
 
-#: lib/tymeslot_web/components/core_components/brand.ex
-#, elixir-autogen, elixir-format
-msgid "the scheduler logo"
-msgstr "Logo di the scheduler"
-
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format
 msgid "Your Timezone"
@@ -185,16 +180,6 @@ msgstr "Apri/chiudi il menu"
 #, elixir-autogen, elixir-format
 msgid "Beautiful, on-brand meeting scheduling. No ads, no tracking."
 msgstr "Pianificazione di riunioni elegante e in linea con il tuo brand. Senza pubblicità né tracciamento."
-
-#: lib/tymeslot_web/components/site_components.ex
-#, elixir-autogen, elixir-format
-msgid "View on GitHub"
-msgstr "Vedi su GitHub"
-
-#: lib/tymeslot_web/components/site_components.ex
-#, elixir-autogen, elixir-format
-msgid "© %{year} Tymeslot. All rights reserved."
-msgstr "© %{year} Tymeslot. Tutti i diritti riservati."
 
 #: lib/tymeslot_web/components/core_components/containers.ex
 #, elixir-autogen, elixir-format
@@ -426,3 +411,8 @@ msgstr "Aggiungi una data"
 #, elixir-autogen, elixir-format
 msgid "Add a time"
 msgstr "Aggiungi un orario"
+
+#: lib/tymeslot_web/components/site_components.ex
+#, elixir-autogen, elixir-format
+msgid "© %{year} %{product}. All rights reserved."
+msgstr "© %{year} %{product}. All rights reserved."

@@ -554,6 +554,7 @@ defmodule Tymeslot.Emails.AppointmentBuilder do
   defp format_location(meeting) do
     cond do
       place = BookingRequestLocation.place(meeting) -> place
+      named = BookingRequestLocation.video_label(meeting) -> named
       meeting.meeting_url -> "Video Call"
       meeting.location in [nil, ""] -> nil
       BookingRequestLocation.legacy_placeholder(meeting.location) == :to_be_determined -> nil

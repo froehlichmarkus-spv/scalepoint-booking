@@ -94,7 +94,7 @@ defmodule Tymeslot.Emails.Shared.Layouts do
           line-height="1.7"
           letter-spacing="0.02em"
         >
-          © #{Date.utc_today().year} <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Tymeslot.Brands.footer_label()}</a>
+          © #{Date.utc_today().year} <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark suite-footer" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">BOOKDESK_SUITE_FOOTER</a>
         </mj-text>
       </mj-column>
     </mj-section>

@@ -95,11 +95,6 @@ msgstr ""
 msgid "Successfully signed in with %{provider}."
 msgstr ""
 
-#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
-#, elixir-autogen, elixir-format
-msgid "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in."
-msgstr ""
-
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
 msgid "This link is no longer valid. Please sign in to continue."
@@ -140,11 +135,6 @@ msgstr ""
 msgid "We couldn't send the link to finish signing up just now. Please try again later."
 msgstr ""
 
-#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! You'll sign in with %{provider}."
-msgstr ""
-
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
 msgid "Welcome! You've successfully signed up with %{provider}."
@@ -158,4 +148,14 @@ msgstr ""
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
 msgid "Your sign-up session has expired. Please sign in again."
+msgstr ""
+
+#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
+#, elixir-autogen, elixir-format
+msgid "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in."
+msgstr ""
+
+#: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
+#, elixir-autogen, elixir-format
+msgid "Welcome to the scheduler! You'll sign in with %{provider}."
 msgstr ""

@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingOptionsTest do
   @moduledoc """
-  A Tymeslot meeting's options in the side panel's New event state, beside
+  A the scheduler meeting's options in the side panel's New event state, beside
   the guest's name, language and reminders: whether the first guest is the
   meeting's main participant, and where it takes place (none, one of the
   organiser's saved locations, or a place typed in). Without a main

@@ -595,3 +595,18 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "The %{break} break on %{day} falls outside that day's hours. Move or delete it, then try again."
 msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Busy times on these calendars are kept off your booking page."
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Connected calendars"
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "No calendar connected yet."
+msgstr ""

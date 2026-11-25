@@ -126,7 +126,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceOpenBookingTest do
       # Without a calendar to write to, a meeting can still be sent from
       # More options, which the note says.
       assert strings.no_calendar_note ==
-               "Connect a calendar to add events, or use More options to send a Tymeslot meeting."
+               "Connect a calendar to add events, or use More options to send a the scheduler meeting."
     end
   end
 

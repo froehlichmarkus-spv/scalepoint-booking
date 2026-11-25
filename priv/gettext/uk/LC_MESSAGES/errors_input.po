@@ -86,11 +86,6 @@ msgstr "Домен має некоректне закінчення (.%{tld}). �
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "Домен має нерозпізнане закінчення (.%{tld}). Ви мали на увазі .%{suggestion}?"
 
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Домен має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія the scheduler його не знає і потребує оновлення."
-
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Email domain format is invalid"
@@ -150,11 +145,6 @@ msgstr "Електронна адреса має некоректне закін
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "Електронна адреса має нерозпізнане закінчення (.%{tld}). Ви мали на увазі .%{suggestion}?"
-
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Електронна адреса має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія the scheduler його не знає і потребує оновлення."
 
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
@@ -544,3 +534,13 @@ msgstr "Пароль має містити щонайменше один спе�
 #, elixir-autogen, elixir-format
 msgid "Password must contain at least one uppercase letter"
 msgstr "Пароль має містити щонайменше одну велику літеру"
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "Домен має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія the scheduler його не знає і потребує оновлення."
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "Електронна адреса має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія the scheduler його не знає і потребує оновлення."

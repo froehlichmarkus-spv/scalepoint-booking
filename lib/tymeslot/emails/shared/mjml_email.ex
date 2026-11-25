@@ -329,8 +329,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
           letter-spacing="0.02em"
           css-class="email-ink-muted"
         >
-          #{dgettext("emails", "Sent with care by")}
-          <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark email-ink-link" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Tymeslot.Brands.footer_label()}</a>
+          <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark email-ink-link suite-footer" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">BOOKDESK_SUITE_FOOTER</a>
         </mj-text>
       </mj-column>
     </mj-section>

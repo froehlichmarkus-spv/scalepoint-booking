@@ -86,11 +86,6 @@ msgstr ""
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr ""
 
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of Tymeslot predates it and needs updating."
-msgstr ""
-
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Email domain format is invalid"
@@ -149,11 +144,6 @@ msgstr ""
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr ""
-
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of Tymeslot predates it and needs updating."
 msgstr ""
 
 #: lib/tymeslot/security/field_validators/email_validator.ex
@@ -540,4 +530,14 @@ msgstr ""
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Password must contain at least one uppercase letter"
+msgstr ""
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr ""
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
 msgstr ""

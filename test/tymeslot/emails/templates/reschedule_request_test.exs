@@ -126,7 +126,7 @@ defmodule Tymeslot.Emails.Templates.RescheduleRequestTest do
       email = RescheduleRequest.render(meeting)
 
       assert email.from ==
-               {"Dr. Lisa Anderson", Application.get_env(:tymeslot, :email)[:from_email]}
+               {"Dr. Lisa Anderson", Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()}
     end
 
     test "handles various meeting types" do
@@ -265,7 +265,7 @@ defmodule Tymeslot.Emails.Templates.RescheduleRequestTest do
       email = RescheduleRequest.render(meeting)
 
       assert email.reply_to == {"Sam Host", "sam@example.com"}
-      assert email.from == {"Sam Host", Application.get_env(:tymeslot, :email)[:from_email]}
+      assert email.from == {"Sam Host", Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()}
     end
   end
 end

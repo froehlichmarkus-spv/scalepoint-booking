@@ -116,7 +116,7 @@ defmodule Tymeslot.Emails.PollTemplatesTest do
       email = PollDeadlineReminder.render(poll, participant, url)
 
       assert email.reply_to == {"Hana Host", "hana@example.com"}
-      assert email.from == {"Hana Host", Application.get_env(:tymeslot, :email)[:from_email]}
+      assert email.from == {"Hana Host", Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()}
     end
   end
 

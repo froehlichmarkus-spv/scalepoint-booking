@@ -130,11 +130,6 @@ msgstr "Ungültiger Link"
 msgid "Invalid reset token"
 msgstr "Ungültiges Token zum Zurücksetzen"
 
-#: lib/tymeslot_web/components/auth/registration/signup_component.ex
-#, elixir-autogen, elixir-format
-msgid "Join the scheduler"
-msgstr "Bei the scheduler registrieren"
-
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #, elixir-autogen, elixir-format
 msgid "Link Expired or Invalid"
@@ -152,11 +147,6 @@ msgstr "Anmelden"
 #, elixir-autogen, elixir-format
 msgid "Log in"
 msgstr "Anmelden"
-
-#: lib/tymeslot_web/components/auth/session/login_component.ex
-#, elixir-autogen, elixir-format
-msgid "Log in to the scheduler"
-msgstr "Bei the scheduler anmelden"
 
 #: lib/tymeslot_web/controllers/auth/session_controller.ex
 #, elixir-autogen, elixir-format
@@ -402,16 +392,6 @@ msgstr "Wählen Sie ein neues Passwort"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your the scheduler account."
-msgstr "Wählen Sie ein sicheres neues Passwort für Ihr the scheduler-Konto."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
-msgstr "Erstellen Sie ein the scheduler-Konto und teilen Sie Ihre Verfügbarkeit in wenigen Minuten. Keine Kreditkarte erforderlich."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
 msgid "Create an Account"
 msgstr "Konto erstellen"
 
@@ -424,11 +404,6 @@ msgstr "Zum Abschließen der Registrierung ist eine E-Mail-Adresse erforderlich.
 #, elixir-autogen, elixir-format
 msgid "Email address is required to complete registration. Please provide your email address."
 msgstr "Zum Abschließen der Registrierung ist eine E-Mail-Adresse erforderlich. Bitte geben Sie Ihre E-Mail-Adresse an."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your the scheduler account."
-msgstr "Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts für Ihr the scheduler-Konto zu erhalten."
 
 #: lib/tymeslot/auth/registration.ex
 #: lib/tymeslot_web/controllers/auth/helpers/controller_helpers.ex
@@ -455,11 +430,6 @@ msgstr "Bitte geben Sie eine gültige E-Mail-Adresse an."
 #, elixir-autogen, elixir-format
 msgid "Registration failed due to validation errors. Please check your information and try again."
 msgstr "Registrierung aufgrund von Validierungsfehlern fehlgeschlagen. Bitte überprüfen Sie Ihre Angaben und versuchen Sie es erneut."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
-msgstr "Melden Sie sich bei Ihrem the scheduler-Konto an, um Buchungslinks, Verfügbarkeit und Buchungen zu verwalten."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format
@@ -800,3 +770,33 @@ msgid "Welcome back. Your account has been restored, but %{names} needs reconnec
 msgid_plural "Welcome back. Your account has been restored, but %{names} need reconnecting. Until you reconnect them, your booking page may not offer times or take bookings."
 msgstr[0] "Willkommen zurück. Ihr Konto wurde wiederhergestellt, aber die Integration %{names} muss erneut verbunden werden. Solange Sie sie nicht erneut verbinden, bietet Ihre Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
 msgstr[1] "Willkommen zurück. Ihr Konto wurde wiederhergestellt, aber die Integrationen %{names} müssen erneut verbunden werden. Solange Sie sie nicht erneut verbinden, bietet Ihre Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a strong new password for your the scheduler account."
+msgstr "Wählen Sie ein sicheres neues Passwort für Ihr the scheduler-Konto."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
+msgstr "Erstellen Sie ein the scheduler-Konto und teilen Sie Ihre Verfügbarkeit in wenigen Minuten. Keine Kreditkarte erforderlich."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your email to receive a password reset link for your the scheduler account."
+msgstr "Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts für Ihr the scheduler-Konto zu erhalten."
+
+#: lib/tymeslot_web/components/auth/registration/signup_component.ex
+#, elixir-autogen, elixir-format
+msgid "Join the scheduler"
+msgstr "Bei the scheduler registrieren"
+
+#: lib/tymeslot_web/components/auth/session/login_component.ex
+#, elixir-autogen, elixir-format
+msgid "Log in to the scheduler"
+msgstr "Bei the scheduler anmelden"
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
+msgstr "Melden Sie sich bei Ihrem the scheduler-Konto an, um Buchungslinks, Verfügbarkeit und Buchungen zu verwalten."

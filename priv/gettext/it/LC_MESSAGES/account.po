@@ -312,11 +312,6 @@ msgstr "Digita il tuo indirizzo email per confermare"
 msgid "Until then it is frozen and your booking page is offline. Sign in before that date to restore it."
 msgstr "Fino ad allora è congelato e la tua pagina di prenotazione è offline. Accedi prima di quella data per ripristinarlo."
 
-#: lib/tymeslot_web/live/account_live/danger_zone.ex
-#, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Le prenotazioni future vengono eliminate da the scheduler e i tuoi ospiti non vengono avvisati."
-
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Why are you leaving? (optional)"
@@ -341,11 +336,6 @@ msgstr "Il tuo account verrà eliminato il %{date}."
 #, elixir-autogen, elixir-format
 msgid "Your account will be deleted on %{date}. Sign in before then if you change your mind."
 msgstr "Il tuo account verrà eliminato il %{date}. Accedi prima di quella data se cambi idea."
-
-#: lib/tymeslot_web/live/account_live/delete_account_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Your upcoming bookings will be deleted from Tymeslot. Your guests will not be notified."
-msgstr "Le tue prenotazioni future verranno eliminate da Tymeslot. I tuoi ospiti non verranno avvisati."
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
@@ -384,3 +374,13 @@ msgstr "Inviata proprio ora"
 #, elixir-autogen, elixir-format
 msgid "You are the only admin who can sign in, so this account cannot be deleted yet. Make another account an admin first, or ask the server operator to delete it from the release shell."
 msgstr "Sei l'unico amministratore che può accedere, quindi questo account non può ancora essere eliminato. Rendi prima amministratore un altro account, oppure chiedi al gestore del server di eliminarlo dalla release shell."
+
+#: lib/tymeslot_web/live/account_live/danger_zone.ex
+#, elixir-autogen, elixir-format
+msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
+msgstr "Le prenotazioni future vengono eliminate da the scheduler e i tuoi ospiti non vengono avvisati."
+
+#: lib/tymeslot_web/live/account_live/delete_account_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Your upcoming bookings will be deleted. Your guests will not be notified."
+msgstr "Le tue prenotazioni future verranno eliminate da Tymeslot. I tuoi ospiti non verranno avvisati."

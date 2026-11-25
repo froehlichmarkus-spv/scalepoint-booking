@@ -83,20 +83,10 @@ msgstr "Wählen Sie, welche Buchungsereignisse überwacht werden sollen"
 msgid "Close"
 msgstr "Schließen"
 
-#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
-#, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "In the scheduler konfigurieren"
-
 #: lib/tymeslot_web/live/dashboard/automation/webhook_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Configure the basic information for your webhook."
 msgstr "Konfigurieren Sie die grundlegenden Informationen für Ihren Webhook."
-
-#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
-#, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Verbinden Sie the scheduler mit n8n, Zapier, Make oder Ihren eigenen Automatisierungs-Workflows"
 
 #: lib/tymeslot_web/live/dashboard/automation/helpers.ex
 #, elixir-autogen, elixir-format
@@ -404,11 +394,6 @@ msgstr "Webhook aktualisieren"
 #, elixir-autogen, elixir-format
 msgid "Use this in your n8n/Zapier header verification"
 msgstr "Verwenden Sie dies in Ihrer n8n/Zapier-Header-Verifizierung"
-
-#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
-#, elixir-autogen, elixir-format
-msgid "Verify the token in your automation tool to ensure requests are from Tymeslot."
-msgstr "Verifizieren Sie den Token in Ihrem Automatisierungstool, um sicherzustellen, dass die Anfragen von the scheduler stammen."
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
@@ -756,3 +741,18 @@ msgstr "Wird einmal ausgelöst, wenn jemand eine Serie von Terminen anfragt, die
 #, elixir-autogen, elixir-format
 msgid "Triggers once when you decline a series request, instead of Booking Declined for each session"
 msgstr "Wird einmal ausgelöst, wenn Sie eine Serienanfrage ablehnen, statt „Buchung abgelehnt“ für jeden einzelnen Termin"
+
+#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
+#, elixir-autogen, elixir-format
+msgid "Configure in the scheduler"
+msgstr "In the scheduler konfigurieren"
+
+#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
+#, elixir-autogen, elixir-format
+msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Verbinden Sie the scheduler mit n8n, Zapier, Make oder Ihren eigenen Automatisierungs-Workflows"
+
+#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
+#, elixir-autogen, elixir-format
+msgid "Verify the token in your automation tool to ensure requests are from this booking page."
+msgstr "Verifizieren Sie den Token in Ihrem Automatisierungstool, um sicherzustellen, dass die Anfragen von the scheduler stammen."

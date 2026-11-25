@@ -398,11 +398,6 @@ msgstr "Wird abonniert…"
 msgid "Colour"
 msgstr "Farbe"
 
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
-#, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
-msgstr "So werden die Ereignisse dieses Kalenders in Ihrem the scheduler-Kalender angezeigt."
-
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
@@ -522,11 +517,6 @@ msgstr "Nur belegte Zeiten"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Wählen Sie, welche Kalender the scheduler verwendet und welche davon Zeiten auf Ihrer Buchungsseite blockieren."
-
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
-#, elixir-autogen, elixir-format
 msgid "Don't block"
 msgstr "Nicht blockieren"
 
@@ -554,11 +544,6 @@ msgstr "Ein"
 #, elixir-autogen, elixir-format
 msgid "Read-only"
 msgstr "Schreibgeschützt"
-
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "Nur mit belegten Zeiten für Sie freigegeben. the scheduler kann diese Zeiten blockieren, die Ereignisse aber nicht anzeigen."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -641,11 +626,6 @@ msgstr "Falls Sie das alte App-spezifische Passwort seit dem Verbinden widerrufe
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
-msgid "Keep this password for as long as you use Tymeslot. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
-msgstr "Behalten Sie dieses Passwort, solange Sie the scheduler nutzen. Wenn Sie es widerrufen oder Ihr Apple-ID-Passwort ändern, wird iCloud getrennt, und Ihre Buchungsseite bietet keine Zeiten an, bis Sie iCloud erneut verbinden."
-
-#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
-#, elixir-autogen, elixir-format
 msgid "Enter your Apple ID email and that password below."
 msgstr "Geben Sie unten die E-Mail-Adresse Ihrer Apple-ID und dieses Passwort ein."
 
@@ -663,3 +643,23 @@ msgstr "Wählen Sie unter „Anmelden und Sicherheit“ die Option „App-spezif
 #, elixir-autogen, elixir-format
 msgid "iCloud needs an app-specific password, not your Apple ID password."
 msgstr "iCloud benötigt ein App-spezifisches Passwort, nicht das Passwort Ihrer Apple-ID."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
+msgstr "Wählen Sie, welche Kalender the scheduler verwendet und welche davon Zeiten auf Ihrer Buchungsseite blockieren."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "How this calendar's events are shown in your the scheduler calendar."
+msgstr "So werden die Ereignisse dieses Kalenders in Ihrem the scheduler-Kalender angezeigt."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
+#, elixir-autogen, elixir-format
+msgid "Keep this password for as long as you use this booking page. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
+msgstr "Behalten Sie dieses Passwort, solange Sie the scheduler nutzen. Wenn Sie es widerrufen oder Ihr Apple-ID-Passwort ändern, wird iCloud getrennt, und Ihre Buchungsseite bietet keine Zeiten an, bis Sie iCloud erneut verbinden."
+
+#: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
+msgstr "Nur mit belegten Zeiten für Sie freigegeben. the scheduler kann diese Zeiten blockieren, die Ereignisse aber nicht anzeigen."

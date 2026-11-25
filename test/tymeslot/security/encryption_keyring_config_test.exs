@@ -288,7 +288,9 @@ defmodule Tymeslot.Security.EncryptionKeyringConfigTest do
                    Encryption.check_config()
         end)
 
-      assert log =~ "Tymeslot cannot start: the data encryption key configuration is invalid."
+      assert log =~
+               "the scheduler cannot start: the data encryption key configuration is invalid."
+
       assert log =~ "DATA_ENCRYPTION_KEY must be valid Base64."
       assert log =~ "URL-safe characters (`-`, `_`) are refused."
       assert log =~ "openssl rand -base64 48"

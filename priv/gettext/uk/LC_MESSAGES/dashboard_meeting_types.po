@@ -344,6 +344,7 @@ msgstr "Видалити тип зустрічі"
 msgid "Edit %{name}"
 msgstr "Редагувати %{name}"
 
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
 #, elixir-autogen, elixir-format
 msgid "Booking link copied!"
@@ -354,6 +355,7 @@ msgstr "Посилання для бронювання скопійовано!"
 msgid "Cancelled"
 msgstr "Скасовано"
 
+#: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
@@ -589,11 +591,6 @@ msgstr "Використано"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Кожне посилання бронює одну зустріч. the scheduler не надсилає листів: скопіюйте посилання й надішліть його самі."
-
-#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
-#, elixir-autogen, elixir-format
 msgid "Appointment cancelled"
 msgstr "Зустріч скасовано"
 
@@ -646,3 +643,8 @@ msgstr "Показано 100 найновіших запрошень."
 #, elixir-autogen, elixir-format
 msgid "This link has expired, so it can't be reopened. Create a new one instead."
 msgstr "Термін дії цього посилання минув, тому його неможливо відкрити знову. Натомість створіть нове."
+
+#: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
+#, elixir-autogen, elixir-format
+msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
+msgstr "Кожне посилання бронює одну зустріч. the scheduler не надсилає листів: скопіюйте посилання й надішліть його самі."

@@ -162,7 +162,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfacePanelRepeatTest do
 
     lv |> edit(sync) |> choose("daily")
 
-    assert status(lv) =~ "This calendar doesn't take repeat rules from Tymeslot."
+    assert status(lv) =~ "This calendar doesn't take repeat rules from this booking page."
     refute_receive {:written, _uid, _payload}, 200
   end
 

@@ -239,7 +239,7 @@ defmodule TymeslotWeb.Dashboard.PaymentsControllerTest do
       {:expired_state, "That Stripe connection link is no longer valid. Please try again."},
       {:state_already_used, "That Stripe connection link is no longer valid. Please try again."},
       {:account_already_linked,
-       "That Stripe account is already connected to another Tymeslot account."},
+       "That Stripe account is already connected to another the scheduler account."},
       {:unsupported_currency,
        "That Stripe account uses a currency Tymeslot doesn't support for payments yet."}
     ]

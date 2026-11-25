@@ -81,6 +81,6 @@ defmodule Tymeslot.Emails.Templates.RescheduleRequestExpiredTest do
 
     assert email.reply_to == {"Alex Guest", "alex@example.com"}
     assert {_name, address} = email.from
-    assert address == Application.get_env(:tymeslot, :email)[:from_email]
+    assert address == Tymeslot.Emails.Shared.MjmlEmail.fetch_from_email()
   end
 end

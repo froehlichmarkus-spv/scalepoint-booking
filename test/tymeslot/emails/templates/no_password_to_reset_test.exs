@@ -52,7 +52,7 @@ defmodule Tymeslot.Emails.Templates.NoPasswordToResetTest do
 
       text = email.text_body
 
-      assert email.subject == "Ihr Tymeslot-Konto hat kein Passwort"
+      assert email.subject == "Ihr the scheduler-Konto hat kein Passwort"
 
       assert text =~ "meldet sich jedoch über Google an"
     end

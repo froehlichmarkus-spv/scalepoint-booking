@@ -125,5 +125,19 @@ defmodule Tymeslot.Emails.Templates.BookingReplyToTest do
 
   # Reads the sender identity from config rather than from MjmlEmail, so the
   # assertions stay independent of the module under test.
+  defp configured(:from_email) do
+    case Tymeslot.Brands.mail_identity() do
+      %{sender_email: email} when is_binary(email) and email != "" -> email
+      _ -> Application.get_env(:tymeslot, :email)[:from_email]
+    end
+  end
+
+  defp configured(:from_name) do
+    case Tymeslot.Brands.mail_identity() do
+      %{sender_name: name} when is_binary(name) and name != "" -> name
+      _ -> Application.get_env(:tymeslot, :email)[:from_name]
+    end
+  end
+
   defp configured(key), do: Application.get_env(:tymeslot, :email)[key]
 end

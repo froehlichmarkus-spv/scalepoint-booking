@@ -55,7 +55,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
 
     #{Text.divider()}
 
-    #{Text.system_footer_note("This is an automated alert from Tymeslot. If you are self-hosting and would like to help debug this issue, you can share the report above (redacting any sensitive values) via a GitHub issue at https://github.com/Tymeslot/tymeslot/issues.")}
+    #{Text.system_footer_note("This is an automated alert from #{Tymeslot.Brands.product_name()}. If you are self-hosting and would like to help debug this issue, share the report above after redacting any sensitive values.")}
     """
 
     TemplateHelper.compile_system_template(
@@ -70,8 +70,10 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
   end
 
   defp text_body(category, severity, message, metadata) do
+    product = Tymeslot.Brands.product_name()
+
     """
-    TYMESLOT ADMIN ALERT
+    ADMIN ALERT
 
     Category: #{category}
     Severity: #{severity}
@@ -82,9 +84,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
     #{metadata_text(metadata)}
 
     ---
-    This is an automated alert from Tymeslot.
-    Self-hosters: to help debug this issue, please share the report above
-    (redacting any sensitive values) via https://github.com/Tymeslot/tymeslot/issues.
+    This is an automated alert from #{product}.
     """
   end
 

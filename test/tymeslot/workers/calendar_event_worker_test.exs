@@ -184,7 +184,7 @@ defmodule Tymeslot.Workers.CalendarEventWorkerTest do
 
       flagged = Repo.get!(CalendarIntegrationSchema, integration.id)
       assert flagged.needs_reauth
-      assert flagged.sync_error =~ "does not allow Tymeslot to add bookings"
+      assert flagged.sync_error =~ "does not allow the scheduler to add bookings"
 
       assert [_one] =
                all_enqueued(

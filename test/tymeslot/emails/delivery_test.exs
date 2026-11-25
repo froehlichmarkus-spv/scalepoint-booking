@@ -328,7 +328,7 @@ defmodule Tymeslot.Emails.DeliveryTest do
 
       assert sent.to == [{"Ada Bcc: victim@example.com", "ada@example.com"}]
       assert sent.cc == [{"Grace", "grace@example.com"}]
-      assert sent.from == {"Tymeslot", "noreply@example.com"}
+      assert sent.from == {Tymeslot.Brands.mail_identity().sender_name, "noreply@example.com"}
       assert sent.subject == "Meeting X-Injected: yes"
     end
 

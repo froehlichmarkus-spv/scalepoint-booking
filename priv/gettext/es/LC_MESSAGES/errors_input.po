@@ -86,11 +86,6 @@ msgstr "El dominio tiene una terminación no válida (.%{tld}). ¿Quisiste decir
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "El dominio tiene una terminación desconocida (.%{tld}). ¿Quisiste decir .%{suggestion}?"
 
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "El dominio tiene una terminación desconocida (.%{tld}). Si es correcta, esta versión de the scheduler es anterior a ella y hay que actualizarla."
-
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Email domain format is invalid"
@@ -150,11 +145,6 @@ msgstr "El correo tiene una terminación de dominio no válida (.%{tld}). ¿Quis
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
 msgstr "El correo tiene una terminación de dominio desconocida (.%{tld}). ¿Quisiste decir .%{suggestion}?"
-
-#: lib/tymeslot/security/field_validators/tld_list.ex
-#, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "El correo tiene una terminación de dominio desconocida (.%{tld}). Si es correcta, esta versión de the scheduler es anterior a ella y hay que actualizarla."
 
 #: lib/tymeslot/security/field_validators/email_validator.ex
 #, elixir-autogen, elixir-format
@@ -541,3 +531,13 @@ msgstr "La contraseña debe contener al menos un carácter especial"
 #, elixir-autogen, elixir-format
 msgid "Password must contain at least one uppercase letter"
 msgstr "La contraseña debe contener al menos una letra mayúscula"
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "El dominio tiene una terminación desconocida (.%{tld}). Si es correcta, esta versión de the scheduler es anterior a ella y hay que actualizarla."
+
+#: lib/tymeslot/security/field_validators/tld_list.ex
+#, elixir-autogen, elixir-format
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
+msgstr "El correo tiene una terminación de dominio desconocida (.%{tld}). Si es correcta, esta versión de the scheduler es anterior a ella y hay que actualizarla."

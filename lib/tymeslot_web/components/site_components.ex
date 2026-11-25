@@ -394,15 +394,12 @@ defmodule TymeslotWeb.Components.SiteComponents do
               {dgettext("common", "Beautiful, on-brand meeting scheduling. No ads, no tracking.")}
             </p>
             <a
-              href="https://github.com/tymeslot/tymeslot"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-analytics-event="github_cta_clicked"
+              href={Tymeslot.Brands.footer_href()}
+              data-analytics-event="footer_product_clicked"
               data-analytics-props={Jason.encode!(%{source_page: "footer"})}
               class="inline-flex items-center gap-2 px-4 py-2 bg-linear-to-r from-turquoise-500 to-turquoise-600 text-white font-semibold rounded-token-lg hover:from-turquoise-600 hover:to-turquoise-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-turquoise-500/25 text-token-sm"
             >
-              <.icon name="brand-github" class="w-4 h-4" />
-              {dgettext("common", "View on GitHub")}
+              {Tymeslot.Brands.product_name()}
             </a>
           </div>
 
@@ -415,8 +412,9 @@ defmodule TymeslotWeb.Components.SiteComponents do
         <%!-- Bottom bar --%>
         <div class="border-t border-tymeslot-700 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p class="text-tymeslot-500 text-token-xs">
-            {dgettext("common", "© %{year} Tymeslot. All rights reserved.",
-              year: DateTime.utc_now().year
+            {dgettext("common", "© %{year} %{product}. All rights reserved.",
+              year: DateTime.utc_now().year,
+              product: Tymeslot.Brands.product_name()
             )} · v{to_string(Application.spec(:tymeslot, :vsn))}
           </p>
         </div>

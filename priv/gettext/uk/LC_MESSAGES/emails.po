@@ -293,6 +293,7 @@ msgid "Tuesday"
 msgstr "вівторок"
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/templates/appointment_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Video call"
 msgstr "Відеодзвінок"
@@ -301,17 +302,6 @@ msgstr "Відеодзвінок"
 #, elixir-autogen, elixir-format
 msgid "Wednesday"
 msgstr "середа"
-
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "Sent with care by"
-msgstr "З турботою від"
-
-#: lib/tymeslot/emails/shared/layouts.ex
-#: lib/tymeslot/emails/shared/mjml_email.ex
-#, elixir-autogen, elixir-format
-msgid "scheduling that respects your time"
-msgstr "планування, що поважає ваш час"
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format

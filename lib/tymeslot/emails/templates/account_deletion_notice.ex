@@ -107,7 +107,8 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNotice do
   defp bookings_note(nil) do
     dgettext(
       "emails_account",
-      "Your upcoming bookings have been deleted from Tymeslot. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
+      "Your upcoming bookings have been deleted from %{product}. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself.",
+      product: Tymeslot.Brands.product_name()
     )
   end
 

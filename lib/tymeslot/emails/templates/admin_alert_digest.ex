@@ -116,9 +116,9 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
     %{
       headline: "#{pluralise(total_alerts(digest), "info alert")} since the last digest",
       footer:
-        "This is an automated daily digest from Tymeslot. Warnings and errors are emailed " <>
+        "This is an automated daily digest from #{Tymeslot.Brands.product_name()}. Warnings and errors are emailed " <>
           "as they happen; informational alerts are collected here.",
-      text_title: "TYMESLOT ADMIN ALERT DIGEST",
+      text_title: "ADMIN ALERT DIGEST",
       stage_title: "Daily alert digest",
       intent: :confirmed
     }

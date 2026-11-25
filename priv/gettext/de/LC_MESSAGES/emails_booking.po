@@ -420,11 +420,6 @@ msgstr "Der Termin mit %{organizer}, zu dem %{booker} Sie eingeladen hat, steht 
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler platform fee: %{amount}"
-msgstr "the scheduler-Plattformgebühr: %{amount}"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
-#, elixir-autogen, elixir-format
 msgid "View receipt"
 msgstr "Beleg ansehen"
 
@@ -754,3 +749,8 @@ msgstr "Die Anmeldung ist geschlossen"
 #, elixir-autogen, elixir-format
 msgid "The list is also attached as a CSV file for a spreadsheet."
 msgstr "Die Liste hängt zusätzlich als CSV-Datei für eine Tabellenkalkulation an."
+
+#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
+#, elixir-autogen, elixir-format
+msgid "the scheduler platform fee: %{amount}"
+msgstr "the scheduler-Plattformgebühr: %{amount}"

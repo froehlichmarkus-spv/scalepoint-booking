@@ -383,11 +383,6 @@ msgstr "Стандартний - по центру з обмеженням ~640p
 
 #: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
 #, elixir-autogen, elixir-format
-msgid "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
-msgstr "Встановіть офіційний плагін the scheduler, щоб додати сторінку бронювання за допомогою блоку або шорткоду - без жодного програмування."
-
-#: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
-#, elixir-autogen, elixir-format
 msgid "Updates every snippet below. Defaults work for most embeds - adjust when your site needs them."
 msgstr "Оновлює всі фрагменти коду нижче. Стандартні налаштування підходять для більшості сайтів - змінюйте їх лише за потреби."
 
@@ -452,3 +447,8 @@ msgstr "Потрібна допомога? Перегляньте %{guide}, де
 #, elixir-autogen, elixir-format
 msgid "Booking page"
 msgstr "Сторінка бронювання"
+
+#: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
+#, elixir-autogen, elixir-format
+msgid "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
+msgstr "Встановіть офіційний плагін the scheduler, щоб додати сторінку бронювання за допомогою блоку або шорткоду - без жодного програмування."

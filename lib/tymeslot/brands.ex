@@ -358,15 +358,25 @@ defmodule Tymeslot.Brands do
 
   def scrub(other, _brand), do: other
 
+  @suite_footer "ScalePoint Ventures"
+  @suite_footer_token "BOOKDESK_SUITE_FOOTER"
+
   def scrub_email(%{from: from} = email) do
     brand = mail_identity()
 
     email
     |> Map.update!(:subject, &scrub(&1, brand))
-    |> Map.update!(:html_body, &scrub(&1, brand))
-    |> Map.update!(:text_body, &scrub(&1, brand))
+    |> Map.update!(:html_body, &restore_suite_footer(scrub(&1, brand)))
+    |> Map.update!(:text_body, &restore_suite_footer(scrub(&1, brand)))
     |> Map.put(:from, guard_from(from, brand))
   end
+
+  # The suite footer is one line on every mail, including a tenant page.
+  # Scrub would otherwise rewrite the house name on those pages.
+  defp restore_suite_footer(nil), do: nil
+
+  defp restore_suite_footer(text) when is_binary(text),
+    do: String.replace(text, @suite_footer_token, @suite_footer)
 
   def leak?(text) when is_binary(text) do
     down = String.downcase(text)

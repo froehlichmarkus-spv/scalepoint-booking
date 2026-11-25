@@ -115,16 +115,6 @@ msgstr "Standardwährung"
 msgid "Disconnect Stripe"
 msgstr "Stripe trennen"
 
-#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
-#, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from Tymeslot. Existing payments remain visible. New paid bookings will fail until you reconnect."
-msgstr "Trennen Sie Ihr Stripe-Konto von Tymeslot. Bestehende Zahlungen bleiben sichtbar. Neue kostenpflichtige Buchungen schlagen fehl, bis Sie erneut verbinden."
-
-#: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
-#, elixir-autogen, elixir-format
-msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
-msgstr "Ihr Stripe-Konto von the scheduler trennen? Bestehende Zahlungen bleiben sichtbar, aber neue kostenpflichtige Buchungen schlagen fehl, bis Sie erneut verbinden."
-
 #: lib/tymeslot_web/live/dashboard/payments_settings/status_card.ex
 #, elixir-autogen, elixir-format
 msgid "Disconnected"
@@ -313,20 +303,10 @@ msgstr "Stripe hat für diese Buchung noch keine Zahlung erfasst. Versuchen Sie 
 msgid "Stripe is reviewing your account. Charges switch on automatically once approved."
 msgstr "Stripe prüft Ihr Konto. Der Zahlungseinzug wird nach der Genehmigung automatisch aktiviert."
 
-#: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
-#, elixir-autogen, elixir-format
-msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
-msgstr "Der Teilnehmer erhält den vollen von Ihnen erstatteten Betrag. Die Plattformgebühr von the scheduler wird anteilig zurückerstattet; die Stripe-Bearbeitungsgebühren für die ursprüngliche Zahlung verbleiben bei Ihnen."
-
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "This booking has not been paid yet, so it cannot be refunded."
 msgstr "Diese Buchung wurde noch nicht bezahlt und kann daher nicht erstattet werden."
-
-#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
-#, elixir-autogen, elixir-format
-msgid "This payment can no longer be refunded from Tymeslot. Refunds older than 60 days must be processed in your Stripe dashboard."
-msgstr "Diese Zahlung kann nicht mehr über the scheduler erstattet werden. Rückerstattungen, die älter als 60 Tage sind, müssen in Ihrem Stripe-Dashboard bearbeitet werden."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -501,16 +481,6 @@ msgstr "Stripe-Zahlungen sind auf diesem Server nicht vollständig eingerichtet.
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
-msgid "That Stripe account is already connected to another the scheduler account."
-msgstr "Dieses Stripe-Konto ist bereits mit einem anderen the scheduler-Konto verbunden."
-
-#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
-#, elixir-autogen, elixir-format
-msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
-msgstr "Dieses Stripe-Konto verwendet eine Währung, die the scheduler für Zahlungen noch nicht unterstützt."
-
-#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
-#, elixir-autogen, elixir-format
 msgid "That Stripe connection link is no longer valid. Please try again."
 msgstr "Dieser Stripe-Verbindungslink ist nicht mehr gültig. Bitte versuchen Sie es erneut."
 
@@ -540,3 +510,33 @@ msgstr[1] "%{count} laufende Bezahlvorgänge werden beim Trennen abgebrochen."
 #, elixir-autogen, elixir-format
 msgid "A checkout is in progress in your current currency. Try again in a few minutes."
 msgstr "In Ihrer aktuellen Währung läuft gerade ein Bezahlvorgang. Versuchen Sie es in ein paar Minuten erneut."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
+#, elixir-autogen, elixir-format
+msgid "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+msgstr "Ihr Stripe-Konto von the scheduler trennen? Bestehende Zahlungen bleiben sichtbar, aber neue kostenpflichtige Buchungen schlagen fehl, bis Sie erneut verbinden."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "Disconnect your Stripe account. Existing payments remain visible. New paid bookings will fail until you reconnect."
+msgstr "Trennen Sie Ihr Stripe-Konto von Tymeslot. Bestehende Zahlungen bleiben sichtbar. Neue kostenpflichtige Buchungen schlagen fehl, bis Sie erneut verbinden."
+
+#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
+#, elixir-autogen, elixir-format
+msgid "That Stripe account is already connected to another the scheduler account."
+msgstr "Dieses Stripe-Konto ist bereits mit einem anderen the scheduler-Konto verbunden."
+
+#: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
+#, elixir-autogen, elixir-format
+msgid "That Stripe account uses a currency the scheduler doesn't support for payments yet."
+msgstr "Dieses Stripe-Konto verwendet eine Währung, die the scheduler für Zahlungen noch nicht unterstützt."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
+#, elixir-autogen, elixir-format
+msgid "The attendee receives the full amount you refund. the scheduler's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
+msgstr "Der Teilnehmer erhält den vollen von Ihnen erstatteten Betrag. Die Plattformgebühr von the scheduler wird anteilig zurückerstattet; die Stripe-Bearbeitungsgebühren für die ursprüngliche Zahlung verbleiben bei Ihnen."
+
+#: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
+#, elixir-autogen, elixir-format
+msgid "This payment can no longer be refunded here. Refunds older than 60 days must be processed in your Stripe dashboard."
+msgstr "Diese Zahlung kann nicht mehr über the scheduler erstattet werden. Rückerstattungen, die älter als 60 Tage sind, müssen in Ihrem Stripe-Dashboard bearbeitet werden."

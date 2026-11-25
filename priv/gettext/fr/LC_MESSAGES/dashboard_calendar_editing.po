@@ -749,11 +749,6 @@ msgstr "%{email} ne figure plus parmi les invités. La notification sera envoyé
 msgid "Your calendar needs to be reconnected. Please reconnect it from the Integrations page."
 msgstr "Votre calendrier doit être reconnecté. Veuillez le reconnecter depuis la page Intégrations."
 
-#: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
-#, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Aucun (the scheduler uniquement)"
-
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
@@ -857,12 +852,17 @@ msgstr "L’horaire est lié à la réservation. Reportez-la depuis Réservation
 msgid "Colour"
 msgstr "Couleur"
 
+#: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
+#, elixir-autogen, elixir-format
+msgid "%{calendar} can't hold all of the event's reminders, so some were not carried."
+msgstr "%{calendar} ne peut pas conserver tous les rappels de l’événement, certains n’ont donc pas été repris."
+
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
 msgid "Add a guest to send a the scheduler meeting."
 msgstr "Ajoutez un invité pour envoyer une réunion Tymeslot."
 
-#: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
+#: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "%{calendar} can't hold all of the event's reminders, so some were not carried."
-msgstr "%{calendar} ne peut pas conserver tous les rappels de l’événement, certains n’ont donc pas été repris."
+msgid "None (the scheduler only)"
+msgstr "Aucun (the scheduler uniquement)"

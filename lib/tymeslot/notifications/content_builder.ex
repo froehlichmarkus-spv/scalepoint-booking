@@ -91,6 +91,7 @@ defmodule Tymeslot.Notifications.ContentBuilder do
   defp determine_location(meeting) do
     cond do
       place = BookingRequestLocation.place(meeting) -> place
+      named = BookingRequestLocation.video_label(meeting) -> named
       meeting.meeting_url -> "Video Call"
       meeting.location -> meeting.location
       true -> "TBD"

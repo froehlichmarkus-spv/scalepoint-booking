@@ -278,11 +278,6 @@ msgstr "Celý den"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Zarezervováno přes vaši stránku the scheduler"
-
-#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
-#, elixir-autogen, elixir-format
 msgid "External calendar"
 msgstr "Externí kalendář"
 
@@ -447,3 +442,8 @@ msgstr "Sbalit menu"
 #, elixir-autogen, elixir-format
 msgid "Expand menu"
 msgstr "Rozbalit menu"
+
+#: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
+#, elixir-autogen, elixir-format
+msgid "Booked through your the scheduler page"
+msgstr "Zarezervováno přes vaši stránku the scheduler"
