@@ -248,6 +248,7 @@ defmodule Tymeslot.Brands do
   def chrome_suffix, do: " · " <> chrome_name()
 
   @doc "Customer-facing product. Tenants override it; the house default is BookDesk24."
+  @spec product_name(term()) :: term()
   def product_name(brand \\ nil) do
     brand = brand || mail_identity()
 
@@ -259,18 +260,21 @@ defmodule Tymeslot.Brands do
   end
 
   @doc "Internal suite, for example ScalePoint Ventures Growth OS."
+  @spec suite_name(term()) :: term()
   def suite_name(brand \\ nil) do
     brand = brand || mail_identity()
     if present?(brand.suite_name), do: brand.suite_name, else: "ScalePoint Ventures Growth OS"
   end
 
   @doc "Module name inside the suite, matching Outreach and Connect."
+  @spec module_name(term()) :: term()
   def module_name(brand \\ nil) do
     brand = brand || mail_identity()
     if present?(brand.module_name), do: brand.module_name, else: "Booking"
   end
 
   @doc "Document title for admin, login and the dashboard."
+  @spec suite_title(term()) :: term()
   def suite_title(brand \\ nil) do
     brand = brand || mail_identity()
 
@@ -282,6 +286,7 @@ defmodule Tymeslot.Brands do
   end
 
   @doc "Small byline under the wordmark. Tenants on their own brand can leave it empty."
+  @spec byline(term()) :: term()
   def byline(brand \\ nil) do
     brand = brand || mail_identity()
 

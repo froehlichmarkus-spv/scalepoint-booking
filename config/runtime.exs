@@ -1057,5 +1057,4 @@ if plans_enabled?.() do
          :oban_additional_crontab,
          Application.get_env(:tymeslot, :oban_additional_crontab, []) ++
            [{"0 */6 * * *", Tymeslot.Plans.Workers.EntitlementResync}]
-
 end

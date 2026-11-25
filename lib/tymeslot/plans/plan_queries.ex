@@ -61,9 +61,8 @@ defmodule Tymeslot.Plans.Queries do
 
   @spec count_calendars(integer()) :: integer()
   def count_calendars(user_id) do
-    Repo.one(
-      from r in "calendar_integrations", where: r.user_id == ^user_id, select: count(r.id)
-    ) || 0
+    Repo.one(from r in "calendar_integrations", where: r.user_id == ^user_id, select: count(r.id)) ||
+      0
   end
 
   @spec lock_user(integer()) :: integer() | nil

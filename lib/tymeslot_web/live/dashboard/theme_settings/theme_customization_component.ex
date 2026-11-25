@@ -159,9 +159,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
 
   defp set_option(socket, group, field, value) do
     if branding_blocked?(socket, group, field, value) do
-        Flash.error(
-        dgettext("plans", "Your logo and accent colour are part of Pro.")
-      )
+      Flash.error(dgettext("plans", "Your logo and accent colour are part of Pro."))
 
       {:noreply, socket}
     else
@@ -172,7 +170,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   defp branding_blocked?(socket, group, field, value) do
     user_id = socket.assigns.current_user.id
 
-      not BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
+    not BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
   end
 
   defp do_set_option(socket, group, field, value) do
