@@ -73,10 +73,10 @@ defmodule Tymeslot.Emails.SeedMailTest do
       assert {:ok, _job} =
                Oban.insert(
                  EmailWorker.new(%{
-                 "action" => "send_email_verification",
-                 "user_id" => user.id,
-                 "verification_url_encrypted" => "pending"
-               })
+                   "action" => "send_email_verification",
+                   "user_id" => user.id,
+                   "verification_url_encrypted" => "pending"
+                 })
                )
 
       System.put_env("CONFIRM_SUPPRESS_SEED_MAIL", "yes")

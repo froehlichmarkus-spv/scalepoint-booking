@@ -193,7 +193,10 @@ defmodule Tymeslot.Application do
         {:ok, pid}
 
       {:error, reason} = error ->
-        Logger.error("Failed to start the scheduler application", reason: LogFormat.reason(reason))
+        Logger.error("Failed to start the scheduler application",
+          reason: LogFormat.reason(reason)
+        )
+
         error
     end
   end
