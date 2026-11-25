@@ -2,7 +2,7 @@ defmodule Tymeslot.Integrations.Calendar.CreatedEvent do
   @moduledoc """
   What a provider answers a successful create with.
 
-  A create is the one moment the scheduler holds a new event's server-side identity
+  A create is the one moment BookDesk24 holds a new event's server-side identity
   for free: the resource the provider just wrote, and, on CalDAV, the entity
   tag the server assigned it. This struct carries both, so the grid caches the
   row with `provider_event_id` and `etag` set, and everything that reads
@@ -20,7 +20,7 @@ defmodule Tymeslot.Integrations.Calendar.CreatedEvent do
     * `:ical_uid`: the iCalendar UID a provider that mints its own id reports
       alongside it (Google's `iCalUID`, Outlook's `iCalUId`). It is what
       that provider's sync keys the cached row by, and it cannot be derived:
-      Google assigns its own even to an event created under an id the scheduler
+      Google assigns its own even to an event created under an id BookDesk24
       chose. Kept apart from `:uid` because it is not how the event is
       addressed. `nil` for the CalDAV family, whose `:uid` already is that
       key, and for a response that does not carry one.
@@ -55,7 +55,7 @@ defmodule Tymeslot.Integrations.Calendar.CreatedEvent do
   cached row ask for `cache_uid/1`, the key the next sync will look it up by.
 
   Deliberately does not carry the created document: `raw_ical` on a cached row
-  means "the server's copy", and echoing back what the scheduler submitted would
+  means "the server's copy", and echoing back what BookDesk24 submitted would
   make the colour write-back patch a snapshot that never existed, silently
   reverting whatever the server normalised or added. That column stays NULL
   until a read fills it.

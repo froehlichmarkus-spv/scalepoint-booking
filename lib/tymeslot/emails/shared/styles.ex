@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Styles do
   @moduledoc """
-  Public facade for the the scheduler email design system.
+  Public facade for the BookDesk24 email design system.
 
   The system is split across three focused sub-modules:
 

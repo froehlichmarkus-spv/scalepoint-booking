@@ -4,7 +4,7 @@ defmodule Tymeslot.CalendarGrid.EditGuard do
   wherever it is changed from.
 
     * `writable/2`: the event sits on one of the organiser's own
-      integrations, on a calendar that takes writes, and is not a the scheduler
+      integrations, on a calendar that takes writes, and is not a BookDesk24
       booking (a booking is rescheduled or cancelled from the booking). The
       organiser's integrations are passed in, so a check on render needs no
       query.
@@ -42,7 +42,7 @@ defmodule Tymeslot.CalendarGrid.EditGuard do
   before drawing the change.
 
   An event's colour is not gated here: it is the organiser's own override
-  in the scheduler (`Calendar.set_event_colour/3`), kept whatever the calendar
+  in BookDesk24 (`Calendar.set_event_colour/3`), kept whatever the calendar
   allows, and the calendar's side panel asks `check/3` before offering it.
 
   `free_busy_editable?/2` says whether the organiser may change an event's

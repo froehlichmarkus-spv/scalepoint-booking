@@ -23,7 +23,7 @@ defmodule Tymeslot.Locales.WeekStart do
                      PY SA SG SV TH TT TW UM US VE VI WS YE ZA ZW)
 
   # A bare language whose speakers live overwhelmingly in Sunday-first
-  # regions. `pt` is here because the scheduler's Portuguese is Brazilian.
+  # regions. `pt` is here because BookDesk24's Portuguese is Brazilian.
   @sunday_languages ~w(pt ja ko he hi th id)
 
   # Bare languages spoken across both kinds of region in large numbers; for

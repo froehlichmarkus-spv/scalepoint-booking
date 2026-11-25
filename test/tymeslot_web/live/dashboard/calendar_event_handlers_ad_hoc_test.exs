@@ -1,7 +1,7 @@
 defmodule TymeslotWeb.Dashboard.CalendarEventHandlersAdHocTest do
   @moduledoc """
   What the organiser is told when a meeting they created from the calendar
-  (a the scheduler meeting with guests, `EventCreation.run_create_ad_hoc_meeting/1`)
+  (a BookDesk24 meeting with guests, `EventCreation.run_create_ad_hoc_meeting/1`)
   has been made or refused, and that the calendar hears of it only while it
   is on screen.
   """

@@ -18,7 +18,7 @@ defmodule Tymeslot.Meetings.Cancellation do
   to refund is the one choice that requires an explicit acknowledgement, since
   it is the only one that leaves the attendee out of pocket.
 
-  A payment the scheduler can no longer refund (`MeetingPayments.refund_refusal/1`:
+  A payment BookDesk24 can no longer refund (`MeetingPayments.refund_refusal/1`:
   past the refund window, under dispute, never paid) is settled up front:
   the default resolves to cancelling without a refund, with the reason
   (`{:not_refunded, reason}`), so the host is told why rather than seeing a

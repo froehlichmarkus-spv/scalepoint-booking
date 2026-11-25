@@ -5,7 +5,7 @@ defmodule TymeslotWeb.Components.Calendar.RemindersEditor do
   lead time, which the side panel's add rows also label the
   `ReminderForm.reminder_minutes_presets/0` lead times with. Reminders are
   synced to the calendar provider, which fires the alert on the user's own
-  devices; the scheduler does not fire them itself.
+  devices; BookDesk24 does not fire them itself.
   """
 
   use Gettext, backend: TymeslotWeb.Gettext

@@ -234,7 +234,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceBookingMoveTest do
 
       eventually(fn ->
         assert render(lv) =~
-                 "the scheduler is still updating your calendar for this booking. Please try again in a moment."
+                 "BookDesk24 is still updating your calendar for this booking. Please try again in a moment."
       end)
 
       # Drawn at the new time at once, then back at 14:00 London once refused.
@@ -417,7 +417,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceBookingMoveTest do
 
       send(lv.pid, {:booking_move_result, a.id, {:ok, reload(a)}})
       send(lv.pid, {:booking_move_result, a.id, {:error, :failed_to_update_meeting}})
-      eventually(fn -> assert render(lv) =~ "the scheduler could not move this booking." end)
+      eventually(fn -> assert render(lv) =~ "BookDesk24 could not move this booking." end)
 
       assert has_element?(lv, "#calendar-move-booking", "Ben Ortiz")
     end

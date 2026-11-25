@@ -1,6 +1,6 @@
 defmodule Tymeslot.MeetingPayments.Workers.DeauthorizeConnectAccount do
   @moduledoc """
-  Revokes the platform's access to a Stripe account the scheduler no longer holds:
+  Revokes the platform's access to a Stripe account BookDesk24 no longer holds:
   one it refused, or one the host disconnected (or whose owner was deleted),
   which is scheduled after a delay so a checkout session still open can be
   refunded first. Accounts created by the platform before OAuth are revoked
@@ -12,7 +12,7 @@ defmodule Tymeslot.MeetingPayments.Workers.DeauthorizeConnectAccount do
 
   A failed attempt is retried with Oban's default backoff, which over twenty
   attempts spans days. When the last one fails, an admin alert names the
-  account, since the scheduler would otherwise keep access to an account it has no
+  account, since BookDesk24 would otherwise keep access to an account it has no
   row for with nobody told.
 
   Revoking needs `STRIPE_CONNECT_CLIENT_ID`. Without it nothing is sent to
@@ -120,7 +120,7 @@ defmodule Tymeslot.MeetingPayments.Workers.DeauthorizeConnectAccount do
     )
 
     AdminAlerts.report(:connect_revocation_failed,
-      summary: "the scheduler's access to a Stripe account could not be revoked",
+      summary: "BookDesk24's access to a Stripe account could not be revoked",
       reason: reason,
       context: %{stripe_account_id: stripe_account_id, oban_job_id: job.id}
     )

@@ -77,7 +77,7 @@ defmodule Tymeslot.Meetings.MeetingRules do
 
   # A new meeting gets its own calendar identity, generated independently of
   # `uid` so that nothing readable in a calendar leads back to the capability.
-  # A UUID, like `uid`, because callers tell a the scheduler-minted identifier from
+  # A UUID, like `uid`, because callers tell a BookDesk24-minted identifier from
   # one a provider assigned by that shape (`CalendarEventSync`'s legacy
   # mapping check, the Exchange busy-interval namespace). An existing meeting
   # already has one and keeps it: its event is keyed by it, and a new value

@@ -201,7 +201,7 @@ msgstr "Este proveedor es la única forma de iniciar sesión que funciona para l
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Email operational alerts (webhook failures, integration health issues, background job errors) to the admin alert recipient. Requires a recipient address to be set below."
-msgstr "Con esta opción, the scheduler envía por correo alertas de funcionamiento al destinatario de las alertas de administración. Por ejemplo: fallos de webhooks, problemas en las integraciones y errores de tareas en segundo plano. Para funcionar, necesita una dirección de destinatario definida abajo."
+msgstr "Con esta opción, BookDesk24 envía por correo alertas de funcionamiento al destinatario de las alertas de administración. Por ejemplo: fallos de webhooks, problemas en las integraciones y errores de tareas en segundo plano. Para funcionar, necesita una dirección de destinatario definida abajo."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -246,7 +246,7 @@ msgstr "No se puede desactivar la autenticación con contraseña mientras algún
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Collect privacy-friendly analytics for booking pages on this instance: page views, traffic source (UTM/referrer), and conversion. Counts unique visitors with a daily-rotating, cookieless fingerprint - no raw IP is stored. Off by default; review your privacy policy before enabling."
-msgstr "Con esta opción, the scheduler recopila analítica de las páginas de reservas de esta instancia: visitas, origen del tráfico (UTM/referrer) y conversión. La analítica respeta la privacidad. Los visitantes únicos se cuentan con una huella sin cookies que cambia cada día; no se guarda ninguna dirección IP tal cual. La analítica está desactivada de forma predeterminada; revisa tu política de privacidad antes de activarla."
+msgstr "Con esta opción, BookDesk24 recopila analítica de las páginas de reservas de esta instancia: visitas, origen del tráfico (UTM/referrer) y conversión. La analítica respeta la privacidad. Los visitantes únicos se cuentan con una huella sin cookies que cambia cada día; no se guarda ninguna dirección IP tal cual. La analítica está desactivada de forma predeterminada; revisa tu política de privacidad antes de activarla."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -576,7 +576,7 @@ msgstr "Danos una estrella en GitHub"
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
 msgid "Stars help other self-hosters find the project."
-msgstr "Las estrellas ayudan a otras personas que alojan the scheduler en sus propios servidores a encontrar el proyecto."
+msgstr "Las estrellas ayudan a otras personas que alojan BookDesk24 en sus propios servidores a encontrar el proyecto."
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
@@ -605,18 +605,18 @@ msgstr "Los cambios que hagas aquí se aplican de inmediato. Algunas opciones es
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
-msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps the scheduler's access to their Stripe account until it is set."
-msgstr "Con esta opción, los anfitriones de esta instancia pueden cobrar con Stripe Connect a las personas que reservan. Para funcionar, necesita STRIPE_SECRET_KEY y STRIPE_CONNECT_WEBHOOK_SECRET definidas en el entorno; sin ellas, el interruptor sigue bloqueado. Los anfitriones conectan su cuenta de Stripe con STRIPE_CONNECT_CLIENT_ID; sin esta variable, los anfitriones que ya están conectados siguen cobrando, pero ningún anfitrión nuevo puede conectarse, y si un anfitrión se desconecta, the scheduler conserva el acceso a su cuenta de Stripe hasta que se defina."
+msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps BookDesk24's access to their Stripe account until it is set."
+msgstr "Con esta opción, los anfitriones de esta instancia pueden cobrar con Stripe Connect a las personas que reservan. Para funcionar, necesita STRIPE_SECRET_KEY y STRIPE_CONNECT_WEBHOOK_SECRET definidas en el entorno; sin ellas, el interruptor sigue bloqueado. Los anfitriones conectan su cuenta de Stripe con STRIPE_CONNECT_CLIENT_ID; sin esta variable, los anfitriones que ya están conectados siguen cobrando, pero ningún anfitrión nuevo puede conectarse, y si un anfitrión se desconecta, BookDesk24 conserva el acceso a su cuenta de Stripe hasta que se defina."
 
 #: lib/tymeslot_web/live/admin_live/components/layout.ex
 #, elixir-autogen, elixir-format
-msgid "Manage this self-hosted the scheduler install."
+msgid "Manage this self-hosted BookDesk24 install."
 msgstr "Administra esta instalación autoalojada de Tymeslot."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
-msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
-msgstr "Nombre para la vista previa en la bandeja de entrada, el texto alternativo del logotipo y el título del correo. No cambia el nombre del remitente; para eso está EMAIL_FROM_NAME. Déjalo vacío para usar «the scheduler»."
+msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"BookDesk24\"."
+msgstr "Nombre para la vista previa en la bandeja de entrada, el texto alternativo del logotipo y el título del correo. No cambia el nombre del remitente; para eso está EMAIL_FROM_NAME. Déjalo vacío para usar «BookDesk24»."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -625,10 +625,10 @@ msgstr "Lo define la variable de entorno %{variable}. Para cambiarlo aquí, quit
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "Support the scheduler"
-msgstr "Apoya a the scheduler"
+msgid "Support BookDesk24"
+msgstr "Apoya a BookDesk24"
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is free to self-host. If it is useful to you, here are three ways to help it grow."
-msgstr "Alojar the scheduler en tu propio servidor es gratis. Si te resulta útil, aquí tienes tres formas de ayudar a que crezca."
+msgid "BookDesk24 is free to self-host. If it is useful to you, here are three ways to help it grow."
+msgstr "Alojar BookDesk24 en tu propio servidor es gratis. Si te resulta útil, aquí tienes tres formas de ayudar a que crezca."

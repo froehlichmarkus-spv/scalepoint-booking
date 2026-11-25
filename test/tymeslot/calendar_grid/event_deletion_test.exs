@@ -1,7 +1,7 @@
 defmodule Tymeslot.CalendarGrid.EventDeletionTest do
   @moduledoc """
   `Changes.delete_event/3` deletes an event on its calendar, cancels the
-  the scheduler meeting it was booked as, and removes the cached row, or queues the
+  BookDesk24 meeting it was booked as, and removes the cached row, or queues the
   delete for the next sync when the calendar could not be reached. A member of
   a series goes in the scope asked for: its one occurrence, or the series.
 

@@ -294,10 +294,10 @@ msgstr "Hai annullato le sessioni rimanenti di una serie, ma non è stato possib
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
-msgstr "Quando Stripe sarà soddisfatto, lo stato del tuo account si aggiornerà automaticamente. Da parte di the scheduler non serve fare altro."
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr "Quando Stripe sarà soddisfatto, lo stato del tuo account si aggiornerà automaticamente. Da parte di BookDesk24 non serve fare altro."
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
-msgstr "Rimborsa il partecipante dai tuoi pagamenti in the scheduler o dalla dashboard di Stripe, oppure fagli sapere cosa succede ora."
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Rimborsa il partecipante dai tuoi pagamenti in BookDesk24 o dalla dashboard di Stripe, oppure fagli sapere cosa succede ora."

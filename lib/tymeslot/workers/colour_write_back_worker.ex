@@ -66,7 +66,7 @@ defmodule Tymeslot.Workers.ColourWriteBackWorker do
   # Oban preserves `max_attempts` across a snooze, so nothing else bounds this
   # loop: an integration deleted or left broken before its next sync would
   # snooze forever. Sixteen snoozes is a day, past the 24h forced full fetch,
-  # after which the colour is only ever going to be the scheduler's own.
+  # after which the colour is only ever going to be BookDesk24's own.
   @max_raw_ical_snoozes 16
 
   @behaviour ExpectedJobOutcome

@@ -10,7 +10,7 @@ defmodule Tymeslot.Payments.SubscriptionInvoiceSchema do
   scrubbed when it is set.
 
   This table covers *platform subscription* invoices only (billed by
-  the scheduler to the host). It deliberately does not cover Connect direct-charge
+  BookDesk24 to the host). It deliberately does not cover Connect direct-charge
   booking invoices (billed by the host to their attendee, via
   `invoice_creation` on the Connect checkout session — see
   `MeetingPayments.CheckoutSessions`): those have a different issuer, a

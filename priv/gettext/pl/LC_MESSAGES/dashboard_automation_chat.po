@@ -844,25 +844,25 @@ msgstr "Nie udało się zainicjować integracji. Spróbuj ponownie."
 
 #: lib/tymeslot/slack/error_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Channel not accessible. If it's a private channel, invite the the scheduler bot first."
+msgid "Channel not accessible. If it's a private channel, invite the BookDesk24 bot first."
 msgstr "Kanał jest niedostępny. Jeśli to kanał prywatny, najpierw zaproś do niego bota Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
-msgid "No channels available. Invite the the scheduler bot to at least one channel in Slack, then click Refresh."
-msgstr "Brak dostępnych kanałów. Zaproś bota the scheduler na co najmniej jeden kanał w Slacku, a następnie kliknij Odśwież."
+msgid "No channels available. Invite the BookDesk24 bot to at least one channel in Slack, then click Refresh."
+msgstr "Brak dostępnych kanałów. Zaproś bota BookDesk24 na co najmniej jeden kanał w Slacku, a następnie kliknij Odśwież."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
-msgid "Pick a channel for the scheduler to post booking notifications to."
-msgstr "Wybierz kanał, na którym the scheduler będzie publikować powiadomienia o rezerwacjach."
+msgid "Pick a channel for BookDesk24 to post booking notifications to."
+msgstr "Wybierz kanał, na którym BookDesk24 będzie publikować powiadomienia o rezerwacjach."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}."
-msgstr "the scheduler wysyła powiadomienia na ten adres URL. Kanał docelowy ustala Slack w momencie tworzenia webhooka – pełny przewodnik konfiguracji: %{guide}."
+msgid "BookDesk24 posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}."
+msgstr "BookDesk24 wysyła powiadomienia na ten adres URL. Kanał docelowy ustala Slack w momencie tworzenia webhooka – pełny przewodnik konfiguracji: %{guide}."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the the scheduler bot in Slack (%{command}), then click Refresh."
-msgstr "the scheduler będzie publikować powiadomienia o rezerwacjach na tym kanale. Kanały publiczne pojawiają się automatycznie; w przypadku kanału prywatnego zaproś bota the scheduler w Slacku (%{command}), a następnie kliknij Odśwież."
+msgid "BookDesk24 will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the BookDesk24 bot in Slack (%{command}), then click Refresh."
+msgstr "BookDesk24 będzie publikować powiadomienia o rezerwacjach na tym kanale. Kanały publiczne pojawiają się automatycznie; w przypadku kanału prywatnego zaproś bota BookDesk24 w Slacku (%{command}), a następnie kliknij Odśwież."

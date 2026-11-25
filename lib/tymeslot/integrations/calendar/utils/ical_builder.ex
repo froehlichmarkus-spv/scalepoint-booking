@@ -25,8 +25,8 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
 
   ## Building versus patching
 
-  `build_simple_event/3` serialises a whole event from the scheduler's payload and
-  is the writer for an event the scheduler authors. `patch_event_properties/3`
+  `build_simple_event/3` serialises a whole event from BookDesk24's payload and
+  is the writer for an event BookDesk24 authors. `patch_event_properties/3`
   rewrites named properties of a document the provider already holds and is
   the writer for an event that arrived by sync, where everything the payload
   does not model has to survive the write.
@@ -41,7 +41,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
   alias Tymeslot.Integrations.Calendar.ICalBuilder.Properties
   alias Tymeslot.Integrations.Calendar.ICalBuilder.TimeZoneComponent
 
-  # Emitted alongside an ATTENDEE block the scheduler authored, and read back by
+  # Emitted alongside an ATTENDEE block BookDesk24 authored, and read back by
   # `Patcher` to tell it apart from the organiser's own.
   @attendee_marker "X-TYMESLOT-ATTENDEES:1"
 
@@ -150,7 +150,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
   Each payload key owns one property, so a key the payload does not carry
   leaves its property alone and a key it carries with an empty value deletes
   it. `ATTENDEE` blocks, `CATEGORIES`, `SEQUENCE`, `X-` properties and
-  anything else the scheduler does not model survive the write, which
+  anything else BookDesk24 does not model survive the write, which
   `build_simple_event/3` cannot promise: it serialises the payload and
   nothing else. See `Tymeslot.Integrations.Calendar.ICalBuilder.Patcher` for the full contract, including
   which components are deliberately left untouched.
@@ -188,7 +188,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
   end
 
   # An `ATTENDEE` block is ambiguous on the way back in: it is either one
-  # the scheduler wrote or one the organiser's own calendar client did, and the
+  # BookDesk24 wrote or one the organiser's own calendar client did, and the
   # patcher must rewrite the first and never touch the second (see
   # `Patcher`'s "What is left alone"). This marks ours. `X-` properties are
   # preserved across patches, so the mark survives for as long as the block

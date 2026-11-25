@@ -30,9 +30,9 @@ defmodule Tymeslot.Integrations.Shared.ConnectionProbe do
   `Request.scope: :background` (the scheduled health probe) skips metering
   entirely — no actor resolution, no bucket lookup, no rate-limiter call.
   This is a deliberate function-clause dispatch in `probe/1`, not a silent
-  default: the scheduler already owns its own cadence (a 30-minute floor
+  default: BookDesk24 already owns its own cadence (a 30-minute floor
   plus its own exponential backoff on failure), so a token bucket protects
-  nothing there and only adds a way for the scheduler's own result to be
+  nothing there and only adds a way for BookDesk24's own result to be
   corrupted by an unrelated refusal. `HealthCheck.orchestrate_health_check/2`
   additionally short-circuits on a `{:rate_limited, _}` refusal as
   belt-and-braces, in case a caller ever passes `scope: :background` through

@@ -266,5 +266,5 @@ msgstr "Aby mieć cały kalendarz, bez limitu i na bieżąco z jego zmianami, za
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar the scheduler can write to before importing events."
-msgstr "Zanim zaimportujesz wydarzenia, podłącz kalendarz, do którego the scheduler może zapisywać."
+msgid "Connect a calendar BookDesk24 can write to before importing events."
+msgstr "Zanim zaimportujesz wydarzenia, podłącz kalendarz, do którego BookDesk24 może zapisywać."

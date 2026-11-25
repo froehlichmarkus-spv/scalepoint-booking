@@ -969,15 +969,15 @@ msgstr "No se puede hacer ningún reembolso, ya que el pago está en disputa. Re
 
 #: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Your calendar now has this meeting at %{time}. the scheduler will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
-msgstr "Ahora tu calendario tiene esta reunión en este horario: %{time}. the scheduler moverá la reserva a ese horario, reprogramará sus recordatorios y enviará el nuevo horario por correo a %{attendee_name} y a los invitados, si los hay."
+msgid "Your calendar now has this meeting at %{time}. BookDesk24 will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
+msgstr "Ahora tu calendario tiene esta reunión en este horario: %{time}. BookDesk24 moverá la reserva a ese horario, reprogramará sus recordatorios y enviará el nuevo horario por correo a %{attendee_name} y a los invitados, si los hay."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not move this booking. Please try again."
-msgstr "the scheduler no pudo mover esta reserva. Inténtalo de nuevo."
+msgid "BookDesk24 could not move this booking. Please try again."
+msgstr "BookDesk24 no pudo mover esta reserva. Inténtalo de nuevo."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is still updating your calendar for this booking. Please try again in a moment."
-msgstr "the scheduler todavía está actualizando tu calendario para esta reserva. Inténtalo de nuevo en un momento."
+msgid "BookDesk24 is still updating your calendar for this booking. Please try again in a moment."
+msgstr "BookDesk24 todavía está actualizando tu calendario para esta reserva. Inténtalo de nuevo en un momento."

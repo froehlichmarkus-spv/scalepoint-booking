@@ -537,10 +537,10 @@ msgstr "Пароль має містити щонайменше одну вел�
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Домен має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія the scheduler його не знає і потребує оновлення."
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of BookDesk24 predates it and needs updating."
+msgstr "Домен має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія BookDesk24 його не знає і потребує оновлення."
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Електронна адреса має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія the scheduler його не знає і потребує оновлення."
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of BookDesk24 predates it and needs updating."
+msgstr "Електронна адреса має нерозпізнане закінчення (.%{tld}). Якщо воно правильне, ця версія BookDesk24 його не знає і потребує оновлення."

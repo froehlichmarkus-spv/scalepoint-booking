@@ -6,7 +6,7 @@ defmodule Tymeslot.FreeBusy do
   generating a secret token (`enable_feed/1`); clearing it (`disable_feed/1`)
   takes the feed offline. Busy intervals are derived from the same connected
   calendar events the availability engine treats as blocking, plus the
-  profile's time off, so a holiday entered in the scheduler rather than in a
+  profile's time off, so a holiday entered in BookDesk24 rather than in a
   calendar is published as busy too.
 
   An event counts as the booking page counts it

@@ -773,30 +773,30 @@ msgstr[1] "Hola de nuevo. Tu cuenta se restauró, pero hay que volver a conectar
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your the scheduler account."
+msgid "Choose a strong new password for your BookDesk24 account."
 msgstr "Elige una contraseña nueva y segura para tu cuenta de Tymeslot."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
-msgstr "Crea una cuenta de the scheduler y comparte tu disponibilidad en unos minutos. Sin tarjeta de crédito."
+msgid "Create a BookDesk24 account and start sharing your availability in minutes. No credit card required."
+msgstr "Crea una cuenta de BookDesk24 y comparte tu disponibilidad en unos minutos. Sin tarjeta de crédito."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your the scheduler account."
+msgid "Enter your email to receive a password reset link for your BookDesk24 account."
 msgstr "Escribe tu correo y te enviaremos un enlace para restablecer la contraseña de tu cuenta de Tymeslot."
 
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
-msgid "Join the scheduler"
-msgstr "Únete a the scheduler"
+msgid "Join BookDesk24"
+msgstr "Únete a BookDesk24"
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
-msgid "Log in to the scheduler"
-msgstr "Inicia sesión en the scheduler"
+msgid "Log in to BookDesk24"
+msgstr "Inicia sesión en BookDesk24"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
-msgstr "Inicia sesión en tu cuenta de the scheduler para gestionar tus enlaces de reservas, tu disponibilidad y tus reservas."
+msgid "Sign in to your BookDesk24 account to manage scheduling links, availability, and bookings."
+msgstr "Inicia sesión en tu cuenta de BookDesk24 para gestionar tus enlaces de reservas, tu disponibilidad y tus reservas."

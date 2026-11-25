@@ -243,7 +243,7 @@ defmodule Tymeslot.Integrations.Calendar.Discovery do
   saved with an empty selection is inert: it can never sync, and it has no
   calendar to book into. Refusing here is the last moment the person
   connecting is still present to fix the URL or the credentials, or to create
-  a calendar on a server that has none — the scheduler never issues MKCALENDAR, so
+  a calendar on a server that has none — BookDesk24 never issues MKCALENDAR, so
   an account with no collection stays empty until its owner makes one in
   their own client. Every alternative surfaces the same dead end hours later
   and a long way from its cause.

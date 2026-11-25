@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingGuestsTest do
   @moduledoc """
-  The guests of a "Send as a the scheduler meeting" draft in the side panel's
+  The guests of a "Send as a BookDesk24 meeting" draft in the side panel's
   New event state: the box is offered once the draft has a guest, added or
   typed; an address typed but not added survives the form's other changes
   and is invited on Create; and the meeting's own guest limit holds at Add
@@ -38,7 +38,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingGuestsTest do
       "guest_email" => "ada@example.com"
     })
 
-    assert has_element?(lv, "#calendar-panel-meeting", "Send as a the scheduler meeting")
+    assert has_element?(lv, "#calendar-panel-meeting", "Send as a BookDesk24 meeting")
 
     assert has_element?(
              lv,
@@ -57,7 +57,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingGuestsTest do
     open_meeting_draft(lv, integration, %{"guests" => []})
 
     render_change(new_event_form(lv), %{"guest_email" => "ada@example.com"})
-    assert has_element?(lv, "#calendar-panel-meeting", "Send as a the scheduler meeting")
+    assert has_element?(lv, "#calendar-panel-meeting", "Send as a BookDesk24 meeting")
 
     render_change(new_event_form(lv), %{"guest_email" => "ada@example.com", "meeting" => "true"})
     assert has_element?(lv, "#calendar-panel-meeting-guest-name")
@@ -157,7 +157,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingGuestsTest do
       assert has_element?(
                lv,
                "#calendar-panel-guests",
-               "Add a guest to send a the scheduler meeting."
+               "Add a guest to send a BookDesk24 meeting."
              )
 
       assert has_element?(lv, "#calendar-panel-create:not([disabled])")

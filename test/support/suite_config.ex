@@ -129,7 +129,7 @@ defmodule Tymeslot.Test.SuiteConfig do
   # An async case checks out one sandbox connection and holds it for its whole
   # lifetime, so the pool is the ceiling; two are left spare for checkouts made
   # outside a case's own owner. Cases spend most of their time waiting on
-  # Postgres rather than on CPU, so the scheduler term oversubscribes (matching
+  # Postgres rather than on CPU, so BookDesk24 term oversubscribes (matching
   # ExUnit's own default) and the pool is what actually binds on a derived pool.
   @spec default_max_cases() :: pos_integer()
   defp default_max_cases do

@@ -430,5 +430,5 @@ msgstr "Vaše překlady (%{language}) zůstanou zachovány: zaškrtněte jazyk z
 
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
 #, elixir-autogen, elixir-format
-msgid "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
-msgstr "Hosté si mohou zvolit libovolný jazyk, který the scheduler podporuje. Vypněte, pokud chcete jazyky vybrat sami."
+msgid "Invitees can choose any language BookDesk24 supports. Turn this off to choose the languages yourself."
+msgstr "Hosté si mohou zvolit libovolný jazyk, který BookDesk24 podporuje. Vypněte, pokud chcete jazyky vybrat sami."

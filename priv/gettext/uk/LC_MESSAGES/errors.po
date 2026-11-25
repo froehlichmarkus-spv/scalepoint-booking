@@ -932,5 +932,5 @@ msgstr "Типи зустрічей, які просять запрошених 
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Перейти до the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Перейти до BookDesk24"

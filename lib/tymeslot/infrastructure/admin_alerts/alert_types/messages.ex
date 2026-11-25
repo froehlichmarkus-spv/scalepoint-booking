@@ -219,10 +219,10 @@ defmodule Tymeslot.Infrastructure.AdminAlerts.AlertTypes.Messages do
     account = Map.get(metadata, :stripe_account_id, "unknown")
     job_id = Map.get(metadata, :oban_job_id, "unknown")
 
-    "Revoking the scheduler's access to Stripe account #{account} failed on every attempt " <>
-      "(#{reason_text(metadata)}); the account is no longer connected in the scheduler but " <>
+    "Revoking BookDesk24's access to Stripe account #{account} failed on every attempt " <>
+      "(#{reason_text(metadata)}); the account is no longer connected in BookDesk24 but " <>
       "still authorises it. Once the cause is fixed, retry Oban job #{job_id}, or remove " <>
-      "the scheduler from the account's authorised apps in the Stripe dashboard"
+      "BookDesk24 from the account's authorised apps in the Stripe dashboard"
   end
 
   def format_message(:subscription_withdrawal_unfinished, metadata) do

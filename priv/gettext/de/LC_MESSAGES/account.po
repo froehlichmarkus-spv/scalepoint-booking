@@ -377,10 +377,10 @@ msgstr "du bist der einzige Administrator, der sich anmelden kann, daher kann di
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Anstehende Buchungen werden aus the scheduler gelöscht, und deine Gäste werden nicht benachrichtigt."
+msgid "Upcoming bookings are deleted from BookDesk24 and your guests are not notified."
+msgstr "Anstehende Buchungen werden aus BookDesk24 gelöscht, und deine Gäste werden nicht benachrichtigt."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Your upcoming bookings will be deleted. Your guests will not be notified."
-msgstr "Deine anstehenden Buchungen werden aus the scheduler gelöscht. Deine Gäste werden nicht benachrichtigt."
+msgstr "Deine anstehenden Buchungen werden aus BookDesk24 gelöscht. Deine Gäste werden nicht benachrichtigt."

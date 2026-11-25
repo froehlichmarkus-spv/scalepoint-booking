@@ -77,7 +77,7 @@ defmodule Tymeslot.CalendarGrid.NewEvent do
   video is handed on to the occurrences its first sync caches
   (`SeriesCarry.series_created/1`).
 
-  The row is marked as the scheduler's own: the organiser just created it here, and
+  The row is marked as BookDesk24's own: the organiser just created it here, and
   a move before the first sync reads ownership off this row
   (`Tymeslot.CalendarGrid.EventMove`).
   """

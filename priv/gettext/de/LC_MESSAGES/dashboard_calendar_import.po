@@ -255,5 +255,5 @@ msgstr "Wenn du einen ganzen Kalender ohne Obergrenze übernehmen und mit seinen
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar the scheduler can write to before importing events."
-msgstr "Verbinde einen Kalender, in den the scheduler schreiben kann, bevor du Ereignisse importieren."
+msgid "Connect a calendar BookDesk24 can write to before importing events."
+msgstr "Verbinde einen Kalender, in den BookDesk24 schreiben kann, bevor du Ereignisse importieren."

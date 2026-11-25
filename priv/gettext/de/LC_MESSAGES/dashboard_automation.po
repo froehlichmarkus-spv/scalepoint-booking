@@ -744,15 +744,15 @@ msgstr "Wird einmal ausgelöst, wenn du eine Serienanfrage ablehnen, statt „Bu
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "In the scheduler konfigurieren"
+msgid "Configure in BookDesk24"
+msgstr "In BookDesk24 konfigurieren"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Verbinde the scheduler mit n8n, Zapier, Make oder deinen eigenen Automatisierungs-Workflows"
+msgid "Connect BookDesk24 to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Verbinde BookDesk24 mit n8n, Zapier, Make oder deinen eigenen Automatisierungs-Workflows"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
 msgid "Verify the token in your automation tool to ensure requests are from this booking page."
-msgstr "Verifiziere den Token in deinem Automatisierungstool, um sicherzustellen, dass die Anfragen von the scheduler stammen."
+msgstr "Verifiziere den Token in deinem Automatisierungstool, um sicherzustellen, dass die Anfragen von BookDesk24 stammen."

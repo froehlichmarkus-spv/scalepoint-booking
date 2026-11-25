@@ -75,7 +75,7 @@ defmodule Tymeslot.Application do
     # non-cloudron deployments). Stdout output is unaffected.
     FileSink.attach()
 
-    Logger.info("Starting the scheduler application")
+    Logger.info("Starting BookDesk24 application")
 
     # Oban's default logger handles non-job events (plugin, notifier, peer,
     # queue, stager). Job events are owned by ObanLogger instead, so every job
@@ -182,7 +182,7 @@ defmodule Tymeslot.Application do
 
     case Supervisor.start_link(children, opts) do
       {:ok, pid} ->
-        Logger.info("the scheduler application started successfully", pid: LogFormat.reason(pid))
+        Logger.info("BookDesk24 application started successfully", pid: LogFormat.reason(pid))
 
         if Application.get_env(:tymeslot, :environment) != :test do
           check_deployment_config()
@@ -193,7 +193,7 @@ defmodule Tymeslot.Application do
         {:ok, pid}
 
       {:error, reason} = error ->
-        Logger.error("Failed to start the scheduler application",
+        Logger.error("Failed to start BookDesk24 application",
           reason: LogFormat.reason(reason)
         )
 

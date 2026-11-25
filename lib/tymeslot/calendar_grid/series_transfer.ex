@@ -89,7 +89,7 @@ defmodule Tymeslot.CalendarGrid.SeriesTransfer do
       join link in the description the move copied.
     * The series' cached rows on the source are deleted
       (`EventDeletion.delete_series_rows/2`); the cache holds nothing of the
-      new series yet. What only the scheduler knows of the series goes with it
+      new series yet. What only BookDesk24 knows of the series goes with it
       (`SeriesCarry`): its video, for the destination's sync to find, and
       the organiser's colour overrides, moved to the uids its occurrences
       will be cached under there.

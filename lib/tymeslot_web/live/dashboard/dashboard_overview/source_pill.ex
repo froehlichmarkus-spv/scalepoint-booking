@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.Dashboard.DashboardOverview.SourcePill do
   @moduledoc """
-  The pill saying where an agenda entry came from: a the scheduler booking or an
+  The pill saying where an agenda entry came from: a BookDesk24 booking or an
   event on a connected calendar. Shared by the agenda rows and the agenda
   detail modal so the two always label an entry the same way.
   """

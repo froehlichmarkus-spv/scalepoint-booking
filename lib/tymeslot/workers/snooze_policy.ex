@@ -15,7 +15,7 @@ defmodule Tymeslot.Workers.SnoozePolicy do
   `executions/1` is that count, and it is what every snooze bound here is
   measured against.
 
-  Public infrastructure: a worker in another application built on the scheduler
+  Public infrastructure: a worker in another application built on BookDesk24
   may call it to bound its own snooze loop the same way.
   """
 

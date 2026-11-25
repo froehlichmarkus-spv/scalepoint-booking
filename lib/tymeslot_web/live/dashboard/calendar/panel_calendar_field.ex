@@ -44,12 +44,12 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelCalendarField do
     """
   end
 
-  attr :meeting, :boolean, required: true, doc: "whether the draft is a the scheduler meeting"
+  attr :meeting, :boolean, required: true, doc: "whether the draft is a BookDesk24 meeting"
   attr :has_accounts, :boolean, default: false, doc: "whether any account is connected"
 
   @doc """
   The New event state's Calendar field when the organiser has no calendar
-  to write to: a the scheduler meeting is kept in the scheduler alone, and an event
+  to write to: a BookDesk24 meeting is kept in BookDesk24 alone, and an event
   cannot be made, which the note says.
   """
   @spec no_calendar(map()) :: Phoenix.LiveView.Rendered.t()
@@ -61,7 +61,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelCalendarField do
         {dgettext("dashboard_calendar_editing", "Calendar")}
       </p>
       <p :if={@meeting} id="calendar-panel-calendar-none" class="mt-1 text-token-sm text-tymeslot-600">
-        {dgettext("dashboard_calendar_editing", "None (the scheduler only)")}
+        {dgettext("dashboard_calendar_editing", "None (BookDesk24 only)")}
       </p>
       <p
         :if={!@meeting}

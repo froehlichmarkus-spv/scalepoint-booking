@@ -13,7 +13,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelNewReminders do
   buttons send `panel:draft_drop_reminder` (`drop/3`). How many reminders the
   draft's calendar keeps, and by which methods, is the domain's rule
   (`CreateParams.reminder_capacity/1`): on Outlook or Exchange, which keep
-  one notification, the row offers one and no method choice. A the scheduler meeting sends reminder emails of its own
+  one notification, the row offers one and no method choice. A BookDesk24 meeting sends reminder emails of its own
   (`PanelMeetingReminders`) and a group event has none, so the field gives way
   to them.
   """

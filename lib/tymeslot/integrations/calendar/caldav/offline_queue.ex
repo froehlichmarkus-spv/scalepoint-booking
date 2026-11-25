@@ -53,7 +53,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.OfflineQueue do
 
   A `412 Precondition Failed` response to a `locally_modified` flush
   follows the usual conflict-resolution policy (`:keep_local` for
-  the scheduler-owned events, `:fail` otherwise — the default is configured
+  BookDesk24-owned events, `:fail` otherwise — the default is configured
   per row via `conflict_policy_for/1`).
 
   A `locally_modified` flush that finds no resource at all is the one case
@@ -298,7 +298,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.OfflineQueue do
   # A live event is recreated only when a meeting that still expects its
   # calendar event claims the row. The `created_by_tymeslot` flag cannot gate
   # this: it is also set on an event the organiser created from the grid, and
-  # on one a sync once read as the scheduler's, so recreating on the flag would
+  # on one a sync once read as BookDesk24's, so recreating on the flag would
   # resurrect a deletion nobody here asked to undo. Resolving against the
   # meeting itself is the rule the grid and the reconciler already use. A
   # create racing another writer comes back `:precondition_failed`, which
@@ -440,7 +440,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.OfflineQueue do
   # The collection to address the row in, in descending order of authority: the
   # one the row is filed under, then the integration's booking collection,
   # which is where `ClientManager.booking_client/1` writes and so where a
-  # the scheduler-created event with no href yet actually lives, and only then the
+  # BookDesk24-created event with no href yet actually lives, and only then the
   # first configured path. Taking the first path unconditionally would build
   # the wrong URL for every integration whose booking calendar is not its
   # first, and since a CalDAV DELETE counts 404 as success, would report the
@@ -532,7 +532,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.OfflineQueue do
   defp unsendable_change_message do
     dgettext(
       "integrations_calendar",
-      "the scheduler could not send this change to the calendar server."
+      "BookDesk24 could not send this change to the calendar server."
     )
   end
 

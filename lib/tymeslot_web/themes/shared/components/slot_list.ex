@@ -38,6 +38,8 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
   use Phoenix.Component
   use Gettext, backend: TymeslotWeb.Gettext
 
+  import TymeslotWeb.Components.CoreComponents.Icons, only: [icon: 1]
+
   alias Tymeslot.Themes.Catalog
   alias TymeslotWeb.Components.MeetingUtils
   alias TymeslotWeb.Live.Scheduling.CalendarHelpers
@@ -138,6 +140,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
           <% @slots == [] -> %>
             <%= if @empty == [] do %>
               <div class="slot-list__empty">
+                <.icon name="hero-calendar-days" class="slot-list__empty-icon" />
                 <p>{dgettext("booking", "This date is fully booked")}</p>
                 <p>{dgettext("booking", "Please select another date")}</p>
               </div>

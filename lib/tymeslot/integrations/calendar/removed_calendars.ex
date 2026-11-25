@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Calendar.RemovedCalendars do
   @moduledoc """
-  What the scheduler records, and tells the owner, when it stops using a calendar
+  What BookDesk24 records, and tells the owner, when it stops using a calendar
   because the calendar server no longer has it.
 
   Every path that deselects a calendar the server stopped listing (an event

@@ -51,7 +51,7 @@ defmodule TymeslotWeb.Dashboard.Languages.SettingsTab do
               do:
                 dgettext(
                   "dashboard_languages",
-                  "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
+                  "Invitees can choose any language BookDesk24 supports. Turn this off to choose the languages yourself."
                 ),
               else:
                 dgettext(

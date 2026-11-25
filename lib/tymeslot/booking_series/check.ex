@@ -16,7 +16,7 @@ defmodule Tymeslot.BookingSeries.Check do
        offered time, or an open planned session, at that start.
     3. **Calendar.** The host's connected calendars, read once for the
        occurrences that passed steps 1 and 2 (`CalendarCheck.enforce_many/3`).
-    4. **Bookings.** No other live the scheduler booking in the way, buffers
+    4. **Bookings.** No other live BookDesk24 booking in the way, buffers
        included. A group session the booker can join is not in the way; one
        with too few seats is full. An earlier available occurrence of the
        same series is in the way too (`:overlaps_session`), since the series

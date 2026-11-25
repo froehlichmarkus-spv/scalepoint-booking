@@ -39,7 +39,7 @@ defmodule Tymeslot.Bookings.Activation do
   alias Tymeslot.Notifications.Events
   alias Tymeslot.Workers.VideoRoomWorker
 
-  # Providers whose rooms the scheduler creates through an API call, and which
+  # Providers whose rooms BookDesk24 creates through an API call, and which
   # therefore need the video job to run before the confirmation email is
   # composed. This is every provider `Video` knows about except `:none` (no
   # integration configured, so there is nothing to create), derived at

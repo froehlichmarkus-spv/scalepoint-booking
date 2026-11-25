@@ -752,5 +752,5 @@ msgstr "L'elenco è allegato anche come file CSV per un foglio di calcolo."
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler platform fee: %{amount}"
-msgstr "Commissione della piattaforma the scheduler: %{amount}"
+msgid "BookDesk24 platform fee: %{amount}"
+msgstr "Commissione della piattaforma BookDesk24: %{amount}"

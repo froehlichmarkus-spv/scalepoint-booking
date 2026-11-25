@@ -85,10 +85,10 @@ msgstr "Dein Passwort ist festgelegt. Bitte melde dich an, um fortzufahren."
 
 #: lib/tymeslot_web/controllers/auth/invitation_controller.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your password is set."
-msgstr "Willkommen bei the scheduler! Dein Passwort ist festgelegt."
+msgid "Welcome to BookDesk24! Your password is set."
+msgstr "Willkommen bei BookDesk24! Dein Passwort ist festgelegt."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
-msgid "You have been invited to the scheduler with this email address. Open the invitation link we emailed you to choose how you will sign in. If the link has expired, ask your administrator to send a new one."
-msgstr "Du wurden mit dieser E-Mail-Adresse zu the scheduler eingeladen. Öffne den Einladungslink aus unserer E-Mail, um festzulegen, wie du sich anmelden möchtest. Falls der Link abgelaufen ist, bittest du deinen Administrator, dir einen neuen zu senden."
+msgid "You have been invited to BookDesk24 with this email address. Open the invitation link we emailed you to choose how you will sign in. If the link has expired, ask your administrator to send a new one."
+msgstr "Du wurden mit dieser E-Mail-Adresse zu BookDesk24 eingeladen. Öffne den Einladungslink aus unserer E-Mail, um festzulegen, wie du sich anmelden möchtest. Falls der Link abgelaufen ist, bittest du deinen Administrator, dir einen neuen zu senden."

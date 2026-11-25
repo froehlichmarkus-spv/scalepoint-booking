@@ -1029,5 +1029,5 @@ msgstr "Le modifiche a questo sondaggio non sono ancora salvate. Se esci ora, an
 
 #: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
 #, elixir-autogen, elixir-format
-msgid "Guests vote on a page that opens once your calendar is connected, so the scheduler can flag the times you're busy and book the winner without double-booking you."
-msgstr "Gli ospiti votano su una pagina che si apre solo dopo aver collegato il tuo calendario, così the scheduler può segnalare gli orari in cui hai già impegni e prenotare quello vincente senza doppie prenotazioni."
+msgid "Guests vote on a page that opens once your calendar is connected, so BookDesk24 can flag the times you're busy and book the winner without double-booking you."
+msgstr "Gli ospiti votano su una pagina che si apre solo dopo aver collegato il tuo calendario, così BookDesk24 può segnalare gli orari in cui hai già impegni e prenotare quello vincente senza doppie prenotazioni."

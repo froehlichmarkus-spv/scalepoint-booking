@@ -45,7 +45,7 @@ defmodule Tymeslot.Meetings.AttendeeNotifications.Recipients do
   in their name when they delete it is theirs to send.
 
   The organiser counts as the user when its address is one the user is known
-  by on the event's calendar: their the scheduler address, the account address of
+  by on the event's calendar: their BookDesk24 address, the account address of
   the integration the event sits on, the integration's login when it is an
   address (a CalDAV login usually is), or the calendar's own id when it is
   one (Google names a secondary calendar, and so the organiser of every
@@ -54,7 +54,7 @@ defmodule Tymeslot.Meetings.AttendeeNotifications.Recipients do
   An event naming no organiser counts as the user's own. Every invitation a
   user receives names its organiser (RFC 5546 requires `ORGANIZER` on a
   request), so an event without one was made on the user's own calendar:
-  in the scheduler's grid before its first sync, or in a CalDAV client that does
+  in BookDesk24's grid before its first sync, or in a CalDAV client that does
   not write the line.
 
   An address the user uses that none of these carries makes the user look

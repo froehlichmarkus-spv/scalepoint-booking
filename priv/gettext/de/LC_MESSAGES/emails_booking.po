@@ -752,5 +752,5 @@ msgstr "Die Liste hängt zusätzlich als CSV-Datei für eine Tabellenkalkulation
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler platform fee: %{amount}"
-msgstr "the scheduler-Plattformgebühr: %{amount}"
+msgid "BookDesk24 platform fee: %{amount}"
+msgstr "BookDesk24-Plattformgebühr: %{amount}"

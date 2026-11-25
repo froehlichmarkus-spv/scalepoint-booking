@@ -601,34 +601,34 @@ msgstr "Lege STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung
 #: lib/tymeslot_web/live/admin_live/components/settings.ex
 #, elixir-autogen, elixir-format
 msgid "Changes here take effect immediately. A setting fixed by an environment variable, such as REGISTRATION_ENABLED, is greyed out and changes only when you edit that variable and restart the app."
-msgstr "Änderungen an dieser Stelle werden sofort wirksam. Eine Einstellung, die durch eine Umgebungsvariable wie REGISTRATION_ENABLED festgelegt ist, ist ausgegraut und ändert sich erst, wenn du diese Variable bearbeiten und the scheduler neu starten."
+msgstr "Änderungen an dieser Stelle werden sofort wirksam. Eine Einstellung, die durch eine Umgebungsvariable wie REGISTRATION_ENABLED festgelegt ist, ist ausgegraut und ändert sich erst, wenn du diese Variable bearbeiten und BookDesk24 neu starten."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
-msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps the scheduler's access to their Stripe account until it is set."
-msgstr "Gastgebern auf dieser Instanz erlauben, Zahlungen von Buchenden über Stripe Connect entgegenzunehmen. Erfordert, dass STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung gesetzt sind: Ohne sie bleibt der Schalter gesperrt. Gastgeber verbinden ihr Stripe-Konto über STRIPE_CONNECT_CLIENT_ID: Ohne diese Variable nehmen bereits verbundene Gastgeber weiter Zahlungen entgegen, neue Gastgeber können sich aber nicht verbinden, und trennt ein Gastgeber die Verbindung, behält the scheduler den Zugriff auf sein Stripe-Konto, bis die Variable gesetzt ist."
+msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps BookDesk24's access to their Stripe account until it is set."
+msgstr "Gastgebern auf dieser Instanz erlauben, Zahlungen von Buchenden über Stripe Connect entgegenzunehmen. Erfordert, dass STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung gesetzt sind: Ohne sie bleibt der Schalter gesperrt. Gastgeber verbinden ihr Stripe-Konto über STRIPE_CONNECT_CLIENT_ID: Ohne diese Variable nehmen bereits verbundene Gastgeber weiter Zahlungen entgegen, neue Gastgeber können sich aber nicht verbinden, und trennt ein Gastgeber die Verbindung, behält BookDesk24 den Zugriff auf sein Stripe-Konto, bis die Variable gesetzt ist."
 
 #: lib/tymeslot_web/live/admin_live/components/layout.ex
 #, elixir-autogen, elixir-format
-msgid "Manage this self-hosted the scheduler install."
-msgstr "Diese selbst gehostete the scheduler-Installation verwalten."
+msgid "Manage this self-hosted BookDesk24 install."
+msgstr "Diese selbst gehostete BookDesk24-Installation verwalten."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
-msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
-msgstr "Name in der Vorschauzeile im Posteingang, im Alt-Text des Logos und im Titel der E-Mail. Ändert nicht den Absendernamen, dafür ist EMAIL_FROM_NAME zuständig. Leer lassen, um „the scheduler“ zu verwenden."
+msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"BookDesk24\"."
+msgstr "Name in der Vorschauzeile im Posteingang, im Alt-Text des Logos und im Titel der E-Mail. Ändert nicht den Absendernamen, dafür ist EMAIL_FROM_NAME zuständig. Leer lassen, um „BookDesk24“ zu verwenden."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Set by the %{variable} environment variable. To change it here, remove the variable and restart the app."
-msgstr "Durch die Umgebungsvariable %{variable} festgelegt. Um die Einstellung hier zu ändern, entfernst du die Variable und starte the scheduler neu."
+msgstr "Durch die Umgebungsvariable %{variable} festgelegt. Um die Einstellung hier zu ändern, entfernst du die Variable und starte BookDesk24 neu."
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "Support the scheduler"
-msgstr "the scheduler unterstützen"
+msgid "Support BookDesk24"
+msgstr "BookDesk24 unterstützen"
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is free to self-host. If it is useful to you, here are three ways to help it grow."
-msgstr "the scheduler lässt sich kostenlos selbst hosten. Wenn es dir nützt, gibt es drei Möglichkeiten, es beim Wachsen zu unterstützen."
+msgid "BookDesk24 is free to self-host. If it is useful to you, here are three ways to help it grow."
+msgstr "BookDesk24 lässt sich kostenlos selbst hosten. Wenn es dir nützt, gibt es drei Möglichkeiten, es beim Wachsen zu unterstützen."

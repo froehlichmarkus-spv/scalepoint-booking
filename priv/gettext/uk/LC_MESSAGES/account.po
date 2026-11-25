@@ -381,8 +381,8 @@ msgstr "Ви єдиний адміністратор, який може увій
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Майбутні бронювання видаляються з the scheduler, а ваші гості не отримують сповіщення."
+msgid "Upcoming bookings are deleted from BookDesk24 and your guests are not notified."
+msgstr "Майбутні бронювання видаляються з BookDesk24, а ваші гості не отримують сповіщення."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format

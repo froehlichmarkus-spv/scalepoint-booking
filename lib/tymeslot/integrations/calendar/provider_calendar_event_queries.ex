@@ -224,7 +224,7 @@ defmodule Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries do
   # of its own, here rather than in each caller, so "may raise, may never
   # clear" is a property of the write that no caller can get half right. The
   # uid list is bounded by the chunk, and usually empty: a calendar holds far
-  # more foreign events than the scheduler bookings.
+  # more foreign events than BookDesk24 bookings.
   defp raise_tymeslot_ownership(entries) do
     entries
     |> Enum.filter(&Map.get(&1, :created_by_tymeslot))
@@ -390,14 +390,14 @@ defmodule Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries do
   end
 
   @doc """
-  Writes through the timing/content fields the scheduler itself just pushed to the
+  Writes through the timing/content fields BookDesk24 itself just pushed to the
   provider onto the matching cache row.
 
   Used by `Tymeslot.Meetings.CalendarEventSync.update/2` after a successful
   *outbound* push (e.g. a reschedule), so the calendar-view grid — which
   prefers a linked cache row over the live meeting — doesn't keep showing
   the pre-update time until the next inbound sync cycle happens to reconcile
-  it. Limited to the handful of fields the scheduler actually knows it just
+  it. Limited to the handful of fields BookDesk24 actually knows it just
   wrote; everything else on the row (etag, provider_metadata, the offline
   sync-queue bookkeeping columns, ...) is left untouched for a real inbound
   sync to reconcile, matching `update_notification_baseline/3`'s narrow
@@ -440,7 +440,7 @@ defmodule Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries do
   end
 
   @doc """
-  Writes a dashboard edit the scheduler has just pushed to the provider onto the
+  Writes a dashboard edit BookDesk24 has just pushed to the provider onto the
   cached row, touching only the columns a user can edit (#{Enum.map_join(@local_edit_fields, ", ", &"`#{&1}`")}).
 
   Unlike `upsert_batch/1`'s full-row replace, everything the provider owns
@@ -568,7 +568,7 @@ defmodule Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries do
   # Fields updated on conflict — everything except the surrogate key, inserted_at,
   # the identity fields :provider and :provider_calendar_id (set at insert time from
   # the integration and must never be overwritten with EXCLUDED values from partial
-  # cache-update maps that may omit them), the scheduler-owned fields that are written
+  # cache-update maps that may omit them), BookDesk24-owned fields that are written
   # independently of provider data (:ical_sequence, :last_notified_state,
   # :video_link, :video_integration_id), and the offline write queue columns
   # (:sync_state, :sync_attempts, :sync_last_attempt_at, :sync_last_error,
@@ -578,7 +578,7 @@ defmodule Tymeslot.Integrations.Calendar.ProviderCalendarEventQueries do
   #
   # :created_by_tymeslot is excluded so a sync can never clear it: the ownership
   # lookup can miss (a meeting outside the queried window), and that false must
-  # not retract the flag `CalDAV.QueueWiring` raised when the scheduler wrote the
+  # not retract the flag `CalDAV.QueueWiring` raised when BookDesk24 wrote the
   # event. `raise_tymeslot_ownership/1` supplies the raising half.
   #
   # :role is excluded for the same reason as :provider — it is insert-time

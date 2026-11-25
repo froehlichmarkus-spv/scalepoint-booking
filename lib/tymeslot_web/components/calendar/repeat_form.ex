@@ -34,7 +34,7 @@ defmodule TymeslotWeb.Components.Calendar.RepeatForm do
   profile zone for an event that carries none.
 
   A one-off carrying UTC falls back too. Sync stores UTC for every event
-  written with UTC times, which is how the scheduler writes its one-offs, so that
+  written with UTC times, which is how BookDesk24 writes its one-offs, so that
   zone records how the event was written, not the local time a series made
   from it should keep. A series carrying UTC keeps it: its writers read an
   UNTIL back as a date in the series' own zone, so ending the day anywhere

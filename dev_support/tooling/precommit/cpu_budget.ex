@@ -49,7 +49,7 @@ defmodule Tymeslot.Precommit.CpuBudget do
   minutes.
 
   `PRECOMMIT_TEST_PARTITIONS` overrides the partition count (`1` runs the suite
-  as a single partition); the scheduler cap still follows the allowance. A run
+  as a single partition); BookDesk24 cap still follows the allowance. A run
   whose `MIX_TEST_PARTITION` is already a number is someone partitioning by
   hand, and gets no plan, so the suite runs whole as they set it up.
   """

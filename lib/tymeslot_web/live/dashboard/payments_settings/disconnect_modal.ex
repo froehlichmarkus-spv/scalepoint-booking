@@ -42,7 +42,7 @@ defmodule TymeslotWeb.Dashboard.PaymentsSettings.DisconnectModal do
       <p>
         {dgettext(
           "dashboard_payments",
-          "Disconnect your Stripe account from the scheduler? Existing payments remain visible, but new paid bookings will fail until you reconnect."
+          "Disconnect your Stripe account from BookDesk24? Existing payments remain visible, but new paid bookings will fail until you reconnect."
         )}
       </p>
 

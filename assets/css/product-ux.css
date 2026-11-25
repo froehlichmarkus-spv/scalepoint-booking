@@ -28,6 +28,23 @@ h1,
   font-size: clamp(28px, 4vw, 34px);
 }
 
+/* The "24" accent has to clear 4.5:1 on the white header. The bright teal does not. */
+.gos-wordmark-accent {
+  color: var(--spv-teal-strong);
+}
+
+/* Teal links on white must clear 4.5:1. The bright teal is 3.7:1. */
+a.text-turquoise-600,
+.text-turquoise-600,
+button.text-turquoise-600 {
+  color: var(--spv-teal-strong);
+}
+
+/* The progress pill's teal on a teal wash is 4.0:1. Navy on that wash clears it. */
+.bg-turquoise-100.text-turquoise-700 {
+  color: var(--spv-navy);
+}
+
 .dashboard-title,
 .page-title {
   font-size: 32px;

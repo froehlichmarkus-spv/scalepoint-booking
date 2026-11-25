@@ -1043,5 +1043,5 @@ msgstr "Ваші зміни в цьому опитуванні ще не збе�
 
 #: lib/tymeslot_web/live/dashboard/polls/poll_list.ex
 #, elixir-autogen, elixir-format
-msgid "Guests vote on a page that opens once your calendar is connected, so the scheduler can flag the times you're busy and book the winner without double-booking you."
-msgstr "Гості голосують на сторінці, яка відкривається лише після підключення вашого календаря. Так the scheduler зможе позначити час, коли ви зайняті, і забронювати варіант-переможець без накладок у розкладі."
+msgid "Guests vote on a page that opens once your calendar is connected, so BookDesk24 can flag the times you're busy and book the winner without double-booking you."
+msgstr "Гості голосують на сторінці, яка відкривається лише після підключення вашого календаря. Так BookDesk24 зможе позначити час, коли ви зайняті, і забронювати варіант-переможець без накладок у розкладі."

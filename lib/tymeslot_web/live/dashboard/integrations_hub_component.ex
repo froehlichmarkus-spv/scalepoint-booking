@@ -190,7 +190,7 @@ defmodule TymeslotWeb.Dashboard.IntegrationsHubComponent do
   # Calendar integrations have no such field, and so no such refusal.
   defp room_creation_attention(_integration, _tab), do: []
 
-  # CalDAV changes made in the scheduler that the server kept refusing are no
+  # CalDAV changes made in BookDesk24 that the server kept refusing are no
   # longer sent (`Calendar.stuck_changes/1`), so the calendar differs from the
   # grid until the owner retries them from the calendar's card. Listed only
   # for an integration with nothing worse to report: a paused one or one
@@ -224,7 +224,7 @@ defmodule TymeslotWeb.Dashboard.IntegrationsHubComponent do
         message:
           dgettext(
             "dashboard_integrations",
-            "%{name}: “%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it.",
+            "%{name}: “%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it.",
             name: integration.name,
             calendar: calendar
           )
@@ -239,8 +239,8 @@ defmodule TymeslotWeb.Dashboard.IntegrationsHubComponent do
         message:
           dngettext(
             "dashboard_integrations",
-            "%{name}: %{count} calendar is no longer on your calendar server, so the scheduler has stopped using it.",
-            "%{name}: %{count} calendars are no longer on your calendar server, so the scheduler has stopped using them.",
+            "%{name}: %{count} calendar is no longer on your calendar server, so BookDesk24 has stopped using it.",
+            "%{name}: %{count} calendars are no longer on your calendar server, so BookDesk24 has stopped using them.",
             length(removed),
             name: integration.name
           )

@@ -496,5 +496,5 @@ msgstr "O navegador não permitiu as notificações, então as notificações na
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Enviar como reunião the scheduler"
+msgid "Send as a BookDesk24 meeting"
+msgstr "Enviar como reunião BookDesk24"

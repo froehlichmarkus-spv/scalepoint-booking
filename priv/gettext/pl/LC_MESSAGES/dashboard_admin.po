@@ -601,18 +601,18 @@ msgstr "Zmiany wprowadzone tutaj działają natychmiast. Ustawienie narzucone pr
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
-msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps the scheduler's access to their Stripe account until it is set."
-msgstr "Pozwól organizatorom w tej instancji przyjmować płatności od gości przez Stripe Connect. Wymaga ustawienia STRIPE_SECRET_KEY i STRIPE_CONNECT_WEBHOOK_SECRET w środowisku: bez nich przełącznik pozostaje zablokowany. Organizatorzy łączą swoje konto Stripe za pomocą STRIPE_CONNECT_CLIENT_ID: bez tej zmiennej organizatorzy, którzy są już połączeni, nadal przyjmują płatności, ale nowy organizator nie może się połączyć, a gdy organizator się odłączy, the scheduler zachowuje dostęp do jego konta Stripe, dopóki zmienna nie zostanie ustawiona."
+msgid "Let hosts on this instance take payment from bookers via Stripe Connect. Requires STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET to be set in the environment: without them the toggle stays locked. Hosts connect their Stripe account with STRIPE_CONNECT_CLIENT_ID: without it, hosts who are already connected keep taking payments, but no new host can connect, and a host who disconnects keeps BookDesk24's access to their Stripe account until it is set."
+msgstr "Pozwól organizatorom w tej instancji przyjmować płatności od gości przez Stripe Connect. Wymaga ustawienia STRIPE_SECRET_KEY i STRIPE_CONNECT_WEBHOOK_SECRET w środowisku: bez nich przełącznik pozostaje zablokowany. Organizatorzy łączą swoje konto Stripe za pomocą STRIPE_CONNECT_CLIENT_ID: bez tej zmiennej organizatorzy, którzy są już połączeni, nadal przyjmują płatności, ale nowy organizator nie może się połączyć, a gdy organizator się odłączy, BookDesk24 zachowuje dostęp do jego konta Stripe, dopóki zmienna nie zostanie ustawiona."
 
 #: lib/tymeslot_web/live/admin_live/components/layout.ex
 #, elixir-autogen, elixir-format
-msgid "Manage this self-hosted the scheduler install."
-msgstr "Zarządzaj tą instalacją the scheduler na własnym serwerze."
+msgid "Manage this self-hosted BookDesk24 install."
+msgstr "Zarządzaj tą instalacją BookDesk24 na własnym serwerze."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
-msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"the scheduler\"."
-msgstr "Nazwa widoczna w wierszu podglądu w skrzynce, w tekście alternatywnym logo i w tytule e-maila. Nie zmienia nazwy nadawcy – służy do tego EMAIL_FROM_NAME. Zostaw puste, aby użyć nazwy „the scheduler”."
+msgid "Name shown in the inbox preview line, the logo's alt text, and the email title. Does not change the sender name - set EMAIL_FROM_NAME for that. Leave blank to use \"BookDesk24\"."
+msgstr "Nazwa widoczna w wierszu podglądu w skrzynce, w tekście alternatywnym logo i w tytule e-maila. Nie zmienia nazwy nadawcy – służy do tego EMAIL_FROM_NAME. Zostaw puste, aby użyć nazwy „BookDesk24”."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -621,10 +621,10 @@ msgstr "Ustawione przez zmienną środowiskową %{variable}. Aby zmienić je tut
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "Support the scheduler"
-msgstr "Wesprzyj the scheduler"
+msgid "Support BookDesk24"
+msgstr "Wesprzyj BookDesk24"
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is free to self-host. If it is useful to you, here are three ways to help it grow."
-msgstr "the scheduler można hostować u siebie za darmo. Jeśli jest dla ciebie przydatny, oto trzy sposoby, by pomóc mu się rozwijać."
+msgid "BookDesk24 is free to self-host. If it is useful to you, here are three ways to help it grow."
+msgstr "BookDesk24 można hostować u siebie za darmo. Jeśli jest dla ciebie przydatny, oto trzy sposoby, by pomóc mu się rozwijać."

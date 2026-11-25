@@ -744,13 +744,13 @@ msgstr "Si attiva una sola volta quando rifiuti una richiesta di serie, invece d
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "Configura in the scheduler"
+msgid "Configure in BookDesk24"
+msgstr "Configura in BookDesk24"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Collega the scheduler a n8n, Zapier, Make o ai tuoi flussi di lavoro di automazione personalizzati"
+msgid "Connect BookDesk24 to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Collega BookDesk24 a n8n, Zapier, Make o ai tuoi flussi di lavoro di automazione personalizzati"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format

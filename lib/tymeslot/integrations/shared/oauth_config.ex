@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Shared.OAuthConfig do
   @moduledoc """
-  Reads the OAuth client credentials and secrets of the providers the scheduler
+  Reads the OAuth client credentials and secrets of the providers BookDesk24
   integrates with, in one way for all of them.
 
   A value comes from the provider's application config (`:google_oauth`,

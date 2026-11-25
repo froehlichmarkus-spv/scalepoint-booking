@@ -1,6 +1,6 @@
 defmodule Tymeslot.CalendarGrid.BookingEvent do
   @moduledoc """
-  A the scheduler booking projected into the calendar grid's event shape.
+  A BookDesk24 booking projected into the calendar grid's event shape.
 
   The grid renders cached provider events; this struct mirrors the fields that
   rendering path reads (`summary`, `start_at`, `end_at`, `all_day`, `uid`,
@@ -10,7 +10,7 @@ defmodule Tymeslot.CalendarGrid.BookingEvent do
   on the grid (no drag, resize or inline edit) and open a booking detail
   modal instead of the provider-event editor.
 
-  The calendar keeps this projection and drops the calendar copy the scheduler
+  The calendar keeps this projection and drops the calendar copy BookDesk24
   wrote for it (`Tymeslot.CalendarGrid.EventWindow`),
   recording in `copy` which calendar the copy sits in
   (`%{calendar_integration_id, provider_calendar_id, calendar_name}`).
@@ -30,7 +30,7 @@ defmodule Tymeslot.CalendarGrid.BookingEvent do
   (`Tymeslot.Meetings.calendar_move_offers/1`), when the host moved that
   event in their own calendar, and nil otherwise.
 
-  `guests` are the people invited to the meeting through the scheduler whose
+  `guests` are the people invited to the meeting through BookDesk24 whose
   invitation still stands, each with the answer they gave (`status`:
   `"pending"`, `"accepted"` or `"declined"`), read by the preview
   (`Tymeslot.CalendarGrid.GuestReplies`).

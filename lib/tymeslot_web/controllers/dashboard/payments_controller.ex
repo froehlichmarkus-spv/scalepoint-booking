@@ -118,14 +118,14 @@ defmodule TymeslotWeb.Dashboard.PaymentsController do
     do:
       dgettext(
         "dashboard_payments",
-        "That Stripe account is already connected to another the scheduler account."
+        "That Stripe account is already connected to another BookDesk24 account."
       )
 
   defp error_message(:unsupported_currency),
     do:
       dgettext(
         "dashboard_payments",
-        "That Stripe account uses a currency the scheduler doesn't support for payments yet."
+        "That Stripe account uses a currency BookDesk24 doesn't support for payments yet."
       )
 
   defp error_message(_reason), do: nil

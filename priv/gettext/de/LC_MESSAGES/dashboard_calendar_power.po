@@ -496,5 +496,5 @@ msgstr "Dein Browser hat keine Benachrichtigungen erlaubt, daher sind die Deskto
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Als the scheduler-Termin senden"
+msgid "Send as a BookDesk24 meeting"
+msgstr "Als BookDesk24-Termin senden"

@@ -104,7 +104,7 @@ defmodule Tymeslot.MeetingPayments.Refunds do
   given back.
 
   Deliberately says nothing about the #{@refund_window_days}-day window: the
-  attendee is out of pocket whether or not the scheduler can still issue the refund
+  attendee is out of pocket whether or not BookDesk24 can still issue the refund
   itself, and a host past the window needs telling more urgently rather than
   less, since only their Stripe dashboard can settle it. Use `refundable?/1`
   to decide whether to offer the in-app refund.

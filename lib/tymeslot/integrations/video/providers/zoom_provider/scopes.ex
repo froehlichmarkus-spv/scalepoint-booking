@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Video.Providers.ZoomProvider.Scopes do
   @moduledoc """
-  Zoom OAuth scope rules for the meeting operations the scheduler performs.
+  Zoom OAuth scope rules for the meeting operations BookDesk24 performs.
 
   Zoom apps come in two flavours. Classic apps hold coarse scopes such as
   `meeting:write`, which covers creating, updating and deleting meetings alike.
@@ -32,7 +32,7 @@ defmodule Tymeslot.Integrations.Video.Providers.ZoomProvider.Scopes do
   # Scopes that are not tied to one meeting operation.
   @read_scopes ["meeting:read:meeting", "user:read:user"]
 
-  # The operations the scheduler always asks Zoom for. `:update` is requested by
+  # The operations BookDesk24 always asks Zoom for. `:update` is requested by
   # default but lives behind `:zoom_update_scope_enabled`, because whether it
   # can be obtained is a property of the Marketplace app behind a given
   # deployment, not of this code.
@@ -54,7 +54,7 @@ defmodule Tymeslot.Integrations.Video.Providers.ZoomProvider.Scopes do
   @type operation :: :write | :update | :delete
 
   @doc """
-  Every operation the scheduler performs against a Zoom meeting, in lifecycle order.
+  Every operation BookDesk24 performs against a Zoom meeting, in lifecycle order.
   """
   @spec operations() :: [operation()]
   def operations, do: [:write, :update, :delete]

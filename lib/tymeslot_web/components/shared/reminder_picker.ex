@@ -1,7 +1,7 @@
 defmodule TymeslotWeb.Components.Shared.ReminderPicker do
   @moduledoc """
-  Reminder picker shared by the surfaces that decide when the scheduler emails a
-  reminder: the meeting type form, a poll, and a the scheduler meeting booked from
+  Reminder picker shared by the surfaces that decide when BookDesk24 emails a
+  reminder: the meeting type form, a poll, and a BookDesk24 meeting booked from
   the calendar's side panel.
 
   All hold the same thing, a list of `%{value: integer, unit: "minutes" |

@@ -219,7 +219,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
 
       # No ICS attachment for the organiser, for the same reason confirmations
-      # omit it: the scheduler writes the new time straight to the organiser's own
+      # omit it: BookDesk24 writes the new time straight to the organiser's own
       # calendar, and an iMIP-aware mail server would import the attachment on
       # top of that as a second event.
       MjmlEmail.base_email()

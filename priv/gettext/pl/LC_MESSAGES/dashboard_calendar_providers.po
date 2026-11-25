@@ -643,12 +643,12 @@ msgstr "iCloud wymaga hasła dla aplikacji, a nie hasła do Apple ID."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Wybierz, których kalendarzy używa the scheduler i które z nich blokują terminy na twojej stronie rezerwacji."
+msgid "Choose which calendars BookDesk24 uses, and which of them block times on your booking page."
+msgstr "Wybierz, których kalendarzy używa BookDesk24 i które z nich blokują terminy na twojej stronie rezerwacji."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
+msgid "How this calendar's events are shown in your BookDesk24 calendar."
 msgstr "Sposób wyświetlania wydarzeń z tego kalendarza w kalendarzu Tymeslot."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
@@ -658,5 +658,5 @@ msgstr "Zachowaj to hasło tak długo, jak korzystasz z Tymeslot. Unieważnienie
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "Udostępniony ci tylko jako zajęte terminy. the scheduler może blokować te terminy, ale nie może wyświetlać wydarzeń."
+msgid "Shared with you as busy times only. BookDesk24 can block these times but cannot show the events."
+msgstr "Udostępniony ci tylko jako zajęte terminy. BookDesk24 może blokować te terminy, ale nie może wyświetlać wydarzeń."

@@ -103,7 +103,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.UrlBuilder do
   Prefers the server-supplied `href` (stored as `provider_event_id`) when the
   event has been synced: it is the event's real location, and is the only way
   to address an event living on a calendar other than `calendar_path`. Falls
-  back to the resource the scheduler writes for `uid` under `calendar_path` for
+  back to the resource BookDesk24 writes for `uid` under `calendar_path` for
   events that have not been synced back yet.
 
   The href is resolved through `build_calendar_url/2`, so a server-root-relative

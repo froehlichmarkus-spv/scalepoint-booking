@@ -548,7 +548,7 @@ defmodule TymeslotWeb.OAuthController do
       :info,
       dgettext(
         "auth_invitation",
-        "You have been invited to the scheduler with this email address. Open the invitation link we emailed you to choose how you will sign in. If the link has expired, ask your administrator to send a new one."
+        "You have been invited to BookDesk24 with this email address. Open the invitation link we emailed you to choose how you will sign in. If the link has expired, ask your administrator to send a new one."
       )
     )
     |> redirect(to: paths[:login_path])

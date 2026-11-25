@@ -647,12 +647,12 @@ msgstr "Для iCloud потрібен пароль для програми, а 
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Виберіть, які календарі використовує the scheduler і які з них блокують час на вашій сторінці бронювання."
+msgid "Choose which calendars BookDesk24 uses, and which of them block times on your booking page."
+msgstr "Виберіть, які календарі використовує BookDesk24 і які з них блокують час на вашій сторінці бронювання."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
+msgid "How this calendar's events are shown in your BookDesk24 calendar."
 msgstr "Як події цього календаря відображаються у вашому календарі Tymeslot."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
@@ -662,5 +662,5 @@ msgstr "Зберігайте цей пароль, доки користуєте�
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "Надано вам лише як інформацію про зайнятість. the scheduler може блокувати цей час, але не може показувати події."
+msgid "Shared with you as busy times only. BookDesk24 can block these times but cannot show the events."
+msgstr "Надано вам лише як інформацію про зайнятість. BookDesk24 може блокувати цей час, але не може показувати події."

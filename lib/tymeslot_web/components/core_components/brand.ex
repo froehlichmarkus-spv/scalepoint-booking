@@ -4,7 +4,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Brand do
   use Gettext, backend: TymeslotWeb.Gettext
 
   @doc """
-  Renders the the scheduler logo.
+  Renders the BookDesk24 logo.
 
   ## Attributes
     * `mode` - Either :full (logo + text) or :icon (logo only). Defaults to :full.
@@ -24,23 +24,18 @@ defmodule TymeslotWeb.Components.CoreComponents.Brand do
       assigns
       |> assign(:head, head)
       |> assign(:accent, accent)
-      |> assign(:byline, Tymeslot.Brands.byline())
-      |> assign(:suite, Tymeslot.Brands.suite_title())
-      |> assign(:show_suite, Tymeslot.Brands.suite_title() != name)
 
     ~H"""
     <div class={["flex items-center gap-3", @class]}>
       <img
-        src={Tymeslot.Brands.chrome_logo()}
-        alt={Tymeslot.Brands.product_name()}
+        src="/images/brand/scalepoint-mark.svg"
+        alt=""
         class={[@img_class, "w-auto", @mode == :icon && "h-8"]}
       />
       <div :if={@mode == :full} class="min-w-0">
         <div class="gos-wordmark">
           {@head}<span :if={@accent} class="gos-wordmark-accent">{@accent}</span>
         </div>
-        <div :if={@byline} class="gos-byline">{@byline}</div>
-        <div :if={@show_suite} class="gos-suite-line">{@suite}</div>
       </div>
     </div>
     """

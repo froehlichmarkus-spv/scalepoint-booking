@@ -3,7 +3,7 @@ defmodule Tymeslot.Infrastructure.PubSub do
   Handles PubSub broadcasting for auth-related events.
 
   This module provides a centralized way to broadcast authentication events
-  within the the scheduler application.
+  within the BookDesk24 application.
 
   The topic name is private to this module. Subscribers go through
   `Tymeslot.Auth.subscribe_to_user_registrations/0`, which re-exports

@@ -163,7 +163,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Events do
   Skips `ICalBuilder` entirely — the caller is responsible for producing a
   valid RFC 5545 document. Used by `mix calendar_audit` to exercise
   adversarial server-generated payloads (e.g. Zimbra-style quoted TZIDs)
-  that the scheduler's own writer never produces.
+  that BookDesk24's own writer never produces.
   """
   @spec put_raw_event(Base.client(), String.t(), String.t(), String.t(), keyword()) ::
           {:ok, CreatedEvent.t()} | {:error, Base.error_reason()}
@@ -218,11 +218,11 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Events do
   rewrites the properties the payload carries, and the rest of the document —
   the `ATTENDEE` block with its `PARTSTAT`, `CATEGORIES`, `X-` properties —
   goes back untouched. Rebuilding it from the payload instead would erase all
-  of that, since `build_simple_event/3` serialises what the scheduler models and
+  of that, since `build_simple_event/3` serialises what BookDesk24 models and
   nothing else.
 
   An event with no `:raw_ical` is **rebuilt**, which is the right writer for a
-  booking the scheduler authored and the only one available before the first sync.
+  booking BookDesk24 authored and the only one available before the first sync.
 
   A patched write replaces the event's `VALARM`s with the payload's
   `:reminders`, unless the payload sets `keep_stored_alarms: true`, as a
@@ -536,7 +536,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.Events do
 
   @doc """
   Fetches one event resource: `href` when known, otherwise the resource
-  the scheduler writes for `uid` in `calendar_path`. Returns the parsed events as a
+  BookDesk24 writes for `uid` in `calendar_path`. Returns the parsed events as a
   calendar-query would, or `{:error, :not_found}` when the server answers 404
   or 410.
 

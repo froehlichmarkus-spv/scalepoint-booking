@@ -444,5 +444,5 @@ msgstr "Menü ausklappen"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
-msgstr "Über deine the scheduler-Seite gebucht"
+msgid "Booked through your BookDesk24 page"
+msgstr "Über deine BookDesk24-Seite gebucht"

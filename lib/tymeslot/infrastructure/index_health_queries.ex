@@ -50,7 +50,7 @@ defmodule Tymeslot.Infrastructure.IndexHealthQueries do
   # the purpose-built signal for "mid-build", where the catalogue flags are
   # ambiguous. Its one limitation is visibility: an unprivileged role sees only
   # its own backends' rows, so a build started by a *different* role could
-  # still be reported. the scheduler runs its migrations and its application under
+  # still be reported. BookDesk24 runs its migrations and its application under
   # one role, so that case does not arise here.
   #
   # `current_schemas(false)` keeps this to the schemas the application's own

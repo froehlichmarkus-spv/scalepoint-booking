@@ -450,5 +450,5 @@ msgstr "Pagina di prenotazione"
 
 #: lib/tymeslot_web/live/dashboard/embed_settings/options_grid.ex
 #, elixir-autogen, elixir-format
-msgid "Install the official the scheduler plugin to embed your booking page with a block or shortcode - no code."
-msgstr "Installa il plugin ufficiale the scheduler per incorporare la tua pagina di prenotazione con un blocco o uno shortcode - senza codice."
+msgid "Install the official BookDesk24 plugin to embed your booking page with a block or shortcode - no code."
+msgstr "Installa il plugin ufficiale BookDesk24 per incorporare la tua pagina di prenotazione con un blocco o uno shortcode - senza codice."

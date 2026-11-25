@@ -3,7 +3,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventNormaliser do
   Converts raw Google Calendar API event payloads into normalised `CalendarEvent` structs.
 
   Handles field mapping, datetime parsing, visibility/transparency/status inference,
-  attendee normalisation, recurrence rules, and the scheduler-origin fingerprint detection.
+  attendee normalisation, recurrence rules, and BookDesk24-origin fingerprint detection.
   """
 
   require Logger

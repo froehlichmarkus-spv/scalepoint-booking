@@ -29,7 +29,7 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.CardNotice do
 
   # A change the server kept refusing is no longer sent, so until the owner
   # retries it the calendar differs from what the grid shows. The error is
-  # stored as an English msgid (a CalDAV error, or the scheduler's own reason for
+  # stored as an English msgid (a CalDAV error, or BookDesk24's own reason for
   # skipping the change) and translated as it is shown.
   defp stuck_notice(nil), do: nil
 
@@ -59,7 +59,7 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.CardNotice do
   defp removed_notice([%{name: calendar}]) do
     dgettext(
       "dashboard_calendar_settings",
-      "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it.",
+      "“%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it.",
       calendar: calendar
     )
   end
@@ -67,8 +67,8 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.CardNotice do
   defp removed_notice(removed) do
     dngettext(
       "dashboard_calendar_settings",
-      "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}",
-      "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}",
+      "%{count} calendar is no longer on your calendar server, so BookDesk24 has stopped using it: %{calendars}",
+      "%{count} calendars are no longer on your calendar server, so BookDesk24 has stopped using them: %{calendars}",
       length(removed),
       calendars: Enum.map_join(removed, ", ", &"“#{&1.name}”")
     )

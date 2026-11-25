@@ -745,13 +745,13 @@ msgstr "Спрацьовує один раз, коли ви відхиляєте
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "Налаштувати в the scheduler"
+msgid "Configure in BookDesk24"
+msgstr "Налаштувати в BookDesk24"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Підключіть the scheduler до n8n, Zapier, Make або власних робочих процесів автоматизації"
+msgid "Connect BookDesk24 to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Підключіть BookDesk24 до n8n, Zapier, Make або власних робочих процесів автоматизації"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format

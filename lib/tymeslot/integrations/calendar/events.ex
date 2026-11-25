@@ -32,7 +32,7 @@ defmodule Tymeslot.Integrations.Calendar.Events do
 
   # Failures a later replay cannot recover: queueing them would only keep a
   # dead row in the offline queue.
-  # The organiser has no calendar the scheduler can write to: none connected, or the
+  # The organiser has no calendar BookDesk24 can write to: none connected, or the
   # one a meeting names is gone. Nothing changes that but the organiser
   # connecting one, and a meeting booked before then never had an event.
   @no_calendar_errors [:no_calendar_client, :no_calendar_integration]
@@ -246,7 +246,7 @@ defmodule Tymeslot.Integrations.Calendar.Events do
   end
 
   @doc """
-  Deletes an event on the provider, then reconciles any the scheduler meeting
+  Deletes an event on the provider, then reconciles any BookDesk24 meeting
   linked to it as externally deleted.
 
   The linked meeting is looked up before the delete, so its attendee email
@@ -364,7 +364,7 @@ defmodule Tymeslot.Integrations.Calendar.Events do
   end
 
   @doc """
-  Whether a calendar event is linked to a the scheduler meeting, matched by
+  Whether a calendar event is linked to a BookDesk24 meeting, matched by
   provider event id first and iCal UID second.
   """
   @spec event_linked_to_booking?(integration_id(), String.t() | nil, String.t() | nil) ::

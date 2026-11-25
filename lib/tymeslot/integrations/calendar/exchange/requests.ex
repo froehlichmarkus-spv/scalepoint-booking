@@ -49,7 +49,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.Requests do
   ## Writes never invite anyone
 
   Every write carries `SendMeetingInvitations="SendToNone"` (or the
-  cancellation equivalent) and no attendee elements at all. the scheduler sends its
+  cancellation equivalent) and no attendee elements at all. BookDesk24 sends its
   own invitation and cancellation emails, so an item carrying attendees would
   have the Exchange server mail the same people a second time. This is the same
   trap `CalendarEventBuilder` documents for CalDAV, where the defence is

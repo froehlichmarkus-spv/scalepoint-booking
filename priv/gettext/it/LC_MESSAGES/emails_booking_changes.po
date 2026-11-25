@@ -665,8 +665,8 @@ msgstr "Nessun altro ha confermato un posto all'orario precedente, quindi quella
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr "Se la riunione non si terrà più, ti preghiamo di annullarla su the scheduler, in modo da avvisare il partecipante e liberare la fascia oraria."
+msgid "If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
+msgstr "Se la riunione non si terrà più, ti preghiamo di annullarla su BookDesk24, in modo da avvisare il partecipante e liberare la fascia oraria."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -680,8 +680,8 @@ msgstr "Please review the group meeting in %{product}."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
-msgstr "La riunione di gruppo «%{title}» è stata riprogrammata nel tuo calendario esterno. the scheduler mantiene ancora l'orario originale per ogni partecipante, e una riunione di gruppo non può essere spostata per tutti in una volta."
+msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
+msgstr "La riunione di gruppo «%{title}» è stata riprogrammata nel tuo calendario esterno. BookDesk24 mantiene ancora l'orario originale per ogni partecipante, e una riunione di gruppo non può essere spostata per tutti in una volta."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
@@ -690,35 +690,35 @@ msgstr "The meeting \"%{title}\" was deleted from your external calendar but is 
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was deleted from your external calendar. the scheduler still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
-msgstr "La riunione «%{title}» è stata eliminata dal tuo calendario esterno. the scheduler conserva ancora questa prenotazione: ti preghiamo di controllarla e annullarla qui se la riunione non avrà più luogo."
+msgid "The meeting \"%{title}\" was deleted from your external calendar. BookDesk24 still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
+msgstr "La riunione «%{title}» è stata eliminata dal tuo calendario esterno. BookDesk24 conserva ancora questa prenotazione: ti preghiamo di controllarla e annullarla qui se la riunione non avrà più luogo."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking - please review the details and update or cancel it accordingly."
-msgstr "La riunione «%{title}» è stata riprogrammata nel tuo calendario esterno. the scheduler mantiene ancora la prenotazione originale: ti invitiamo a controllare i dettagli per aggiornarla o annullarla."
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking - please review the details and update or cancel it accordingly."
+msgstr "La riunione «%{title}» è stata riprogrammata nel tuo calendario esterno. BookDesk24 mantiene ancora la prenotazione originale: ti invitiamo a controllare i dettagli per aggiornarla o annullarla."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "The meeting \"%{title}\" was rescheduled in your external calendar. the scheduler still holds the original booking shown below."
-msgstr "La riunione «%{title}» è stata riprogrammata nel tuo calendario esterno. the scheduler mantiene ancora la prenotazione originale mostrata di seguito."
+msgid "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking shown below."
+msgstr "La riunione «%{title}» è stata riprogrammata nel tuo calendario esterno. BookDesk24 mantiene ancora la prenotazione originale mostrata di seguito."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
-msgstr "Questa riunione di gruppo è stata <strong>riprogrammata nel tuo calendario esterno</strong>. the scheduler mostra ancora l'orario originale qui sopra, e i partecipanti si aspettano ancora quell'orario. Per mantenere l'orario originale, riporta l'evento al suo posto nel tuo calendario. Per cambiarlo, invia ai partecipanti una richiesta di riprogrammazione dalla tua dashboard, oppure annulla lì la riunione così che ogni partecipante venga avvisato."
+msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
+msgstr "Questa riunione di gruppo è stata <strong>riprogrammata nel tuo calendario esterno</strong>. BookDesk24 mostra ancora l'orario originale qui sopra, e i partecipanti si aspettano ancora quell'orario. Per mantenere l'orario originale, riporta l'evento al suo posto nel tuo calendario. Per cambiarlo, invia ai partecipanti una richiesta di riprogrammazione dalla tua dashboard, oppure annulla lì la riunione così che ogni partecipante venga avvisato."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
-msgstr "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in the scheduler so the attendee is notified and the time slot is freed up."
+msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
+msgstr "This meeting was <strong>removed from your external calendar</strong> but is still active in %{product}. If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "This meeting was <strong>rescheduled in your external calendar</strong>. the scheduler still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: the scheduler then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
-msgstr "Questa riunione è stata <strong>riprogrammata nel tuo calendario esterno</strong>. the scheduler mostra ancora l'orario originale qui sopra. Per spostare la prenotazione al nuovo orario, aprila nella tua dashboard e scegli <strong>Sposta la prenotazione</strong>: the scheduler ripianifica quindi i suoi promemoria e invia al partecipante il nuovo orario via email. Se l'opzione <strong>Sposta la prenotazione</strong> non compare, invia invece al partecipante una richiesta di riprogrammazione dalla tua dashboard."
+msgid "This meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: BookDesk24 then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
+msgstr "Questa riunione è stata <strong>riprogrammata nel tuo calendario esterno</strong>. BookDesk24 mostra ancora l'orario originale qui sopra. Per spostare la prenotazione al nuovo orario, aprila nella tua dashboard e scegli <strong>Sposta la prenotazione</strong>: BookDesk24 ripianifica quindi i suoi promemoria e invia al partecipante il nuovo orario via email. Se l'opzione <strong>Sposta la prenotazione</strong> non compare, invia invece al partecipante una richiesta di riprogrammazione dalla tua dashboard."
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format
-msgid "You changed when \"%{title}\" ends in your external calendar, so the scheduler updated the booking: it now ends at %{to} instead of %{from}."
-msgstr "Hai modificato la fine di \"%{title}\" nel tuo calendario esterno, quindi the scheduler ha aggiornato la prenotazione: ora termina alle %{to} invece che alle %{from}."
+msgid "You changed when \"%{title}\" ends in your external calendar, so BookDesk24 updated the booking: it now ends at %{to} instead of %{from}."
+msgstr "Hai modificato la fine di \"%{title}\" nel tuo calendario esterno, quindi BookDesk24 ha aggiornato la prenotazione: ora termina alle %{to} invece che alle %{from}."

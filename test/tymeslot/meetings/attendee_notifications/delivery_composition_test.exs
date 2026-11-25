@@ -58,7 +58,7 @@ defmodule Tymeslot.Meetings.AttendeeNotifications.DeliveryCompositionTest do
       organizer_email = user.email
 
       # The mock pattern-matches the shape of `details` — a field rename in
-      # `build_update_details/4` or a key rename in the scheduler's args
+      # `build_update_details/4` or a key rename in BookDesk24's args
       # surfaces here before reaching production.
       expect(EmailServiceMock, :send_event_update_notification, fn email, details ->
         assert email == "retained@example.com"

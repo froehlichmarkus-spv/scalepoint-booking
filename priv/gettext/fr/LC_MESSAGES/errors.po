@@ -914,5 +914,5 @@ msgstr "Les types de réunion qui demandent aux invités de confirmer leur adres
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Accéder à the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Accéder à BookDesk24"

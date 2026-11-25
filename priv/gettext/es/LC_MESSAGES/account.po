@@ -377,8 +377,8 @@ msgstr "Eres la única persona con permisos de administrador que puede iniciar s
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Las próximas reservas se eliminan de the scheduler y no se avisa a tus invitados."
+msgid "Upcoming bookings are deleted from BookDesk24 and your guests are not notified."
+msgstr "Las próximas reservas se eliminan de BookDesk24 y no se avisa a tus invitados."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format

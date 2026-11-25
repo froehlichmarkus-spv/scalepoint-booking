@@ -862,10 +862,10 @@ msgstr "%{calendar} nie pomieści wszystkich przypomnień wydarzenia, więc czę
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a BookDesk24 meeting."
 msgstr "Dodaj gościa, aby wysłać spotkanie Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Brak (tylko the scheduler)"
+msgid "None (BookDesk24 only)"
+msgstr "Brak (tylko BookDesk24)"

@@ -111,3 +111,11 @@
 .slot-list__empty p + p {
   margin-top: var(--space-3xs);
 }
+
+.slot-list__empty-icon {
+  display: block;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  margin: 0 auto var(--space-xs);
+  color: var(--theme-text-secondary);
+}

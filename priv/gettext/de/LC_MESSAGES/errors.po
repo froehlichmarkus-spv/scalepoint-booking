@@ -914,5 +914,5 @@ msgstr "Termintypen, bei denen Gäste ihre E-Mail-Adresse bestätigen, können n
 
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Zu the scheduler"
+msgid "Go to BookDesk24"
+msgstr "Zu BookDesk24"

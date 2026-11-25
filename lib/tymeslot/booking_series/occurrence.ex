@@ -12,7 +12,7 @@ defmodule Tymeslot.BookingSeries.Occurrence do
     * `:no_session`: a fixed-date type has no open session or offered time
       at that start;
     * `:calendar_busy`: the host's connected calendar is busy;
-    * `:booked`: another the scheduler booking is in the way;
+    * `:booked`: another BookDesk24 booking is in the way;
     * `:overlaps_session`: an earlier session of the same series is in the
       way, buffers included;
     * `:already_booked`: the booker already holds a seat in that session;

@@ -12,7 +12,7 @@ defmodule Tymeslot.Integrations.Video.AccountCleanup do
   The deleted account's own rows still go with the account.
 
   Rooms are not deleted: a guest may still join a meeting that the deletion
-  removes from the scheduler, and deleting the room would break their link.
+  removes from BookDesk24, and deleting the room would break their link.
 
   Best-effort: a failure, including a raise or exit while cleaning one
   integration (a database error, a lock timeout, the HTTP client), is logged

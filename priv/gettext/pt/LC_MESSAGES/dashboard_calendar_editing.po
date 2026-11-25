@@ -859,10 +859,10 @@ msgstr "O calendário %{calendar} não comporta todos os lembretes do evento, po
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a BookDesk24 meeting."
 msgstr "Adicione um convidado para enviar uma reunião Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Nenhum (só no the scheduler)"
+msgid "None (BookDesk24 only)"
+msgstr "Nenhum (só no BookDesk24)"

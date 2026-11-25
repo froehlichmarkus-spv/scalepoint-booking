@@ -467,22 +467,22 @@ msgstr "Dieser Termintyp nutzt eine Funktion, die dein aktueller Tarif nicht ent
 
 #: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
 #, elixir-autogen, elixir-format
-msgid "%{name}: %{count} calendar is no longer on your calendar server, so the scheduler has stopped using it."
-msgid_plural "%{name}: %{count} calendars are no longer on your calendar server, so the scheduler has stopped using them."
-msgstr[0] "%{name}: %{count} Kalender ist auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler ihn nicht mehr."
-msgstr[1] "%{name}: %{count} Kalender sind auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler sie nicht mehr."
+msgid "%{name}: %{count} calendar is no longer on your calendar server, so BookDesk24 has stopped using it."
+msgid_plural "%{name}: %{count} calendars are no longer on your calendar server, so BookDesk24 has stopped using them."
+msgstr[0] "%{name}: %{count} Kalender ist auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet BookDesk24 ihn nicht mehr."
+msgstr[1] "%{name}: %{count} Kalender sind auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet BookDesk24 sie nicht mehr."
 
 #: lib/tymeslot_web/live/dashboard/integrations_hub_component.ex
 #, elixir-autogen, elixir-format
-msgid "%{name}: “%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "%{name}: Der Kalender „%{calendar}“ ist auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet the scheduler ihn nicht mehr."
+msgid "%{name}: “%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it."
+msgstr "%{name}: Der Kalender „%{calendar}“ ist auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet BookDesk24 ihn nicht mehr."
 
 #: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
 #, elixir-autogen, elixir-format
-msgid "%{service} wasn't connected because Calendar permission was not granted. Please try again and tick the box for \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - the scheduler needs this to create meetings and Google Meet links."
-msgstr "%{service} wurde nicht verbunden, weil die Kalenderberechtigung nicht erteilt wurde. Bitte versuche es erneut und aktiviere das Kontrollkästchen für \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - the scheduler benötigt dies, um Termine und Google-Meet-Links zu erstellen."
+msgid "%{service} wasn't connected because Calendar permission was not granted. Please try again and tick the box for \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - BookDesk24 needs this to create meetings and Google Meet links."
+msgstr "%{service} wurde nicht verbunden, weil die Kalenderberechtigung nicht erteilt wurde. Bitte versuche es erneut und aktiviere das Kontrollkästchen für \"See, edit, share, and permanently delete all the calendars you can access using Google Calendar\" - BookDesk24 benötigt dies, um Termine und Google-Meet-Links zu erstellen."
 
 #: lib/tymeslot_web/controllers/integrations/oauth_callback_handler.ex
 #, elixir-autogen, elixir-format
-msgid "Your Microsoft organisation requires admin approval before the scheduler can be connected. Please ask your IT administrator to grant consent for the app."
-msgstr "Deine Microsoft-Organisation erfordert eine Administratorgenehmigung, bevor the scheduler verbunden werden kann. Bitte wende dich an deinen IT-Administrator, damit dieser der App die Zustimmung erteilt."
+msgid "Your Microsoft organisation requires admin approval before BookDesk24 can be connected. Please ask your IT administrator to grant consent for the app."
+msgstr "Deine Microsoft-Organisation erfordert eine Administratorgenehmigung, bevor BookDesk24 verbunden werden kann. Bitte wende dich an deinen IT-Administrator, damit dieser der App die Zustimmung erteilt."

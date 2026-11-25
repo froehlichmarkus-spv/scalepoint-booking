@@ -32,7 +32,7 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
       description={
         dgettext(
           "dashboard_automation",
-          "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
+          "Connect BookDesk24 to n8n, Zapier, Make, or your custom automation workflows"
         )
       }
     >
@@ -67,7 +67,7 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
                dgettext("dashboard_automation", "Start a new workflow in your n8n instance")},
               {dgettext("dashboard_automation", "Add webhook trigger"),
                dgettext("dashboard_automation", "Insert a Webhook node and copy its URL")},
-              {dgettext("dashboard_automation", "Configure in the scheduler"),
+              {dgettext("dashboard_automation", "Configure in BookDesk24"),
                dgettext("dashboard_automation", "Create a webhook above and paste the URL")},
               {dgettext("dashboard_automation", "Select events"),
                dgettext("dashboard_automation", "Choose which booking events to monitor")},
@@ -137,7 +137,7 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div class="flex items-center gap-2 p-2 bg-white rounded-token-lg">
                       <code class="text-token-xs font-black text-turquoise-700 bg-turquoise-50 px-2 py-1 rounded">
-                        X-the scheduler-Token
+                        X-BookDesk24-Token
                       </code>
                       <span class="text-token-xs text-tymeslot-600 font-medium">
                         {dgettext("dashboard_automation", "Security token")}
@@ -145,7 +145,7 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
                     </div>
                     <div class="flex items-center gap-2 p-2 bg-white rounded-token-lg">
                       <code class="text-token-xs font-black text-turquoise-700 bg-turquoise-50 px-2 py-1 rounded">
-                        X-the scheduler-Signature
+                        X-BookDesk24-Signature
                       </code>
                       <span class="text-token-xs text-tymeslot-600 font-medium">
                         {dgettext("dashboard_automation", "Request signature")}
@@ -153,7 +153,7 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
                     </div>
                     <div class="flex items-center gap-2 p-2 bg-white rounded-token-lg">
                       <code class="text-token-xs font-black text-turquoise-700 bg-turquoise-50 px-2 py-1 rounded">
-                        X-the scheduler-Timestamp
+                        X-BookDesk24-Timestamp
                       </code>
                       <span class="text-token-xs text-tymeslot-600 font-medium">
                         {dgettext("dashboard_automation", "Request timestamp")}
@@ -161,7 +161,7 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
                     </div>
                     <div class="flex items-center gap-2 p-2 bg-white rounded-token-lg">
                       <code class="text-token-xs font-black text-turquoise-700 bg-turquoise-50 px-2 py-1 rounded">
-                        X-the scheduler-Delivery-Id
+                        X-BookDesk24-Delivery-Id
                       </code>
                       <span class="text-token-xs text-tymeslot-600 font-medium">
                         {dgettext("dashboard_automation", "Delivery ID")}

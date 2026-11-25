@@ -1,6 +1,6 @@
 defmodule TymeslotWeb.AdminLive.Components.SupportBox do
   @moduledoc """
-  The "Support the scheduler" card at the foot of every admin tab, asking the admin
+  The "Support BookDesk24" card at the foot of every admin tab, asking the admin
   of a self-hosted install for three things: a GitHub star, a sponsorship, and
   bug reports.
 
@@ -39,11 +39,11 @@ defmodule TymeslotWeb.AdminLive.Components.SupportBox do
       tag="aside"
       class="mt-12"
       icon="hero-heart"
-      title={dgettext("dashboard_admin", "Support the scheduler")}
+      title={dgettext("dashboard_admin", "Support BookDesk24")}
       description={
         dgettext(
           "dashboard_admin",
-          "the scheduler is free to self-host. If it is useful to you, here are three ways to help it grow."
+          "BookDesk24 is free to self-host. If it is useful to you, here are three ways to help it grow."
         )
       }
     >

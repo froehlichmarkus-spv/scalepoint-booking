@@ -12,13 +12,13 @@ defmodule Tymeslot.Integrations.Calendar.Outlook.SeriesPatch do
     * **Plain fields** (`:summary`, `:description`, `:location`,
       `:reminders`, `:attendees`, `:transparency`) are sent under their Graph
       keys, mapped as `EventMapper` maps them (`:transparency` as `showAs`).
-      Outlook events carry no colour the scheduler writes, so `:colour` is not
+      Outlook events carry no colour BookDesk24 writes, so `:colour` is not
       sent.
     * **A move** of the occurrence moves the master's `start` and `end` by
       as much, on the wall clock of the zone the series was created in
       (`originalStartTimeZone`, which is also the label they are written
       with; see `Recurrence.SeriesMove`). The master is read in UTC (the
-      client asks Graph for UTC), so a series in a zone the scheduler cannot
+      client asks Graph for UTC), so a series in a zone BookDesk24 cannot
       read refuses a move (`{:error, :unreadable_timing}`) rather than be
       moved to UTC.
     * When the move changes the master's date, the `recurrence` follows it:

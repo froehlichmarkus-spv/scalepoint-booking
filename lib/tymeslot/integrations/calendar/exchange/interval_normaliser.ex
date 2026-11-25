@@ -23,7 +23,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.IntervalNormaliser do
 
   The prefix is load-bearing rather than decorative.
   `Meetings.ExternalCalendarChanges.find_linked_meeting/3` resolves a vanished
-  provider event to a the scheduler meeting **by uid** (the meeting's
+  provider event to a BookDesk24 meeting **by uid** (the meeting's
   `calendar_uid`) when no provider event id is carried, and cancels the
   meeting it finds, emailing both parties. A synthesised uid that collided
   with a real meeting's would therefore cancel a confirmed booking during

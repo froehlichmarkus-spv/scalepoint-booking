@@ -27,7 +27,7 @@ defmodule Tymeslot.Integrations.Calendar.Management do
 
   @write_unauthorized_message dgettext_noop(
                                 "integrations_calendar",
-                                "Your calendar connection does not allow the scheduler to add bookings to it. Please reconnect the integration and allow the scheduler to create and edit events."
+                                "Your calendar connection does not allow BookDesk24 to add bookings to it. Please reconnect the integration and allow BookDesk24 to create and edit events."
                               )
 
   @type user_id :: integer()

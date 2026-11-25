@@ -60,7 +60,7 @@ defmodule Tymeslot.Meetings.AttendeeNotifications.LastNotifiedState do
   Nothing seeds `last_notified_state` on create or on sync, so every event is
   born with `%{}` and only gains a baseline once this pipeline has dispatched
   for it. An empty baseline therefore does not mean "nobody knows about this
-  event": it means the scheduler has not yet recorded what they were told. The
+  event": it means BookDesk24 has not yet recorded what they were told. The
   people on the event today are the people whichever path created it already
   invited, so they are **retained** rather than newly added, and the first
   edit notifies exactly who the second one would.

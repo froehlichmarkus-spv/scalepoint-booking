@@ -540,10 +540,10 @@ msgstr "Das Passwort muss mindestens einen Großbuchstaben enthalten"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
-msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "Domain hat eine unbekannte Endung (.%{tld}). Falls sie korrekt ist, kennt diese Version von the scheduler sie noch nicht und muss aktualisiert werden."
+msgid "Domain has an unrecognised domain ending (.%{tld}). If it is correct, this version of BookDesk24 predates it and needs updating."
+msgstr "Domain hat eine unbekannte Endung (.%{tld}). Falls sie korrekt ist, kennt diese Version von BookDesk24 sie noch nicht und muss aktualisiert werden."
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
-msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of the scheduler predates it and needs updating."
-msgstr "E-Mail hat eine unbekannte Endung (.%{tld}). Falls sie korrekt ist, kennt diese Version von the scheduler sie noch nicht und muss aktualisiert werden."
+msgid "Email has an unrecognised domain ending (.%{tld}). If it is correct, this version of BookDesk24 predates it and needs updating."
+msgstr "E-Mail hat eine unbekannte Endung (.%{tld}). Falls sie korrekt ist, kennt diese Version von BookDesk24 sie noch nicht und muss aktualisiert werden."

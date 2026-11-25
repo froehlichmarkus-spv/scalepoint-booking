@@ -377,8 +377,8 @@ msgstr "Jesteś jedynym administratorem, który może się zalogować, więc teg
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Nadchodzące rezerwacje są usuwane z the scheduler, a goście nie są o tym powiadamiani."
+msgid "Upcoming bookings are deleted from BookDesk24 and your guests are not notified."
+msgstr "Nadchodzące rezerwacje są usuwane z BookDesk24, a goście nie są o tym powiadamiani."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format

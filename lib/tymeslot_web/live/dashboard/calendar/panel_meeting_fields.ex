@@ -1,7 +1,7 @@
 defmodule TymeslotWeb.Dashboard.Calendar.PanelMeetingFields do
   @moduledoc """
   The New event form's meeting fields (see `PanelMeeting`): the "Send as a
-  the scheduler meeting" box, offered once the draft has a guest, and while it
+  BookDesk24 meeting" box, offered once the draft has a guest, and while it
   is ticked whether the first guest is the meeting's main participant, the
   guest's name (with one), the meeting's place, the language of every
   email about the meeting and its reminder emails, chosen with the reminder
@@ -61,7 +61,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.PanelMeetingFields do
           id="calendar-panel-meeting-toggle"
           name="meeting"
           value={@values["meeting"]}
-          label={dgettext("dashboard_calendar_power", "Send as a the scheduler meeting")}
+          label={dgettext("dashboard_calendar_power", "Send as a BookDesk24 meeting")}
         />
       </div>
       <p class="text-token-xs text-tymeslot-500">

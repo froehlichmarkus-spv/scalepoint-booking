@@ -221,7 +221,7 @@ defmodule TymeslotWeb.Dashboard.Automation.SlackFormComponent do
                       {raw(
                         dgettext(
                           "dashboard_automation_chat",
-                          "the scheduler posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}.",
+                          "BookDesk24 posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}.",
                           guide:
                             DocsUrl.article_link(
                               "slack",
@@ -344,9 +344,9 @@ defmodule TymeslotWeb.Dashboard.Automation.SlackFormComponent do
         {raw(
           dgettext(
             "dashboard_automation_chat",
-            "the scheduler will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the the scheduler bot in Slack (%{command}), then click Refresh.",
+            "BookDesk24 will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the BookDesk24 bot in Slack (%{command}), then click Refresh.",
             command:
-              ~s(<code class="px-1 py-0.5 rounded bg-tymeslot-100 text-tymeslot-700">/invite @the scheduler</code>)
+              ~s(<code class="px-1 py-0.5 rounded bg-tymeslot-100 text-tymeslot-700">/invite @BookDesk24</code>)
           )
         )}
       </p>
@@ -368,7 +368,7 @@ defmodule TymeslotWeb.Dashboard.Automation.SlackFormComponent do
           <div class="p-4 rounded-token-xl border-2 border-tymeslot-100 bg-tymeslot-50 text-token-sm text-tymeslot-600 font-medium">
             {dgettext(
               "dashboard_automation_chat",
-              "No channels available. Invite the the scheduler bot to at least one channel in Slack, then click Refresh."
+              "No channels available. Invite the BookDesk24 bot to at least one channel in Slack, then click Refresh."
             )}
           </div>
         <% true -> %>
@@ -429,7 +429,7 @@ defmodule TymeslotWeb.Dashboard.Automation.SlackFormComponent do
       subtitle:
         dgettext_noop(
           "dashboard_automation_chat",
-          "Pick a channel for the scheduler to post booking notifications to."
+          "Pick a channel for BookDesk24 to post booking notifications to."
         ),
       submit_event: "slack_save_channel",
       submit_label: dgettext_noop("dashboard_automation_chat", "Save channel")

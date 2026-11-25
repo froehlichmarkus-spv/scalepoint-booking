@@ -57,7 +57,7 @@ defmodule Tymeslot.Integrations.Video.MiroTalkConnectionRateLimitTest do
 
   describe "scheduled health probes" do
     # `ConnectionProbe` treats `scope: :background` as unmetered by
-    # construction (see its moduledoc): the scheduler already owns its own
+    # construction (see its moduledoc): BookDesk24 already owns its own
     # cadence — a 30-minute floor plus its own exponential backoff — so a
     # token bucket protects nothing there and only adds a way for the
     # scheduler's own result to be corrupted by an unrelated refusal.

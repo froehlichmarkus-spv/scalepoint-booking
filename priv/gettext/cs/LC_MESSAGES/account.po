@@ -381,10 +381,10 @@ msgstr "Jste jediný správce, který se může přihlásit, takže tento účet
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Nadcházející rezervace se ze služby the scheduler smažou a vaši hosté nebudou upozorněni."
+msgid "Upcoming bookings are deleted from BookDesk24 and your guests are not notified."
+msgstr "Nadcházející rezervace se ze služby BookDesk24 smažou a vaši hosté nebudou upozorněni."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Your upcoming bookings will be deleted. Your guests will not be notified."
-msgstr "Vaše nadcházející rezervace budou ze služby the scheduler smazány. Vaši hosté nebudou upozorněni."
+msgstr "Vaše nadcházející rezervace budou ze služby BookDesk24 smazány. Vaši hosté nebudou upozorněni."

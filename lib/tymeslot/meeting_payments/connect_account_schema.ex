@@ -1,6 +1,6 @@
 defmodule Tymeslot.MeetingPayments.ConnectAccountSchema do
   @moduledoc """
-  Stripe Connect account linked to a the scheduler host.
+  Stripe Connect account linked to a BookDesk24 host.
 
   status values:
     * `:creating` — placeholder row; waiting for the OAuth connection

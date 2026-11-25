@@ -525,7 +525,7 @@ defmodule Tymeslot.Precommit.RunnerTest do
     end
   end
 
-  # The scheduler count is a measured speed setting (see `step_env/1` for the
+  # BookDesk24 count is a measured speed setting (see `step_env/1` for the
   # numbers), and losing it is the kind of regression nothing else in a `mix
   # precommit` run would report: the gate would simply get slower, silently and
   # by about a fifth. Hence a test on the flag itself.

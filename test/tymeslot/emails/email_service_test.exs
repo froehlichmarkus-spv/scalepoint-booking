@@ -137,7 +137,7 @@ defmodule Tymeslot.Emails.EmailServiceTest do
 
       email = next_email()
       assert email.to == [{"Test User", "social@example.com"}]
-      assert email.subject == "Your the scheduler account has no password"
+      assert email.subject == "Your BookDesk24 account has no password"
       assert email.text_body =~ "signs in with GitHub, so it has no password to reset"
       assert email.html_body =~ sign_in_url
       assert email.text_body =~ sign_in_url
@@ -156,10 +156,10 @@ defmodule Tymeslot.Emails.EmailServiceTest do
 
       email = next_email()
       assert email.to == [{"Test User", "owner@example.com"}]
-      assert email.subject == "You already have a the scheduler account"
+      assert email.subject == "You already have a BookDesk24 account"
 
       assert email.text_body =~
-               "tried to create a new the scheduler account with this email address"
+               "tried to create a new BookDesk24 account with this email address"
 
       assert email.html_body =~ ~s(href="#{sign_in_url}")
       assert email.html_body =~ ~s(href="#{reset_url}")
@@ -230,7 +230,7 @@ defmodule Tymeslot.Emails.EmailServiceTest do
 
       old = next_email()
       assert old.to == [{"Test User", "old@example.com"}]
-      assert old.subject == "Email Address Changed - the scheduler Account"
+      assert old.subject == "Email Address Changed - BookDesk24 Account"
 
       new = next_email()
       assert new.to == [{"Test User", "new@example.com"}]

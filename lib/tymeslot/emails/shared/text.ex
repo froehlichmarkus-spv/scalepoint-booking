@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Text do
   @moduledoc """
-  Typographic primitives for the scheduler emails — 2026 redesign.
+  Typographic primitives for BookDesk24 emails — 2026 redesign.
 
   Titles, centred body copy, micro-cap section labels, footer notes,
   dividers, and the troubleshooting link that sits below CTA buttons.

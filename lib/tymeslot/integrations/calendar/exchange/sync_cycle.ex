@@ -112,7 +112,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.SyncCycle do
 
   The incremental item half *does* know which items vanished, and still does
   not call it. Those deletions are applied straight to the cache by
-  `provider_event_id`. Cancelling a the scheduler booking because its mirror row
+  `provider_event_id`. Cancelling a BookDesk24 booking because its mirror row
   left an external calendar is a decision for the providers that own the
   booking, and this one does not: a `display_only` row blocks nothing, so
   removing it costs the grid an entry and no more.
@@ -121,7 +121,7 @@ defmodule Tymeslot.Integrations.Calendar.Exchange.SyncCycle do
   if it ran: it walks the events *present* in the sync rather than vanished
   ones, and signals `:modified`, never `:deleted`. It is skipped on
   `SyncIcsCalendarWorker`'s narrower grounds instead: a read-only mirror of
-  someone else's mailbox has no business rewriting the scheduler meetings whose
+  someone else's mailbox has no business rewriting BookDesk24 meetings whose
   times moved. Its other two effects, the availability-cache invalidation and
   the grid broadcast, are wanted and are done directly by `run/1`.
 

@@ -150,7 +150,7 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents do
         :if={@loading}
         label={dgettext("dashboard_bookings", "Loading meetings")}
       />
-      <.no_meetings :if={!@loading and @is_empty} filter={@filter} />
+      <.no_meetings :if={!@loading and @is_empty} filter={@filter} profile={@profile} />
       <div :if={!@loading and !@is_empty} class="space-y-4" id="meetings" phx-update="stream">
         <div :for={{dom_id, meeting} <- @meetings_stream} id={dom_id}>
           <MeetingCard.meeting_card
@@ -199,6 +199,7 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents do
   end
 
   attr :filter, :string, required: true
+  attr :profile, :any, default: nil
 
   defp no_meetings(assigns) do
     ~H"""
@@ -208,7 +209,17 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents do
       heading={:h2}
       title={no_meetings_title(@filter)}
       description={no_meetings_description(@filter)}
-    />
+    >
+      <:action :if={@filter == "upcoming" && is_map(@profile) && @profile.username}>
+        <Buttons.action_link
+          href={"/" <> @profile.username}
+          variant={:primary}
+          size={:sm}
+        >
+          {dgettext("dashboard_common", "View Page")}
+        </Buttons.action_link>
+      </:action>
+    </Feedback.empty_state>
     """
   end
 

@@ -444,5 +444,5 @@ msgstr ""
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
-msgid "Booked through your the scheduler page"
+msgid "Booked through your BookDesk24 page"
 msgstr ""

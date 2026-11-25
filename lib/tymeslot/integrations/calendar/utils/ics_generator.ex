@@ -219,7 +219,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     end
   end
 
-  # the scheduler emails always advertise METHOD:PUBLISH (not REQUEST/CANCEL). The
+  # BookDesk24 emails always advertise METHOD:PUBLISH (not REQUEST/CANCEL). The
   # organiser's calendar is already updated via the CalDAV/OAuth write path and
   # attendee RSVP is handled by booking URLs in the email body — iTIP on the
   # wire would cause recipient-side mail servers (Zimbra, Nextcloud/Sabre,

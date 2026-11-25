@@ -285,3 +285,53 @@
     font-size: 2.15rem;
   }
 }
+
+/* The summary strip is its own row. Keep it whole, above the card,
+   instead of a sticky bar the grid clips. */
+.folio-page[data-layout] .folio-summary-bar {
+  position: static;
+  top: auto;
+  margin: 0 0 0.75rem;
+  padding: 0.7rem 1rem;
+  overflow: visible;
+  border-radius: 16px;
+}
+
+.folio-page[data-layout] .journey--continuous {
+  overflow: visible;
+  align-items: start;
+}
+
+/* Secondary copy on the light card. The room muted colour is for the navy canvas. */
+.folio-page[data-layout] .journey--continuous > :not(.folio-masthead) {
+  --theme-text-secondary: #3d4c63;
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-identity__name,
+.folio-page[data-layout] .folio-section .folio-identity__name,
+.folio-page[data-layout] p.folio-identity__name {
+  color: #111e32;
+}
+
+.room--host .room__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room--host .room__facts li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--room-muted);
+  font-size: 0.95rem;
+}
+
+.room__fact-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}

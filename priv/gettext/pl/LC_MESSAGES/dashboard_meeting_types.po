@@ -642,5 +642,5 @@ msgstr "Ten link wygasł, więc nie można go ponownie otworzyć. Zamiast tego u
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Każdy link pozwala zarezerwować jedno spotkanie. the scheduler nie wysyła e-maili: skopiuj link i wyślij go sam."
+msgid "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
+msgstr "Każdy link pozwala zarezerwować jedno spotkanie. BookDesk24 nie wysyła e-maili: skopiuj link i wyślij go sam."

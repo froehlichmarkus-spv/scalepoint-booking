@@ -1,6 +1,6 @@
 defmodule Tymeslot.Mailer.Providers do
   @moduledoc """
-  The single registry of email providers the scheduler supports.
+  The single registry of email providers BookDesk24 supports.
 
   `EMAIL_ADAPTER` selects one of the names below and everything that varies
   per provider is resolved from this one table: the Swoosh adapter, the
@@ -24,7 +24,7 @@ defmodule Tymeslot.Mailer.Providers do
   independently of `kind`), and `dev_only` marks the adapters production
   refuses to boot with.
 
-  Any provider the scheduler does not name here can still be used over `smtp`,
+  Any provider BookDesk24 does not name here can still be used over `smtp`,
   which every transactional mail service offers.
 
   ## Adding a provider

@@ -69,7 +69,7 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelper do
     }
 
     # Only parameters Google defines are forwarded: the options also carry
-    # the scheduler's own (`return_to`, `scopes`), which belong in the state or the
+    # BookDesk24's own (`return_to`, `scopes`), which belong in the state or the
     # scope string, not in a URL Google logs and may reject.
     params =
       options

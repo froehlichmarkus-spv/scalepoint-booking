@@ -476,7 +476,7 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
+msgid "Someone else organises this meeting, so BookDesk24 can't move or split a series you were only invited to."
 msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex

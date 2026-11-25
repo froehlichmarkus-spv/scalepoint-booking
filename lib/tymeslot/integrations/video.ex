@@ -338,8 +338,8 @@ defmodule Tymeslot.Integrations.Video do
   Removes every video integration matching `(provider, provider_account_id)`,
   regardless of the owning user. Used by provider-initiated revocation flows —
   for example, when a Zoom user uninstalls the app, Zoom's deauthorization
-  webhook tells us the Zoom account ID but not the the scheduler user, so we strip
-  every the scheduler integration referencing that account.
+  webhook tells us the Zoom account ID but not the BookDesk24 user, so we strip
+  every BookDesk24 integration referencing that account.
   """
   @spec disconnect_by_provider_account(String.t(), String.t()) :: {:ok, non_neg_integer()}
   def disconnect_by_provider_account(provider, provider_account_id)

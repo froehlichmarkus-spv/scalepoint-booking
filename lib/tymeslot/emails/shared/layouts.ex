@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Layouts do
   @moduledoc """
-  High-level MJML layouts for the scheduler emails.
+  High-level MJML layouts for BookDesk24 emails.
 
   Two layouts:
 
@@ -8,7 +8,7 @@ defmodule Tymeslot.Emails.Shared.Layouts do
     which opens with an intent stage band and an organiser strip. Used by
     meeting emails.
   - `system_layout/2` wraps content in a system frame — a stage band with the
-    the scheduler wordmark, a warm surface, and a hairline footer. Used by account
+    BookDesk24 wordmark, a warm surface, and a hairline footer. Used by account
     emails (verification, password reset, subscription, etc).
 
   Both layouts require the caller to declare `:intent` and `:eyebrow`. There

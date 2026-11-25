@@ -641,5 +641,5 @@ msgstr "Dieser Link ist abgelaufen und kann deshalb nicht wieder geöffnet werde
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Mit jedem Link kann ein Termin gebucht werden. the scheduler verschickt keine E-Mail: Kopierst du den Link und sende ihn selbst."
+msgid "Each link books one appointment. BookDesk24 sends no email: copy the link and send it yourself."
+msgstr "Mit jedem Link kann ein Termin gebucht werden. BookDesk24 verschickt keine E-Mail: Kopierst du den Link und sende ihn selbst."

@@ -831,5 +831,5 @@ msgstr "Ce calendrier n’accepte pas les règles de répétition de Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Réservation the scheduler"
+msgid "BookDesk24 booking"
+msgstr "Réservation BookDesk24"

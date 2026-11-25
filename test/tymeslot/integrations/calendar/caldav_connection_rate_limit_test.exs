@@ -53,7 +53,7 @@ defmodule Tymeslot.Integrations.Calendar.CaldavConnectionRateLimitTest do
     test "background probing is unmetered by construction and never starves the owner's interactive check" do
       integration = caldav_integration()
 
-      # The scheduler already owns its own cadence (a 30-minute floor plus
+      # BookDesk24 already owns its own cadence (a 30-minute floor plus
       # its own backoff), so `ConnectionProbe` treats `scope: :background` as
       # unmetered by construction — running well past the interactive
       # per-actor limit never trips a refusal, and never draws from the

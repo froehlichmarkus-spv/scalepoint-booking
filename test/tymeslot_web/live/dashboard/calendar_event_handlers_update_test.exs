@@ -19,7 +19,7 @@ defmodule TymeslotWeb.Dashboard.CalendarEventHandlersUpdateTest do
      "Outlook can't skip the months that don't have this series' day, and would move those events to the month's last day. Please start the series on the 28th or earlier, or save it to another calendar."},
     {:rule_not_supported_by_outlook, "This repeat pattern can't be saved to Outlook."},
     {:not_organiser,
-     "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."},
+     "Someone else organises this meeting, so BookDesk24 can't move or split a series you were only invited to."},
     {:unaddressable_occurrence,
      "This event could not be matched to its series. Refresh your calendars and try again."},
     {:unreadable_timing,

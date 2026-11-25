@@ -13,7 +13,7 @@ defmodule Tymeslot.MeetingPayments.DataRetention do
   @doc """
   Scrubs the attendee details from every booking payment of the host's,
   keeping the host's own snapshot, and soft-deletes their Connect account,
-  scheduling the revocation of the scheduler's access to its Stripe account.
+  scheduling the revocation of BookDesk24's access to its Stripe account.
   """
   @spec anonymise_host(integer(), DateTime.t()) :: :ok
   def anonymise_host(user_id, %DateTime{} = now) when is_integer(user_id) do

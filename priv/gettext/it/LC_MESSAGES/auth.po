@@ -773,30 +773,30 @@ msgstr[1] "Ti diamo il bentornato. Il tuo account è stato ripristinato, ma le i
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your the scheduler account."
+msgid "Choose a strong new password for your BookDesk24 account."
 msgstr "Scegli una nuova password sicura per il tuo account Tymeslot."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
-msgstr "Crea un account the scheduler e inizia a condividere la tua disponibilità in pochi minuti. Nessuna carta di credito richiesta."
+msgid "Create a BookDesk24 account and start sharing your availability in minutes. No credit card required."
+msgstr "Crea un account BookDesk24 e inizia a condividere la tua disponibilità in pochi minuti. Nessuna carta di credito richiesta."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your the scheduler account."
+msgid "Enter your email to receive a password reset link for your BookDesk24 account."
 msgstr "Inserisci la tua email per ricevere un link di reimpostazione della password per il tuo account Tymeslot."
 
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
-msgid "Join the scheduler"
-msgstr "Registrati su the scheduler"
+msgid "Join BookDesk24"
+msgstr "Registrati su BookDesk24"
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
-msgid "Log in to the scheduler"
-msgstr "Accedi a the scheduler"
+msgid "Log in to BookDesk24"
+msgstr "Accedi a BookDesk24"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
-msgstr "Accedi al tuo account the scheduler per gestire i link di pianificazione, la disponibilità e le prenotazioni."
+msgid "Sign in to your BookDesk24 account to manage scheduling links, availability, and bookings."
+msgstr "Accedi al tuo account BookDesk24 per gestire i link di pianificazione, la disponibilità e le prenotazioni."

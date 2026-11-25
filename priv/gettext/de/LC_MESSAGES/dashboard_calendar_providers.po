@@ -646,20 +646,20 @@ msgstr "iCloud benötigt ein App-spezifisches Passwort, nicht das Passwort deine
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Wähle, welche Kalender the scheduler verwendet und welche davon Zeiten auf deiner Buchungsseite blockieren."
+msgid "Choose which calendars BookDesk24 uses, and which of them block times on your booking page."
+msgstr "Wähle, welche Kalender BookDesk24 verwendet und welche davon Zeiten auf deiner Buchungsseite blockieren."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
-msgstr "So werden die Ereignisse dieses Kalenders in deinem the scheduler-Kalender angezeigt."
+msgid "How this calendar's events are shown in your BookDesk24 calendar."
+msgstr "So werden die Ereignisse dieses Kalenders in deinem BookDesk24-Kalender angezeigt."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Keep this password for as long as you use this booking page. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
-msgstr "Behalte dieses Passwort, solange du the scheduler nutzen. Wenn du es widerrufen oder dein Apple-ID-Passwort ändern, wird iCloud getrennt, und deine Buchungsseite bietet keine Zeiten an, bis du iCloud erneut verbinden."
+msgstr "Behalte dieses Passwort, solange du BookDesk24 nutzen. Wenn du es widerrufen oder dein Apple-ID-Passwort ändern, wird iCloud getrennt, und deine Buchungsseite bietet keine Zeiten an, bis du iCloud erneut verbinden."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "Nur mit belegten Zeiten für dich freigegeben. the scheduler kann diese Zeiten blockieren, die Ereignisse aber nicht anzeigen."
+msgid "Shared with you as busy times only. BookDesk24 can block these times but cannot show the events."
+msgstr "Nur mit belegten Zeiten für dich freigegeben. BookDesk24 kann diese Zeiten blockieren, die Ereignisse aber nicht anzeigen."

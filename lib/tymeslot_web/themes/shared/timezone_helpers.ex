@@ -11,7 +11,6 @@ defmodule TymeslotWeb.Themes.Shared.TimezoneHelpers do
   import Phoenix.Component, only: [assign: 3]
   import Phoenix.LiveView, only: [get_connect_params: 1]
 
-  alias Tymeslot.Profiles
   alias Tymeslot.Timezones
 
   @doc """
@@ -25,18 +24,17 @@ defmodule TymeslotWeb.Themes.Shared.TimezoneHelpers do
   `timezone` URL parameter covers the
   static render, before the browser has reported anything; the default covers
   the rest. The result is always a valid, current IANA id: renamed zones are
-  normalised, and an unknown one falls back to the default (or `"UTC"` should
-  even that be invalid).
+  normalised, and an unknown one, or a bare UTC, falls back to Europe/Berlin.
 
   Reads the connect params, so it can only be called during `mount/3`.
   """
   @spec assign_user_timezone(Phoenix.LiveView.Socket.t(), map()) :: Phoenix.LiveView.Socket.t()
   def assign_user_timezone(socket, params) do
-    browser_timezone = valid_timezone(get_connect_params(socket)["timezone"])
+    browser_timezone = usable_timezone(get_connect_params(socket)["timezone"])
 
     requested =
-      carried_timezone(params) || browser_timezone || params["timezone"] ||
-        Profiles.get_default_timezone()
+      carried_timezone(params) || browser_timezone || usable_timezone(params["timezone"]) ||
+        fallback_timezone()
 
     normalized = Timezones.normalize(requested)
 
@@ -51,8 +49,17 @@ defmodule TymeslotWeb.Themes.Shared.TimezoneHelpers do
   # (`PathHandlers` carries it with the chosen day and time, which are wall
   # clock in that zone). It wins over the browser's, as the visitor's own
   # choice did before the redirect; one that is not a valid zone is ignored.
-  defp carried_timezone(%{"visitor_timezone" => timezone}), do: valid_timezone(timezone)
+  defp carried_timezone(%{"visitor_timezone" => timezone}), do: usable_timezone(timezone)
   defp carried_timezone(_params), do: nil
+
+  # UTC is what a browser reports when it has no zone. The booking page
+  # then uses Berlin, the product default, rather than a zone nobody is in.
+  defp usable_timezone(timezone) do
+    case valid_timezone(timezone) do
+      zone when zone in [nil, "UTC", "Etc/UTC"] -> nil
+      zone -> zone
+    end
+  end
 
   defp valid_timezone(timezone) when is_binary(timezone) do
     normalized = Timezones.normalize(timezone)
@@ -61,10 +68,7 @@ defmodule TymeslotWeb.Themes.Shared.TimezoneHelpers do
 
   defp valid_timezone(_timezone), do: nil
 
-  defp fallback_timezone do
-    default = Profiles.get_default_timezone()
-    if Timezones.valid?(default), do: default, else: "UTC"
-  end
+  defp fallback_timezone, do: "Europe/Berlin"
 
   @doc """
   Formats the current local time for a timezone as "HH:MM".

@@ -1,6 +1,6 @@
 defmodule Tymeslot.Integrations.Calendar.EventColour do
   @moduledoc """
-  The single source of truth for the scheduler's calendar colour palette.
+  The single source of truth for BookDesk24's calendar colour palette.
 
   An event or a calendar integration may carry a stable, provider-independent
   palette **key** (e.g. `"tomato"`) in its `:colour` field. This module maps

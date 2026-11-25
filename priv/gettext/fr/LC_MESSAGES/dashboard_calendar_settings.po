@@ -430,15 +430,15 @@ msgstr "Choisissez « Bloquer » pour utiliser cette option : pour un calendrier
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} calendar is no longer on your calendar server, so the scheduler has stopped using it: %{calendars}"
-msgid_plural "%{count} calendars are no longer on your calendar server, so the scheduler has stopped using them: %{calendars}"
-msgstr[0] "%{count} calendrier n’existe plus sur votre serveur de calendrier ; the scheduler a donc cessé de l’utiliser : %{calendars}"
-msgstr[1] "%{count} calendriers n’existent plus sur votre serveur de calendrier ; the scheduler a donc cessé de les utiliser : %{calendars}"
+msgid "%{count} calendar is no longer on your calendar server, so BookDesk24 has stopped using it: %{calendars}"
+msgid_plural "%{count} calendars are no longer on your calendar server, so BookDesk24 has stopped using them: %{calendars}"
+msgstr[0] "%{count} calendrier n’existe plus sur votre serveur de calendrier ; BookDesk24 a donc cessé de l’utiliser : %{calendars}"
+msgstr[1] "%{count} calendriers n’existent plus sur votre serveur de calendrier ; BookDesk24 a donc cessé de les utiliser : %{calendars}"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar so the scheduler can read your availability and stop meetings being booked when you're already busy."
-msgstr "Connectez un calendrier pour que the scheduler puisse lire vos disponibilités et empêcher que des réunions soient réservées lorsque vous êtes déjà occupé."
+msgid "Connect a calendar so BookDesk24 can read your availability and stop meetings being booked when you're already busy."
+msgstr "Connectez un calendrier pour que BookDesk24 puisse lire vos disponibilités et empêcher que des réunions soient réservées lorsque vous êtes déjà occupé."
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -447,5 +447,5 @@ msgstr "Needs attention"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so the scheduler has stopped using it."
-msgstr "Le calendrier « %{calendar} » n’existe plus sur votre serveur de calendrier ; the scheduler a donc cessé de l’utiliser."
+msgid "“%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it."
+msgstr "Le calendrier « %{calendar} » n’existe plus sur votre serveur de calendrier ; BookDesk24 a donc cessé de l’utiliser."

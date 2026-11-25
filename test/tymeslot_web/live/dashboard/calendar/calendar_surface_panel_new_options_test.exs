@@ -167,7 +167,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfacePanelNewOptionsTest do
       assert has_element?(lv, "#calendar-panel-new-location")
     end
 
-    test "carries into the meeting when it is sent as a the scheduler meeting", %{
+    test "carries into the meeting when it is sent as a BookDesk24 meeting", %{
       lv: lv,
       user: user,
       integration: integration
@@ -317,7 +317,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfacePanelNewOptionsTest do
       assert %{recurrence_rule: nil} = Repo.one!(ProviderCalendarEventSchema)
     end
 
-    test "gives way to a the scheduler meeting, which does not repeat", %{
+    test "gives way to a BookDesk24 meeting, which does not repeat", %{
       lv: lv,
       integration: integration
     } do

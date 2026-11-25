@@ -294,10 +294,10 @@ msgstr "du hast die verbleibenden Termine einer Serie abgesagt, aber die Rücker
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on the scheduler's side."
-msgstr "Sobald Stripe zufrieden ist, aktualisiert sich der Status deines Kontos automatisch. Auf Seiten von the scheduler ist nichts weiter nötig."
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr "Sobald Stripe zufrieden ist, aktualisiert sich der Status deines Kontos automatisch. Auf Seiten von BookDesk24 ist nichts weiter nötig."
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in the scheduler or from your Stripe dashboard, or let them know what happens next."
-msgstr "Erstatte dem Teilnehmer den Betrag über deine Zahlungen in the scheduler oder über dein Stripe-Dashboard, oder teile ihm mit, wie es weitergeht."
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Erstatte dem Teilnehmer den Betrag über deine Zahlungen in BookDesk24 oder über dein Stripe-Dashboard, oder teile ihm mit, wie es weitergeht."

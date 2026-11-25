@@ -28,7 +28,7 @@ defmodule Tymeslot.Utils.DateTimeUtils.TimeFormat do
 
   @formats ~w(12h 24h)
 
-  # The languages the scheduler ships that write the time as "14:30". Everything
+  # The languages BookDesk24 ships that write the time as "14:30". Everything
   # else, including an unknown or missing locale, reads as a 12-hour clock.
   @twenty_four_hour_locales ~w(de fr it uk cs pl pt es)
 

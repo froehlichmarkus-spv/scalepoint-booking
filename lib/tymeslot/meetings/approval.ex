@@ -34,7 +34,7 @@ defmodule Tymeslot.Meetings.Approval do
       same video room, the same confirmation emails, the same reminders and
       webhooks an ungated booking would have produced. The invitee's second
       email is deliberately the standard confirmation, so it looks like every
-      other the scheduler booking. Answering after the request's own
+      other BookDesk24 booking. Answering after the request's own
       `approval_deadline_at` does not confirm it — see "The deadline" below.
 
     * `decline/2` — the host says no. The meeting becomes `:cancelled`, which
@@ -416,7 +416,7 @@ defmodule Tymeslot.Meetings.Approval do
   # The update job is always scheduled, the way `Bookings.Create` schedules its
   # "create" job and `Bookings.Reschedule` its own "update": whether there is
   # anything to flip is `CalendarEventSync`'s call. CalDAV addresses its event
-  # by a the scheduler-minted UID until its create job confirms it
+  # by a BookDesk24-minted UID until its create job confirms it
   # (`CalendarEventSync.put_provider_mapping/2`), so no "has a provider event"
   # test made here can tell. The job falls back to uid-addressing, recreates
   # the event on a missing-event 404, and ends gracefully when there is no

@@ -741,13 +741,13 @@ msgstr "Wyzwalany raz, gdy odrzucisz prośbę o serię, zamiast „Rezerwacja od
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Configure in the scheduler"
-msgstr "Skonfiguruj w the scheduler"
+msgid "Configure in BookDesk24"
+msgstr "Skonfiguruj w BookDesk24"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Connect the scheduler to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Połącz the scheduler z n8n, Zapier, Make lub własnymi przepływami pracy"
+msgid "Connect BookDesk24 to n8n, Zapier, Make, or your custom automation workflows"
+msgstr "Połącz BookDesk24 z n8n, Zapier, Make lub własnymi przepływami pracy"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format

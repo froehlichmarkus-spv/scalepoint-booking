@@ -61,14 +61,14 @@ defmodule TymeslotWeb.Themes.Shared.TimezoneHelpersTest do
       socket = mounting_socket(%{"timezone" => "Mars/Olympus_Mons"}, true)
 
       assert TimezoneHelpers.assign_user_timezone(socket, %{}).assigns.user_timezone ==
-               "Europe/Tallinn"
+               "Europe/Berlin"
     end
 
-    test "falls back to the default when nothing names a timezone" do
+    test "falls back to Berlin when nothing names a timezone" do
       socket = mounting_socket(%{}, false)
 
       assert TimezoneHelpers.assign_user_timezone(socket, %{}).assigns.user_timezone ==
-               "Europe/Tallinn"
+               "Europe/Berlin"
     end
   end
 end

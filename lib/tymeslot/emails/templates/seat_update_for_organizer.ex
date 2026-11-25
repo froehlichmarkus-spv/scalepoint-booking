@@ -15,7 +15,7 @@ defmodule Tymeslot.Emails.Templates.SeatUpdateForOrganizer do
   `:original_start_time_owner_tz`, the time the spot moved from.
 
   Like every organiser email, it carries no calendar file: the organiser's
-  calendar holds the slot as one provider event that the scheduler keeps up to
+  calendar holds the slot as one provider event that BookDesk24 keeps up to
   date itself, and an attachment would be imported on top of it as a second
   event by mail servers that process invitations.
   """
