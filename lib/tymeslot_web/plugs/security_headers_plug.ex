@@ -20,6 +20,14 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlug do
 
   @local_hosts ~w(localhost 127.0.0.1)
 
+  # Sales-room video embeds. The URL parser only emits these origins.
+  @video_embed_origins [
+    "https://www.youtube-nocookie.com",
+    "https://www.youtube.com",
+    "https://player.vimeo.com",
+    "https://www.loom.com"
+  ]
+
   # Built once at compile time because this plug runs on every response. See
   # `Hsts` for why the two reaching directives default off.
   @hsts_header Hsts.header(Application.compile_env(:tymeslot, :hsts, []))
@@ -238,7 +246,10 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlug do
       base_connect_sources(env) ++
         recaptcha_origins(recaptcha?, @recaptcha_connect_origins) ++ analytics_origins
 
-    frame_src = ["'self'" | recaptcha_origins(recaptcha?, @recaptcha_frame_origins)]
+    frame_src =
+      ["'self'"] ++
+        @video_embed_origins ++
+        recaptcha_origins(recaptcha?, @recaptcha_frame_origins)
 
     [
       "default-src 'self'",

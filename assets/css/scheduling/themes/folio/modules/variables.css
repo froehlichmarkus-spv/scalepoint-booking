@@ -236,4 +236,13 @@
 
   /* Default meeting pages (shared/components/manage-pages.css). */
   --manage-page-danger-ink: var(--theme-danger);
+
+  /* Host sales room. Colours are the Growth OS pair; CTAs still read
+     --theme-primary so a Pro accent replaces them. */
+  --folio-host-canvas: #f3f5f7;
+  --folio-host-card: #ffffff;
+  --folio-host-ink: #111e32;
+  --folio-host-muted: #65758b;
+  --folio-host-line: #e2e8f0;
+  --folio-host-teal: #469189;
 }

@@ -1,0 +1,258 @@
+/* Host sales room on Folio. The calendar stays in the right column on a
+   wide page and the story scrolls beside it. A short page keeps the
+   "choose a time" button within reach. */
+
+.folio-page:has([data-host-room="on"]) {
+  background: var(--folio-host-canvas);
+  color: var(--folio-host-ink);
+}
+
+.folio-page:has([data-host-room="on"]) .folio-cover,
+.folio-page:has([data-host-room="on"]) .folio-portrait,
+.folio-page:has([data-host-room="on"]) .folio-identity__bio,
+.folio-page:has([data-host-room="on"]) .profile-intro__headline {
+  display: none;
+}
+
+.folio-page:has([data-host-room="on"]) .folio-identity__name {
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  color: var(--folio-host-ink);
+  font-size: var(--theme-font-size-2xl);
+}
+
+.sr-story {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
+.sr-hero__logo,
+.sr-hero__portrait {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: calc(var(--space-2xl) * 2);
+  object-fit: contain;
+  border-radius: var(--radius-control);
+}
+
+.sr-hero__portrait {
+  width: calc(var(--space-2xl) * 2);
+  height: calc(var(--space-2xl) * 2);
+  object-fit: cover;
+  border: var(--border-width-thin) solid var(--folio-host-line);
+}
+
+.sr-hero__title,
+.sr-card h3,
+.sr-cta h3 {
+  margin: 0;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  font-size: var(--theme-font-size-xl);
+  line-height: var(--folio-line-height-heading);
+  color: var(--folio-host-ink);
+}
+
+.sr-hero__sub,
+.sr-card p,
+.sr-cta p,
+.sr-quotes span,
+.sr-files small {
+  margin: 0;
+  color: var(--folio-host-muted);
+  font-size: var(--theme-font-size-sm);
+  line-height: var(--folio-line-height-body);
+}
+
+.sr-card,
+.sr-cta {
+  background: var(--folio-host-card);
+  border: var(--border-width-thin) solid var(--folio-host-line);
+  border-radius: var(--radius-control);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.sr-benefits,
+.sr-gallery,
+.sr-files,
+.sr-quotes,
+.sr-logos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.sr-benefits li {
+  padding-left: var(--space-md);
+  position: relative;
+}
+
+.sr-benefits li::before {
+  content: "";
+  width: var(--space-2xs);
+  height: var(--space-2xs);
+  border-radius: var(--radius-control);
+  background: var(--theme-primary);
+  position: absolute;
+  left: 0;
+  top: var(--space-2xs);
+}
+
+.sr-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-xs);
+}
+
+.sr-gallery img,
+.sr-logos img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--folio-host-canvas);
+}
+
+.sr-logos {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.sr-logos img {
+  width: auto;
+  max-width: calc(var(--space-2xl) * 3);
+  height: calc(var(--space-xl) + var(--space-sm));
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.sr-card iframe,
+.sr-card video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--folio-host-ink);
+}
+
+.sr-files a,
+.sr-cta__button,
+.sr-book-tab {
+  color: var(--theme-on-primary);
+  background: var(--theme-primary);
+  border-radius: var(--radius-control);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sr-files a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.sr-files small {
+  color: var(--theme-on-primary);
+}
+
+.sr-quotes blockquote {
+  margin: 0;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-size: var(--theme-font-size-lg);
+  line-height: var(--folio-line-height-heading);
+  color: var(--folio-host-ink);
+}
+
+.sr-faq details {
+  border-top: var(--border-width-thin) solid var(--folio-host-line);
+  padding-top: var(--space-xs);
+}
+
+.sr-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sr-cta__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.sr-book-tab {
+  display: none;
+}
+
+.sr-view-counter {
+  display: none;
+}
+
+@media (max-width: 63.99rem) {
+  .folio-page:has([data-host-room="on"]) {
+    padding-bottom: calc(var(--space-2xl) * 2);
+  }
+
+  .sr-book-tab {
+    display: flex;
+    position: fixed;
+    left: var(--space-md);
+    right: var(--space-md);
+    bottom: var(--space-md);
+    z-index: 5;
+    justify-content: center;
+    padding: var(--space-sm) var(--space-md);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+@media (min-width: 64rem) {
+  .folio-page:has([data-host-room="on"]) .journey--continuous {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+    column-gap: var(--space-xl);
+    row-gap: var(--space-md);
+    align-items: start;
+    width: min(100%, 76rem);
+    margin-inline: auto;
+    padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+  }
+
+  .folio-page:has([data-host-room="on"]) .folio-masthead,
+  .folio-page:has([data-host-room="on"]) .sr-story,
+  .folio-page:has([data-host-room="on"]) .folio-summary-bar,
+  .folio-page:has([data-host-room="on"]) #offer-step,
+  .folio-page:has([data-host-room="on"]) #length-step,
+  .folio-page:has([data-host-room="on"]) #series-step,
+  .folio-page:has([data-host-room="on"]) #you-step {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .folio-page:has([data-host-room="on"]) #when-step {
+    grid-column: 2;
+    grid-row: 1 / span 16;
+    position: sticky;
+    top: var(--space-md);
+    align-self: start;
+    border: var(--border-width-thin) solid var(--folio-host-line);
+    border-radius: var(--radius-control);
+    background: var(--folio-host-card);
+  }
+}

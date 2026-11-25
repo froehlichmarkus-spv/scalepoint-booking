@@ -23,6 +23,7 @@ defmodule TymeslotWeb.Components.DashboardSidebar do
   attr :profile, :any, default: nil
   attr :automations_allowed, :boolean, default: true
   attr :analytics_allowed, :boolean, default: true
+  attr :sales_room_allowed, :boolean, default: true
   attr :sidebar_extensions, :list, default: []
 
   attr :rail_toggle, :boolean,
@@ -258,6 +259,20 @@ defmodule TymeslotWeb.Components.DashboardSidebar do
                 label={dgettext("dashboard_common", "Booking pages")}
                 rail={@rail}
               />
+
+              <.nav_link
+                patch={~p"/dashboard/sales-room"}
+                current={@current_action}
+                action={:sales_room}
+                locked={!@sales_room_allowed}
+                icon="hero-photo"
+                label={dgettext("dashboard_common", "Sales room")}
+                rail={@rail}
+              >
+                <:trailing>
+                  <.pro_badge :if={!@sales_room_allowed} data-testid="sales-room-pro-badge" />
+                </:trailing>
+              </.nav_link>
 
               <.nav_link
                 patch={~p"/dashboard/languages"}

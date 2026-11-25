@@ -1,0 +1,106 @@
+msgid ""
+msgstr ""
+"Language: de\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "What you leave with"
+msgstr "Was Sie mitnehmen"
+
+msgid "In pictures"
+msgstr "Einblicke"
+
+msgid "Watch"
+msgstr "Film"
+
+msgid "Documents"
+msgstr "Unterlagen"
+
+msgid "What clients say"
+msgstr "Stimmen"
+
+msgid "Trusted by"
+msgstr "Vertrauen"
+
+msgid "Questions"
+msgstr "Fragen"
+
+msgid "Choose a time"
+msgstr "Termin wählen"
+
+msgid "Sales room"
+msgstr "Sales Room"
+
+msgid "Booking page"
+msgstr "Buchungsseite"
+
+msgid "Your link"
+msgstr "Ihr Link"
+
+msgid "Event type"
+msgstr "Terminart"
+
+msgid "Whole page"
+msgstr "Ganze Seite"
+
+msgid "Hero"
+msgstr "Kopf"
+
+msgid "Benefits"
+msgstr "Nutzen"
+
+msgid "Gallery"
+msgstr "Galerie"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Brochures"
+msgstr "Unterlagen"
+
+msgid "Testimonials"
+msgstr "Stimmen"
+
+msgid "Logos"
+msgstr "Logos"
+
+msgid "FAQ"
+msgstr "Fragen"
+
+msgid "Closing"
+msgstr "Abschluss"
+
+msgid "On"
+msgstr "An"
+
+msgid "Off"
+msgstr "Aus"
+
+msgid "Headline"
+msgstr "Überschrift"
+
+msgid "Subline"
+msgstr "Unterzeile"
+
+msgid "Logo alt text"
+msgstr "Alt-Text zum Logo"
+
+msgid "Show profile photo when there is no logo"
+msgstr "Profilbild zeigen, wenn kein Logo da ist"
+
+msgid "Remove logo"
+msgstr "Logo entfernen"
+
+msgid "Accent colour"
+msgstr "Akzentfarbe"
+
+msgid "Preview"
+msgstr "Vorschau"
+
+msgid "%{views} page views"
+msgstr "%{views} Seitenaufrufe"
+
+msgid "%{downloads} PDF downloads"
+msgstr "%{downloads} PDF-Downloads"
+
+msgid "A short page beside the calendar. One promise, a little proof, then a time. Turn a block off and the calendar stays."
+msgstr "Eine kurze Seite neben dem Kalender. Ein Versprechen, ein wenig Beweis, dann eine Zeit. Ein Block aus, und der Kalender bleibt."

@@ -177,7 +177,9 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlugProdTest do
       assert directives["script-src"] == "'self' 'nonce-#{nonce}'"
       assert directives["img-src"] == "'self' data:"
       assert directives["connect-src"] == "'self' #{socket_origin}"
-      assert directives["frame-src"] == "'self'"
+
+      assert directives["frame-src"] ==
+               "'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://www.loom.com"
 
       assert directives["form-action"] ==
                "'self' https://accounts.google.com https://github.com https://billing.stripe.com https://checkout.stripe.com https://connect.stripe.com"
@@ -196,7 +198,9 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlugProdTest do
 
       assert directives["img-src"] == "'self' data:"
       assert directives["connect-src"] == "'self' #{socket_origin} https://www.google.com"
-      assert directives["frame-src"] == "'self' https://www.google.com"
+
+      assert directives["frame-src"] ==
+               "'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://www.loom.com https://www.google.com"
     end
 
     test "adds the reCAPTCHA origins while only signup reCAPTCHA is active", %{conn: conn} do
@@ -204,7 +208,8 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlugProdTest do
 
       {directives, _nonce} = directives(conn)
 
-      assert directives["frame-src"] == "'self' https://www.google.com"
+      assert directives["frame-src"] ==
+               "'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://www.loom.com https://www.google.com"
     end
 
     test "leaves the reCAPTCHA origins out while it is enabled but has no keys", %{conn: conn} do
@@ -214,7 +219,8 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlugProdTest do
 
       {directives, _nonce} = directives(conn)
 
-      assert directives["frame-src"] == "'self'"
+      assert directives["frame-src"] ==
+               "'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://www.loom.com"
     end
   end
 end

@@ -31,7 +31,9 @@ defmodule TymeslotWeb.Themes.Shared.Customization.Helpers do
     assign(
       socket,
       :theme_tokens,
-      BookingChrome.present(user_id, customization, tokens)
+      tokens
+      |> BookingChrome.present(user_id, customization)
+      |> BookingChrome.apply_accent(Tymeslot.SalesRooms.accent_for(profile))
     )
   end
 

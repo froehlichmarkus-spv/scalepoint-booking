@@ -238,6 +238,7 @@ defmodule TymeslotWeb.DashboardLive do
       integration_status={@integration_status}
       automations_allowed={@automations_allowed}
       analytics_allowed={@analytics_allowed}
+      sales_room_allowed={@sales_room_allowed}
       full_width={@live_action == :calendar}
       compact_nav={@live_action == :calendar}
       focus={@calendar_focus_active}

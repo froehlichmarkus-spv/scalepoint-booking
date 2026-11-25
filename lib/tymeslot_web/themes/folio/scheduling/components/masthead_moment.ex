@@ -29,8 +29,28 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
 
   @long_bio_graphemes 300
 
+  alias Tymeslot.SalesRooms
+  alias TymeslotWeb.SalesRooms.Story
+
   @impl Phoenix.LiveComponent
-  defdelegate update(assigns, socket), to: StepEvents
+  def update(assigns, socket) do
+    {:ok, socket} = StepEvents.update(assigns, socket)
+    key = {profile_id(assigns[:organizer_profile]), type_id(assigns[:meeting_type])}
+
+    socket =
+      if socket.assigns[:host_room_key] == key do
+        socket
+      else
+        socket
+        |> assign(:host_room_key, key)
+        |> assign(
+          :host_room,
+          SalesRooms.public_room(assigns[:organizer_profile], assigns[:meeting_type])
+        )
+      end
+
+    {:ok, socket}
+  end
 
   @impl Phoenix.LiveComponent
   defdelegate handle_event(event, params, socket), to: StepEvents
@@ -38,12 +58,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
   @impl Phoenix.LiveComponent
   def render(assigns) do
     assigns =
-      assign(
-        assigns,
+      assigns
+      |> assign(
         :jump?,
-        assigns.meeting_types != [] and is_nil(assigns.meeting_type) and
-          long_bio?(assigns.organizer_profile)
+        assigns[:meeting_types] != [] and is_nil(assigns[:meeting_type]) and
+          long_bio?(assigns[:organizer_profile])
       )
+      |> assign(:count_views?, assigns[:owner_preview] != true)
+      |> assign(:host_room, assigns[:host_room])
 
     ~H"""
     <section
@@ -52,6 +74,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
       data-moment={@moment}
       data-moment-state={@moment_state}
       data-locale={@locale}
+      data-host-room={if @host_room, do: "on", else: "off"}
     >
       <Masthead.masthead
         variant={:full}
@@ -60,7 +83,11 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
         username_context={@username_context}
       >
         <:after_intro>
-          <TymeslotWeb.Brands.SalesRoom.panel profile={@organizer_profile} locale={@locale} />
+          <TymeslotWeb.Brands.SalesRoom.panel
+            :if={is_nil(@host_room)}
+            profile={@organizer_profile}
+            locale={@locale}
+          />
         </:after_intro>
         <:after_intro :if={@jump?}>
           <a href="#offer-step" class="folio-jump" data-testid="folio-jump-to-offer">
@@ -73,6 +100,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
           </a>
         </:after_intro>
       </Masthead.masthead>
+      <Story.blocks
+        :if={@host_room}
+        room={@host_room}
+        profile={@organizer_profile}
+        locale={@locale}
+        calendar_href={if @meeting_type, do: "#when-step", else: "#offer-step"}
+        count?={@count_views?}
+      />
       <div :if={@meeting_type} class="folio-summary-bar" data-testid="folio-summary-bar">
         <span :if={@organizer_profile} class="folio-summary-bar__person">
           <img
@@ -106,4 +141,10 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
   end
 
   defp long_bio?(_no_profile), do: false
+
+  defp profile_id(%{id: id}) when is_integer(id), do: id
+  defp profile_id(_), do: nil
+
+  defp type_id(%{id: id}) when is_integer(id), do: id
+  defp type_id(_), do: nil
 end

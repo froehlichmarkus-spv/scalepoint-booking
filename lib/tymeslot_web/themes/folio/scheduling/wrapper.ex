@@ -50,13 +50,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   @spec folio_wrapper(map()) :: Phoenix.LiveView.Rendered.t()
   def folio_wrapper(assigns) do
     brand = resolve_brand(assigns)
-    Tymeslot.Brands.bind(brand)
+    Tymeslot.Brands.bind(brand || Tymeslot.Brands.neutral_default())
 
     assigns =
       assigns
       |> prepare_wrapper_assigns()
       |> assign(theme_id: theme_id(), mode: mode(assigns.theme_tokens))
-      |> assign(brand: brand, brand_style: Tymeslot.Brands.css(brand))
+      |> assign(brand: brand, brand_style: brand && Tymeslot.Brands.css(brand))
+      |> assign(:sales_accent, sales_accent(assigns[:organizer_user_id]))
 
     ~H"""
     <ThemeShell.theme_shell
@@ -66,12 +67,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
     >
       <div
         class="booker-page folio-page"
-        data-brand={@brand.key}
-        data-layout={@brand.layout}
-        data-portrait={if(@brand.portrait, do: "on", else: "off")}
-        data-copy="1"
+        data-brand={@brand && @brand.key}
+        data-layout={@brand && @brand.layout}
+        data-portrait={@brand && if(@brand.portrait, do: "on", else: "off")}
+        data-copy={@brand && "1"}
+        data-sales-accent={@sales_accent}
+        style={accent_style(@sales_accent)}
       >
-        <style>
+        <style :if={@brand_style}>
           {@brand_style}
         </style>
         <div class="content-area">
@@ -95,7 +98,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
           {Map.take(assigns, [:demo_mode])}
         />
         <LegalLinks.footer links={@legal_links} />
-        <p :if={Tymeslot.Brands.powered_by(@brand)} class="room-powered">
+        <p :if={@brand && Tymeslot.Brands.powered_by(@brand)} class="room-powered">
           {Tymeslot.Brands.powered_by(@brand)}
         </p>
         <p class="room-source"><a href="/source">AGPLv3 source</a></p>
@@ -120,12 +123,26 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
 
   defp resolve_brand(assigns) do
     Tymeslot.Brands.for_user_id(assigns[:organizer_user_id]) ||
-      Tymeslot.Brands.for_username(assigns[:username_context]) ||
-      Tymeslot.Brands.neutral_default()
+      Tymeslot.Brands.for_username(assigns[:username_context])
   end
 
   defp theme_id do
     {:ok, id} = Catalog.key_to_id(:folio)
     id
   end
+
+  defp sales_accent(user_id) when is_integer(user_id) do
+    case Tymeslot.SalesRooms.accent_for_user(user_id) do
+      "#" <> _ = hex -> hex
+      _ -> nil
+    end
+  end
+
+  defp sales_accent(_), do: nil
+
+  defp accent_style("#" <> _ = hex) do
+    "--theme-primary: #{hex}; --theme-primary-hover: #{hex}; --theme-primary-solid: #{hex}; --theme-primary-solid-hover: #{hex}; --theme-accent: #{hex}; --theme-accent-solid: #{hex}; --spv-teal: #{hex};"
+  end
+
+  defp accent_style(_), do: nil
 end

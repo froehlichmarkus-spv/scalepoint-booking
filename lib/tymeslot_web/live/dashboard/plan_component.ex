@@ -119,13 +119,17 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
               <th>{dgettext("plans", "Feature")}</th>
               <th>Free</th>
               <th>Pro</th>
+              <th>
+                Team <span class="gos-plan-muted">{dgettext("plans", "Coming soon")}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr :for={{label, free, pro} <- @rows}>
+            <tr :for={{label, free, pro, team} <- @rows}>
               <td>{label}</td>
               <td>{free}</td>
               <td>{pro}</td>
+              <td>{team}</td>
             </tr>
           </tbody>
         </table>
@@ -176,19 +180,39 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   end
 
   defp comparison_rows do
-    [
-      {dgettext("plans", "Event types"), "1", dgettext("plans", "Unlimited")},
-      {dgettext("plans", "Calendars"), "1", dgettext("plans", "Unlimited")},
-      {dgettext("plans", "Google Calendar"), dgettext("plans", "One"),
-       dgettext("plans", "Unlimited")},
-      {dgettext("plans", "Google Meet, Zoom, Teams"), "—", dgettext("plans", "Included")},
-      {dgettext("plans", "Group, polls, recurring"), "—", dgettext("plans", "Included")},
-      {dgettext("plans", "Payments, webhooks, reminders"), "—", dgettext("plans", "Included")},
-      {dgettext("plans", "Powered by BookDesk24"), dgettext("plans", "Always"),
-       dgettext("plans", "Hidden")},
-      {dgettext("plans", "Your logo and accent"), "—", dgettext("plans", "On your booking page")}
+    soon = dgettext("plans", "Coming soon")
+    included = dgettext("plans", "Included")
+    unlimited = dgettext("plans", "Unlimited")
+
+    quotas = [
+      {dgettext("plans", "Event types"), "1", unlimited, soon},
+      {dgettext("plans", "Calendars"), "1", unlimited, soon},
+      {dgettext("plans", "Google Calendar"), dgettext("plans", "One"), unlimited, soon},
+      {dgettext("plans", "Google Meet, Zoom, Teams"), "—", included, soon},
+      {dgettext("plans", "Group, polls, recurring"), "—", included, soon},
+      {dgettext("plans", "Payments, webhooks, reminders"), "—", included, soon}
     ]
+
+    quotas ++
+      Enum.map(Plans.catalog(), fn row ->
+        {catalog_label(row.key), cell(row.free), cell(row.pro), cell(row.team)}
+      end)
   end
+
+  defp cell(true), do: dgettext("plans", "Included")
+  defp cell(false), do: "—"
+  defp cell(:coming_soon), do: dgettext("plans", "Coming soon")
+
+  defp catalog_label(:standard_booking), do: dgettext("plans", "Online booking")
+  defp catalog_label(:short_link), do: dgettext("plans", "Short booking link")
+  defp catalog_label(:profile_intro), do: dgettext("plans", "Profile photo and short text")
+  defp catalog_label(:calendar), do: dgettext("plans", "Calendar")
+  defp catalog_label(:powered_by_badge), do: dgettext("plans", "Powered by BookDesk24")
+  defp catalog_label(:sales_room), do: dgettext("plans", "Sales room")
+  defp catalog_label(:sales_room_media), do: dgettext("plans", "Photos, video, PDFs and quotes")
+  defp catalog_label(:custom_logo), do: dgettext("plans", "Your logo")
+  defp catalog_label(:custom_accent), do: dgettext("plans", "Your accent colour")
+  defp catalog_label(_), do: dgettext("plans", "Feature")
 
   defp success_url, do: "/dashboard/plan?checkout=success"
   defp cancel_url, do: "/dashboard/plan?checkout=cancel"

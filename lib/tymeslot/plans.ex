@@ -25,10 +25,29 @@ defmodule Tymeslot.Plans do
     automations_allowed: false,
     booking_pages_allowed: false,
     custom_questions_allowed: true,
-    analytics_allowed: true
+    analytics_allowed: true,
+    sales_room_allowed: false,
+    custom_logo_allowed: false,
+    custom_accent_allowed: false,
+    powered_by_badge: true
   }
 
-  @pro_features Map.new(@free_features, fn {key, _} -> {key, true} end)
+  @pro_features @free_features
+                |> Map.new(fn {key, _} -> {key, true} end)
+                |> Map.put(:powered_by_badge, false)
+
+  # Marketing reads this. `:team` is not a live entitlement: Phase 2 only.
+  @catalog [
+    %{key: :standard_booking, free: true, pro: true, team: :coming_soon},
+    %{key: :short_link, free: true, pro: true, team: :coming_soon},
+    %{key: :profile_intro, free: true, pro: true, team: :coming_soon},
+    %{key: :calendar, free: true, pro: true, team: :coming_soon},
+    %{key: :powered_by_badge, free: true, pro: false, team: :coming_soon},
+    %{key: :sales_room, free: false, pro: true, team: :coming_soon},
+    %{key: :sales_room_media, free: false, pro: true, team: :coming_soon},
+    %{key: :custom_logo, free: false, pro: true, team: :coming_soon},
+    %{key: :custom_accent, free: false, pro: true, team: :coming_soon}
+  ]
 
   @doc "True when plan gating is switched on for this instance."
   @spec enabled?() :: boolean()
@@ -63,6 +82,12 @@ defmodule Tymeslot.Plans do
   end
 
   def features(_), do: features(:free)
+
+  @doc """
+  Plan matrix for pricing pages. `team: :coming_soon` is a label only.
+  """
+  @spec catalog() :: [map()]
+  def catalog, do: @catalog
 
   @spec feature?(:free | :pro, atom()) :: boolean()
   def feature?(plan, feature) when is_atom(feature) do

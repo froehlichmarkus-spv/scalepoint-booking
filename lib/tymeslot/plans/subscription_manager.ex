@@ -14,7 +14,7 @@ defmodule Tymeslot.Plans.SubscriptionManager do
 
   @impl true
   def should_show_branding?(user_id) when is_integer(user_id) do
-    Plans.enabled?() and Plans.effective_plan(user_id) == :free
+    Plans.enabled?() and Plans.feature?(Plans.effective_plan(user_id), :powered_by_badge)
   end
 
   def should_show_branding?(_), do: false

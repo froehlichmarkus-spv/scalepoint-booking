@@ -18,6 +18,7 @@ defmodule TymeslotWeb.Router do
     pipe_through :browser
 
     get "/source", SourceController, :show
+    get "/downloads/sales-room/:room_id/:file_id", SalesRoomFileController, :show
   end
 
   # Public free/busy feed — token-gated, declared early so it wins over the
@@ -321,6 +322,7 @@ defmodule TymeslotWeb.Router do
       live "/dashboard/integrations", DashboardLive, :integrations
       live "/dashboard/automation", DashboardLive, :automation
       live "/dashboard/pages", DashboardLive, :theme
+      live "/dashboard/sales-room", DashboardLive, :sales_room
       live "/dashboard/pages/customize/:theme_id", DashboardLive, :theme_customization
       live "/dashboard/meetings", DashboardLive, :meetings
       live "/dashboard/polls", DashboardLive, :polls

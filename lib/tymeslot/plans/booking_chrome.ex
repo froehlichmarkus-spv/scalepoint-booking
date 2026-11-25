@@ -19,11 +19,15 @@ defmodule Tymeslot.Plans.BookingChrome do
       not Plans.enabled?() ->
         tokens
 
-      not is_integer(user_id) or Plans.effective_plan(user_id) != :pro ->
+      not is_integer(user_id) or
+          not Plans.feature?(Plans.effective_plan(user_id), :custom_logo_allowed) ->
         strip_logo(tokens)
 
-      true ->
+      Plans.feature?(Plans.effective_plan(user_id), :custom_accent_allowed) ->
         put_accent(tokens, accent_hex(customization))
+
+      true ->
+        tokens
     end
   end
 
@@ -32,13 +36,24 @@ defmodule Tymeslot.Plans.BookingChrome do
   @doc "Pro may store a booking-page logo and accent. Turning a logo off is always allowed."
   @spec branding_change_allowed?(integer() | nil, atom(), term(), term()) :: boolean()
   def branding_change_allowed?(user_id, group, field, value) do
+    plan = if is_integer(user_id), do: Plans.effective_plan(user_id), else: :free
+
     cond do
       not Plans.enabled?() -> true
       group == :logo and clearing_logo?(field, value) -> true
-      group in [:logo, :accent] and Plans.effective_plan(user_id) != :pro -> false
+      group == :logo and not Plans.feature?(plan, :custom_logo_allowed) -> false
+      group == :accent and not Plans.feature?(plan, :custom_accent_allowed) -> false
       true -> true
     end
   end
+
+  @doc "Paints CTAs with a host accent. `nil` leaves the tokens alone."
+  @spec apply_accent(Tokens.t(), String.t() | nil) :: Tokens.t()
+  def apply_accent(%Tokens{} = tokens, hex) when is_binary(hex) do
+    if valid_hex?(hex), do: put_accent(tokens, hex), else: tokens
+  end
+
+  def apply_accent(tokens, _), do: tokens
 
   defp strip_logo(%Tokens{media: media} = tokens) do
     %{tokens | media: Map.delete(media || %{}, :logo)}
@@ -47,10 +62,18 @@ defmodule Tymeslot.Plans.BookingChrome do
   defp put_accent(tokens, nil), do: tokens
 
   defp put_accent(%Tokens{vars: vars, dark_vars: dark} = tokens, hex) do
+    strong = mix(hex, -0.18)
+
     override = %{
       "--spv-teal" => hex,
-      "--spv-teal-strong" => mix(hex, -0.18),
-      "--spv-teal-light" => mix(hex, 0.28)
+      "--spv-teal-strong" => strong,
+      "--spv-teal-light" => mix(hex, 0.28),
+      "--theme-primary" => hex,
+      "--theme-primary-hover" => strong,
+      "--theme-primary-solid" => hex,
+      "--theme-primary-solid-hover" => strong,
+      "--theme-accent" => hex,
+      "--theme-accent-solid" => hex
     }
 
     %{tokens | vars: Map.merge(vars, override), dark_vars: Map.merge(dark, override)}
