@@ -828,13 +828,13 @@ msgstr "Questa prenotazione non può più essere spostata all'orario del suo cal
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler is still updating your calendar for this booking. Please try again in a moment."
-msgstr "the scheduler sta ancora aggiornando il tuo calendario per questa prenotazione. Riprova tra un attimo."
+msgid "Tymeslot is still updating your calendar for this booking. Please try again in a moment."
+msgstr "Tymeslot sta ancora aggiornando il tuo calendario per questa prenotazione. Riprova tra un attimo."
 
 #: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Your calendar now has this meeting at %{time}. the scheduler will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
-msgstr "Il tuo calendario ora ha questa riunione a %{time}. the scheduler sposterà la prenotazione a quell'orario, riprogrammerà i promemoria e avviserà via email %{attendee_name} e gli eventuali ospiti del nuovo orario."
+msgid "Your calendar now has this meeting at %{time}. Tymeslot will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
+msgstr "Il tuo calendario ora ha questa riunione a %{time}. Tymeslot sposterà la prenotazione a quell'orario, riprogrammerà i promemoria e avviserà via email %{attendee_name} e gli eventuali ospiti del nuovo orario."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
@@ -843,8 +843,8 @@ msgstr "La riunione è stata spostata di nuovo nel tuo calendario. Controlla il 
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler could not move this booking. Please try again."
-msgstr "the scheduler non è riuscito a spostare questa prenotazione. Riprova."
+msgid "Tymeslot could not move this booking. Please try again."
+msgstr "Tymeslot non è riuscito a spostare questa prenotazione. Riprova."
 
 #: lib/tymeslot_web/components/dashboard/meetings/host_move_modal.ex
 #, elixir-autogen, elixir-format

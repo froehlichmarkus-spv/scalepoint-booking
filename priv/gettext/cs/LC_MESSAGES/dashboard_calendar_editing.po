@@ -753,8 +753,8 @@ msgstr "Váš kalendář je potřeba připojit znovu. Připojte jej prosím na s
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Žádný (jen the scheduler)"
+msgid "None (Tymeslot only)"
+msgstr "Žádný (jen Tymeslot)"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
@@ -862,8 +862,8 @@ msgstr "Barva"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
-msgstr "Pro odeslání schůzky the scheduler přidejte hosta."
+msgid "Add a guest to send a Tymeslot meeting."
+msgstr "Pro odeslání schůzky Tymeslot přidejte hosta."
 
 #: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
 #, elixir-autogen, elixir-format

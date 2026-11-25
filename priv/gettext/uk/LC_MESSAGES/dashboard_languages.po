@@ -400,7 +400,7 @@ msgstr "Введіть переклад (%{language})"
 
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
 #, elixir-autogen, elixir-format
-msgid "Invitees can choose any language the scheduler supports. Turn this off to choose the languages yourself."
+msgid "Invitees can choose any language Tymeslot supports. Turn this off to choose the languages yourself."
 msgstr "Гості можуть вибрати будь-яку мову, яку підтримує Tymeslot. Вимкніть, щоб вибрати мови самостійно."
 
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex

@@ -58,7 +58,7 @@ msgstr "Dodaj typ spotkania"
 
 #: lib/tymeslot_web/live/dashboard/calendar/treat_as.ex
 #, elixir-autogen, elixir-format
-msgid "Affects the scheduler bookings only. Your calendar doesn't change."
+msgid "Affects Tymeslot bookings only. Your calendar doesn't change."
 msgstr "Dotyczy tylko rezerwacji w Tymeslot. Kalendarz się nie zmienia."
 
 #: lib/tymeslot_web/live/dashboard/calendar/bookable_strings.ex
@@ -392,8 +392,8 @@ msgstr "Przy rezerwacjach traktowane jako wolne. Goście mogą zarezerwować ten
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking · %{calendar}"
-msgstr "Rezerwacja the scheduler · %{calendar}"
+msgid "Tymeslot booking · %{calendar}"
+msgstr "Rezerwacja Tymeslot · %{calendar}"
 
 #: lib/tymeslot_web/live/dashboard/calendar/block_time.ex
 #, elixir-autogen, elixir-format
@@ -457,10 +457,10 @@ msgstr "Przenoszenie…"
 
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar to add events, or use More options to send a the scheduler meeting."
+msgid "Connect a calendar to add events, or use More options to send a Tymeslot meeting."
 msgstr "Podłącz kalendarz, aby dodawać wydarzenia, albo wybierz „Więcej opcji” i wyślij spotkanie Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
 #, elixir-autogen, elixir-format
-msgid "Your calendars are read-only. Connect one you can write to, or use More options to send a the scheduler meeting."
+msgid "Your calendars are read-only. Connect one you can write to, or use More options to send a Tymeslot meeting."
 msgstr "Twoje kalendarze są tylko do odczytu. Podłącz taki, w którym można zapisywać, albo wybierz „Więcej opcji” i wyślij spotkanie Tymeslot."

@@ -256,8 +256,8 @@ msgstr "Забагато нових зустрічей. Будь ласка, з�
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Цю зустріч організовує хтось інший, тому the scheduler не може перенести чи розділити серію, до якої вас лише запросили."
+msgid "Someone else organises this meeting, so Tymeslot can't move or split a series you were only invited to."
+msgstr "Цю зустріч організовує хтось інший, тому Tymeslot не може перенести чи розділити серію, до якої вас лише запросили."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format

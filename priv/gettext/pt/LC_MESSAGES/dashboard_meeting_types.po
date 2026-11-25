@@ -584,8 +584,8 @@ msgstr "Usado"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
-msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Cada link agenda um único compromisso. O the scheduler não envia e-mails: copie o link e envie você mesmo."
+msgid "Each link books one appointment. Tymeslot sends no email: copy the link and send it yourself."
+msgstr "Cada link agenda um único compromisso. O Tymeslot não envia e-mails: copie o link e envie você mesmo."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format

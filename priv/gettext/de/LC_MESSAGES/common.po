@@ -133,8 +133,8 @@ msgstr "Diese Zeitzone wird für Ihre Verfügbarkeit und Terminplanung verwendet
 
 #: lib/tymeslot_web/components/core_components/brand.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler logo"
-msgstr "the scheduler-Logo"
+msgid "Tymeslot logo"
+msgstr "Tymeslot-Logo"
 
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format

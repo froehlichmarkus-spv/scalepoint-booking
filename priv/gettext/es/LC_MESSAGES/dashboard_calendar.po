@@ -698,8 +698,8 @@ msgstr "Es demasiado tarde para deshacer: «%{title}» ya se eliminó."
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Reserva de the scheduler"
+msgid "Tymeslot booking"
+msgstr "Reserva de Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format

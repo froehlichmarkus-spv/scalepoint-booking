@@ -78,7 +78,7 @@ defmodule Tymeslot.Brands.Assembly do
       chrome_logo: public_path(Map.get(map, "chrome_logo") || Map.get(map, "logo")),
       favicon: public_path(Map.get(map, "favicon")),
       portrait: Map.get(map, "portrait") == true,
-      accent: hex(Map.get(map, "accent"), "#3E5C76"),
+      accent: hex(Map.get(map, "accent"), nil),
       colors: Map.get(map, "colors") || %{},
       fonts: Map.get(map, "fonts") || %{},
       hosts: List.wrap(Map.get(map, "hosts")),

@@ -256,8 +256,8 @@ msgstr "Příliš mnoho nových schůzek. Počkejte prosím chvíli."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Tuto schůzku organizuje někdo jiný, takže the scheduler nemůže přesunout ani rozdělit sérii, na kterou jste byli jen pozváni."
+msgid "Someone else organises this meeting, so Tymeslot can't move or split a series you were only invited to."
+msgstr "Tuto schůzku organizuje někdo jiný, takže Tymeslot nemůže přesunout ani rozdělit sérii, na kterou jste byli jen pozváni."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format

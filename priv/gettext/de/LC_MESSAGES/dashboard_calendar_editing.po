@@ -751,8 +751,8 @@ msgstr "Ihr Kalender muss erneut verbunden werden. Bitte verbinden Sie ihn auf d
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Keiner (nur the scheduler)"
+msgid "None (Tymeslot only)"
+msgstr "Keiner (nur Tymeslot)"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
@@ -859,8 +859,8 @@ msgstr "Farbe"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
-msgstr "Fügen Sie einen Gast hinzu, um einen the scheduler-Termin zu senden."
+msgid "Add a guest to send a Tymeslot meeting."
+msgstr "Fügen Sie einen Gast hinzu, um einen Tymeslot-Termin zu senden."
 
 #: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
 #, elixir-autogen, elixir-format

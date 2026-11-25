@@ -68,9 +68,15 @@ defmodule Tymeslot.Emails.Branding do
   """
   @spec brand_name() :: String.t()
   def brand_name do
-    case Brands.mail_identity() do
-      %{name: name} when is_binary(name) and name != "" -> name
-      _unused -> AppSettings.get(:email_brand_name)
+    case AppSettings.get(:email_brand_name) do
+      name when is_binary(name) and name != "" ->
+        name
+
+      _setting ->
+        case Brands.mail_identity() do
+          %{name: name} when is_binary(name) and name != "" -> name
+          _brand -> "Tymeslot"
+        end
     end
   end
 
@@ -80,9 +86,15 @@ defmodule Tymeslot.Emails.Branding do
   """
   @spec accent() :: String.t() | nil
   def accent do
-    case Brands.mail_identity() do
-      %{accent: hex} when is_binary(hex) and hex != "" -> hex
-      _unused -> AppSettings.get(:email_brand_accent)
+    case AppSettings.get(:email_brand_accent) do
+      hex when is_binary(hex) and hex != "" ->
+        hex
+
+      _setting ->
+        case Brands.mail_identity() do
+          %{accent: hex} when is_binary(hex) and hex != "" -> hex
+          _brand -> nil
+        end
     end
   end
 

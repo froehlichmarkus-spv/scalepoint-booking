@@ -731,8 +731,8 @@ msgstr "Za późno na cofnięcie: „%{title}” zostało już usunięte."
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Rezerwacja the scheduler"
+msgid "Tymeslot booking"
+msgstr "Rezerwacja Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format

@@ -35,8 +35,8 @@ msgstr "Fermer"
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Connect a calendar the scheduler can write to before importing events."
-msgstr "Connectez un calendrier dans lequel the scheduler peut écrire avant d’importer des événements."
+msgid "Connect a calendar Tymeslot can write to before importing events."
+msgstr "Connectez un calendrier dans lequel Tymeslot peut écrire avant d’importer des événements."
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format

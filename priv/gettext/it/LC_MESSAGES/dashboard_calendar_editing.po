@@ -751,8 +751,8 @@ msgstr "Il tuo calendario deve essere ricollegato. Ricollegalo dalla pagina Inte
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
-msgid "None (the scheduler only)"
-msgstr "Nessuno (solo the scheduler)"
+msgid "None (Tymeslot only)"
+msgstr "Nessuno (solo Tymeslot)"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
@@ -859,7 +859,7 @@ msgstr "Colore"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
-msgid "Add a guest to send a the scheduler meeting."
+msgid "Add a guest to send a Tymeslot meeting."
 msgstr "Aggiungi un ospite per inviare una riunione Tymeslot."
 
 #: lib/tymeslot_web/live/dashboard/calendar/transfer.ex

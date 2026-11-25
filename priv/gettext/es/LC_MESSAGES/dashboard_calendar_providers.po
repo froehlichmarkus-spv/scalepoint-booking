@@ -400,7 +400,7 @@ msgstr "Color"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
+msgid "How this calendar's events are shown in your Tymeslot calendar."
 msgstr "Cómo se muestran los eventos de este calendario en tu calendario de Tymeslot."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
@@ -483,7 +483,7 @@ msgstr "Sincronizar las horas ocupadas y las reservas con un Exchange Server loc
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "This mailbox is read from and written to: it blocks the times you're already busy, and confirmed bookings are added to the calendar you choose as your booking destination. Exchange does not report which calendars your account may write to, so if you choose one it cannot write to, the first booking sent there fails."
-msgstr "the scheduler lee este buzón y también escribe en él. Así, the scheduler bloquea las horas que ya tienes ocupadas y agrega las reservas confirmadas al calendario que elijas como destino de tus reservas. Exchange no indica en qué calendarios puede escribir tu cuenta. Si eliges uno en el que no puede escribir, fallará la primera reserva que se envíe ahí."
+msgstr "Tymeslot lee este buzón y también escribe en él. Así, Tymeslot bloquea las horas que ya tienes ocupadas y agrega las reservas confirmadas al calendario que elijas como destino de tus reservas. Exchange no indica en qué calendarios puede escribir tu cuenta. Si eliges uno en el que no puede escribir, fallará la primera reserva que se envíe ahí."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
@@ -522,8 +522,8 @@ msgstr "Solo horas ocupadas"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Elige qué calendarios usa the scheduler y cuáles bloquean horas en tu página de reservas."
+msgid "Choose which calendars Tymeslot uses, and which of them block times on your booking page."
+msgstr "Elige qué calendarios usa Tymeslot y cuáles bloquean horas en tu página de reservas."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -557,8 +557,8 @@ msgstr "Solo lectura"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "De este calendario solo se compartieron contigo las horas ocupadas. the scheduler puede bloquear esas horas, pero no puede mostrar los eventos."
+msgid "Shared with you as busy times only. Tymeslot can block these times but cannot show the events."
+msgstr "De este calendario solo se compartieron contigo las horas ocupadas. Tymeslot puede bloquear esas horas, pero no puede mostrar los eventos."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format

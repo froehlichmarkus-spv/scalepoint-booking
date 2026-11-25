@@ -451,8 +451,8 @@ msgstr "Użyj zegara 24-godzinnego"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
-msgid "Send as a the scheduler meeting"
-msgstr "Wyślij jako spotkanie the scheduler"
+msgid "Send as a Tymeslot meeting"
+msgstr "Wyślij jako spotkanie Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format

@@ -241,8 +241,8 @@ msgstr "Потрібно ввести ім'я користувача"
 
 #: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! Your account is now set up."
-msgstr "Вітаємо в the scheduler! Ваш обліковий запис налаштовано."
+msgid "Welcome to Tymeslot! Your account is now set up."
+msgstr "Вітаємо в Tymeslot! Ваш обліковий запис налаштовано."
 
 #: lib/tymeslot_web/live/onboarding_live/profile_step.ex
 #, elixir-autogen, elixir-format

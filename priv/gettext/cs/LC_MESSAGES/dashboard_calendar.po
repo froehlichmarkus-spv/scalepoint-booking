@@ -730,8 +730,8 @@ msgstr "Na vrácení je pozdě: událost „%{title}“ už byla smazána."
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Rezervace the scheduler"
+msgid "Tymeslot booking"
+msgstr "Rezervace Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format

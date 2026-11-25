@@ -69,7 +69,7 @@ msgstr "Termin mit %{name}"
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This calendar is read-only. Events on it can't be changed from Tymeslot."
-msgstr "Dieser Kalender ist schreibgeschützt. Ereignisse darin können nicht über the scheduler geändert werden."
+msgstr "Dieser Kalender ist schreibgeschützt. Ereignisse darin können nicht über Tymeslot geändert werden."
 
 #: lib/tymeslot_web/live/dashboard/calendar_event_handlers.ex
 #, elixir-autogen, elixir-format
@@ -254,8 +254,8 @@ msgstr "Zu viele neue Termine. Bitte warten Sie einen Moment."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Diese Besprechung wird von jemand anderem organisiert. the scheduler kann eine Serie, zu der Sie nur eingeladen wurden, nicht verschieben oder aufteilen."
+msgid "Someone else organises this meeting, so Tymeslot can't move or split a series you were only invited to."
+msgstr "Diese Besprechung wird von jemand anderem organisiert. Tymeslot kann eine Serie, zu der Sie nur eingeladen wurden, nicht verschieben oder aufteilen."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format

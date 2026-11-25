@@ -728,8 +728,8 @@ msgstr "Tarde demais para desfazer: o evento “%{title}” já foi excluído."
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler booking"
-msgstr "Agendamento do the scheduler"
+msgid "Tymeslot booking"
+msgstr "Agendamento do Tymeslot"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format

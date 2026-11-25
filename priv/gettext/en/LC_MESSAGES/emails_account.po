@@ -13,7 +13,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
-msgid "A change was requested on your the scheduler account."
+msgid "A change was requested on your Tymeslot account."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/password_reset.ex
@@ -23,7 +23,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
-msgid "A request has been made to change the email address on your the scheduler account. We're letting you know so you can confirm it was you."
+msgid "A request has been made to change the email address on your Tymeslot account. We're letting you know so you can confirm it was you."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
@@ -101,7 +101,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
-msgid "Confirm the new email address on your the scheduler account."
+msgid "Confirm the new email address on your Tymeslot account."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
@@ -176,12 +176,12 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, no further action is needed."
+msgid "For your security, this link expires in 24 hours. If you didn't sign up for Tymeslot, no further action is needed."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email."
+msgid "For your security, this link expires in 24 hours. If you didn't sign up for Tymeslot, you can ignore this email."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
@@ -221,7 +221,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
-msgid "Instructions to reset your the scheduler password."
+msgid "Instructions to reset your Tymeslot password."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/password_reset.ex
@@ -353,13 +353,13 @@ msgstr ""
 #: lib/tymeslot/emails/templates/no_password_to_reset.ex
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Sign In to the scheduler"
+msgid "Sign In to Tymeslot"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/no_password_to_reset.ex
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Sign In to the scheduler:"
+msgid "Sign In to Tymeslot:"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
@@ -369,17 +369,17 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/no_password_to_reset.ex
 #, elixir-autogen, elixir-format
-msgid "Someone asked to reset the password for your the scheduler account, but your account signs in with %{provider}, so it has no password to reset. Use the button below and choose %{provider} to sign in."
+msgid "Someone asked to reset the password for your Tymeslot account, but your account signs in with %{provider}, so it has no password to reset. Use the button below and choose %{provider} to sign in."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new the scheduler account with this email address, which already has an account. If it was you, sign in below, or reset your password if you can't remember it."
+msgid "Someone just tried to create a new Tymeslot account with this email address, which already has an account. If it was you, sign in below, or reset your password if you can't remember it."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new the scheduler account with this email address, which already has an account. If it was you, sign in with %{provider} below."
+msgid "Someone just tried to create a new Tymeslot account with this email address, which already has an account. If it was you, sign in with %{provider} below."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
@@ -421,7 +421,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
 #, elixir-autogen, elixir-format
-msgid "This link expires in 24 hours. If you didn't sign up for the scheduler, you can ignore this email and no account will be created."
+msgid "This link expires in 24 hours. If you didn't sign up for Tymeslot, you can ignore this email and no account will be created."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
@@ -492,17 +492,17 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler"
+msgid "Welcome to Tymeslot"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler - please verify your email."
+msgid "Welcome to Tymeslot - please verify your email."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler!"
+msgid "Welcome to Tymeslot!"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
@@ -522,12 +522,12 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
-msgid "You asked to change the email address on your the scheduler account to %{new_email}."
+msgid "You asked to change the email address on your Tymeslot account to %{new_email}."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
-msgid "You asked to change the email address on your the scheduler account. Confirm the new address below to finish the switch."
+msgid "You asked to change the email address on your Tymeslot account. Confirm the new address below to finish the switch."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
@@ -542,27 +542,27 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
 #, elixir-autogen, elixir-format
-msgid "You're signing up for the scheduler with %{provider}. Confirm this email address to create your account and sign in."
+msgid "You're signing up for Tymeslot with %{provider}. Confirm this email address to create your account and sign in."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account email address has been successfully changed."
+msgid "Your Tymeslot account email address has been successfully changed."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account email address has been successfully changed. This confirmation is being sent to your previous address so you know the switch happened."
+msgid "Your Tymeslot account email address has been successfully changed. This confirmation is being sent to your previous address so you know the switch happened."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/no_password_to_reset.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account has no password to reset."
+msgid "Your Tymeslot account has no password to reset."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler email address has been changed."
+msgid "Your Tymeslot email address has been changed."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
@@ -592,12 +592,12 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "As you asked, your the scheduler account has been deleted, together with everything in it. This cannot be undone."
+msgid "As you asked, your Tymeslot account has been deleted, together with everything in it. This cannot be undone."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "As you asked, your the scheduler account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account."
+msgid "As you asked, your Tymeslot account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
@@ -607,7 +607,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "If you did not ask for this, contact whoever runs this the scheduler service straight away."
+msgid "If you did not ask for this, contact whoever runs this Tymeslot service straight away."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
@@ -647,12 +647,12 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Your upcoming bookings will be deleted from the scheduler with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
+msgid "Your upcoming bookings will be deleted from Tymeslot with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new the scheduler account with this email address. It belongs to an account that is scheduled for deletion on %{date}. If it was you, sign in before then to restore that account, or sign up again after that date."
+msgid "Someone just tried to create a new Tymeslot account with this email address. It belongs to an account that is scheduled for deletion on %{date}. If it was you, sign in before then to restore that account, or sign up again after that date."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
@@ -662,7 +662,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
-msgid "Email Address Changed - the scheduler Account"
+msgid "Email Address Changed - Tymeslot Account"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
@@ -677,22 +677,22 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
-msgid "You already have a the scheduler account"
+msgid "You already have a Tymeslot account"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account has been deleted"
+msgid "Your Tymeslot account has been deleted"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/no_password_to_reset.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account has no password"
+msgid "Your Tymeslot account has no password"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account is scheduled for deletion"
+msgid "Your Tymeslot account is scheduled for deletion"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
@@ -777,7 +777,7 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
-msgid "You're invited to the scheduler"
+msgid "You're invited to Tymeslot"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
@@ -787,10 +787,10 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
-msgid "An administrator has created a the scheduler account for you. Accept the invitation to choose how you'll sign in and set up your booking page."
+msgid "An administrator has created a Tymeslot account for you. Accept the invitation to choose how you'll sign in and set up your booking page."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
-msgid "Your the scheduler account is ready. Accept the invitation to sign in."
+msgid "Your Tymeslot account is ready. Accept the invitation to sign in."
 msgstr ""

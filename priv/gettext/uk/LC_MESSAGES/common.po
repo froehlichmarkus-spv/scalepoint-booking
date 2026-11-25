@@ -133,8 +133,8 @@ msgstr "Цей часовий пояс використовуватиметьс�
 
 #: lib/tymeslot_web/components/core_components/brand.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler logo"
-msgstr "Логотип the scheduler"
+msgid "Tymeslot logo"
+msgstr "Логотип Tymeslot"
 
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format

@@ -133,8 +133,8 @@ msgstr "Toto časové pásmo se použije pro vaši dostupnost a plánování."
 
 #: lib/tymeslot_web/components/core_components/brand.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler logo"
-msgstr "Logo the scheduler"
+msgid "Tymeslot logo"
+msgstr "Logo Tymeslot"
 
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format

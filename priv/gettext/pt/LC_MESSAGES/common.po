@@ -133,8 +133,8 @@ msgstr "Este fuso horário será usado para sua disponibilidade e seus agendamen
 
 #: lib/tymeslot_web/components/core_components/brand.ex
 #, elixir-autogen, elixir-format
-msgid "the scheduler logo"
-msgstr "Logo do the scheduler"
+msgid "Tymeslot logo"
+msgstr "Logo do Tymeslot"
 
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format

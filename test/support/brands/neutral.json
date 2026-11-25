@@ -1,0 +1,115 @@
+{
+  "key": "neutral",
+  "enabled": false,
+  "default": false,
+  "house_brand": false,
+  "layout": "neutral",
+  "name": "BookDesk24",
+  "product_label": "BookDesk24",
+  "sender_name": "BookDesk24",
+  "sender_email": "booking@bookdesk24.com",
+  "sender_email_env": "NEUTRAL_SENDER_EMAIL",
+  "sender_name_env": "NEUTRAL_SENDER_NAME",
+  "name_env": "NEUTRAL_BRAND_NAME",
+  "footer": "BookDesk24",
+  "footer_env": "NEUTRAL_FOOTER",
+  "powered_by": null,
+  "logo": "/images/brand/neutral-mark.png",
+  "chrome_logo": "/images/brand/neutral-mark.svg",
+  "favicon": "/images/brand/neutral-favicon.svg",
+  "portrait": false,
+  "accent": "#3E5C76",
+  "colors": {
+    "canvas": "#E4DDD2",
+    "card": "#F7F4EF",
+    "card_text": "#1C1B19",
+    "text": "#1C1B19",
+    "muted": "#6E6A62",
+    "accent": "#3E5C76",
+    "accent_strong": "#2C455C"
+  },
+  "fonts": {
+    "body": "Inter",
+    "heading": "Inter"
+  },
+  "hosts": [
+    "book.bookdesk24.com"
+  ],
+  "username": "studio",
+  "owner_email": "host@bookdesk24.com",
+  "owner_name": "Demo Host",
+  "timezone": "Europe/Berlin",
+  "role": "Host",
+  "company": "",
+  "legal": {
+    "notice": "",
+    "privacy": ""
+  },
+  "links": [],
+  "copy": {
+    "en": {
+      "hero": "Pick a time. The confirmation comes from this page.",
+      "bio": "An example booking page. Its name, logo, colours, sender and footer come from configuration, and can be replaced without a code change."
+    },
+    "de": {
+      "hero": "W\u00e4hlen Sie eine Zeit. Die Best\u00e4tigung kommt von dieser Seite.",
+      "bio": "Eine Beispielseite. Name, Logo, Farben, Absender und Fu\u00dfzeile stehen in der Konfiguration und lassen sich ohne Code\u00e4nderung tauschen."
+    }
+  },
+  "services": [],
+  "availability": {
+    "days": {
+      "1": [
+        "09:00",
+        "16:00"
+      ],
+      "2": [
+        "09:00",
+        "16:00"
+      ],
+      "3": [
+        "09:00",
+        "16:00"
+      ],
+      "4": [
+        "09:00",
+        "16:00"
+      ],
+      "5": [
+        "09:00",
+        "12:00"
+      ]
+    },
+    "closed": [
+      6,
+      7
+    ],
+    "buffer_before": 15,
+    "buffer_after": 15,
+    "min_notice_hours": 24
+  },
+  "events": [
+    {
+      "name": "Intro call",
+      "slug": "intro",
+      "minutes": 30,
+      "private": false,
+      "description": "A short first call.",
+      "questions": [
+        "What is this about?"
+      ]
+    },
+    {
+      "name": "Follow-up",
+      "slug": "follow-up",
+      "minutes": 45,
+      "private": true,
+      "description": "A longer follow-up, shared by link only.",
+      "questions": [
+        "What should we pick up?"
+      ]
+    }
+  ],
+  "notify_email": "host@bookdesk24.com",
+  "webhook_url_env": ""
+}

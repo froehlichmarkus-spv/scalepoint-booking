@@ -254,8 +254,8 @@ msgstr "Muitas reuniões novas. Aguarde um momento."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
-msgid "Someone else organises this meeting, so the scheduler can't move or split a series you were only invited to."
-msgstr "Outra pessoa organiza esta reunião, então o the scheduler não pode mover nem dividir a série: você só recebeu o convite."
+msgid "Someone else organises this meeting, so Tymeslot can't move or split a series you were only invited to."
+msgstr "Outra pessoa organiza esta reunião, então o Tymeslot não pode mover nem dividir a série: você só recebeu o convite."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format

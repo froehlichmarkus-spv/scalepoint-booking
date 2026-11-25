@@ -97,7 +97,7 @@ msgstr "Přihlášení přes %{provider} proběhlo úspěšně."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
 #, elixir-autogen, elixir-format
-msgid "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in."
+msgid "This %{provider} account already signs in to another Tymeslot account. Use a different one, or choose another way to sign in."
 msgstr "Tento účet %{provider} už slouží k přihlášení do jiného účtu Tymeslot. Použijte jiný, nebo zvolte jiný způsob přihlášení."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
@@ -142,8 +142,8 @@ msgstr "Odkaz k dokončení registrace se teď nepodařilo odeslat. Zkuste to pr
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! You'll sign in with %{provider}."
-msgstr "Vítejte v aplikaci the scheduler! Budete se přihlašovat přes %{provider}."
+msgid "Welcome to Tymeslot! You'll sign in with %{provider}."
+msgstr "Vítejte v aplikaci Tymeslot! Budete se přihlašovat přes %{provider}."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format

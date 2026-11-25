@@ -314,8 +314,8 @@ msgstr "Fino ad allora è congelato e la tua pagina di prenotazione è offline. 
 
 #: lib/tymeslot_web/live/account_live/danger_zone.ex
 #, elixir-autogen, elixir-format
-msgid "Upcoming bookings are deleted from the scheduler and your guests are not notified."
-msgstr "Le prenotazioni future vengono eliminate da the scheduler e i tuoi ospiti non vengono avvisati."
+msgid "Upcoming bookings are deleted from Tymeslot and your guests are not notified."
+msgstr "Le prenotazioni future vengono eliminate da Tymeslot e i tuoi ospiti non vengono avvisati."
 
 #: lib/tymeslot_web/live/account_live/delete_account_modal.ex
 #, elixir-autogen, elixir-format

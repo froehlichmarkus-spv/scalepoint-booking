@@ -97,7 +97,7 @@ msgstr ""
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
 #, elixir-autogen, elixir-format
-msgid "This %{provider} account already signs in to another the scheduler account. Use a different one, or choose another way to sign in."
+msgid "This %{provider} account already signs in to another Tymeslot account. Use a different one, or choose another way to sign in."
 msgstr ""
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
@@ -142,7 +142,7 @@ msgstr ""
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
 #, elixir-autogen, elixir-format
-msgid "Welcome to the scheduler! You'll sign in with %{provider}."
+msgid "Welcome to Tymeslot! You'll sign in with %{provider}."
 msgstr ""
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex

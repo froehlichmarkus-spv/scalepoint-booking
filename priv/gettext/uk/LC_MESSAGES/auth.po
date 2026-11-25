@@ -132,8 +132,8 @@ msgstr "Недійсний токен скидання"
 
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
-msgid "Join the scheduler"
-msgstr "Приєднуйтеся до the scheduler"
+msgid "Join Tymeslot"
+msgstr "Приєднуйтеся до Tymeslot"
 
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #, elixir-autogen, elixir-format
@@ -155,8 +155,8 @@ msgstr "Увійти"
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
-msgid "Log in to the scheduler"
-msgstr "Увійти в the scheduler"
+msgid "Log in to Tymeslot"
+msgstr "Увійти в Tymeslot"
 
 #: lib/tymeslot_web/controllers/auth/session_controller.ex
 #, elixir-autogen, elixir-format
@@ -403,13 +403,13 @@ msgstr "Створіть новий пароль"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your the scheduler account."
+msgid "Choose a strong new password for your Tymeslot account."
 msgstr "Створіть надійний новий пароль для свого облікового запису Tymeslot."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
-msgstr "Створіть обліковий запис the scheduler і почніть ділитися своєю доступністю вже за кілька хвилин. Кредитна картка не потрібна."
+msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+msgstr "Створіть обліковий запис Tymeslot і почніть ділитися своєю доступністю вже за кілька хвилин. Кредитна картка не потрібна."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
@@ -428,7 +428,7 @@ msgstr "Для завершення реєстрації потрібно вка
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your the scheduler account."
+msgid "Enter your email to receive a password reset link for your Tymeslot account."
 msgstr "Введіть свою електронну адресу, щоб отримати посилання для скидання пароля до облікового запису Tymeslot."
 
 #: lib/tymeslot/auth/registration.ex
@@ -459,8 +459,8 @@ msgstr "Помилка реєстрації через некоректні да
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
-msgstr "Увійдіть до свого облікового запису the scheduler, щоб керувати посиланнями для бронювання, доступністю та бронюваннями."
+msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+msgstr "Увійдіть до свого облікового запису Tymeslot, щоб керувати посиланнями для бронювання, доступністю та бронюваннями."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format

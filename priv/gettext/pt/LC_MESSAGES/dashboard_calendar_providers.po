@@ -400,7 +400,7 @@ msgstr "Cor"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "How this calendar's events are shown in your the scheduler calendar."
+msgid "How this calendar's events are shown in your Tymeslot calendar."
 msgstr "Como os eventos deste calendário aparecem no seu calendário do Tymeslot."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
@@ -522,8 +522,8 @@ msgstr "Só horários ocupados"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Choose which calendars the scheduler uses, and which of them block times on your booking page."
-msgstr "Escolha quais calendários o the scheduler usa e quais deles bloqueiam horários na sua página de agendamento."
+msgid "Choose which calendars Tymeslot uses, and which of them block times on your booking page."
+msgstr "Escolha quais calendários o Tymeslot usa e quais deles bloqueiam horários na sua página de agendamento."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -557,8 +557,8 @@ msgstr "Somente leitura"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
-msgid "Shared with you as busy times only. the scheduler can block these times but cannot show the events."
-msgstr "Compartilhado com você apenas como horários ocupados. O the scheduler pode bloquear esses horários, mas não consegue mostrar os eventos."
+msgid "Shared with you as busy times only. Tymeslot can block these times but cannot show the events."
+msgstr "Compartilhado com você apenas como horários ocupados. O Tymeslot pode bloquear esses horários, mas não consegue mostrar os eventos."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
