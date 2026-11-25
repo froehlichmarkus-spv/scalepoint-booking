@@ -13,9 +13,11 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   """
   use Phoenix.Component
 
+  alias Tymeslot.SalesRooms
   alias Tymeslot.ThemeCustomizations.Tokens
   alias Tymeslot.Themes.Catalog
   alias Tymeslot.Utils.Colour
+  alias TymeslotWeb.SalesRooms.Public
   alias TymeslotWeb.Themes.Shared.Components.{LegalLinks, ThemeShell}
 
   import TymeslotWeb.Themes.Shared.Customization.Helpers, only: [prepare_wrapper_assigns: 1]
@@ -31,6 +33,8 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   attr :offered_locales, :list, default: nil, doc: "the locale codes the organiser offers"
   attr :language_dropdown_open, :boolean, default: nil
   attr :organizer_user_id, :integer, default: nil
+  attr :organizer_profile, :any, default: nil
+  attr :meeting_type, :any, default: nil
   attr :should_show_branding, :boolean, default: false
   attr :show_language_switcher, :boolean, default: nil
   attr :owner_preview, :boolean, default: false
@@ -52,11 +56,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
     brand = resolve_brand(assigns)
     Tymeslot.Brands.bind(brand)
 
+    host_room =
+      SalesRooms.for_public(assigns[:organizer_profile], meeting_type_id(assigns[:meeting_type]))
+
     assigns =
       assigns
       |> prepare_wrapper_assigns()
       |> assign(theme_id: theme_id(), mode: mode(assigns.theme_tokens))
-      |> assign(brand: brand, brand_style: Tymeslot.Brands.css(brand))
+      |> assign(brand: brand, brand_style: Tymeslot.Brands.css(brand), host_room: host_room)
 
     ~H"""
     <ThemeShell.theme_shell
@@ -68,6 +75,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
         class="booker-page folio-page"
         data-brand={@brand.key}
         data-layout={@brand.layout}
+        data-host-room={if(@host_room, do: "1")}
         data-portrait={if(@brand.portrait, do: "on", else: "off")}
         data-copy="1"
       >
@@ -75,16 +83,38 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
           {@brand_style}
         </style>
         <div class="content-area">
-          <ThemeShell.chrome
-            locales={@language_locales}
-            language_class="folio-language"
-            locale={@locale}
-            language_dropdown_open={@language_dropdown_open}
-            show_language_switcher={@show_language_switcher}
-            owner_preview={@owner_preview}
-            refused_calendars={@refused_calendars}
-          />
-          {render_slot(@inner_block)}
+          <%= if @host_room do %>
+            <div class="folio-chrome">
+              <ThemeShell.chrome
+                locales={@language_locales}
+                language_class="folio-language"
+                locale={@locale}
+                language_dropdown_open={@language_dropdown_open}
+                show_language_switcher={@show_language_switcher}
+                owner_preview={@owner_preview}
+                refused_calendars={@refused_calendars}
+              />
+            </div>
+            <Public.story
+              blocks={@host_room.blocks}
+              profile={@organizer_profile}
+              locale={@locale}
+            />
+            <div id="host-room-book" class="host-room-book">
+              {render_slot(@inner_block)}
+            </div>
+          <% else %>
+            <ThemeShell.chrome
+              locales={@language_locales}
+              language_class="folio-language"
+              locale={@locale}
+              language_dropdown_open={@language_dropdown_open}
+              show_language_switcher={@show_language_switcher}
+              owner_preview={@owner_preview}
+              refused_calendars={@refused_calendars}
+            />
+            {render_slot(@inner_block)}
+          <% end %>
         </div>
         <ThemeShell.extensions
           :if={@show_extensions}
@@ -128,4 +158,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
     {:ok, id} = Catalog.key_to_id(:folio)
     id
   end
+
+  defp meeting_type_id(%{id: id}) when is_integer(id), do: id
+  defp meeting_type_id(_type), do: nil
 end

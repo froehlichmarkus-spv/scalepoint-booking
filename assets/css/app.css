@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "../../brand/tokens.css";
 @import "./spv-bridge.css";
+@import "./scheduling/themes/folio/modules/saleroom.css";
 
 /* Import design tokens */
 @import "./base/variables.css";

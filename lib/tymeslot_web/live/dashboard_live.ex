@@ -57,7 +57,7 @@ defmodule TymeslotWeb.DashboardLive do
   require Logger
 
   # The sections showing the Theme screen, which follows booking page changes.
-  @booking_page_actions [:theme, :theme_customization]
+  @booking_page_actions [:theme, :theme_customization, :sales_room]
 
   # The standalone calendar/video/payments pages live as tabs inside the
   # unified integrations hub. Their routes stay defined (deep links, emails and
@@ -238,6 +238,7 @@ defmodule TymeslotWeb.DashboardLive do
       integration_status={@integration_status}
       automations_allowed={@automations_allowed}
       analytics_allowed={@analytics_allowed}
+      sales_room_allowed={@sales_room_allowed}
       full_width={@live_action == :calendar}
       compact_nav={@live_action == :calendar}
       focus={@calendar_focus_active}

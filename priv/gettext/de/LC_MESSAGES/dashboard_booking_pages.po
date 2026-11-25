@@ -17,6 +17,189 @@ msgstr ""
 msgid "Address"
 msgstr "Adresse"
 
+msgid "Sales room"
+msgstr "Sales Room"
+
+msgid "Booking page"
+msgstr "Buchungsseite"
+
+msgid "Event type"
+msgstr "Terminart"
+
+msgid "Whole page"
+msgstr "Ganze Seite"
+
+msgid "Hero"
+msgstr "Hero"
+
+msgid "Offer"
+msgstr "Angebot"
+
+msgid "Gallery"
+msgstr "Galerie"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Documents"
+msgstr "Dokumente"
+
+msgid "Testimonials"
+msgstr "Kundenstimmen"
+
+msgid "Logos"
+msgstr "Logos"
+
+msgid "Questions"
+msgstr "Fragen"
+
+msgid "Closing call"
+msgstr "Abschluss"
+
+msgid "On"
+msgstr "An"
+
+msgid "Off"
+msgstr "Aus"
+
+msgid "Hide block"
+msgstr "Block ausblenden"
+
+msgid "Headline"
+msgstr "Überschrift"
+
+msgid "Subline"
+msgstr "Unterzeile"
+
+msgid "Image description"
+msgstr "Bildbeschreibung"
+
+msgid "Image"
+msgstr "Bild"
+
+msgid "Views %{views}, downloads %{downloads}"
+msgstr "Aufrufe %{views}, Downloads %{downloads}"
+
+msgid "Tell the story beside the calendar. Visitors on a phone get a button that leads to the times."
+msgstr "Erzählen Sie die Geschichte neben dem Kalender. Auf dem Telefon führt ein Button zu den Terminen."
+
+msgid "Sales room is part of Pro"
+msgstr "Der Sales Room ist Teil von Pro"
+
+msgid "Free keeps the calendar and the Powered by BookDesk24 badge. Your text stays here and comes back if you upgrade. Nothing is deleted."
+msgstr "Free behält den Kalender und das Badge „Powered by BookDesk24“. Ihre Texte bleiben hier und erscheinen wieder, sobald Sie upgraden. Nichts wird gelöscht."
+
+msgid "View plans"
+msgstr "Pläne ansehen"
+
+msgid "Use the page again"
+msgstr "Wieder die Seite verwenden"
+
+msgid "This event uses the page. Saving here keeps a version just for it."
+msgstr "Diese Terminart nutzt die Seite. Speichern legt eine eigene Fassung an."
+
+msgid "Move up"
+msgstr "Nach oben"
+
+msgid "Move down"
+msgstr "Nach unten"
+
+msgid "Show block"
+msgstr "Block einblenden"
+
+msgid "Save block"
+msgstr "Block speichern"
+
+msgid "Preview"
+msgstr "Vorschau"
+
+msgid "Nothing is ready to show yet. The page stays a calendar until a block is complete."
+msgstr "Noch ist nichts bereit. Die Seite bleibt ein Kalender, bis ein Block vollständig ist."
+
+msgid "Portrait"
+msgstr "Porträt"
+
+msgid "Logo"
+msgstr "Logo"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "Add point"
+msgstr "Punkt hinzufügen"
+
+msgid "Up to 8 images. JPG, PNG or WebP."
+msgstr "Bis zu 8 Bilder. JPG, PNG oder WebP."
+
+msgid "YouTube, Vimeo or Loom URL"
+msgstr "YouTube-, Vimeo- oder Loom-URL"
+
+msgid "Or an MP4 or WebM up to 40 MB."
+msgstr "Oder ein MP4 oder WebM bis 40 MB."
+
+msgid "Up to 5 PDFs, 20 MB each."
+msgstr "Bis zu 5 PDFs, je 20 MB."
+
+msgid "Quote"
+msgstr "Zitat"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Company"
+msgstr "Firma"
+
+msgid "Photo description"
+msgstr "Fotobeschreibung"
+
+msgid "Choose photo"
+msgstr "Foto wählen"
+
+msgid "Add quote"
+msgstr "Zitat hinzufügen"
+
+msgid "Logo description"
+msgstr "Logobeschreibung"
+
+msgid "Question"
+msgstr "Frage"
+
+msgid "Answer"
+msgstr "Antwort"
+
+msgid "Add question"
+msgstr "Frage hinzufügen"
+
+msgid "Button"
+msgstr "Button"
+
+msgid "Describe each image before saving it."
+msgstr "Beschreiben Sie jedes Bild, bevor Sie es speichern."
+
+msgid "That block is full."
+msgstr "Dieser Block ist voll."
+
+msgid "Use a JPG, PNG or WebP image."
+msgstr "Verwenden Sie ein JPG-, PNG- oder WebP-Bild."
+
+msgid "Use an MP4 or WebM video."
+msgstr "Verwenden Sie ein MP4- oder WebM-Video."
+
+msgid "Use a PDF."
+msgstr "Verwenden Sie ein PDF."
+
+msgid "That file is too large."
+msgstr "Diese Datei ist zu groß."
+
+msgid "Could not save this block."
+msgstr "Dieser Block konnte nicht gespeichert werden."
+
 #: lib/tymeslot_web/live/dashboard/theme_settings/pages_component.ex
 #, elixir-autogen, elixir-format
 msgid "Booking page created"

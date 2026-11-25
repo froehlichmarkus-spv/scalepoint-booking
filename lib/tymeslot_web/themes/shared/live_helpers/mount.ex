@@ -14,6 +14,7 @@ defmodule TymeslotWeb.Themes.Shared.LiveHelpers.Mount do
 
   alias Tymeslot.Integrations.Calendar
   alias Tymeslot.Onboarding
+  alias Tymeslot.SalesRooms
 
   alias TymeslotWeb.Live.Scheduling.{
     AvailabilityHelpers,
@@ -125,12 +126,26 @@ defmodule TymeslotWeb.Themes.Shared.LiveHelpers.Mount do
     # the connected mount — the static render would throw the result away, and
     # the calendar degrades gracefully to business-hours availability until the
     # socket connects.
+    socket =
+      if connected?(socket) do
+        AvailabilityHelpers.fetch_month_availability_async(socket)
+      else
+        socket
+      end
+
     if connected?(socket) do
-      AvailabilityHelpers.fetch_month_availability_async(socket)
-    else
-      socket
+      SalesRooms.record_public_view(
+        socket.assigns[:organizer_profile],
+        meeting_type_id(socket.assigns[:meeting_type]),
+        socket.assigns[:owner_preview] == true
+      )
     end
+
+    socket
   end
+
+  defp meeting_type_id(%{id: id}) when is_integer(id), do: id
+  defp meeting_type_id(_type), do: nil
 
   @doc """
   `handle_scheduling_params/2`, given the request's `url`: a patch the page

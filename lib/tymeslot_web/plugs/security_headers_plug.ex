@@ -12,6 +12,7 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlug do
 
   alias Tymeslot.Infrastructure.Security.RecaptchaHelpers
   alias Tymeslot.Profiles
+  alias Tymeslot.SalesRooms.Embeds
   alias Tymeslot.Security.Token
   alias TymeslotWeb.Analytics.Providers, as: AnalyticsProviders
   alias TymeslotWeb.Endpoint
@@ -238,7 +239,9 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlug do
       base_connect_sources(env) ++
         recaptcha_origins(recaptcha?, @recaptcha_connect_origins) ++ analytics_origins
 
-    frame_src = ["'self'" | recaptcha_origins(recaptcha?, @recaptcha_frame_origins)]
+    frame_src =
+      ["'self'" | recaptcha_origins(recaptcha?, @recaptcha_frame_origins)] ++
+        Embeds.frame_origins()
 
     [
       "default-src 'self'",
