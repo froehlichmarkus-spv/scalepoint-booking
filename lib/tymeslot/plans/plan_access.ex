@@ -23,7 +23,7 @@ defmodule Tymeslot.Plans.PlanAccess do
         |> Map.new(fn user_id -> {user_id, paused_ids(user_id)} end)
 
       Enum.reject(meeting_types, fn type ->
-        MapSet.member?(Map.get(paused, type.user_id, MapSet.new()), type.id)
+        type.id in Map.get(paused, type.user_id, [])
       end)
     else
       meeting_types
@@ -33,8 +33,7 @@ defmodule Tymeslot.Plans.PlanAccess do
   @doc "True when this active type is not the one Free still offers."
   @spec paused?(map()) :: boolean()
   def paused?(%{id: id, user_id: user_id}) when is_integer(id) and is_integer(user_id) do
-    Plans.enabled?() and Plans.effective_plan(user_id) == :free and
-      MapSet.member?(paused_ids(user_id), id)
+    Plans.enabled?() and Plans.effective_plan(user_id) == :free and id in paused_ids(user_id)
   end
 
   def paused?(_unused15), do: false
@@ -47,7 +46,7 @@ defmodule Tymeslot.Plans.PlanAccess do
 
   def ensure_bookable(_unused23), do: :ok
 
-  @spec paused_ids(integer()) :: MapSet.t()
+  @spec paused_ids(integer()) :: [integer()]
   def paused_ids(user_id) when is_integer(user_id) do
     if Plans.enabled?() and Plans.effective_plan(user_id) == :free do
       types = MeetingTypeQueries.list_active_meeting_types(user_id)
@@ -56,9 +55,9 @@ defmodule Tymeslot.Plans.PlanAccess do
 
       types
       |> Enum.reject(&(&1.id == keeper and not oauth_blocked?(&1, providers)))
-      |> MapSet.new(& &1.id)
+      |> Enum.map(& &1.id)
     else
-      MapSet.new()
+      []
     end
   end
 

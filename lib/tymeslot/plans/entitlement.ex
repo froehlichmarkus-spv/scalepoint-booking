@@ -9,6 +9,8 @@ defmodule Tymeslot.Plans.Entitlement do
 
   alias Tymeslot.Auth.UserSchema
 
+  @type t :: %__MODULE__{}
+
   @plans ~w(free pro)
   @statuses ~w(none trialing active past_due canceled unpaid)
   @intervals ~w(month year)

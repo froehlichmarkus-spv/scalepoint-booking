@@ -4,6 +4,8 @@ defmodule Tymeslot.Plans.WebhookDelivery do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+
   schema "plan_webhook_deliveries" do
     field :event_id, :string
 
