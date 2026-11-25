@@ -57,7 +57,7 @@ defmodule TymeslotWeb.Themes.Folio.OnboardingPreview do
   def card(assigns) do
     assigns =
       assign(assigns,
-        primary: color(assigns.colors, :primary, "#b4532a"),
+        primary: color(assigns.colors, :primary, "#111E32"),
         accent: color(assigns.colors, :accent, "#a0612f"),
         ink: ink(assigns.colors)
       )
@@ -104,7 +104,7 @@ defmodule TymeslotWeb.Themes.Folio.OnboardingPreview do
   # White where it reads on the primary at 4.5:1, otherwise the darker of the
   # scheme's canvas and text, as ContrastTokens picks a filled control's ink.
   defp ink(colors) do
-    primary = color(colors, :primary, "#b4532a")
+    primary = color(colors, :primary, "#111E32")
 
     if Colour.contrast_ratio("#ffffff", primary) >= 4.5 do
       "#ffffff"

@@ -1,6 +1,7 @@
 /* Growth OS bridge. Colour, type and radius live in /brand/tokens.css (shared
    with the CRM). This file only loads the named families and applies the
-   tokens to the app shell: navy sidebar, white cards, teal CTAs. */
+   tokens to the app shell: navy sidebar, white cards, navy primary
+   actions, teal only for links, active states, focus and small badges. */
 
 @font-face {
   font-family: "Inter";
@@ -62,18 +63,34 @@ h1,
 }
 
 .action-button--primary,
-.btn-primary,
-.dashboard-nav-link--active,
-.dashboard-sidebar .dashboard-nav-link--active {
+.btn-primary {
   background-image: none;
-  background-color: var(--spv-teal);
+  background-color: var(--spv-navy);
   color: var(--spv-white);
-  border-color: var(--spv-teal);
+  border-color: var(--spv-navy);
+  box-shadow: none;
 }
 
 .action-button--primary:hover:not(:disabled, [aria-disabled="true"]),
-.btn-primary:hover:not(:disabled, [aria-disabled="true"]),
+.btn-primary:hover:not(:disabled, [aria-disabled="true"]) {
+  background-image: none;
+  background-color: var(--spv-navy-dark);
+  border-color: var(--spv-navy-dark);
+  color: var(--spv-white);
+}
+
+/* Active navigation is an accent state, not a primary action. The stronger
+   teal keeps white label text at AA; the brand teal stays for rings and links. */
+.dashboard-nav-link--active,
+.dashboard-sidebar .dashboard-nav-link--active {
+  background-image: none;
+  background-color: var(--spv-teal-strong);
+  color: var(--spv-white);
+  border-color: var(--spv-teal-strong);
+}
+
 .dashboard-sidebar .dashboard-nav-link--active:hover {
+  background-image: none;
   background-color: var(--spv-teal-strong);
   color: var(--spv-white);
 }

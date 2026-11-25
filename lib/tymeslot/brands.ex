@@ -327,7 +327,7 @@ defmodule Tymeslot.Brands do
       --room-card: #{hex(c["card"], "#F7F4EF")};
       --room-card-text: #{hex(c["card_text"], "#1C1B19")};
       --room-text: #{hex(c["text"], "#1C1B19")};
-      --room-muted: #{hex(c["muted"], "#6E6A62")};
+      --room-muted: #{hex(c["muted"], "#5A687C")};
       --room-accent: #{hex(c["accent"], "#3E5C76")};
       --room-accent-strong: #{hex(c["accent_strong"], "#2C455C")};
       --room-heading: #{font(brand.fonts["heading"])};

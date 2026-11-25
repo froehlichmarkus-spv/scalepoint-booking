@@ -75,7 +75,7 @@ defmodule TymeslotWeb.Components.DashboardSidebar do
             :if={LinkAccessPolicy.can_link?(@profile, @integration_status)}
             href={LinkAccessPolicy.scheduling_path(@profile)}
             target="_blank"
-            class="dashboard-nav-link flex-1 min-w-0 bg-linear-to-br from-turquoise-600 to-cyan-600 text-white hover:text-white hover:translate-x-0 shadow-lg shadow-turquoise-500/30 hover:shadow-xl hover:shadow-turquoise-500/40 hover:from-turquoise-700 hover:to-cyan-700 group"
+            class="dashboard-nav-link flex-1 min-w-0 bg-[var(--spv-navy)] text-white hover:text-white hover:translate-x-0 hover:bg-[var(--spv-navy-dark)] group"
           >
             <.icon name="hero-arrow-top-right-on-square" class="w-5 h-5 shrink-0 text-white" />
             <span class="dashboard-nav-label text-white min-w-0 leading-tight wrap-break-word">{dgettext(
