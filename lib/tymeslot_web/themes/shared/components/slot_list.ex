@@ -125,8 +125,11 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
             </div>
           <% @loading_slots -> %>
             <%= if @loading == [] do %>
-              <div class="slot-list__loading">
-                <span>{dgettext("booking", "Loading available times...")}</span>
+              <div class="slot-list__loading" role="status">
+                <span class="sr-only">{dgettext("booking", "Loading available times...")}</span>
+                <div class="slot-list__skeleton" aria-hidden="true">
+                  <span :for={_ <- 1..6} class="skeleton slot-list__skeleton-chip"></span>
+                </div>
               </div>
             <% else %>
               {render_slot(@loading)}

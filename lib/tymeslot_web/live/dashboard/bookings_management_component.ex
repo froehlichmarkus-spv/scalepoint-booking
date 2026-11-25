@@ -499,7 +499,7 @@ defmodule TymeslotWeb.Dashboard.BookingsManagementComponent do
         |> assign(:move_offers, Meetings.calendar_move_offers(page.items))
         |> assign(:next_cursor, page.next_cursor)
         |> assign(:has_more, page.has_more)
-        |> assign(:loading, false)
+        |> assign(:loading, preview_loading?(socket))
         |> assign(:is_empty, page.items == [])
         |> assign_awaiting_approval_count()
 
@@ -519,6 +519,11 @@ defmodule TymeslotWeb.Dashboard.BookingsManagementComponent do
         |> assign(:loading, false)
         |> assign(:is_empty, true)
     end
+  end
+
+  defp preview_loading?(socket) do
+    Application.get_env(:tymeslot, :state_preview, false) and
+      get_in(socket.assigns, [:params, "state"]) == "loading"
   end
 
   defp focus_param(param) when is_binary(param) and param != "", do: param

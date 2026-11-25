@@ -3,6 +3,11 @@ import Config
 # Configure environment
 config :tymeslot, environment: :dev
 
+# Still frames of loading, empty and error slot panels: `?state=slot_loading`,
+# `slot_empty`, `slot_error` on a booking page, and `?state=loading` on
+# Termine. Off outside dev, so a query string cannot fake a failure in prod.
+config :tymeslot, :state_preview, true
+
 # Enable the pseudo-localisation locale in dev. Visit any page with
 # `?locale=pseudo` to render every translated string as an accented, bracketed
 # look-alike — un-wrapped literals show up plain. Never enabled outside dev.

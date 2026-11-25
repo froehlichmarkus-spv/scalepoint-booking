@@ -119,3 +119,29 @@
   margin: 0 auto var(--space-xs);
   color: var(--theme-text-secondary);
 }
+
+.slot-list__skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-xs);
+}
+
+.slot-list__skeleton-chip {
+  display: block;
+  height: var(--folio-control-height);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--theme-text) 8%, var(--theme-surface));
+  animation: skeleton-sheen 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-sheen {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot-list__skeleton-chip {
+    animation: none;
+  }
+}

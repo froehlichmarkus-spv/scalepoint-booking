@@ -58,12 +58,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.WhenMoment do
       )
 
     assigns =
-      assign(assigns,
+      assigns
+      |> assign(
         days: days,
         month_notice: month_notice(days, assigns),
         prev_month_label: month_label(assigns.current_year, assigns.current_month, -1),
         next_month_label: month_label(assigns.current_year, assigns.current_month, 1)
       )
+      |> with_state_preview()
 
     ~H"""
     <section
@@ -260,6 +262,43 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.WhenMoment do
       />
     </section>
     """
+  end
+
+  # Dev-only stills of the slot panel. `config :tymeslot, :state_preview` is
+  # set in dev and nowhere else, so a `?state=` link cannot fake a failure
+  # on a published page.
+  defp with_state_preview(assigns) do
+    case state_preview(assigns) do
+      "slot_loading" ->
+        preview_slots(assigns, loading: true, error: nil)
+
+      "slot_empty" ->
+        preview_slots(assigns, loading: false, error: nil)
+
+      "slot_error" ->
+        preview_slots(assigns,
+          loading: false,
+          error: dgettext("booking", "No time slots could be loaded. Please try again.")
+        )
+
+      _other ->
+        assigns
+    end
+  end
+
+  defp preview_slots(assigns, opts) do
+    assign(assigns,
+      loading_slots: opts[:loading],
+      calendar_error: opts[:error],
+      available_slots: [],
+      selected_date: assigns.selected_date || Date.to_iso8601(Date.utc_today())
+    )
+  end
+
+  defp state_preview(assigns) do
+    if Application.get_env(:tymeslot, :state_preview, false) do
+      get_in(assigns, [:page_query_params, "state"])
+    end
   end
 
   # The name of the month `delta` months from the one on screen, which labels

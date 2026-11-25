@@ -133,9 +133,11 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
     if Brands.for_profile(profile) do
       nil
     else
+      role = present(Map.get(profile, :headline))
+
       %{
-        role: present(Map.get(profile, :headline)),
-        company: present(Map.get(profile, :booking_greeting)),
+        role: role,
+        company: company_unless_repeated(role, present(Map.get(profile, :booking_greeting))),
         bio: present(Map.get(profile, :booking_instruction)) || present(Map.get(profile, :bio)),
         duration: duration_fact(assigns.meeting_type),
         place: place_fact(assigns.meeting_type)
@@ -171,4 +173,11 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.MastheadMoment do
   end
 
   defp present(_value), do: nil
+
+  # The greeting is often the same company already named in the role line.
+  defp company_unless_repeated(role, company) when is_binary(role) and is_binary(company) do
+    if String.contains?(String.downcase(role), String.downcase(company)), do: nil, else: company
+  end
+
+  defp company_unless_repeated(_role, company), do: company
 end

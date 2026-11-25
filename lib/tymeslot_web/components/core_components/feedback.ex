@@ -219,6 +219,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Feedback do
   still loading. `label` is announced to screen readers.
   """
   attr :label, :string, default: nil, doc: "Screen reader text; defaults to \"Loading\""
+  attr :variant, :atom, default: :spinner, values: [:spinner, :rows]
   attr :class, :any, default: nil, doc: "Layout classes only"
   attr :rest, :global
 
@@ -226,9 +227,16 @@ defmodule TymeslotWeb.Components.CoreComponents.Feedback do
   def loading_card(assigns) do
     ~H"""
     <div class={["card-glass", @class]} role="status" {@rest}>
-      <div class="flex items-center justify-center py-12">
+      <div :if={@variant == :spinner} class="flex items-center justify-center py-12">
         <.spinner class="h-8 w-8 text-turquoise-600" aria-hidden="true" />
         <span class="sr-only">{@label || dgettext("common", "Loading")}</span>
+      </div>
+      <div :if={@variant == :rows} class="space-y-3 p-4">
+        <span class="sr-only">{@label || dgettext("common", "Loading")}</span>
+        <div :for={_ <- 1..3} class="skeleton-row" aria-hidden="true">
+          <span class="skeleton skeleton-row__title"></span>
+          <span class="skeleton skeleton-row__line"></span>
+        </div>
       </div>
     </div>
     """

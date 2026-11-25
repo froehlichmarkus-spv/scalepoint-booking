@@ -148,6 +148,7 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents do
     <div>
       <Feedback.loading_card
         :if={@loading}
+        variant={:rows}
         label={dgettext("dashboard_bookings", "Loading meetings")}
       />
       <.no_meetings :if={!@loading and @is_empty} filter={@filter} profile={@profile} />

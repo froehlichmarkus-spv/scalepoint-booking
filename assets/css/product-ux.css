@@ -45,6 +45,42 @@ button.text-turquoise-600 {
   color: var(--spv-navy);
 }
 
+.skeleton {
+  display: block;
+  background: color-mix(in srgb, var(--c-ink) 10%, white);
+  border-radius: var(--r-sm, 8px);
+  animation: skeleton-sheen 1.2s ease-in-out infinite;
+}
+
+.skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.skeleton-row__title {
+  height: 14px;
+  width: 42%;
+}
+
+.skeleton-row__line {
+  height: 10px;
+  width: 70%;
+}
+
+@keyframes skeleton-sheen {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
 .dashboard-title,
 .page-title {
   font-size: 32px;

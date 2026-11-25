@@ -57,6 +57,8 @@ defmodule TymeslotWeb.Themes.Folio.Components.Masthead do
           class="folio-portrait"
           src={Demo.avatar_url(@organizer_profile, :original)}
           alt={Demo.avatar_alt_text(@organizer_profile)}
+          decoding="async"
+          fetchpriority={if @variant == :full, do: "high", else: "auto"}
         />
         <div class="folio-identity__text">
           <%= if @variant == :full do %>
