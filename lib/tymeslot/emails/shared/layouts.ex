@@ -16,7 +16,7 @@ defmodule Tymeslot.Emails.Shared.Layouts do
   """
 
   alias Tymeslot.Emails.Branding
-  alias Tymeslot.Emails.Shared.{Frame, MjmlEmail, Sanitise, Stage, Styles, Urls}
+  alias Tymeslot.Emails.Shared.{Frame, MjmlEmail, Sanitise, Stage, Styles}
 
   use Gettext, backend: TymeslotWeb.Gettext
 
