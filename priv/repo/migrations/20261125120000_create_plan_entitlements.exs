@@ -1,6 +1,18 @@
 defmodule Tymeslot.Repo.Migrations.CreatePlanEntitlements do
   use Ecto.Migration
 
+  # excellent_migrations:safety-assured-for-this-file column_reference_added
+  # excellent_migrations:safety-assured-for-this-file index_not_concurrently
+  #
+  # Every reference and index here is on a table created in this same
+  # migration. The tables are empty and unreachable until it commits, so
+  # there are no existing rows to validate and no concurrent readers to
+  # lock out. Both checks assume an established table under live traffic.
+  #
+  # Migrations also run offline: `start.sh` executes them in a one-shot VM
+  # and only starts Phoenix once they finish. Revisit this if a deployment
+  # target ever migrates against a running instance.
+
   def change do
     create table(:plan_entitlements) do
       add(:user_id, references(:users, on_delete: :delete_all), null: false)
