@@ -50,8 +50,8 @@ defmodule Tymeslot.Auth.UserQueriesTest do
     test "securely hashes passwords during registration" do
       attrs = %{
         email: "secure@example.com",
-        password: "SecurePassword123!",
-        password_confirmation: "SecurePassword123!",
+        password: "harbor-horse-battery",
+        password_confirmation: "harbor-horse-battery",
         name: "Secure User"
       }
 
@@ -59,7 +59,7 @@ defmodule Tymeslot.Auth.UserQueriesTest do
 
       # Password should be hashed, not stored in plain text
       assert user.password_hash
-      refute user.password_hash == "SecurePassword123!"
+      refute user.password_hash == "harbor-horse-battery"
     end
   end
 

@@ -1,0 +1,133 @@
+/* Calm booking surface: hairline, navy-tinted elevation, serif headlines,
+   and a mobile sheet for the confirm action. Colours and timing come from
+   shared/tokens.css so a theme's palette still drives the fill. */
+
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+}
+
+h1,
+.slot-list__heading,
+.meeting-title {
+  font-family: "DM Serif Display", "Source Serif 4 Variable", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.calendar-day {
+  box-shadow: var(--sh-xs);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+
+.calendar-day:hover:not(:disabled, .calendar-day--selected) {
+  box-shadow: var(--sh-sm);
+  transform: translateY(-1px);
+}
+
+.calendar-day--selected,
+.calendar-day.calendar-day--selected {
+  box-shadow: var(--sh-sm);
+}
+
+.calendar-day:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.slot-list__groups {
+  gap: var(--space-md);
+}
+
+.slot-list__slot {
+  box-shadow: var(--sh-xs);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+
+.slot-list__slot:hover:not(.slot-list__slot--selected) {
+  box-shadow: var(--sh-sm);
+  transform: translateY(-1px);
+}
+
+.slot-list__slot.slot-list__slot--selected,
+.slot-list__slot--selected {
+  background: var(--theme-primary-solid);
+  border-color: var(--theme-primary-solid);
+  color: var(--theme-on-primary);
+  box-shadow: var(--sh-sm);
+}
+
+.slot-list__slot--selected:hover {
+  transform: none;
+}
+
+.slot-list__slot:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.glass-morphism-card,
+.scheduling-card {
+  box-shadow: var(--sh-xs);
+}
+
+.booking-confirm-sheet {
+  scroll-margin-bottom: var(--space-2xl);
+}
+
+@media (max-width: 639px) {
+  .booking-confirm-sheet {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
+    background: var(--theme-surface, var(--surface-1));
+    border: var(--border-width-thin) solid var(--border-light);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    box-shadow: var(--sh-xl);
+  }
+
+  .booking-confirm-sheet::before {
+    content: "";
+    display: block;
+    width: var(--space-2xl);
+    height: var(--space-3xs);
+    margin: 0 auto var(--space-xs);
+    border-radius: var(--radius-full, 999px);
+    background: var(--border-medium);
+  }
+
+  .booking-confirm-sheet button[type="submit"],
+  .booking-confirm-sheet .folio-button--primary,
+  .booking-confirm-sheet .paper-button--primary,
+  .booking-confirm-sheet .submit-button {
+    width: 100%;
+    min-height: var(--min-touch-target);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-day,
+  .slot-list__slot {
+    transition: none;
+  }
+}

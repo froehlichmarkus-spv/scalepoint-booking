@@ -20,7 +20,7 @@ defmodule TymeslotWeb.Shared.Auth.LayoutComponents do
         <TymeslotWeb.Components.CoreComponents.Brand.logo mode={:full} img_class="h-10" />
       </div>
       <div class="text-center">
-        <h1 class="text-2xl font-black text-tymeslot-900 tracking-tight">
+        <h1 class="auth-title">
           {@title}
         </h1>
         <%= if @subtitle do %>

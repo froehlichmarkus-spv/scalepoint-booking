@@ -50,7 +50,7 @@ msgstr "Auf Werktage anwenden"
 #: lib/tymeslot_web/components/dashboard/availability/delete_break_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Are you sure you want to delete this break%{label}?"
-msgstr "Möchten Sie diese Pause%{label} wirklich löschen?"
+msgstr "Möchtest du diese Pause%{label} wirklich löschen?"
 
 #: lib/tymeslot_web/live/dashboard/availability/day_card_component.ex
 #, elixir-autogen, elixir-format
@@ -185,7 +185,7 @@ msgstr "Wochenplan"
 #: lib/tymeslot_web/live/dashboard/availability/list_component.ex
 #, elixir-autogen, elixir-format
 msgid "You're adding breaks too quickly. Please wait a bit."
-msgstr "Sie fügen Pausen zu schnell hinzu. Bitte warten Sie einen Moment."
+msgstr "Du fügen Pausen zu schnell hinzu. Bitte warte einen Moment."
 
 #: lib/tymeslot_web/live/dashboard/availability/day_card_component.ex
 #, elixir-autogen, elixir-format
@@ -195,7 +195,7 @@ msgstr "z. B. Mittagspause"
 #: lib/tymeslot_web/components/dashboard/availability/clear_day_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Are you sure you want to clear all settings for %{day}?"
-msgstr "Möchten Sie wirklich alle Einstellungen für %{day} löschen?"
+msgstr "Möchtest du wirklich alle Einstellungen für %{day} löschen?"
 
 #: lib/tymeslot/availability/input_validation.ex
 #, elixir-autogen, elixir-format
@@ -265,7 +265,7 @@ msgstr "Vorausbuchungszeitraum auf %{days} Tage aktualisiert"
 #: lib/tymeslot_web/components/dashboard/availability/delete_schedule_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Are you sure you want to delete %{name}?"
-msgstr "Möchten Sie %{name} wirklich löschen?"
+msgstr "Möchtest du %{name} wirklich löschen?"
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -290,7 +290,7 @@ msgstr "Duplizieren"
 #: lib/tymeslot_web/components/dashboard/availability/schedule_form_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Each meeting type can be booked against one of your schedules."
-msgstr "Jeder Termintyp verwendet einen Ihrer Zeitpläne."
+msgstr "Jeder Termintyp verwendet einen deiner Zeitpläne."
 
 #: lib/tymeslot_web/components/dashboard/availability/schedule_form_modal.ex
 #, elixir-autogen, elixir-format
@@ -367,17 +367,17 @@ msgstr "Zeitplan umbenannt"
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Something went wrong. Please try again."
-msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+msgstr "Etwas ist schiefgelaufen. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/components/dashboard/availability/delete_schedule_modal.ex
 #, elixir-autogen, elixir-format
 msgid "These meeting types will fall back to your default schedule:"
-msgstr "Diese Termintypen verwenden künftig Ihren Standard-Zeitplan:"
+msgstr "Diese Termintypen verwenden künftig deinen Standard-Zeitplan:"
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your default schedule cannot be deleted. Make another schedule the default first."
-msgstr "Ihr Standard-Zeitplan kann nicht gelöscht werden. Legen Sie zuerst einen anderen Zeitplan als Standard fest."
+msgstr "Dein Standard-Zeitplan kann nicht gelöscht werden. Lege zuerst einen anderen Zeitplan als Standard fest."
 
 #: lib/tymeslot_web/live/dashboard/availability/list_component.ex
 #: lib/tymeslot_web/live/dashboard/availability/list_component/break_helpers.ex
@@ -404,9 +404,7 @@ msgstr "Diese Pause überschneidet sich mit einer bestehenden Pause"
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "You have reached the limit of %{count} schedules. Delete one to add another."
-msgstr ""
-"Sie haben das Limit von %{count} Zeitplänen erreicht. Löschen Sie einen, um "
-"einen weiteren hinzuzufügen."
+msgstr "du hast das Limit von %{count} Zeitplänen erreicht. Lösche einen, um einen weiteren hinzuzufügen."
 
 #: lib/tymeslot_web/live/dashboard/availability/schedule_switcher.ex
 #, elixir-autogen, elixir-format
@@ -416,7 +414,7 @@ msgstr "Diesen Zeitplan verwalten"
 #: lib/tymeslot_web/live/dashboard/availability/schedule_switcher.ex
 #, elixir-autogen, elixir-format
 msgid "No meeting type uses these hours yet. Pick this schedule under a meeting type's booking rules."
-msgstr "Noch kein Termintyp nutzt diese Zeiten. Wählen Sie diesen Zeitplan in den Buchungsregeln eines Termintyps aus."
+msgstr "Noch kein Termintyp nutzt diese Zeiten. Wähle diesen Zeitplan in den Buchungsregeln eines Termintyps aus."
 
 #: lib/tymeslot_web/live/dashboard/availability/schedule_switcher.ex
 #, elixir-autogen, elixir-format
@@ -486,7 +484,7 @@ msgstr "Puffer vor Terminen auf %{minutes} Minuten aktualisiert"
 #: lib/tymeslot/availability/input_validation.ex
 #, elixir-autogen, elixir-format
 msgid "End time must be after start time. To run past midnight, pick an end time marked (+1)."
-msgstr "Die Endzeit muss nach der Startzeit liegen. Für Zeiten über Mitternacht hinaus wählen Sie eine mit (+1) markierte Endzeit."
+msgstr "Die Endzeit muss nach der Startzeit liegen. Für Zeiten über Mitternacht hinaus wählst du eine mit (+1) markierte Endzeit."
 
 #: lib/tymeslot_web/live/dashboard/availability/day_card_component.ex
 #, elixir-autogen, elixir-format
@@ -531,12 +529,12 @@ msgstr "Datum"
 #: lib/tymeslot_web/live/dashboard/availability/extra_availability_card.ex
 #, elixir-autogen, elixir-format
 msgid "Dates you can be booked besides your weekly hours, such as office hours once a month. With every weekday switched off, only these are offered. They apply to the meeting types using this schedule; past dates are removed automatically."
-msgstr "Tage, an denen Sie zusätzlich zu Ihren wöchentlichen Zeiten gebucht werden können, etwa eine Sprechstunde einmal im Monat. Sind alle Wochentage ausgeschaltet, werden nur diese angeboten. Sie gelten für die Termintypen mit diesem Zeitplan; vergangene Tage werden automatisch entfernt."
+msgstr "Tage, an denst du zusätzlich zu deinen wöchentlichen Zeiten gebucht werden können, etwa eine Sprechstunde einmal im Monat. Sind alle Wochentage ausgeschaltet, werden nur diese angeboten. Du gelten für die Termintypen mit diesem Zeitplan; vergangene Tage werden automatisch entfernt."
 
 #: lib/tymeslot_web/live/dashboard/availability/extra_availability_card.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a date, a from and a to time."
-msgstr "Geben Sie ein Datum, eine Von- und eine Bis-Zeit ein."
+msgstr "Gib ein Datum, eine Von- und eine Bis-Zeit ein."
 
 #: lib/tymeslot_web/live/dashboard/availability/extra_availability_card.ex
 #, elixir-autogen, elixir-format
@@ -591,12 +589,12 @@ msgstr "Bis"
 #: lib/tymeslot_web/live/dashboard/availability/list_component.ex
 #, elixir-autogen, elixir-format
 msgid "The %{break} break no longer fits these hours. Move or delete it first."
-msgstr "Die Pause %{break} passt nicht mehr in diese Zeiten. Verschieben oder löschen Sie sie zuerst."
+msgstr "Die Pause %{break} passt nicht mehr in diese Zeiten. Verschiebe oder lösche sie zuerst."
 
 #: lib/tymeslot_web/live/dashboard/availability/list_component/break_helpers.ex
 #, elixir-autogen, elixir-format
 msgid "The %{break} break on %{day} falls outside that day's hours. Move or delete it, then try again."
-msgstr "Die Pause %{break} am %{day} liegt außerhalb der Zeiten dieses Tages. Verschieben oder löschen Sie sie und versuchen Sie es dann erneut."
+msgstr "Die Pause %{break} am %{day} liegt außerhalb der Zeiten dieses Tages. Verschiebe oder lösche sie und versuche es dann erneut."
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format

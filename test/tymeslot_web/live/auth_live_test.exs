@@ -411,7 +411,7 @@ defmodule TymeslotWeb.AuthLiveTest do
     # dropped on the floor by the template, so a rejected submission looked
     # exactly like no submission at all. These pin the failure paths to
     # something the user can actually read.
-    test "a password missing a special character is rejected visibly", %{
+    test "a common password is rejected visibly", %{
       conn: conn,
       token: token
     } do
@@ -420,12 +420,12 @@ defmodule TymeslotWeb.AuthLiveTest do
       html =
         view
         |> form("#new-password-form", %{
-          "password" => "SomePassword123",
-          "password_confirmation" => "SomePassword123"
+          "password" => "password",
+          "password_confirmation" => "password"
         })
         |> render_submit()
 
-      assert html =~ "Password must contain at least one special character"
+      assert html =~ "This password is too common. Try a short phrase only you would know."
       refute html =~ "Password Reset Successfully"
     end
 

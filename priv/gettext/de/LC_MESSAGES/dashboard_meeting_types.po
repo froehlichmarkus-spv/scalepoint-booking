@@ -25,7 +25,7 @@ msgstr "Buchungslink ändern"
 #: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Changing this link will stop any links you have already shared for this meeting type from working."
-msgstr "Wenn Sie diesen Link ändern, funktionieren bereits geteilte Links für diesen Termintyp nicht mehr."
+msgstr "Wenn du diesen Link ändern, funktionieren bereits geteilte Links für diesen Termintyp nicht mehr."
 
 #: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
 #, elixir-autogen, elixir-format
@@ -50,7 +50,7 @@ msgstr "Nicht gelistet"
 #: lib/tymeslot_web/components/dashboard/meeting_types/booking_link_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Use lowercase letters, numbers and hyphens. Randomise creates an unguessable link."
-msgstr "Verwenden Sie Kleinbuchstaben, Ziffern und Bindestriche. „Zufällig erzeugen“ erstellt einen nicht erratbaren Link."
+msgstr "Verwende Kleinbuchstaben, Ziffern und Bindestriche. „Zufällig erzeugen“ erstellt einen nicht erratbaren Link."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/events_list_component.ex
@@ -78,7 +78,7 @@ msgstr "Kalender"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_types_list_component.ex
 #, elixir-autogen, elixir-format
 msgid "Create meeting types to offer different appointment options"
-msgstr "Erstellen Sie Termintypen, um verschiedene Terminoptionen anzubieten"
+msgstr "Erstelle Termintypen, um verschiedene Terminoptionen anzubieten"
 
 #: lib/tymeslot_web/live/dashboard/locations/venue_card.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
@@ -107,7 +107,7 @@ msgstr "Noch keine Termintypen eingerichtet"
 #: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This action cannot be undone and will permanently remove this meeting type from your account."
-msgstr "Diese Aktion kann nicht rückgängig gemacht werden und entfernt diesen Termintyp dauerhaft aus Ihrem Konto."
+msgstr "Diese Aktion kann nicht rückgängig gemacht werden und entfernt diesen Termintyp dauerhaft aus deinem Konto."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
@@ -117,7 +117,7 @@ msgstr "Verfügbarkeit von %{name} umschalten"
 #: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Are you sure you want to delete the meeting type \"%{name}\"?"
-msgstr "Möchten Sie den Termintyp „%{name}“ wirklich löschen?"
+msgstr "Möchtest du den Termintyp „%{name}“ wirklich löschen?"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -142,7 +142,7 @@ msgstr "Buchungslimit auf %{limit} Buchungen aktualisiert"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/scheduling_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Maximum number of bookings you accept across all meeting types. Days at their cap disappear from your booking page. Leave a field empty for no limit."
-msgstr "Maximale Anzahl an Buchungen, die Sie über alle Termintypen hinweg annehmen. Tage, an denen das Limit erreicht ist, werden auf Ihrer Buchungsseite ausgeblendet. Lassen Sie ein Feld leer, wenn es kein Limit geben soll."
+msgstr "Maximale Anzahl an Buchungen, die du über alle Termintypen hinweg annehmen. Tage, an denen das Limit erreicht ist, werden auf deiner Buchungsseite ausgeblendet. Lass ein Feld leer, wenn es kein Limit geben soll."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
@@ -157,12 +157,12 @@ msgstr "Schreibgeschützt"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
 msgid "The calendar this meeting type books into is no longer on the connected account. Edit it and choose another calendar."
-msgstr "Der Kalender, in den dieser Termintyp bucht, ist im verbundenen Konto nicht mehr vorhanden. Bearbeiten Sie den Termintyp und wählen Sie einen anderen Kalender."
+msgstr "Der Kalender, in den dieser Termintyp bucht, ist im verbundenen Konto nicht mehr vorhanden. Bearbeite den Termintyp und wähle einen anderen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
 msgid "This meeting type books into a calendar you can no longer write to. Edit it and choose another calendar."
-msgstr "Dieser Termintyp bucht in einen Kalender, in den Sie nicht mehr schreiben können. Bearbeiten Sie ihn und wählen Sie einen anderen Kalender."
+msgstr "Dieser Termintyp bucht in einen Kalender, in dest du nicht mehr schreiben kannst. Bearbeite ihn und wähle einen anderen Kalender."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen
@@ -184,7 +184,7 @@ msgstr "%{name} wird von diesen Termintypen angeboten. Beim Löschen wird der Or
 #: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
 #, elixir-autogen, elixir-format
 msgid "Add an office, a studio or any other place you meet people. In-person meeting types can then offer it to bookers."
-msgstr "Fügen Sie ein Büro, ein Studio oder einen anderen Ort hinzu, an dem Sie Menschen treffen. Termintypen vor Ort können ihn dann Buchenden anbieten."
+msgstr "Füge ein Büro, ein Studio oder einen anderen Ort hinzu, an dem du Menschen treffen. Termintypen vor Ort können ihn dann Buchenden anbieten."
 
 #: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
 #: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
@@ -265,12 +265,12 @@ msgstr "Ort speichern"
 #: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
 #, elixir-autogen, elixir-format
 msgid "Save the places you meet people once, then offer them on any in-person meeting type."
-msgstr "Speichern Sie die Orte, an denen Sie Menschen treffen, einmal und bieten Sie sie dann in jedem Termintyp vor Ort an."
+msgstr "Speichern du die Orte, an denst du Menschen treffen, einmal und biete sie dann in jedem Termintyp vor Ort an."
 
 #: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Street, postcode and city, plus anything that helps bookers find you: 3rd floor, ring the bell."
-msgstr "Straße, Postleitzahl und Ort sowie alles, was Buchenden hilft, Sie zu finden: 3. Stock, bitte klingeln."
+msgstr "Straße, Postleitzahl und Ort sowie alles, was Buchenden hilft, du zu finden: 3. Stock, bitte klingeln."
 
 #: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
 #, elixir-autogen, elixir-format
@@ -297,12 +297,12 @@ msgstr "Dieser Ort existiert nicht mehr"
 #: lib/tymeslot_web/live/dashboard/locations/venue_form_modal.ex
 #, elixir-autogen, elixir-format
 msgid "A place you meet people, such as an office or a studio. Offer it on any in-person meeting type, and bookers see its name and address when they book."
-msgstr "Ein Ort, an dem Sie Menschen treffen, etwa ein Büro oder ein Studio. Bieten Sie ihn bei jedem Termintyp vor Ort an; Buchende sehen beim Buchen seinen Namen und seine Adresse."
+msgstr "Ein Ort, an dem du Menschen treffen, etwa ein Büro oder ein Studio. Biete ihn bei jedem Termintyp vor Ort an; Buchende sehen beim Buchen seinen Namen und seine Adresse."
 
 #: lib/tymeslot_web/live/dashboard/locations/delete_venue_modal.ex
 #, elixir-autogen, elixir-format
 msgid "%{name} is the only location of these group meeting types, whose address must be fixed in advance. Give them another location before deleting it:"
-msgstr "%{name} ist der einzige Ort dieser Gruppen-Termintypen, deren Adresse im Voraus feststehen muss. Geben Sie ihnen einen anderen Ort, bevor Sie ihn löschen:"
+msgstr "%{name} ist der einzige Ort dieser Gruppen-Termintypen, deren Adresse im Voraus feststehen muss. Gib ihnen einen anderen Ort, bevor du ihn löschen:"
 
 #: lib/tymeslot_web/live/dashboard/locations/locations_component.ex
 #, elixir-autogen, elixir-format
@@ -317,7 +317,7 @@ msgstr "Gruppe · bis zu %{count}"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
 msgid "Group bookings are not included in your current plan, so this meeting type is taking no new bookings. Existing bookings are unaffected. Upgrade, or set the participant limit to 1, to take bookings again."
-msgstr "Gruppenbuchungen sind in Ihrem aktuellen Tarif nicht enthalten, daher nimmt dieser Termintyp keine neuen Buchungen an. Bestehende Buchungen bleiben bestehen. Führen Sie ein Upgrade durch oder setzen Sie das Teilnehmerlimit auf 1, um wieder Buchungen anzunehmen."
+msgstr "Gruppenbuchungen sind in deinem aktuellen Tarif nicht enthalten, daher nimmt dieser Termintyp keine neuen Buchungen an. Bestehende Buchungen bleiben bestehen. Führe ein Upgrade durch oder setze das Teilnehmerlimit auf 1, um wieder Buchungen anzunehmen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
@@ -407,12 +407,12 @@ msgstr "Keine offenen Termine"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
 msgid "Not on your booking page until one of its dates is open for registration. Plan a date, or move a registration close."
-msgstr "Erscheint erst wieder auf Ihrer Buchungsseite, wenn einer der Termine zur Anmeldung offen ist. Planen Sie einen Termin oder verschieben Sie einen Anmeldeschluss."
+msgstr "Erscheint erst wieder auf deiner Buchungsseite, wenn einer der Termine zur Anmeldung offen ist. Plane einen Termin oder verschiebe einen Anmeldeschluss."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen
 msgid "Not offered to guests until payments are reconnected. Existing bookings are unaffected."
-msgstr "Dieser Termintyp wird Gästen nicht angeboten, bis Sie die Zahlungen erneut verbinden. Bestehende Buchungen bleiben bestehen."
+msgstr "Dieser Termintyp wird Gästen nicht angeboten, bis du die Zahlungen erneut verbinden. Bestehende Buchungen bleiben bestehen."
 
 #: lib/tymeslot_web/components/dashboard/meeting_types/delete_meeting_type_modal.ex
 #, elixir-autogen, elixir-format
@@ -431,7 +431,7 @@ msgstr[1] "Die %{count} angemeldeten Personen werden per E-Mail benachrichtigt."
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
 msgid "Not on your booking page until it offers a time a booker can pick: one past the minimum notice and within the booking window. Add a time to offer."
-msgstr "Erscheint erst auf Ihrer Buchungsseite, wenn er eine Zeit anbietet, die Buchende auswählen können: eine nach der Mindestvorlaufzeit und innerhalb des Vorausbuchungszeitraums. Fügen Sie eine angebotene Zeit hinzu."
+msgstr "Erscheint erst auf deiner Buchungsseite, wenn er eine Zeit anbietet, die Buchende auswählen können: eine nach der Mindestvorlaufzeit und innerhalb des Vorausbuchungszeitraums. Füge eine angebotene Zeit hinzu."
 
 #: lib/tymeslot/meeting_types/duplication.ex
 #, elixir-autogen, elixir-format
@@ -536,12 +536,12 @@ msgstr "Name (optional)"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
 msgid "No invitations yet. Create one link per person you want to invite."
-msgstr "Noch keine Einladungen. Erstellen Sie einen Link pro Person, die Sie einladen möchten."
+msgstr "Noch keine Einladungen. Erstelle einen Link pro Person, die du einladen möchtest."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
 msgid "On no booking page; booked only through the invitation links you send"
-msgstr "Auf keiner Buchungsseite; nur über die Einladungslinks buchbar, die Sie verschicken"
+msgstr "Auf keiner Buchungsseite; nur über die Einladungslinks buchbar, die du verschicken"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
@@ -627,7 +627,7 @@ msgstr "Link für %{name} widerrufen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
 msgid "This link can't be shown. Revoke it and create a new one."
-msgstr "Dieser Link kann nicht angezeigt werden. Widerrufen Sie ihn und erstellen Sie einen neuen."
+msgstr "Dieser Link kann nicht angezeigt werden. Widerrufe ihn und erstelle einen neuen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
@@ -637,9 +637,9 @@ msgstr "Die neuesten 100 Einladungen werden angezeigt."
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
 msgid "This link has expired, so it can't be reopened. Create a new one instead."
-msgstr "Dieser Link ist abgelaufen und kann deshalb nicht wieder geöffnet werden. Erstellen Sie stattdessen einen neuen."
+msgstr "Dieser Link ist abgelaufen und kann deshalb nicht wieder geöffnet werden. Erstelle stattdessen einen neuen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
 msgid "Each link books one appointment. the scheduler sends no email: copy the link and send it yourself."
-msgstr "Mit jedem Link kann ein Termin gebucht werden. the scheduler verschickt keine E-Mail: Kopieren Sie den Link und senden Sie ihn selbst."
+msgstr "Mit jedem Link kann ein Termin gebucht werden. the scheduler verschickt keine E-Mail: Kopierst du den Link und sende ihn selbst."

@@ -179,7 +179,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Feedback do
       )
 
     ~H"""
-    <div class={["text-center", @surface, @box_class, @class]} {@rest}>
+    <div class={["text-center", @surface, @box_class, @class]} data-empty-state {@rest}>
       <div
         :if={@icon || @graphic != []}
         class={[

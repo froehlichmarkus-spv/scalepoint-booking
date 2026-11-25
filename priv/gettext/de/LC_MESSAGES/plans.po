@@ -202,3 +202,18 @@ msgstr "Your logo and accent"
 #, elixir-autogen, elixir-format
 msgid "Your logo and accent colour are part of Pro."
 msgstr "Your logo and accent colour are part of Pro."
+
+msgid "Pro trial"
+msgstr "Pro-Testphase"
+
+msgid "%{days} days left. Full Pro access until %{date}."
+msgstr "Noch %{days} Tage. Voller Pro-Zugang bis %{date}."
+
+msgid "When the trial ends the workspace returns to Free. Bookings stay. Extra event types pause, and the BookDesk24 badge comes back."
+msgstr "Wenn die Testphase endet, ist der Arbeitsbereich wieder Free. Buchungen bleiben. Zusätzliche Termintypen pausieren, und der Hinweis BookDesk24 kommt zurück."
+
+msgid "Back on Free"
+msgstr "Wieder bei Free"
+
+msgid "Pro has ended. Your bookings are still here. Extra event types are paused, not deleted. Choose Pro to open them again."
+msgstr "Pro ist zu Ende. Deine Buchungen sind noch da. Zusätzliche Termintypen sind pausiert, nicht gelöscht. Wähle Pro, um sie wieder zu öffnen."

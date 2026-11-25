@@ -83,7 +83,7 @@ defmodule Tymeslot.Emails.Shared.Stage do
     <mj-section
       background-color="#{tokens.band_color}"
       padding="32px 32px 28px 32px"
-      border-radius="20px 20px 0 0"
+      border-radius="16px 16px 0 0"
       border-top="1px solid #{@band_border_overlay}"
       css-class="stage-band"
     >
@@ -104,7 +104,8 @@ defmodule Tymeslot.Emails.Shared.Stage do
           padding="0"
           color="#{tokens.band_text}"
           font-size="#{Styles.font_size(:display)}"
-          font-weight="800"
+          font-weight="400"
+          font-family="Georgia, 'Times New Roman', serif"
           align="left"
           line-height="1.08"
           letter-spacing="-0.025em"

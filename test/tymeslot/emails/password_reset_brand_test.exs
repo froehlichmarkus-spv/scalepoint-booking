@@ -55,7 +55,7 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
 
     assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
     assert_receive {:email, delivered}, 1000
-    assert delivered.from == {"ScalePoint Ventures", "booking@scalepoint-ventures.com"}
+    assert delivered.from == {"ScalePoint Growth OS", "booking@scalepoint-ventures.com"}
     assert delivered.html_body =~ @reset_url
     assert delivered.text_body =~ @reset_url
     refute delivered.html_body =~ "meetdesk24.com"
@@ -73,7 +73,7 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
     assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
 
     assert_receive {:email, email}, 1000
-    assert email.from == {"ScalePoint Ventures", "booking@scalepoint-ventures.com"}
+    assert email.from == {"ScalePoint Growth OS", "booking@scalepoint-ventures.com"}
     assert email.html_body =~ @reset_url
     assert email.text_body =~ @reset_url
     assert email.html_body =~ "ScalePoint Ventures"

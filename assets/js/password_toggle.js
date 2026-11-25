@@ -17,6 +17,7 @@ const PasswordToggle = {
         this.revealed = !this.revealed;
         this.applyState();
       };
+      this.button.addEventListener('mousedown', (event) => event.preventDefault());
       this.button.addEventListener('click', this.clickHandler);
     }
     this.applyState();
@@ -48,6 +49,10 @@ const PasswordToggle = {
       input.setAttribute('type', type);
     }
 
+    this.button.setAttribute('aria-pressed', this.revealed ? 'true' : 'false');
+    this.button.setAttribute('aria-label', this.revealed ? 'Hide password' : 'Show password');
+    if (input.id) this.button.setAttribute('aria-controls', input.id);
+
     const openEye = this.button.querySelector('[data-eye-open]');
     const closedEye = this.button.querySelector('[data-eye-closed]');
     if (openEye && closedEye) {
@@ -68,7 +73,11 @@ const PasswordToggle = {
     const rules = Array.from(list.querySelectorAll('[data-password-rule]'))
       .map((element) => {
         try {
-          return { element, pattern: new RegExp(element.dataset.passwordPattern) };
+          return {
+            element,
+            key: element.dataset.passwordRule,
+            pattern: new RegExp(element.dataset.passwordPattern)
+          };
         } catch (error) {
           console.error('Unusable password rule pattern', element.dataset.passwordPattern, error);
           return null;
@@ -76,10 +85,49 @@ const PasswordToggle = {
       })
       .filter(Boolean);
 
-    input.addEventListener('input', () => {
-      rules.forEach(({ element, pattern }) =>
-        updateRequirement(element, pattern.test(input.value))
-      );
+    const caps = this.el.querySelector('[data-caps-hint]');
+    const meter = this.el.querySelector('[data-strength]');
+    const meterLabel = this.el.querySelector('[data-strength-label]');
+
+    const emailLocal = () => {
+      const form = input.form;
+      const email = form && form.querySelector('input[type="email"]');
+      const value = email ? email.value.trim().toLowerCase() : '';
+      return value.split('@')[0] || '';
+    };
+
+    const paint = () => {
+      const value = input.value;
+      const local = emailLocal();
+      let met = 0;
+      rules.forEach(({ element, key, pattern }) => {
+        let ok;
+        if (key === 'email') {
+          ok =
+            value.length > 0 &&
+            (local.length < 3 || !value.toLowerCase().includes(local));
+        } else if (key === 'breached') {
+          ok = pattern.test(value.toLowerCase());
+        } else {
+          ok = pattern.test(value);
+        }
+        if (ok) met += 1;
+        updateRequirement(element, ok);
+      });
+      const score = value.length === 0 ? 0 : met >= rules.length ? (value.length >= 14 ? 4 : 3) : value.length >= 8 ? 2 : 1;
+      if (meter) meter.dataset.score = String(score);
+      if (meterLabel) {
+        meterLabel.textContent = ['Password strength', 'Too weak', 'Weak', 'Good', 'Strong'][score];
+      }
+    };
+
+    input.addEventListener('input', paint);
+    input.addEventListener('keyup', (event) => {
+      if (!caps || !event.getModifierState) return;
+      caps.hidden = !event.getModifierState('CapsLock');
+    });
+    input.addEventListener('blur', () => {
+      if (caps) caps.hidden = true;
     });
   },
 };
@@ -91,6 +139,8 @@ function updateRequirement(element, isValid) {
   element.querySelector('[data-rule-unmet]')?.classList.toggle('hidden', isValid);
   element.classList.toggle('text-gray-500', !isValid);
   element.classList.toggle('text-green-500', isValid);
+  const state = element.querySelector('[data-rule-state]');
+  if (state) state.textContent = isValid ? 'met' : 'not met';
 }
 
 export { PasswordToggle };

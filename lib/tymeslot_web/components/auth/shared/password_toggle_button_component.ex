@@ -24,8 +24,9 @@ defmodule TymeslotWeb.Shared.PasswordToggleButtonComponent do
       id={@id}
       data-password-toggle-button
       class={"pointer-events-auto absolute top-1/2 -translate-y-1/2 right-2 sm:right-3 text-tymeslot-400 hover:text-purple-600 transition duration-300 ease-in-out focus:outline-hidden p-1 sm:p-0 bg-transparent border-none flex items-center justify-center #{@class}"}
-      aria-label={dgettext("auth", "Toggle password visibility")}
-      tabindex="-1"
+      aria-label={dgettext("auth", "Show password")}
+      aria-pressed="false"
+      aria-controls="password-input"
     >
       <.icon name="hero-eye" class="h-4 w-4 sm:h-5 sm:w-5" data-eye-open />
       <.icon name="hero-eye-slash" class="h-4 w-4 sm:h-5 sm:w-5 hidden" data-eye-closed />

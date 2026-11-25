@@ -2,8 +2,8 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   @moduledoc """
   Password field validation with security requirements.
 
-  Validates password complexity, length, and security patterns
-  while providing specific feedback for security requirements.
+  Validates password length and a breached-password blocklist.
+  There are no composition rules (no uppercase, number or symbol requirement).
 
   The rules live here as data (`rules/0`) rather than as a hand-written
   `cond`, because they have two audiences: this module enforces them, and the
@@ -12,9 +12,7 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
 
   Every message returned here reaches the person typing the password — the
   reset form, the signup form, the account security page — so each one resolves
-  through the `auth` gettext domain at call time. The complexity messages are
-  stored as msgids (`dgettext_noop/2`) because a `dgettext/2` call in a module
-  attribute would freeze them at the compile-time locale.
+  through gettext at call time.
   """
 
   use Gettext, backend: TymeslotWeb.Gettext
@@ -26,31 +24,26 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   # scripts and emoji take two to four bytes each.
   @password_max_bytes 72
 
-  # Ordered as they are enforced, so the message names the first rule broken
-  # and the checklist lists them in the same order it checks them. Each rule
-  # carries the pattern's source, not just the compiled regex, because the
-  # browser-side checklist tests against the very same source — which is what
-  # keeps what we enforce and what we tell the user from drifting apart.
-  @complexity_rules [
-    {:lowercase, ~S([a-z]),
-     dgettext_noop("errors_input", "Password must contain at least one lowercase letter")},
-    {:uppercase, ~S([A-Z]),
-     dgettext_noop("errors_input", "Password must contain at least one uppercase letter")},
-    {:number, ~S([0-9]),
-     dgettext_noop("errors_input", "Password must contain at least one number")},
-    {:special, ~S([^A-Za-z0-9]),
-     dgettext_noop("errors_input", "Password must contain at least one special character")}
-  ]
+  # A local blocklist stands in for a breached-password range API. Comparison
+  # is case-insensitive. The same source builds the checklist regex.
+  @blocklist ~w(
+    password password1 password123 12345678 123456789 1234567890
+    qwerty123 qwertyui letmein1 welcome1 admin123 iloveyou1
+    sunshine1 princess1 football1 baseball1 abc12345 changeme
+    passw0rd trustno1 monkey123 dragon123 master123 login123
+    bookdesk bookdesk24 scalepoint growthos
+  )
 
-  @compiled_complexity_rules Enum.map(@complexity_rules, fn {key, pattern, message} ->
-                               {key, Regex.compile!(pattern), message}
-                             end)
+  @breached_source "^(?!(" <> Enum.map_join(@blocklist, "|", &Regex.escape/1) <> ")$).+$"
+  @breached_regex Regex.compile!(@breached_source)
 
+  # `:email` is contextual: the pattern matches any password, and
+  # `validate/2` applies the email-name check only when `:email` is given.
+  # The browser checklist reads the email field itself.
   @rules [
-    %{key: :length, pattern: "^.{#{@password_min_length},}$"}
-    | Enum.map(@complexity_rules, fn {key, pattern, _message} ->
-        %{key: key, pattern: pattern}
-      end)
+    %{key: :length, pattern: "^.{#{@password_min_length},}$"},
+    %{key: :breached, pattern: @breached_source},
+    %{key: :email, pattern: "^.*$"}
   ]
 
   @doc """
@@ -58,14 +51,14 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
 
   ## Examples
 
-      iex> validate("StrongPass123")
+      iex> validate("correct horse")
       :ok
 
       iex> validate("weak")
       {:error, "Password must be at least 8 characters long"}
 
-      iex> validate("nouppercase123")
-      {:error, "Password must contain at least one uppercase letter"}
+      iex> validate("password")
+      {:error, "This password is too common. Try a short phrase only you would know."}
   """
   @spec validate(any(), keyword()) :: :ok | {:error, String.t()}
   def validate(password, opts \\ [])
@@ -76,8 +69,9 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   def validate(password, opts) when is_binary(password) do
     min_length = Keyword.get(opts, :min_length, @password_min_length)
 
-    with :ok <- validate_length(password, min_length) do
-      validate_complexity(password)
+    with :ok <- validate_length(password, min_length),
+         :ok <- validate_breached(password) do
+      validate_email_name(password, Keyword.get(opts, :email))
     end
   end
 
@@ -147,15 +141,36 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
     end
   end
 
-  defp validate_complexity(password) do
-    case Enum.find(@compiled_complexity_rules, fn {_key, regex, _message} ->
-           not String.match?(password, regex)
-         end) do
-      nil ->
-        :ok
-
-      {_key, _regex, message} ->
-        {:error, Gettext.dgettext(TymeslotWeb.Gettext, "errors_input", message)}
+  defp validate_breached(password) do
+    if Regex.match?(@breached_regex, String.downcase(password)) do
+      :ok
+    else
+      {:error,
+       dgettext(
+         "errors_input",
+         "This password is too common. Try a short phrase only you would know."
+       )}
     end
   end
+
+  defp validate_email_name(_password, email) when email in [nil, ""], do: :ok
+
+  defp validate_email_name(password, email) when is_binary(email) do
+    local =
+      email
+      |> String.split("@")
+      |> List.first()
+      |> to_string()
+      |> String.trim()
+      |> String.downcase()
+
+    if String.length(local) >= 3 and String.contains?(String.downcase(password), local) do
+      {:error,
+       dgettext("errors_input", "Choose a password that does not contain your email name.")}
+    else
+      :ok
+    end
+  end
+
+  defp validate_email_name(_password, _email), do: :ok
 end

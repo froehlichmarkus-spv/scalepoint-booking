@@ -151,7 +151,7 @@ msgstr "Wiederholungsregel ersetzen"
 #: lib/tymeslot_web/components/calendar/recurrence_editor.ex
 #, elixir-autogen, elixir-format
 msgid "To repeat on another day, move the event to that day."
-msgstr "Soll sich das Ereignis an einem anderen Tag wiederholen, verschieben Sie es auf diesen Tag."
+msgstr "Soll sich das Ereignis an einem anderen Tag wiederholen, verschiebst du es auf diesen Tag."
 
 #: lib/tymeslot/integrations/calendar/recurrence/summary.ex
 #, elixir-autogen, elixir-format
@@ -554,7 +554,7 @@ msgstr "Nicht verfügbar: Das neue Ende liegt vor diesem Ereignis, daher gibt es
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This series' first event hasn't been read from your calendar yet, so the events left in it can't be counted. Refresh the calendar and try again."
-msgstr "Das erste Ereignis dieser Serie wurde noch nicht aus Ihrem Kalender gelesen, daher lassen sich die verbleibenden Ereignisse nicht zählen. Aktualisieren Sie den Kalender und versuchen Sie es erneut."
+msgstr "Das erste Ereignis dieser Serie wurde noch nicht aus deinem Kalender gelesen, daher lassen sich die verbleibenden Ereignisse nicht zählen. Aktualisiere den Kalender und versuche es erneut."
 
 #: lib/tymeslot_web/components/calendar/recurrence_editor.ex
 #, elixir-autogen, elixir-format

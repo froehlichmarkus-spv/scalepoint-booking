@@ -51,12 +51,12 @@ msgstr "Farbe"
 #: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar to see your whole schedule here"
-msgstr "Verbinden Sie einen Kalender, um hier Ihren gesamten Terminplan zu sehen"
+msgstr "Verbinde einen Kalender, um hier deinen gesamten Terminplan zu sehen"
 
 #: lib/tymeslot_web/live/dashboard/dashboard_overview_component.ex
 #, elixir-autogen, elixir-format
 msgid "Couldn't save that colour. Please try again."
-msgstr "Die Farbe konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+msgstr "Die Farbe konnte nicht gespeichert werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/agenda_detail_modal.ex
 #, elixir-autogen, elixir-format
@@ -66,7 +66,7 @@ msgstr "Standard"
 #: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
 #, elixir-autogen, elixir-format
 msgid "Here's an overview of your scheduling setup and recent activity."
-msgstr "Hier ist ein Überblick über Ihre Terminplanung und die letzten Aktivitäten."
+msgstr "Hier ist ein Überblick über deine Terminplanung und die letzten Aktivitäten."
 
 #: lib/tymeslot_web/live/dashboard_live.ex
 #, elixir-autogen, elixir-format
@@ -117,7 +117,7 @@ msgstr "Willkommen zurück"
 #: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
 #, elixir-autogen, elixir-format
 msgid "Your day"
-msgstr "Ihr Tag"
+msgstr "Dein Tag"
 
 #: lib/tymeslot_web/live/dashboard/dashboard_overview_formatters.ex
 #, elixir-autogen, elixir-format
@@ -164,12 +164,12 @@ msgstr[1] "%{count} Teilnehmende"
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "A few recommended steps. Tick off the ones you don't need."
-msgstr "Ein paar empfohlene Schritte. Haken Sie ab, was Sie nicht benötigen."
+msgstr "Ein paar empfohlene Schritte. Hake ab, was du nicht benötigen."
 
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "Add a headline and a short bio"
-msgstr "Fügen Sie eine Überschrift und eine kurze Vorstellung hinzu"
+msgstr "Füge eine Überschrift und eine kurze Vorstellung hinzu"
 
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
@@ -179,7 +179,7 @@ msgstr "Videoanbieter hinzufügen"
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "Add it to your website"
-msgstr "Auf Ihrer Website einbinden"
+msgstr "Auf deiner Website einbinden"
 
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
@@ -224,7 +224,7 @@ msgstr "Einrichtung abschließen"
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "Introduce yourself"
-msgstr "Stellen Sie sich vor"
+msgstr "Stelle dich vor"
 
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
@@ -234,7 +234,7 @@ msgstr "Damit Gäste sehen, wen sie treffen"
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "Let visitors book without leaving your site"
-msgstr "Besucher buchen, ohne Ihre Website zu verlassen"
+msgstr "Besucher buchen, ohne deine Website zu verlassen"
 
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
@@ -259,4 +259,4 @@ msgstr "Schreiben"
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking page can't take bookings without one"
-msgstr "Ohne Kalender kann Ihre Buchungsseite keine Buchungen annehmen"
+msgstr "Ohne Kalender kann deine Buchungsseite keine Buchungen annehmen"

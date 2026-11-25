@@ -309,8 +309,8 @@ msgstr "Termin hinzufügen"
 #, elixir-autogen, elixir-format
 msgid "Add at least %{count} more session to continue."
 msgid_plural "Add at least %{count} more sessions to continue."
-msgstr[0] "Fügen Sie mindestens %{count} weiteren Termin hinzu, um fortzufahren."
-msgstr[1] "Fügen Sie mindestens %{count} weitere Termine hinzu, um fortzufahren."
+msgstr[0] "Füge mindestens %{count} weiteren Termin hinzu, um fortzufahren."
+msgstr[1] "Füge mindestens %{count} weitere Termine hinzu, um fortzufahren."
 
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
@@ -362,19 +362,19 @@ msgstr "Verfügbarkeit wird geprüft …"
 #: lib/tymeslot_web/themes/shared/series_chooser.ex
 #, elixir-autogen, elixir-format
 msgid "Choose between %{min} and %{max} sessions."
-msgstr "Wählen Sie zwischen %{min} und %{max} Terminen."
+msgstr "Wähle zwischen %{min} und %{max} Terminen."
 
 #: lib/tymeslot_web/themes/shared/series_chooser.ex
 #, elixir-autogen, elixir-format
 msgid "Choose your %{count} session"
 msgid_plural "Choose your %{count} sessions"
-msgstr[0] "Wählen Sie %{count} Termin"
-msgstr[1] "Wählen Sie Ihre %{count} Termine"
+msgstr[0] "Wähle %{count} Termin"
+msgstr[1] "Wähle deine %{count} Termine"
 
 #: lib/tymeslot_web/themes/shared/series_chooser.ex
 #, elixir-autogen, elixir-format
 msgid "Choose your sessions"
-msgstr "Wählen Sie Ihre Termine"
+msgstr "Wähle deine Termine"
 
 #: lib/tymeslot_web/themes/shared/series_chooser.ex
 #, elixir-autogen, elixir-format
@@ -454,7 +454,7 @@ msgstr "Einen Termin mehr"
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
 msgid "Overlaps another of your sessions"
-msgstr "Überschneidet sich mit einem Ihrer Termine"
+msgstr "Überschneidet sich mit einem deiner Termine"
 
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
@@ -470,7 +470,7 @@ msgstr "Verschieben"
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
 msgid "Some sessions aren't available at this time. Pick another time for your first session, or book fewer sessions."
-msgstr "Einige Termine sind zu dieser Uhrzeit nicht verfügbar. Wählen Sie eine andere Uhrzeit für Ihren ersten Termin oder buchen Sie weniger Termine."
+msgstr "Einige Termine sind zu dieser Uhrzeit nicht verfügbar. Wähle eine andere Uhrzeit für deinen ersten Termin oder buche weniger Termine."
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #: lib/tymeslot_web/themes/shared/series_chooser.ex
@@ -502,29 +502,29 @@ msgstr "Erneut versuchen"
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
 msgid "We couldn't check the host's calendar just now. Please try again in a moment."
-msgstr "Wir konnten den Kalender des Gastgebers gerade nicht prüfen. Bitte versuchen Sie es gleich noch einmal."
+msgstr "Wir konnten den Kalender des Gastgebers gerade nicht prüfen. Bitte versuche es gleich noch einmal."
 
 #: lib/tymeslot_web/themes/shared/series_summary.ex
 #, elixir-autogen, elixir-format
 msgid "We've emailed you all the details."
-msgstr "Wir haben Ihnen alle Details per E-Mail geschickt."
+msgstr "Wir haben dir alle Details per E-Mail geschickt."
 
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
 msgid "You already have this session"
-msgstr "Diesen Termin haben Sie bereits"
+msgstr "Diesen Termin hast du bereits"
 
 #: lib/tymeslot_web/themes/shared/series_chooser.ex
 #, elixir-autogen, elixir-format
 msgid "You're booking just this session:"
-msgstr "Sie buchen nur diesen Termin:"
+msgstr "Du buchen nur diesen Termin:"
 
 #: lib/tymeslot_web/themes/shared/series_summary.ex
 #, elixir-autogen, elixir-format
 msgid "Your request for %{count} session has been sent"
 msgid_plural "Your request for %{count} sessions has been sent"
-msgstr[0] "Ihre Anfrage für %{count} Termin wurde gesendet"
-msgstr[1] "Ihre Anfrage für %{count} Termine wurde gesendet"
+msgstr[0] "Deine Anfrage für %{count} Termin wurde gesendet"
+msgstr[1] "Deine Anfrage für %{count} Termine wurde gesendet"
 
 #: lib/tymeslot_web/themes/shared/series_parts.ex
 #, elixir-autogen, elixir-format
@@ -557,7 +557,7 @@ msgstr[1] "%{count} Termine anfragen"
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
 msgid "%{host} hasn't answered your request yet."
-msgstr "Von %{host} gibt es noch keine Antwort auf Ihre Anfrage."
+msgstr "Von %{host} gibt es noch keine Antwort auf deine Anfrage."
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
@@ -596,7 +596,7 @@ msgstr "Abgesagt"
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
 msgid "Cancelling doesn't refund your payment automatically. Contact %{host} about a refund."
-msgstr "Durch die Absage wird Ihre Zahlung nicht automatisch erstattet. Klären Sie eine Rückerstattung bitte mit %{host}."
+msgstr "Durch die Absage wird deine Zahlung nicht automatisch erstattet. Kläre eine Rückerstattung bitte mit %{host}."
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
@@ -631,12 +631,12 @@ msgstr "Vergangen"
 #: lib/tymeslot_web/themes/core/series_management.ex
 #, elixir-autogen, elixir-format
 msgid "The sessions could not be cancelled. Please try again."
-msgstr "Die Termine konnten nicht abgesagt werden. Bitte versuchen Sie es erneut."
+msgstr "Die Termine konnten nicht abgesagt werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/themes/core/series_management.ex
 #, elixir-autogen, elixir-format
 msgid "This series could not be found. Check the link in your email."
-msgstr "Diese Serie wurde nicht gefunden. Prüfen Sie den Link in Ihrer E-Mail."
+msgstr "Diese Serie wurde nicht gefunden. Prüfe den Link in deiner E-Mail."
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
@@ -652,8 +652,8 @@ msgstr "Anfrage zurückziehen"
 #, elixir-autogen, elixir-format
 msgid "Withdraw your request for %{count} session? This can't be undone."
 msgid_plural "Withdraw your request for %{count} sessions? This can't be undone."
-msgstr[0] "Ihre Anfrage für %{count} Termin zurückziehen? Das lässt sich nicht rückgängig machen."
-msgstr[1] "Ihre Anfrage für %{count} Termine zurückziehen? Das lässt sich nicht rückgängig machen."
+msgstr[0] "Deine Anfrage für %{count} Termin zurückziehen? Das lässt sich nicht rückgängig machen."
+msgstr[1] "Deine Anfrage für %{count} Termine zurückziehen? Das lässt sich nicht rückgängig machen."
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
@@ -668,22 +668,22 @@ msgstr "Ja, Anfrage zurückziehen"
 #: lib/tymeslot_web/themes/core/series_management.ex
 #, elixir-autogen, elixir-format
 msgid "Your remaining sessions are cancelled. We've emailed you."
-msgstr "Ihre verbleibenden Termine sind abgesagt. Wir haben Ihnen eine E-Mail geschickt."
+msgstr "Deine verbleibenden Termine sind abgesagt. Wir haben dir eine E-Mail geschickt."
 
 #: lib/tymeslot_web/themes/core/series_management.ex
 #, elixir-autogen, elixir-format
 msgid "Your request is withdrawn. We've emailed you."
-msgstr "Ihre Anfrage ist zurückgezogen. Wir haben Ihnen eine E-Mail geschickt."
+msgstr "Deine Anfrage ist zurückgezogen. Wir haben dir eine E-Mail geschickt."
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
 msgid "Your sessions"
-msgstr "Ihre Termine"
+msgstr "Deine Termine"
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
 msgid "your host"
-msgstr "Ihrem Gastgeber"
+msgstr "Deinem Gastgeber"
 
 #: lib/tymeslot_web/themes/shared/components/series_page.ex
 #, elixir-autogen, elixir-format
@@ -700,4 +700,4 @@ msgstr "Termin %{position}, %{when}"
 #: lib/tymeslot_web/themes/core/series_management.ex
 #, elixir-autogen, elixir-format
 msgid "The host answered your request in the meantime, so nothing was withdrawn. The list shows where each session now stands."
-msgstr "Der Gastgeber hat Ihre Anfrage inzwischen beantwortet, daher wurde nichts zurückgezogen. Die Liste zeigt den aktuellen Stand jedes Termins."
+msgstr "Der Gastgeber hat deine Anfrage inzwischen beantwortet, daher wurde nichts zurückgezogen. Die Liste zeigt den aktuellen Stand jedes Termins."

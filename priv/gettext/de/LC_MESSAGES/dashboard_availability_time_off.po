@@ -37,13 +37,13 @@ msgstr[1] "%{count} Buchungen liegen bereits in diesem Zeitraum"
 #, elixir-autogen, elixir-format
 msgid "1 booking sits inside this time off. It stays in your diary until you move or cancel it."
 msgid_plural "%{count} bookings sit inside this time off. They stay in your diary until you move or cancel them."
-msgstr[0] "1 Buchung liegt in dieser Abwesenheit. Sie bleibt in Ihrem Kalender, bis Sie sie verschieben oder stornieren."
-msgstr[1] "%{count} Buchungen liegen in dieser Abwesenheit. Sie bleiben in Ihrem Kalender, bis Sie sie verschieben oder stornieren."
+msgstr[0] "1 Buchung liegt in dieser Abwesenheit. Du bleibt in deinem Kalender, bis du sie verschieben oder stornieren."
+msgstr[1] "%{count} Buchungen liegen in dieser Abwesenheit. Du bleiben in deinem Kalender, bis du sie verschieben oder stornieren."
 
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
 msgid "Add a period and those days stop being offered, without touching your calendars."
-msgstr "Legen Sie einen Zeitraum an, und diese Tage werden nicht mehr angeboten, ohne Ihre Kalender anzurühren."
+msgstr "Lege einen Zeitraum an, und diese Tage werden nicht mehr angeboten, ohne deine Kalender anzurühren."
 
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
@@ -64,7 +64,7 @@ msgstr "Jeder Tag zwischen dem ersten und dem letzten ist vollständig blockiert
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
 msgid "Anything you add appears here."
-msgstr "Alles, was Sie hinzufügen, erscheint hier."
+msgstr "Alles, was du hinzufügen, erscheint hier."
 
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #, elixir-autogen, elixir-format
@@ -99,7 +99,7 @@ msgstr "Aktuell und bevorstehend"
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
 msgid "Days you are away. These apply to every schedule and every meeting type, and nobody booking you sees why those days are closed."
-msgstr "Tage, an denen Sie abwesend sind. Sie gelten für jeden Zeitplan und jeden Termintyp, und niemand, der bei Ihnen bucht, sieht, warum diese Tage geschlossen sind."
+msgstr "Tage, an denst du abwesend sind. Du gelten für jeden Zeitplan und jeden Termintyp, und niemand, der bei dir bucht, sieht, warum diese Tage geschlossen sind."
 
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #: lib/tymeslot_web/components/dashboard/availability/time_off_period_row.ex
@@ -135,12 +135,12 @@ msgstr "Keine bevorstehende Abwesenheit"
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Note (only you see this)"
-msgstr "Notiz (nur für Sie sichtbar)"
+msgstr "Notiz (nur für dich sichtbar)"
 
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Open your bookings in a new tab"
-msgstr "Ihre Buchungen in einem neuen Tab öffnen"
+msgstr "Deine Buchungen in einem neuen Tab öffnen"
 
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
@@ -161,7 +161,7 @@ msgstr "Abwesenheit entfernen"
 #: lib/tymeslot_web/components/dashboard/availability/delete_time_off_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Remove your time off for %{range}?"
-msgstr "Ihre Abwesenheit für %{range} entfernen?"
+msgstr "Deine Abwesenheit für %{range} entfernen?"
 
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #, elixir-autogen, elixir-format
@@ -191,7 +191,7 @@ msgstr "Abwesenheit hinzugefügt"
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Time off only stops new bookings. These keep their times until you move or cancel them."
-msgstr "Eine Abwesenheit verhindert nur neue Buchungen. Bestehende behalten ihre Zeiten, bis Sie sie verschieben oder stornieren."
+msgstr "Eine Abwesenheit verhindert nur neue Buchungen. Bestehende behalten ihre Zeiten, bis du sie verschieben oder stornieren."
 
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
@@ -201,7 +201,7 @@ msgstr "Abwesenheit entfernt"
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
 msgid "Time off that ended in the last %{count} days. It no longer affects your availability."
-msgstr "Abwesenheiten, die in den letzten %{count} Tagen geendet haben. Sie wirken sich nicht mehr auf Ihre Verfügbarkeit aus."
+msgstr "Abwesenheiten, die in den letzten %{count} Tagen geendet haben. Du wirken sich nicht mehr auf deine Verfügbarkeit aus."
 
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
@@ -211,7 +211,7 @@ msgstr "Abwesenheit aktualisiert"
 #: lib/tymeslot_web/live/dashboard/availability/time_off_card.ex
 #, elixir-autogen, elixir-format
 msgid "You already have the maximum of %{count} time off periods"
-msgstr "Sie haben bereits die maximale Anzahl von %{count} Abwesenheitszeiträumen"
+msgstr "du hast bereits die maximale Anzahl von %{count} Abwesenheitszeiträumen"
 
 #: lib/tymeslot_web/components/dashboard/availability/time_off_form_modal.ex
 #, elixir-autogen, elixir-format

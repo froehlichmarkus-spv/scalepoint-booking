@@ -305,7 +305,9 @@ defmodule Tymeslot.Auth.UserSchema do
 
   defp validate_password(changeset) do
     validate_change(changeset, :password, fn :password, password ->
-      case PasswordValidator.validate(password) do
+      email = get_change(changeset, :email) || get_field(changeset, :email)
+
+      case PasswordValidator.validate(password, email: email) do
         :ok -> []
         {:error, message} -> [password: message]
       end

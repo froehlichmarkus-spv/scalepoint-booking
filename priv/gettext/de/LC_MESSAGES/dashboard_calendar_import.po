@@ -36,7 +36,7 @@ msgstr "Schließen"
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Copy the events of an .ics file into one of your calendars."
-msgstr "Kopieren Sie die Ereignisse einer .ics-Datei in einen Ihrer Kalender."
+msgstr "Kopiere die Ereignisse einer .ics-Datei in einen deiner Kalender."
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
@@ -83,7 +83,7 @@ msgstr "Datei wird gelesen..."
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
 msgid "You can close this window; the import carries on."
-msgstr "Sie können dieses Fenster schließen; der Import läuft weiter."
+msgstr "du kannst dieses Fenster schließen; der Import läuft weiter."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
@@ -111,7 +111,7 @@ msgstr[1] ""
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "An import is still running. Please wait for it to finish before importing another file."
-msgstr "Ein Import läuft noch. Bitte warten Sie, bis er abgeschlossen ist, bevor Sie eine weitere Datei importieren."
+msgstr "Ein Import läuft noch. Bitte warte, bis er abgeschlossen ist, bevor du eine weitere Datei importieren."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
@@ -140,12 +140,12 @@ msgstr[1] "Outlook konnte die ausgelassenen Datumsangaben von %{count} wiederkeh
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "The file could not be uploaded. Please try again."
-msgstr "Die Datei konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut."
+msgstr "Die Datei konnte nicht hochgeladen werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "The import could not be finished. Some of its events may already be in your calendar."
-msgstr "Der Import konnte nicht abgeschlossen werden. Einige seiner Ereignisse sind möglicherweise bereits in Ihrem Kalender."
+msgstr "Der Import konnte nicht abgeschlossen werden. Einige seiner Ereignisse sind möglicherweise bereits in deinem Kalender."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
@@ -155,12 +155,12 @@ msgstr "Der Import wurde angehalten, weil nicht in den Kalender geschrieben werd
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "The import stopped because your calendar is not responding. Please try again later."
-msgstr "Der Import wurde angehalten, weil Ihr Kalender nicht antwortet. Bitte versuchen Sie es später erneut."
+msgstr "Der Import wurde angehalten, weil dein Kalender nicht antwortet. Bitte versuche es später erneut."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "The import stopped because your calendar needs to be reconnected."
-msgstr "Der Import wurde angehalten, weil Ihr Kalender erneut verbunden werden muss."
+msgstr "Der Import wurde angehalten, weil dein Kalender erneut verbunden werden muss."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
@@ -170,12 +170,12 @@ msgstr "Diese Datei enthält keine Ereignisse zum Importieren."
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "This file could not be read as a calendar. Please choose an .ics file."
-msgstr "Diese Datei konnte nicht als Kalender gelesen werden. Bitte wählen Sie eine .ics-Datei aus."
+msgstr "Diese Datei konnte nicht als Kalender gelesen werden. Bitte wähle eine .ics-Datei aus."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "Too many imports. Please wait a while before importing another file."
-msgstr "Zu viele Importe. Bitte warten Sie eine Weile, bevor Sie eine weitere Datei importieren."
+msgstr "Zu viele Importe. Bitte warte eine Weile, bevor du eine weitere Datei importieren."
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
@@ -216,7 +216,7 @@ msgstr "Fortfahren"
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Even the events from today onwards are more than one import can copy. Export a shorter date range from your calendar app and import it in parts."
-msgstr "Selbst die Ereignisse ab heute sind mehr, als ein Import kopieren kann. Exportieren Sie kürzere Zeiträume aus Ihrer Kalender-App und importieren Sie diese einzeln."
+msgstr "Selbst die Ereignisse ab heute sind mehr, als ein Import kopieren kann. Exportiere kürzere Zeiträume aus deiner Kalender-App und importiere diese einzeln."
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
@@ -231,17 +231,17 @@ msgstr "Ab diesem Datum keine Ereignisse"
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Past events are rarely needed for scheduling, so you can leave them out. A repeating event counts once, however often it repeats."
-msgstr "Vergangene Ereignisse werden für die Terminplanung selten gebraucht, Sie können sie also weglassen. Ein wiederkehrendes Ereignis zählt einmal, egal wie oft es sich wiederholt."
+msgstr "Vergangene Ereignisse werden für die Terminplanung selten gebraucht, du kannst sie also weglassen. Ein wiederkehrendes Ereignis zählt einmal, egal wie oft es sich wiederholt."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "The file is too large. Files up to %{size} MB can be imported. Export a shorter date range from your calendar app and try again."
-msgstr "Die Datei ist zu groß. Dateien bis zu %{size} MB können importiert werden. Exportieren Sie einen kürzeren Zeitraum aus Ihrer Kalender-App und versuchen Sie es erneut."
+msgstr "Die Datei ist zu groß. Dateien bis zu %{size} MB können importiert werden. Exportiere einen kürzeren Zeitraum aus deiner Kalender-App und versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex
 #, elixir-autogen, elixir-format
 msgid "This file contains more than %{count} events, too many to read. Export a shorter date range from your calendar app, or subscribe to the calendar by URL instead."
-msgstr "Diese Datei enthält mehr als %{count} Ereignisse, zu viele zum Einlesen. Exportieren Sie einen kürzeren Zeitraum aus Ihrer Kalender-App oder abonnieren Sie den Kalender stattdessen per URL."
+msgstr "Diese Datei enthält mehr als %{count} Ereignisse, zu viele zum Einlesen. Exportiere einen kürzeren Zeitraum aus deiner Kalender-App oder abonniere den Kalender stattdessen per URL."
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
@@ -251,9 +251,9 @@ msgstr "Diese Datei enthält %{count} Ereignisse vom %{first} bis zum %{last}. M
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
 msgid "To keep a whole calendar, with no limit and in step with its changes, subscribe to it by URL instead."
-msgstr "Wenn Sie einen ganzen Kalender ohne Obergrenze übernehmen und mit seinen Änderungen synchron halten möchten, abonnieren Sie ihn stattdessen per URL."
+msgstr "Wenn du einen ganzen Kalender ohne Obergrenze übernehmen und mit seinen Änderungen synchron halten möchten, abonnierst du ihn stattdessen per URL."
 
 #: lib/tymeslot_web/live/dashboard/calendar/import_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar the scheduler can write to before importing events."
-msgstr "Verbinden Sie einen Kalender, in den the scheduler schreiben kann, bevor Sie Ereignisse importieren."
+msgstr "Verbinde einen Kalender, in den the scheduler schreiben kann, bevor du Ereignisse importieren."

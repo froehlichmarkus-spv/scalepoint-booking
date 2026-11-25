@@ -24,31 +24,31 @@ defmodule Tymeslot.Emails.Shared.Styles.Tokens do
   #   surface #fafaf6 → inverts to near-black with a warm tint
   #   ink     #111418 → inverts to warm cream, never glaring white
   # Contrast on the light side clears WCAG AA (≥4.5:1) for every text tier.
-  @canvas "#f4f0e6"
-  @canvas_soft "#ede7d4"
-  @surface "#fafaf6"
-  @hairline "#d5cfbe"
-  @hairline_soft "#e4decb"
+  @canvas "#f5f7f9"
+  @canvas_soft "#eef2f6"
+  @surface "#fbfcfd"
+  @hairline "#e4e9ef"
+  @hairline_soft "#eef2f6"
 
-  @ink "#111418"
-  @ink_soft "#2d3339"
-  @ink_muted "#4a5058"
-  @ink_whisper "#6d737a"
+  @ink "#111e32"
+  @ink_soft "#3b4a5e"
+  @ink_muted "#5a687c"
+  @ink_whisper "#5a687c"
 
   # Dark palette, applied under `prefers-color-scheme: dark` by
   # `Styles.DarkMode`. A warm charcoal rather than pure black, mirroring the
   # light side's cream. Every ink tier clears WCAG AA against `canvas_soft`
   # and against each intent's dark tint, the lightest surfaces text sits on.
   @dark %{
-    canvas: "#131518",
-    canvas_soft: "#24282c",
-    surface: "#1b1e21",
-    hairline: "#3a3f45",
-    hairline_soft: "#2c3035",
-    ink: "#f2eee4",
-    ink_soft: "#d8d4ca",
-    ink_muted: "#aeb2b8",
-    ink_whisper: "#9ca1a8"
+    canvas: "#0b1320",
+    canvas_soft: "#111e32",
+    surface: "#111e32",
+    hairline: "#24344b",
+    hairline_soft: "#1c2b40",
+    ink: "#f3f5f7",
+    ink_soft: "#c9d2dd",
+    ink_muted: "#9fadbe",
+    ink_whisper: "#9fadbe"
   }
 
   # ============================================================================
@@ -128,7 +128,7 @@ defmodule Tymeslot.Emails.Shared.Styles.Tokens do
   # RADII
   # ============================================================================
 
-  @radii %{sm: "8px", md: "14px", lg: "20px", pill: "999px"}
+  @radii %{sm: "8px", md: "12px", lg: "16px", pill: "8px"}
 
   # ============================================================================
   # PUBLIC GETTERS

@@ -253,7 +253,7 @@ defmodule Tymeslot.Auth.RegistrationTest do
 
   describe "password storage" do
     test "passwords are hashed before storage" do
-      plain = "SecurePassword123!"
+      plain = "harbor-horse-battery"
 
       params = %{
         "email" => "secure@example.com",

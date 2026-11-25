@@ -42,16 +42,16 @@ defmodule Tymeslot.Emails.Shared.Buttons do
     """
   end
 
-  defp button_markup(intent, text, safe_url, size, full_width, width) do
+  defp button_markup(_intent, text, safe_url, size, full_width, width) do
     safe_text = Sanitise.sanitize_for_email(text)
     css_class = if full_width, do: "mobile-button", else: ""
-    accent_deep = Styles.intent_accent_deep(intent)
+    cta = Styles.cta_background()
 
     """
     <mj-button
       href="#{safe_url}"
-      background-color="#{accent_deep}"
-      color="#{Styles.button_text_color(accent_deep)}"
+      background-color="#{cta}"
+      color="#{Styles.button_text_color(cta)}"
       border-radius="#{Styles.button_radius()}"
       font-size="#{Styles.font_size(:md)}"
       inner-padding="#{Styles.button_padding(size)}"

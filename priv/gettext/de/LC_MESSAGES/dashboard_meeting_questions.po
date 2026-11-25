@@ -14,7 +14,7 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/custom_questions_section.ex
 #, elixir-autogen, elixir-format
 msgid "Add a question and bookers will be asked it when they book this meeting type."
-msgstr "Fügen Sie eine Frage hinzu, die Buchenden beim Buchen dieses Termintyps gestellt wird."
+msgstr "Füge eine Frage hinzu, die Buchenden beim Buchen dieses Termintyps gestellt wird."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
 #, elixir-autogen, elixir-format
@@ -30,7 +30,7 @@ msgstr "Frage hinzufügen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/custom_questions_section.ex
 #, elixir-autogen, elixir-format
 msgid "Ask bookers extra questions during the booking flow."
-msgstr "Stellen Sie Buchenden während des Buchungsablaufs zusätzliche Fragen."
+msgstr "Stelle Buchenden während des Buchungsablaufs zusätzliche Fragen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
 #, elixir-autogen, elixir-format
@@ -45,7 +45,7 @@ msgstr "Abbrechen"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
 #, elixir-autogen, elixir-format
 msgid "Changing the type will clear the configuration you've defined (options, body, min/max). Past bookings keep their original answers. Continue?"
-msgstr "Wenn Sie den Typ ändern, wird die von Ihnen festgelegte Konfiguration (Optionen, Text, Min/Max) gelöscht. Frühere Buchungen behalten ihre ursprünglichen Antworten. Fortfahren?"
+msgstr "Wenn du den Typ ändern, wird die von dir festgelegte Konfiguration (Optionen, Text, Min/Max) gelöscht. Frühere Buchungen behalten ihre ursprünglichen Antworten. Fortfahren?"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
 #, elixir-autogen, elixir-format
@@ -55,7 +55,7 @@ msgstr "Legt fest, wie Buchende ihre Antwort eingeben."
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/custom_questions_section.ex
 #, elixir-autogen, elixir-format
 msgid "Custom booking questions are not available on your current plan."
-msgstr "Benutzerdefinierte Buchungsfragen sind in Ihrem aktuellen Tarif nicht verfügbar."
+msgstr "Benutzerdefinierte Buchungsfragen sind in deinem aktuellen Tarif nicht verfügbar."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/custom_questions_section.ex
 #, elixir-autogen, elixir-format
@@ -205,7 +205,7 @@ msgstr "Kurztext"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
 #, elixir-autogen, elixir-format
 msgid "Shown below the question - use it to clarify what you're asking or give an example."
-msgstr "Wird unter der Frage angezeigt - nutzen Sie ihn, um zu verdeutlichen, was Sie fragen, oder ein Beispiel zu geben."
+msgstr "Wird unter der Frage angezeigt - nutzt du ihn, um zu verdeutlichen, was du fragen, oder ein Beispiel zu geben."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/custom_questions_section.ex
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
@@ -269,7 +269,7 @@ msgstr "z. B. Firmenname"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/question_editor_component.ex
 #, elixir-autogen, elixir-format
 msgid "e.g., Enter your company's registered name"
-msgstr "z. B. Geben Sie den eingetragenen Firmennamen ein"
+msgstr "z. B. Gib den eingetragenen Firmennamen ein"
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/custom_questions_section.ex
 #, elixir-autogen, elixir-format

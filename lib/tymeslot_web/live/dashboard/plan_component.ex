@@ -70,6 +70,30 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   def render(assigns) do
     ~H"""
     <div class="gos-plan" id={@id}>
+      <section :if={@trial} class="gos-plan-card gos-trial" data-testid="pro-trial">
+        <h2>{dgettext("plans", "Pro trial")}</h2>
+        <p class="gos-plan-muted">
+          {dgettext("plans", "%{days} days left. Full Pro access until %{date}.",
+            days: elem(@trial, 0),
+            date: elem(@trial, 1)
+          )}
+        </p>
+        <p class="gos-plan-muted">
+          {dgettext(
+            "plans",
+            "When the trial ends the workspace returns to Free. Bookings stay. Extra event types pause, and the BookDesk24 badge comes back."
+          )}
+        </p>
+      </section>
+      <section :if={@downgraded} class="gos-plan-card gos-downgrade" data-testid="pro-downgrade">
+        <h2>{dgettext("plans", "Back on Free")}</h2>
+        <p>
+          {dgettext(
+            "plans",
+            "Pro has ended. Your bookings are still here. Extra event types are paused, not deleted. Choose Pro to open them again."
+          )}
+        </p>
+      </section>
       <section class="gos-plan-card">
         <h2>{dgettext("plans", "Plan & billing")}</h2>
         <p class="gos-plan-muted">{plan_line(assigns)}</p>
@@ -144,15 +168,33 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     user = socket.assigns.current_user
     prices = Plans.display_prices()
 
+    plan = Plans.effective_plan(user.id)
+    entitlement = Plans.get_entitlement(user.id)
+
     socket
-    |> assign(:plan, Plans.effective_plan(user.id))
-    |> assign(:entitlement, Plans.get_entitlement(user.id))
-    |> assign(:limits, Plans.limits(Plans.effective_plan(user.id)))
+    |> assign(:plan, plan)
+    |> assign(:entitlement, entitlement)
+    |> assign(:limits, Plans.limits(plan))
     |> assign(:usage, Plans.usage(user.id))
     |> assign(:prices, prices)
     |> assign(:checkout_success, checkout_success?(socket.assigns))
     |> assign(:rows, comparison_rows())
+    |> assign(:trial, trial_banner(entitlement))
+    |> assign(:downgraded, downgraded?(entitlement, plan))
   end
+
+  defp trial_banner(%{status: "trialing", trial_ends_at: %DateTime{} = ends}) do
+    days = max(div(DateTime.diff(ends, DateTime.utc_now(), :second), 86_400), 0)
+    {days, Calendar.strftime(ends, "%Y-%m-%d")}
+  end
+
+  defp trial_banner(_), do: nil
+
+  defp downgraded?(%{status: status}, :free)
+       when status in ["canceled", "unpaid", "incomplete_expired"],
+       do: true
+
+  defp downgraded?(_, _), do: false
 
   defp checkout_success?(assigns) do
     params = assigns[:params] || %{}
