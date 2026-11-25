@@ -190,7 +190,12 @@ defmodule TymeslotWeb.Dashboard.SalesRoomComponent do
             </label>
           </form>
 
-          <form :if={@meeting_type_id} id="sales-room-override" phx-change="override" phx-target={@myself}>
+          <form
+            :if={@meeting_type_id}
+            id="sales-room-override"
+            phx-change="override"
+            phx-target={@myself}
+          >
             <label class="sr-editor__check">
               <input type="hidden" name="override" value="false" />
               <input
