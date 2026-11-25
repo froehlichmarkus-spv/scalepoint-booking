@@ -85,7 +85,7 @@ msgstr "Anzeigename"
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
 msgid "Don't have an account?"
-msgstr "du hast noch kein Konto?"
+msgstr "Du hast noch kein Konto?"
 
 #: lib/tymeslot_web/components/auth/registration/complete_registration_component.ex
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
@@ -779,7 +779,7 @@ msgstr "Wähle ein sicheres neues Passwort für dein the scheduler-Konto."
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Create a the scheduler account and start sharing your availability in minutes. No credit card required."
-msgstr "Erstelle ein the scheduler-Konto und teile deine Verfügbarkeit in wenigen Minuten. Keine Kreditkarte erforderlich."
+msgstr "Erstelle ein BookDesk24-Konto und teile deine Verfügbarkeit in wenigen Minuten. Keine Kreditkarte erforderlich."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
@@ -789,14 +789,14 @@ msgstr "Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passwo
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
 msgid "Join the scheduler"
-msgstr "Bei the scheduler registrieren"
+msgstr "Bei BookDesk24 registrieren"
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
 msgid "Log in to the scheduler"
-msgstr "Bei the scheduler anmelden"
+msgstr "Bei BookDesk24 anmelden"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Sign in to your the scheduler account to manage scheduling links, availability, and bookings."
-msgstr "Melde dich bei deinem the scheduler-Konto an, um Buchungslinks, Verfügbarkeit und Buchungen zu verwalten."
+msgstr "Melde dich bei deinem BookDesk24-Konto an, um Buchungslinks, Verfügbarkeit und Buchungen zu verwalten."

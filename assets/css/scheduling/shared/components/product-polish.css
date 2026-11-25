@@ -12,8 +12,14 @@
 
 h1,
 .slot-list__heading,
-.meeting-title {
-  font-family: "DM Serif Display", "Source Serif 4 Variable", Georgia, serif;
+.meeting-title,
+.journey--continuous :is(h1, h2, h3),
+.folio-outcome-page :is(h1, h2, h3),
+.folio-card :is(h1, h2),
+.folio-page[data-layout] .folio-identity__name,
+.folio-page[data-layout] .room__hero,
+.folio-section__title {
+  font-family: "DM Serif Display", Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.15;

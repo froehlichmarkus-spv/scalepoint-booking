@@ -71,9 +71,10 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
         data-portrait={if(@brand.portrait, do: "on", else: "off")}
         data-copy="1"
       >
-        <style>
-          {@brand_style}
-        </style>
+        <%!-- style tags do not interpolate, so the tenant rules are
+             injected as raw HTML. The stylesheet is built from allowlisted
+             fonts and checked colour values. --%>
+        {Phoenix.HTML.raw("<style>#{@brand_style}</style>")}
         <div class="content-area">
           <ThemeShell.chrome
             locales={@language_locales}

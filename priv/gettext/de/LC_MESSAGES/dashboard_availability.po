@@ -599,12 +599,12 @@ msgstr "Die Pause %{break} am %{day} liegt außerhalb der Zeiten dieses Tages. V
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Busy times on these calendars are kept off your booking page."
-msgstr "Busy times on these calendars are kept off your booking page."
+msgstr "Belegte Zeiten in diesen Kalendern bleiben auf deiner Buchungsseite frei."
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Connected calendars"
-msgstr "Connected calendars"
+msgstr "Verbundene Kalender"
 
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format

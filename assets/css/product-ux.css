@@ -101,9 +101,32 @@ table {
   box-shadow: var(--sh-xs), 0 0 0 1px var(--c-line);
 }
 
+.dashboard-sidebar .dashboard-nav-link svg {
+  width: 16px;
+  height: 16px;
+  color: var(--c-ink-3);
+  flex: none;
+}
+
 .dashboard-sidebar .dashboard-nav-link--active svg,
 .dashboard-sidebar .dashboard-nav-link--active .heroicon {
-  color: var(--c-accent, var(--spv-teal));
+  color: var(--spv-teal);
+}
+
+/* The overview welcome band is a calm card, not a teal gradient. */
+.bg-linear-to-br.from-turquoise-600 {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  border: 1px solid var(--c-line);
+  box-shadow: var(--sh-xs);
+  border-radius: var(--r-lg);
+}
+
+.bg-linear-to-br.from-turquoise-600 p,
+.bg-linear-to-br.from-turquoise-600 .text-white\/90 {
+  color: var(--c-ink-2);
+  font-family: var(--spv-font-display);
+  font-weight: 400;
 }
 
 .dashboard-sidebar .dashboard-nav-section-title {
@@ -137,12 +160,10 @@ table {
 }
 
 #dashboard-content-container main {
-  background: var(--c-bg);
-  border: 1px solid var(--c-line);
-  border-radius: var(--r-lg);
-  box-shadow: var(--sh-xs);
-  padding: 32px;
-  min-height: calc(100vh - 88px);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 8px 0 32px;
 }
 
 .card-glass,
