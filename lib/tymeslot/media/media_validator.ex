@@ -114,6 +114,8 @@ defmodule Tymeslot.Media.MediaValidator do
 
   defp webvtt_signature?(_other), do: false
 
+  defp binary_has?(haystack, needle), do: :binary.match(haystack, needle) != :nomatch
+
   @doc """
   Validates if a file at the given path is a WebVTT captions file.
   """
@@ -138,6 +140,27 @@ defmodule Tymeslot.Media.MediaValidator do
   def valid_image_file?(path) when is_binary(path) do
     case File.read(path) do
       {:ok, binary} -> valid_image?(binary)
+      _other -> false
+    end
+  end
+
+  @doc """
+  Whether `binary` is a PDF: the header is `%PDF-` and the file is not an
+  HTML document wearing that name.
+  """
+  @spec valid_pdf?(binary()) :: boolean()
+  def valid_pdf?(<<"%PDF-", rest::binary>>) do
+    head = binary_part(rest, 0, min(byte_size(rest), 512))
+    not (binary_has?(head, "<html") or binary_has?(head, "<HTML") or binary_has?(head, "<script"))
+  end
+
+  def valid_pdf?(_other), do: false
+
+  @doc "Whether the file at `path` starts as a PDF."
+  @spec valid_pdf_file?(String.t()) :: boolean()
+  def valid_pdf_file?(path) when is_binary(path) do
+    case read_header(path) do
+      {:ok, binary} -> valid_pdf?(binary)
       _other -> false
     end
   end

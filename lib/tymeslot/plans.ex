@@ -25,7 +25,8 @@ defmodule Tymeslot.Plans do
     automations_allowed: false,
     booking_pages_allowed: false,
     custom_questions_allowed: true,
-    analytics_allowed: true
+    analytics_allowed: true,
+    sales_room_allowed: false
   }
 
   @pro_features Map.new(@free_features, fn {key, _} -> {key, true} end)

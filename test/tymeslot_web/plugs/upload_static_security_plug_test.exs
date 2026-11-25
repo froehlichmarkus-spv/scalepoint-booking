@@ -33,7 +33,7 @@ defmodule TymeslotWeb.Plugs.UploadStaticSecurityTest do
   end
 
   describe "call/2 — blocked extensions" do
-    for ext <- ~w(.html .htm .svg .js .css .php .exe .sh .xml) do
+    for ext <- ~w(.html .htm .svg .js .css .php .exe .sh .xml .pdf) do
       test "returns 404 for #{ext}", %{conn: conn} do
         path_info = ["uploads", "avatars", "1", "evil#{unquote(ext)}"]
 

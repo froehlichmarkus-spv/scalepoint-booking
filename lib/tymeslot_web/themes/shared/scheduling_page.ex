@@ -57,6 +57,8 @@ defmodule TymeslotWeb.Themes.Shared.SchedulingPage do
       current_state={assigns[:current_state]}
       journey={assigns[:journey]}
       organizer_user_id={@organizer_user_id}
+      organizer_profile={assigns[:organizer_profile]}
+      meeting_type={assigns[:meeting_type]}
       owner_preview={assigns[:owner_preview]}
       refused_calendars={assigns[:refused_calendars] || []}
       should_show_branding={branding(assigns)}

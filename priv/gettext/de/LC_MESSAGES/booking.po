@@ -903,3 +903,27 @@ msgstr "%{page} mit %{name}"
 #, elixir-autogen, elixir-format
 msgid "We'll email you a link to confirm this booking."
 msgstr "Wir senden Ihnen per E-Mail einen Link, mit dem Sie diese Buchung bestätigen."
+
+msgid "The offer"
+msgstr "Das Angebot"
+
+msgid "Documents"
+msgstr "Dokumente"
+
+msgid "Download"
+msgstr "Herunterladen"
+
+msgid "What clients say"
+msgstr "Kundenstimmen"
+
+msgid "Clients"
+msgstr "Kunden"
+
+msgid "Questions"
+msgstr "Fragen"
+
+msgid "Choose a time"
+msgstr "Termin wählen"
+
+msgid "Film"
+msgstr "Film"

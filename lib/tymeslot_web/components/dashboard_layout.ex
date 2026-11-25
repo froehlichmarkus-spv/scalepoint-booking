@@ -20,6 +20,7 @@ defmodule TymeslotWeb.Components.DashboardLayout do
   attr :integration_status, :map, default: %{}
   attr :automations_allowed, :boolean, default: true
   attr :analytics_allowed, :boolean, default: true
+  attr :sales_room_allowed, :boolean, default: true
   attr :full_width, :boolean, default: false
 
   attr :compact_nav, :boolean,
@@ -74,6 +75,7 @@ defmodule TymeslotWeb.Components.DashboardLayout do
           profile={@profile}
           automations_allowed={@automations_allowed}
           analytics_allowed={@analytics_allowed}
+          sales_room_allowed={@sales_room_allowed}
           sidebar_extensions={@sidebar_extensions}
           rail={@nav_rail}
           rail_toggle={@nav_rail_toggle}

@@ -44,6 +44,9 @@ defmodule TymeslotWeb.Plugs.SecurityHeadersPlugTest do
       assert csp =~ "font-src"
       assert csp =~ "connect-src"
       assert csp =~ "frame-src"
+      assert csp =~ "https://www.youtube-nocookie.com"
+      assert csp =~ "https://player.vimeo.com"
+      assert csp =~ "https://www.loom.com"
       assert csp =~ "base-uri 'self'"
       assert csp =~ "form-action 'self'"
 

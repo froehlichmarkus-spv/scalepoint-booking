@@ -23,6 +23,8 @@ defmodule TymeslotWeb.Themes.Rhythm.Scheduling.Wrapper do
   attr :offered_locales, :list, default: nil, doc: "the locale codes the organiser offers"
   attr :language_dropdown_open, :boolean, default: nil
   attr :organizer_user_id, :integer, default: nil
+  attr :organizer_profile, :any, default: nil
+  attr :meeting_type, :any, default: nil
   attr :should_show_branding, :boolean, default: false
   attr :show_language_switcher, :boolean, default: nil
   attr :owner_preview, :boolean, default: false
