@@ -4,6 +4,7 @@
    Tailwind v4: the framework import must come before every other rule, so it
    leads the file (the shared layout.css no longer carries @tailwind). */
 @import "tailwindcss";
+@import "../../../brand/tokens.css";
 
 /* Shared primitives */
 @import "./reset.css";

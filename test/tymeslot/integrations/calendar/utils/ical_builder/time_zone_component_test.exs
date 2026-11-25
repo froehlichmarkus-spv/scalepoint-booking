@@ -206,7 +206,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.TimeZoneComponentTest do
     @single """
     BEGIN:VCALENDAR\r
     VERSION:2.0\r
-    PRODID:-//Tymeslot//CalDAV Client//EN\r
+    PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN\r
     BEGIN:VEVENT\r
     UID:sync-1\r
     DTSTAMP:20261001T090000Z\r

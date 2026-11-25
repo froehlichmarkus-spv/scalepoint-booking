@@ -19,7 +19,6 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
   alias Tymeslot.Notifications.Email.CalendarEventDetails
 
   @url "https://tymeslot.example.com/?utm_source=ics"
-  @footer "Scheduled with Tymeslot: #{@url}"
 
   setup :verify_on_exit!
 
@@ -47,6 +46,8 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
     :ok
   end
 
+  defp footer, do: "Scheduled with #{Tymeslot.Brands.product_name()}: #{@url}"
+
   defp ics(overrides) do
     %{
       title: "Intro call",
@@ -66,21 +67,21 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
 
   test "a free-tier organiser's event ends its description with the footer" do
     assert ics(%{organizer_user_id: 42}) =~
-             "Agenda\\n\\nScheduled with Tymeslot: #{@url}\r\nLOCATION"
+             "Agenda\\n\\n#{footer()}\r\nLOCATION"
   end
 
   test "a paying organiser's event carries no footer" do
-    refute ics(%{organizer_user_id: 7}) =~ @footer
+    refute ics(%{organizer_user_id: 7}) =~ footer()
   end
 
   test "an event with no known organiser carries no footer" do
-    refute ics(%{}) =~ @footer
+    refute ics(%{}) =~ footer()
   end
 
   test "an instance with branding switched off carries no footer" do
     Application.put_env(:tymeslot, :show_branding, false)
 
-    refute ics(%{organizer_user_id: 42}) =~ @footer
+    refute ics(%{organizer_user_id: 42}) =~ footer()
   end
 
   test "an instance with no footer link never asks the subscription manager" do
@@ -107,7 +108,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
         "de"
       )
 
-    assert unfold(ics) =~ "Geplant mit Tymeslot: #{@url}"
+    assert unfold(ics) =~ "Geplant mit #{Tymeslot.Brands.product_name()}: #{@url}"
   end
 
   test "a dashboard event's invitation email carries its organiser's footer" do
@@ -125,7 +126,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
     email = CalendarInvitation.render("guest@example.com", details)
 
     [attachment] = Enum.filter(email.attachments, &(&1.content_type == "text/calendar"))
-    assert unfold(attachment.data) =~ @footer
+    assert unfold(attachment.data) =~ footer()
   end
 
   describe "a stored booking" do
@@ -152,14 +153,14 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
       stub(Tymeslot.Payments.SubscriptionManagerMock, :should_show_branding?, &(&1 == user.id))
 
       assert {:ok, ics} = Meetings.calendar_export(meeting.uid, user.id)
-      assert unfold(ics) =~ @footer
+      assert unfold(ics) =~ footer()
     end
 
     test "a paying organiser's download carries none", %{meeting: meeting, user: user} do
       stub(Tymeslot.Payments.SubscriptionManagerMock, :should_show_branding?, fn _id -> false end)
 
       assert {:ok, ics} = Meetings.calendar_export(meeting.uid, user.id)
-      refute unfold(ics) =~ @footer
+      refute unfold(ics) =~ footer()
     end
   end
 end

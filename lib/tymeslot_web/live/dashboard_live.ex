@@ -323,6 +323,9 @@ defmodule TymeslotWeb.DashboardLive do
               recurring_bookings_allowed={@recurring_bookings_allowed}
               payments_allowed={@payments_allowed}
               automations_allowed={@automations_allowed}
+              reminders_allowed={assigns[:reminders_allowed] != false}
+              plan_limits={assigns[:plan_limits]}
+              plan_usage={assigns[:plan_usage]}
               feature_placeholder_components={@feature_placeholder_components}
             />
           <% else %>
@@ -504,6 +507,10 @@ defmodule TymeslotWeb.DashboardLive do
 
   def handle_info({:poll_deadline_next, deadline}, socket),
     do: PollEventHandlers.handle_poll_deadline_next(deadline, socket)
+
+  def handle_info({:plan_updated, _user_id}, socket) do
+    {:noreply, TymeslotWeb.Hooks.PlanAssignsHook.refresh(socket)}
+  end
 
   def handle_info(:agenda_tick, socket) do
     {:noreply, socket |> AgendaRefresh.reschedule() |> AgendaRefresh.refresh()}

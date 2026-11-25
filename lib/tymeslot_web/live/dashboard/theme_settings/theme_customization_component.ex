@@ -157,6 +157,24 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   end
 
   defp set_option(socket, group, field, value) do
+    if branding_blocked?(socket, group, field, value) do
+      TymeslotWeb.Live.Shared.Flash.error(
+        dgettext("plans", "Your logo and accent colour are part of Pro.")
+      )
+
+      {:noreply, socket}
+    else
+      do_set_option(socket, group, field, value)
+    end
+  end
+
+  defp branding_blocked?(socket, group, field, value) do
+    user_id = socket.assigns.current_user.id
+
+    not Tymeslot.Plans.BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
+  end
+
+  defp do_set_option(socket, group, field, value) do
     panel = socket.assigns.panels[group.key]
     {event, action, metadata} = panel.telemetry(group, field, value)
 

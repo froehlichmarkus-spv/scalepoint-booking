@@ -149,6 +149,22 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.MeetingTypeForm.Creation do
   defp error_message(:recurring_bookings_not_allowed),
     do: ContextErrors.recurring_bookings_not_allowed_message()
 
+  defp error_message(:reminders_not_allowed),
+    do: dgettext("plans", "Reminder emails are part of Pro.")
+
+  defp error_message(:oauth_video_not_allowed),
+    do: dgettext("plans", "Google Meet, Zoom and Teams are part of Pro.")
+
+  defp error_message(:quota_exceeded),
+    do:
+      dgettext(
+        "plans",
+        "The Free plan includes 1 event type. Upgrade to Pro for unlimited event types."
+      )
+
+  defp error_message(:pro_required),
+    do: dgettext("plans", "This needs BookDesk24 Pro.")
+
   defp error_message(:insufficient_plan),
     do: dgettext("dashboard_meeting_form", "Custom booking questions are available on Pro plans.")
 

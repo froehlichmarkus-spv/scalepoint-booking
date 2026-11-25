@@ -61,6 +61,7 @@ defmodule TymeslotWeb.Dashboard.ComponentDispatch do
   def component_for_action(:polls, _components), do: PollsComponent
   def component_for_action(:embed, _components), do: EmbedSettingsComponent
   def component_for_action(:payments, _components), do: PaymentsSettingsComponent
+  def component_for_action(:plan, _components), do: TymeslotWeb.Dashboard.PlanComponent
 
   def component_for_action(action, components) do
     Map.get(components || %{}, action, DashboardOverviewComponent)

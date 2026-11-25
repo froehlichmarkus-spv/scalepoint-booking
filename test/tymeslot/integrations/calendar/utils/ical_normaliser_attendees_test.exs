@@ -83,7 +83,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalNormaliserAttendeesTest do
     defp cached(uid, property_lines) do
       ical = """
       BEGIN:VCALENDAR
-      PRODID:-//Tymeslot//CalDAV Client//EN
+      PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN
       VERSION:2.0
       BEGIN:VEVENT
       UID:#{uid}

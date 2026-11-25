@@ -62,10 +62,12 @@ defmodule Tymeslot.Integrations.Video.OAuth do
   def reconnect_url(provider, user_id, opts), do: build(provider, user_id, opts)
 
   defp build(provider, user_id, opts) do
-    with true <- supported?(provider),
+    with :ok <- Tymeslot.Plans.allow_oauth_video(user_id, provider),
+         true <- supported?(provider),
          {:ok, flow} <- PendingFlow.start(user_id, provider) do
       {:ok, url_for(provider, user_id, redirect_uri(provider), Keyword.put(opts, :pkce, flow))}
     else
+      {:error, :pro_required} -> {:error, :pro_required}
       false -> {:error, "Provider does not support OAuth"}
       {:error, _changeset} -> {:error, "Failed to setup #{@providers[provider].label} OAuth"}
     end

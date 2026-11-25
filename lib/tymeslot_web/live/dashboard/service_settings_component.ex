@@ -148,14 +148,30 @@ defmodule TymeslotWeb.Dashboard.ServiceSettingsComponent do
     do: {:noreply, BookingLinkShare.record(socket, socket.assigns.profile, "settings")}
 
   def handle_event("toggle_add_form", _params, socket) do
-    show_add_form = !socket.assigns.show_add_form
+    opening = !socket.assigns.show_add_form
 
-    {:noreply,
-     assign(socket,
-       show_add_form: show_add_form,
-       editing_type: nil,
-       form_id: if(show_add_form, do: "meeting-type-form-new")
-     )}
+    if opening and
+         Tymeslot.Plans.Limits.at_quota?(
+           socket.assigns[:plan_limits],
+           socket.assigns[:plan_usage],
+           :meeting_types
+         ) do
+      Flash.error(
+        dgettext(
+          "plans",
+          "The Free plan includes 1 event type. Upgrade to Pro for unlimited event types."
+        )
+      )
+
+      {:noreply, socket}
+    else
+      {:noreply,
+       assign(socket,
+         show_add_form: opening,
+         editing_type: nil,
+         form_id: if(opening, do: "meeting-type-form-new")
+       )}
+    end
   end
 
   def handle_event("edit_type", %{"id" => id}, socket) do
@@ -575,7 +591,11 @@ defmodule TymeslotWeb.Dashboard.ServiceSettingsComponent do
               :insufficient_plan,
               :group_bookings_not_allowed,
               :recurring_bookings_not_allowed,
-              :feature_disabled
+              :feature_disabled,
+              :quota_exceeded,
+              :pro_required,
+              :reminders_not_allowed,
+              :oauth_video_not_allowed
             ],
        do:
          dgettext(

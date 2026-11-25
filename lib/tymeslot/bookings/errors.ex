@@ -77,6 +77,7 @@ defmodule Tymeslot.Bookings.Errors do
   @error_classifications %{
     meeting_type_inactive: :meeting_type_inactive,
     group_bookings_paused: :meeting_type_inactive,
+    plan_paused: :meeting_type_inactive,
     meeting_type_not_found: :meeting_type_not_found,
     meeting_type_missing: :meeting_type_not_found,
     time_conflict: :slot_taken,

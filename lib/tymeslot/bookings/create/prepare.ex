@@ -136,7 +136,8 @@ defmodule Tymeslot.Bookings.Create.Prepare do
     with :ok <- validate_host_accepting(user_id),
          :ok <- validate_meeting_type_active(booking_data),
          :ok <- validate_invitation(booking_data),
-         :ok <- CreateGroup.ensure_taking_seats(booking_data) do
+         :ok <- CreateGroup.ensure_taking_seats(booking_data),
+         :ok <- Tymeslot.Plans.PlanAccess.ensure_bookable(booking_data) do
       validate_payments_available(booking_data, user_id)
     end
   end

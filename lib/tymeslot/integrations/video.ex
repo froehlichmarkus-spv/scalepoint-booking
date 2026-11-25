@@ -168,6 +168,15 @@ defmodule Tymeslot.Integrations.Video do
         ) ::
           {:ok, any()} | {:error, any()}
   def create_integration(user_id, provider, attrs) when is_integer(user_id) and is_map(attrs) do
+    with :ok <- oauth_video_gate(user_id, provider) do
+      create_parsed_integration(user_id, provider, attrs)
+    end
+  end
+
+  defp oauth_video_gate(user_id, provider),
+    do: Tymeslot.Plans.allow_oauth_video(user_id, provider)
+
+  defp create_parsed_integration(user_id, provider, attrs) do
     case ProviderConfig.parse(provider) do
       {:ok, provider} ->
         attrs

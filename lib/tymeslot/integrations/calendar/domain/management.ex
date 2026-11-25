@@ -16,6 +16,7 @@ defmodule Tymeslot.Integrations.Calendar.Management do
   alias Tymeslot.Integrations.Calendar.Discovery
   alias Tymeslot.Integrations.Calendar.Preferences
   alias Tymeslot.Integrations.Calendar.PrimaryElection
+  alias Tymeslot.Plans.Limits
   alias Tymeslot.Integrations.Calendar.ProviderConfig
   alias Tymeslot.Integrations.Calendar.Runtime.BookingIntegrationResolver
   alias Tymeslot.Integrations.HealthCheck
@@ -149,13 +150,18 @@ defmodule Tymeslot.Integrations.Calendar.Management do
           {:ok, CalendarIntegrationSchema.t()} | {:error, Ecto.Changeset.t()}
   def insert_integration(%{user_id: user_id} = attrs) do
     PrimaryElection.under_lock(user_id, fn ->
-      case CalendarIntegrationQueries.create(attrs) do
-        {:ok, integration} ->
-          PrimaryElection.adopt_if_vacant(integration)
-          integration
+      with :ok <- Limits.check_quota(user_id, :calendar_integrations),
+           :ok <- Limits.ensure_calendar_provider(user_id, attrs[:provider] || attrs["provider"]) do
+        case CalendarIntegrationQueries.create(attrs) do
+          {:ok, integration} ->
+            PrimaryElection.adopt_if_vacant(integration)
+            integration
 
-        {:error, changeset} ->
-          Repo.rollback(changeset)
+          {:error, changeset} ->
+            Repo.rollback(changeset)
+        end
+      else
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
   end
