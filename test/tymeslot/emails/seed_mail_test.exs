@@ -13,6 +13,7 @@ defmodule Tymeslot.Emails.SeedMailTest do
 
   @moduletag :emails
 
+  alias Ecto.Changeset
   alias Tymeslot.Auth.Registration
   alias Tymeslot.Emails.SeedMailSuppress
   alias Tymeslot.Emails.SeedRecipients
@@ -42,8 +43,8 @@ defmodule Tymeslot.Emails.SeedMailTest do
 
     {:ok, user} =
       user
-      |> Ecto.Changeset.change(%{
-        verified_at: DateTime.utc_now() |> DateTime.truncate(:second)
+      |> Changeset.change(%{
+        verified_at: DateTime.utc_now(:second)
       })
       |> Repo.update()
 

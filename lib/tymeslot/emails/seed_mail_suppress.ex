@@ -12,11 +12,8 @@ defmodule Tymeslot.Emails.SeedMailSuppress do
   Run it only after the operator has approved it.
   """
 
-  import Ecto.Query
-
-  alias Tymeslot.Auth.UserSchema
+  alias Tymeslot.Emails.SeedMailQueries
   alias Tymeslot.Emails.SeedRecipients
-  alias Tymeslot.Repo
 
   @pending ~w(available scheduled retryable executing)
 
@@ -38,10 +35,7 @@ defmodule Tymeslot.Emails.SeedMailSuppress do
     blocked = MapSet.new(SeedRecipients.blocked_addresses())
     retired = MapSet.new(["scheduler24.io", "meetdesk24.com"])
 
-    Oban.Job
-    |> where([j], j.worker == "Tymeslot.Workers.EmailWorker" and j.state in ^@pending)
-    |> Repo.all()
-    |> Enum.count(fn job ->
+    Enum.count(SeedMailQueries.pending_email_jobs(@pending), fn job ->
       if seed_job?(job, blocked, retired) do
         Oban.cancel_job(job)
         true
@@ -65,15 +59,12 @@ defmodule Tymeslot.Emails.SeedMailSuppress do
   defp user_blocked?(id, blocked, retired) when is_binary(id) do
     case Integer.parse(id) do
       {int, ""} -> user_blocked?(int, blocked, retired)
-      _ -> false
+      _unused -> false
     end
   end
 
   defp user_blocked?(id, blocked, retired) when is_integer(id) do
-    case Repo.get(UserSchema, id) do
-      %{email: email} -> address_blocked?(email, blocked, retired)
-      _ -> false
-    end
+    address_blocked?(SeedMailQueries.user_email(id), blocked, retired)
   end
 
   defp user_blocked?(_id, _blocked, _retired), do: false

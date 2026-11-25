@@ -1,16 +1,19 @@
 defmodule TymeslotWeb.SourceController do
   use TymeslotWeb, :controller
 
+  alias Tymeslot.Brands
+
+  @spec show(term(), term()) :: term()
   def show(conn, _params) do
     conn = conn |> put_root_layout(false) |> put_layout(false)
-    brand = Tymeslot.Brands.current() || Tymeslot.Brands.neutral_default()
+    brand = Brands.current() || Brands.neutral_default()
     colors = brand.colors || %{}
     canvas = colors["canvas"] || "#E4DDD2"
     text = colors["text"] || "#1C1B19"
     url = System.get_env("SOURCE_OFFER_URL") || ""
 
     link =
-      if url != "" and (brand.house_brand or not Tymeslot.Brands.leak?(url)) do
+      if url != "" and (brand.house_brand or not Brands.leak?(url)) do
         ~s(<p><a href="#{html_escape(url)}">Corresponding source</a></p>)
       else
         ""

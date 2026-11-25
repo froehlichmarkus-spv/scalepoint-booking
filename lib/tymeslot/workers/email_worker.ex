@@ -22,6 +22,7 @@ defmodule Tymeslot.Workers.EmailWorker do
     # Higher priority (0-3, lower number = higher priority)
     priority: 1
 
+  alias Tymeslot.Brands
   alias Tymeslot.Clock
   alias Tymeslot.Emails.Delivery
   alias Tymeslot.Emails.EmailActions
@@ -95,7 +96,7 @@ defmodule Tymeslot.Workers.EmailWorker do
   def perform(%Oban.Job{args: %{"action" => action} = args, attempt: attempt} = job) do
     # `user_id` in the args is already Logger metadata and error context:
     # `Tymeslot.Infrastructure.ObanLogger` sets it at job start.
-    Tymeslot.Brands.bind_recipient(args)
+    Brands.bind_recipient(args)
     Logger.metadata(job_id: job.id, attempt: attempt)
 
     if EmailActions.relevant?(args, Clock.utc_now()) do
@@ -111,7 +112,7 @@ defmodule Tymeslot.Workers.EmailWorker do
   end
 
   def perform(%Oban.Job{args: args, attempt: attempt} = job) do
-    Tymeslot.Brands.bind_recipient(args)
+    Brands.bind_recipient(args)
     Logger.metadata(job_id: job.id, attempt: attempt)
 
     Logger.error("EmailWorker job missing action parameter",

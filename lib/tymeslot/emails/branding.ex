@@ -28,6 +28,7 @@ defmodule Tymeslot.Emails.Branding do
   """
 
   alias Tymeslot.AppSettings
+  alias Tymeslot.Brands
   alias Tymeslot.Infrastructure.Logging.LogFormat
   alias Tymeslot.Media.MediaValidator
   alias Tymeslot.Media.Uploads
@@ -67,9 +68,9 @@ defmodule Tymeslot.Emails.Branding do
   """
   @spec brand_name() :: String.t()
   def brand_name do
-    case Tymeslot.Brands.mail_identity() do
+    case Brands.mail_identity() do
       %{name: name} when is_binary(name) and name != "" -> name
-      _ -> AppSettings.get(:email_brand_name)
+      _unused -> AppSettings.get(:email_brand_name)
     end
   end
 
@@ -79,9 +80,9 @@ defmodule Tymeslot.Emails.Branding do
   """
   @spec accent() :: String.t() | nil
   def accent do
-    case Tymeslot.Brands.mail_identity() do
+    case Brands.mail_identity() do
       %{accent: hex} when is_binary(hex) and hex != "" -> hex
-      _ -> AppSettings.get(:email_brand_accent)
+      _unused -> AppSettings.get(:email_brand_accent)
     end
   end
 
@@ -197,14 +198,14 @@ defmodule Tymeslot.Emails.Branding do
   """
   @spec logo_bytes() :: {:ok, binary()} | :error
   def logo_bytes do
-    case Tymeslot.Brands.email_logo_path() do
+    case Brands.email_logo_path() do
       path when is_binary(path) ->
         case read_logo(path) do
           {:ok, bytes} -> {:ok, bytes}
           :error -> read_logo(stock_logo_path())
         end
 
-      _ ->
+      _unused ->
         case custom_logo_path() do
           nil -> read_logo(stock_logo_path())
           path -> read_custom_logo(path)

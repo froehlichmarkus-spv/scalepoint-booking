@@ -6,11 +6,14 @@ defmodule TymeslotWeb.Brands.SalesRoom do
   """
   use Phoenix.Component
 
+  alias Tymeslot.Brands
+
   attr :profile, :map, default: nil
   attr :locale, :string, default: "en"
 
+  @spec panel(term()) :: term()
   def panel(assigns) do
-    brand = Tymeslot.Brands.for_profile(assigns.profile)
+    brand = Brands.for_profile(assigns.profile)
     copy = copy_for(brand, assigns.locale)
 
     assigns =
@@ -58,7 +61,7 @@ defmodule TymeslotWeb.Brands.SalesRoom do
       label = link["label"]
 
       is_binary(url) and is_binary(label) and String.starts_with?(url, "https://") and
-        (brand.house_brand or not Tymeslot.Brands.leak?(url <> label))
+        (brand.house_brand or not Brands.leak?(url <> label))
     end)
   end
 end

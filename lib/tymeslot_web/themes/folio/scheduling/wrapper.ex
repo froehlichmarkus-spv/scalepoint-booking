@@ -13,6 +13,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   """
   use Phoenix.Component
 
+  alias Tymeslot.Brands
   alias Tymeslot.ThemeCustomizations.Tokens
   alias Tymeslot.Themes.Catalog
   alias Tymeslot.Utils.Colour
@@ -50,13 +51,13 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   @spec folio_wrapper(map()) :: Phoenix.LiveView.Rendered.t()
   def folio_wrapper(assigns) do
     brand = resolve_brand(assigns)
-    Tymeslot.Brands.bind(brand)
+    Brands.bind(brand)
 
     assigns =
       assigns
       |> prepare_wrapper_assigns()
       |> assign(theme_id: theme_id(), mode: mode(assigns.theme_tokens))
-      |> assign(brand: brand, brand_style: Tymeslot.Brands.css(brand))
+      |> assign(brand: brand, brand_style: Brands.css(brand))
 
     ~H"""
     <ThemeShell.theme_shell
@@ -95,8 +96,8 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
           {Map.take(assigns, [:demo_mode])}
         />
         <LegalLinks.footer links={@legal_links} />
-        <p :if={Tymeslot.Brands.powered_by(@brand)} class="room-powered">
-          {Tymeslot.Brands.powered_by(@brand)}
+        <p :if={Brands.powered_by(@brand)} class="room-powered">
+          {Brands.powered_by(@brand)}
         </p>
         <p class="room-source"><a href="/source">AGPLv3 source</a></p>
       </div>
@@ -119,9 +120,9 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   def mode(_tokens), do: :light
 
   defp resolve_brand(assigns) do
-    Tymeslot.Brands.for_user_id(assigns[:organizer_user_id]) ||
-      Tymeslot.Brands.for_username(assigns[:username_context]) ||
-      Tymeslot.Brands.neutral_default()
+    Brands.for_user_id(assigns[:organizer_user_id]) ||
+      Brands.for_username(assigns[:username_context]) ||
+      Brands.neutral_default()
   end
 
   defp theme_id do

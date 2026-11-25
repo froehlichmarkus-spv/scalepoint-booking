@@ -76,5 +76,5 @@ defmodule Tymeslot.Emails.SeedRecipients do
     address |> String.trim() |> String.downcase()
   end
 
-  defp normalise(_), do: ""
+  defp normalise(_unused), do: ""
 end

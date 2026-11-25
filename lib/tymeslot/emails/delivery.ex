@@ -14,6 +14,7 @@ defmodule Tymeslot.Emails.Delivery do
 
   require Logger
 
+  alias Tymeslot.Brands
   alias Tymeslot.Emails.DeliveryOutsideJobError
   alias Tymeslot.Emails.SeedRecipients
   alias Tymeslot.Emails.Shared.Sanitise
@@ -72,7 +73,7 @@ defmodule Tymeslot.Emails.Delivery do
   """
   @spec deliver(Swoosh.Email.t(), keyword()) :: {:ok, any()} | {:error, any()}
   def deliver(email, opts \\ []) do
-    email = email |> sanitise_headers() |> Tymeslot.Brands.scrub_email()
+    email = email |> sanitise_headers() |> Brands.scrub_email()
 
     with :ok <- check_text_body(email),
          :ok <- check_email_job(),

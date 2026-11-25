@@ -21,6 +21,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   import Swoosh.Email
 
   alias Swoosh.Attachment
+  alias Tymeslot.Brands
   alias Tymeslot.Emails.Branding
   alias Tymeslot.Emails.Shared.{AvatarHelper, Frame, Sanitise, Stage, Styles, Urls}
   alias Tymeslot.Emails.Shared.Styles.{CSS, Tokens}
@@ -180,18 +181,18 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   @doc "Returns the configured from-email."
   @spec fetch_from_email() :: String.t()
   def fetch_from_email do
-    case Tymeslot.Brands.mail_identity() do
+    case Brands.mail_identity() do
       %{sender_email: email} when is_binary(email) and email != "" -> email
-      _ -> get_config_email_setting(:from_email)
+      _unused -> get_config_email_setting(:from_email)
     end
   end
 
   @doc "Returns the configured from-name."
   @spec fetch_from_name() :: String.t()
   def fetch_from_name do
-    case Tymeslot.Brands.mail_identity() do
+    case Brands.mail_identity() do
       %{sender_name: name} when is_binary(name) and name != "" -> name
-      _ -> get_config_email_setting(:from_name)
+      _unused -> get_config_email_setting(:from_name)
     end
   end
 
@@ -330,7 +331,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
           css-class="email-ink-muted"
         >
           #{dgettext("emails", "Sent with care by")}
-          <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark email-ink-link" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Tymeslot.Brands.footer_label()}</a>
+          <a href="#{Brands.footer_href()}" class="wordmark email-ink-link" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Brands.footer_label()}</a>
         </mj-text>
       </mj-column>
     </mj-section>

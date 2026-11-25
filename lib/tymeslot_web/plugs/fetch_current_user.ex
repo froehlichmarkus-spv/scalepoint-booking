@@ -13,6 +13,7 @@ defmodule TymeslotWeb.Plugs.FetchCurrentUser do
 
   import Plug.Conn
 
+  alias Tymeslot.Brands
   alias TymeslotWeb.UserAuth
 
   @spec init(Keyword.t()) :: Keyword.t()
@@ -26,7 +27,7 @@ defmodule TymeslotWeb.Plugs.FetchCurrentUser do
     conn
     |> drop_dead_token(session, user)
     |> assign(:current_user, user)
-    |> Tymeslot.Brands.bind_conn()
+    |> Brands.bind_conn()
   end
 
   defp drop_dead_token(conn, %{"user_token" => _token}, nil) do

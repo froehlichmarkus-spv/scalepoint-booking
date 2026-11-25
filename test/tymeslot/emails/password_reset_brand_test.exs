@@ -34,7 +34,7 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
 
     email =
       user
-      |> tap(fn _ -> Brands.bind(optional_brand()) end)
+      |> tap(fn _unused -> Brands.bind(optional_brand()) end)
       |> PasswordReset.render(@reset_url)
       |> Brands.scrub_email()
 
@@ -52,7 +52,7 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
   test "sends an unbound reset as ScalePoint Booking and keeps the link" do
     user = build_user_data(%{name: "Guest", email: "guest@example.com", username: "guest"})
 
-    assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
+    assert {:ok, _unused} = AuthEmails.send_password_reset(user, @reset_url)
     assert_receive {:email, delivered}, 1000
     assert delivered.from == {"ScalePoint Ventures", "booking@scalepoint-ventures.com"}
     assert delivered.html_body =~ @reset_url
@@ -69,7 +69,7 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
         username: "someone-else"
       })
 
-    assert {:ok, _} = AuthEmails.send_password_reset(user, @reset_url)
+    assert {:ok, _unused} = AuthEmails.send_password_reset(user, @reset_url)
 
     assert_receive {:email, email}, 1000
     assert email.from == {"ScalePoint Ventures", "booking@scalepoint-ventures.com"}

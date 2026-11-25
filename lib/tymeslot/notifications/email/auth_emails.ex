@@ -43,16 +43,14 @@ defmodule Tymeslot.Notifications.Email.AuthEmails do
           :ok | {:error, term()} | {:discard, String.t()}
   def handle_email_verification(%{"user_id" => user_id} = args) do
     with {:ok, user} <- fetch_user(user_id, "email verification") do
-      cond do
-        verified?(user) ->
-          Logger.info("Skipping verification email for an already verified account",
-            user_id: user_id
-          )
+      if verified?(user) do
+        Logger.info("Skipping verification email for an already verified account",
+          user_id: user_id
+        )
 
-          {:discard, @already_verified}
-
-        true ->
-          send_unless_superseded(user, args)
+        {:discard, @already_verified}
+      else
+        send_unless_superseded(user, args)
       end
     end
   end

@@ -15,6 +15,7 @@ defmodule Tymeslot.Emails.Shared.Layouts do
   is no inference and no default — the template knows what it is.
   """
 
+  alias Tymeslot.Brands
   alias Tymeslot.Emails.Branding
   alias Tymeslot.Emails.Shared.{Frame, MjmlEmail, Sanitise, Stage, Styles}
 
@@ -94,7 +95,7 @@ defmodule Tymeslot.Emails.Shared.Layouts do
           line-height="1.7"
           letter-spacing="0.02em"
         >
-          © #{Date.utc_today().year} <a href="#{Tymeslot.Brands.footer_href()}" class="wordmark" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Tymeslot.Brands.footer_label()}</a>
+          © #{Date.utc_today().year} <a href="#{Brands.footer_href()}" class="wordmark" style="color: #{Styles.ink()}; text-decoration: none; font-weight: 800;">#{Brands.footer_label()}</a>
         </mj-text>
       </mj-column>
     </mj-section>

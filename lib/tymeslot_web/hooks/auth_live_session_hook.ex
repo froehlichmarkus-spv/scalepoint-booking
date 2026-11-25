@@ -36,6 +36,7 @@ defmodule TymeslotWeb.Hooks.AuthLiveSessionHook do
   import Phoenix.Component
 
   alias Tymeslot.Auth
+  alias Tymeslot.Brands
   alias Tymeslot.Infrastructure.Config
   alias TymeslotWeb.Plugs.ReturnTo
   alias TymeslotWeb.UserAuth
@@ -130,7 +131,7 @@ defmodule TymeslotWeb.Hooks.AuthLiveSessionHook do
 
   defp assign_current_user(socket, session) do
     socket = assign_new(socket, :current_user, fn -> UserAuth.user_from_session(session) end)
-    Tymeslot.Brands.bind_user(socket.assigns.current_user && socket.assigns.current_user.id)
+    Brands.bind_user(socket.assigns.current_user && socket.assigns.current_user.id)
     assign(socket, :is_email_verified, email_verified?(socket.assigns.current_user))
   end
 

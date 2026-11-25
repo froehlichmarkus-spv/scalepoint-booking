@@ -22,6 +22,10 @@ defmodule Tymeslot.Infrastructure.DatabaseUrlParseTest do
 
     refute script =~ ~r/\[\^@\/\]/
     assert script =~ "database-url.sh"
+
+    fields = parse("ecto://booking:p%2Fa%2Fss@postgres:5432/booking")
+    assert fields["password"] == "p/ass"
+    assert fields["host"] == "postgres"
     assert script =~ "redact_database_url"
     assert script =~ "apply_discrete_database_overrides"
   end
