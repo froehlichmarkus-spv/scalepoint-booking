@@ -275,7 +275,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.PatcherTest do
     @tymeslot_event """
     BEGIN:VCALENDAR\r
     VERSION:2.0\r
-    PRODID:-//Tymeslot//CalDAV Client//EN\r
+    PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN\r
     BEGIN:VEVENT\r
     UID:booking-1\r
     DTSTAMP:20260901T090000Z\r
@@ -322,7 +322,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder.PatcherTest do
     @marked_event """
     BEGIN:VCALENDAR\r
     VERSION:2.0\r
-    PRODID:-//Tymeslot//CalDAV Client//EN\r
+    PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN\r
     BEGIN:VEVENT\r
     UID:booking-2\r
     DTSTAMP:20260901T090000Z\r

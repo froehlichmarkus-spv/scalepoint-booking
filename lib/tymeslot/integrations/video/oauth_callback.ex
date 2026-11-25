@@ -51,7 +51,8 @@ defmodule Tymeslot.Integrations.Video.OAuthCallback do
   def complete(provider, code, state, user_id) do
     helper = Map.fetch!(@exchange_helpers, provider)
 
-    with {:ok, validated} <- State.verify(state, Map.fetch!(@state_providers, provider), user_id),
+    with :ok <- Tymeslot.Plans.allow_oauth_video(user_id, provider),
+         {:ok, validated} <- State.verify(state, Map.fetch!(@state_providers, provider), user_id),
          {:ok, code_verifier} <- PendingFlow.consume(validated.nonce, user_id, provider),
          {:ok, tokens} <-
            helper.exchange_code_for_tokens(code, OAuth.redirect_uri(provider),

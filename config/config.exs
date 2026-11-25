@@ -242,7 +242,10 @@ config :tymeslot, :feature_assigns,
   recurring_bookings_allowed: true,
   analytics_allowed: true,
   booking_pages_allowed: true,
-  meeting_payments: false
+  meeting_payments: false,
+  reminders_allowed: true,
+  oauth_video_allowed: true,
+  polls_allowed: true
 
 # Dashboard Feature Gates - Maps live_action atoms to feature flag assign keys.
 # When an action is listed here, the corresponding assign must be true for the

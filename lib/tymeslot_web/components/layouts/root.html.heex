@@ -25,7 +25,7 @@
     <%= if assigns[:meta_description] do %>
       <meta name="description" content={@meta_description} />
     <% end %>
-    <.live_title suffix={Tymeslot.Brands.chrome_suffix()}>
+    <.live_title suffix={" · " <> Tymeslot.Brands.suite_title()}>
       {assigns[:page_title] || dgettext("common", "Schedule a Meeting")}
     </.live_title>
     <link rel="icon" href={Tymeslot.Brands.favicon()} />

@@ -214,6 +214,14 @@ defmodule Tymeslot.Notifications.Orchestrator do
   @spec schedule_reminder_notifications(%{atom() => term()}, keyword()) ::
           :ok | {:ok, atom()} | {:error, term()}
   def schedule_reminder_notifications(meeting, opts \\ []) do
+    if reminders_blocked?(meeting) do
+      {:ok, []}
+    else
+      do_schedule_reminder_notifications(meeting, opts)
+    end
+  end
+
+  defp do_schedule_reminder_notifications(meeting, opts) do
     # `ReminderSchedule` is the single reader of the meeting's reminder column,
     # legacy shapes included, so what a surface shows a booking reminds with is
     # what is scheduled here.
@@ -224,6 +232,13 @@ defmodule Tymeslot.Notifications.Orchestrator do
         do: replace_reminders(meeting, reminders),
         else: pin_reminders(meeting, reminders)
     end)
+  end
+
+  defp reminders_blocked?(meeting) do
+    user_id = Map.get(meeting, :organizer_user_id) || Map.get(meeting, :user_id)
+
+    is_integer(user_id) and
+      Tymeslot.Features.check_access(user_id, :reminders_allowed) != :ok
   end
 
   defp replace_reminders(meeting, reminders) do

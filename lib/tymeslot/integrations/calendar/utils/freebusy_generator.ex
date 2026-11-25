@@ -34,7 +34,7 @@ defmodule Tymeslot.Integrations.Calendar.FreebusyGenerator do
       [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Tymeslot//Free/Busy//EN",
+        "PRODID:-//ScalePoint//#{Tymeslot.Brands.product_name()} Free/Busy//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         "BEGIN:VFREEBUSY",

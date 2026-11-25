@@ -946,3 +946,119 @@ if System.get_env("SPV_DEMO_CALENDAR") == "true" do
   providers = Application.get_env(:tymeslot, :calendar_providers, %{})
   config :tymeslot, :calendar_providers, Map.put(providers, :demo, enabled: true)
 end
+
+# BookDesk24 plan gating. Off by default so a self-hosted install and the
+# upstream test suite keep the open feature checker. Subscription events stay
+# on growth-os-billing; this process only stores the pushed entitlement.
+plans_enabled? = fn ->
+  System.get_env("PLANS_ENABLED") in ["true", "1", "yes"]
+end
+
+comped_emails =
+  "PLANS_COMPED_EMAILS"
+  |> System.get_env("")
+  |> String.split(",", trim: true)
+  |> Enum.map(&String.trim/1)
+  |> Enum.reject(&(&1 == ""))
+
+free_calendar_providers =
+  case System.get_env("PLANS_FREE_CALENDAR_PROVIDERS") do
+    nil -> nil
+    "" -> nil
+    list -> list |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
+  end
+
+config :tymeslot, :plans,
+  past_due_grace_days: 7,
+  trial_days: 14,
+  comped_user_emails: comped_emails,
+  free_calendar_providers: free_calendar_providers,
+  oauth_video_providers: [:google_meet, :zoom, :teams],
+  billing_url: System.get_env("GROWTH_OS_BILLING_URL"),
+  billing_api_key: System.get_env("GROWTH_OS_BILLING_API_KEY"),
+  webhook_secret: System.get_env("GROWTH_OS_BILLING_WEBHOOK_SECRET"),
+  display_prices: %{
+    monthly: %{
+      label: "Pro monthly",
+      amount: "5 €",
+      interval: "month",
+      lookup_key: "booking_pro_monthly"
+    },
+    yearly: %{
+      label: "Pro yearly",
+      amount: "50 €",
+      interval: "year",
+      lookup_key: "booking_pro_yearly",
+      note: "2 months free"
+    }
+  }
+
+if ics_branding_url = System.get_env("ICS_BRANDING_URL") do
+  trimmed = String.trim(ics_branding_url)
+
+  if trimmed != "" do
+    config :tymeslot, :ics_branding_url, trimmed
+  end
+end
+
+if plans_enabled?.() do
+  config :tymeslot, :plans_enabled, true
+  config :tymeslot, :feature_access_checker, Tymeslot.Plans.AccessChecker
+  config :tymeslot, :subscription_manager, Tymeslot.Plans.SubscriptionManager
+  config :tymeslot, :show_branding, true
+  config :tymeslot, :user_registered_hook, Tymeslot.Plans.UserRegisteredHook
+  config :tymeslot, :account_deletion_hook, Tymeslot.Plans.AccountDeletionHook
+  config :tymeslot, :billing_client, Tymeslot.Plans.BillingClient.HTTP
+
+  config :tymeslot,
+         :dashboard_additional_hooks,
+         Application.get_env(:tymeslot, :dashboard_additional_hooks, []) ++
+           [{TymeslotWeb.Hooks.PlanAssignsHook, :assign_plan}]
+
+  config :tymeslot,
+         :dashboard_notice_components,
+         Application.get_env(:tymeslot, :dashboard_notice_components, []) ++
+           [TymeslotWeb.Dashboard.PlanNoticeComponent]
+
+  config :tymeslot,
+         :dashboard_sidebar_extensions,
+         Application.get_env(:tymeslot, :dashboard_sidebar_extensions, []) ++
+           [
+             %{
+               id: :plan,
+               label: "Plan & billing",
+               icon: "hero-credit-card",
+               path: "/dashboard/plan",
+               action: :plan
+             }
+           ]
+
+  config :tymeslot,
+         :dashboard_action_components,
+         Map.put(
+           Application.get_env(:tymeslot, :dashboard_action_components, %{}),
+           :plan,
+           TymeslotWeb.Dashboard.PlanComponent
+         )
+
+  config :tymeslot,
+         :dashboard_feature_gates,
+         Map.merge(Application.get_env(:tymeslot, :dashboard_feature_gates, %{}), %{
+           polls: :polls_allowed,
+           payments: :meeting_payments
+         })
+
+  config :tymeslot,
+         :theme_extensions,
+         Application.get_env(:tymeslot, :theme_extensions, []) ++
+           [{TymeslotWeb.Branding.PoweredBy, :badge}]
+
+  config :tymeslot,
+         :oban_additional_crontab,
+         Application.get_env(:tymeslot, :oban_additional_crontab, []) ++
+           [{"0 */6 * * *", Tymeslot.Plans.Workers.EntitlementResync}]
+
+  config :tymeslot,
+         :oban_additional_queues,
+         Application.get_env(:tymeslot, :oban_additional_queues, []) ++ [plans: 2]
+end

@@ -386,6 +386,7 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.MeetingTypeForm.FormView do
           class={panel_class(@active_tab, "reminders")}
         >
           <.reminder_picker
+            allowed={assigns[:reminders_allowed] != false}
             reminders={@reminders}
             max_reminders={@max_reminders}
             new_reminder_value={@new_reminder_value}

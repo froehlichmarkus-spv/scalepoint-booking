@@ -188,14 +188,12 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
   end
 
   defp prodid do
-    name =
-      case Brands.current() do
-        %{name: name} when is_binary(name) and name != "" -> name
-        _unused -> "Scheduler"
-      end
+    product =
+      Brands.product_name()
+      |> String.replace(~r/[^A-Za-z0-9 ._-]/, "")
+      |> String.trim()
 
-    safe = name |> String.replace(~r/[^A-Za-z0-9 ._-]/, "") |> String.trim()
-    "PRODID:-//#{safe}//#{safe}//EN"
+    "PRODID:-//ScalePoint//#{product} 1.0//EN"
   end
 
   defp brand_of(meeting_details) do
@@ -439,7 +437,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGenerator do
     with url when is_binary(url) <- Application.get_env(:tymeslot, :ics_branding_url),
          true <- Payments.show_branding?(Map.get(meeting_details, :organizer_user_id)) do
       dgettext("emails", "Scheduled with %{brand}: %{url}",
-        brand: (Brands.current() || Brands.neutral_default()).name,
+        brand: Brands.product_name(),
         url: url
       )
     else

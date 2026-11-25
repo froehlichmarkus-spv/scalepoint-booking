@@ -1,0 +1,208 @@
+/* Growth OS bridge. Colour, type and radius live in /brand/tokens.css (shared
+   with the CRM). This file only loads the named families and applies the
+   tokens to the app shell: navy sidebar, white cards, teal CTAs. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "DM Serif Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/dm-serif-display-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+body {
+  font-family: var(--spv-font-ui);
+}
+
+h1,
+.dashboard-title,
+.display-xl,
+.display-lg,
+.display-md,
+.gos-wordmark {
+  font-family: var(--spv-font-display);
+  font-weight: 400;
+}
+
+.card-glass,
+.card-glass--flat,
+.card-glass--muted {
+  background: var(--spv-white);
+  border: 1px solid color-mix(in srgb, var(--spv-navy) 14%, var(--spv-white));
+  border-radius: var(--spv-radius);
+  box-shadow: none;
+}
+
+.action-button--primary,
+.btn-primary,
+.dashboard-nav-link--active,
+.dashboard-sidebar .dashboard-nav-link--active {
+  background-image: none;
+  background-color: var(--spv-teal);
+  color: var(--spv-white);
+  border-color: var(--spv-teal);
+}
+
+.action-button--primary:hover:not(:disabled, [aria-disabled="true"]),
+.btn-primary:hover:not(:disabled, [aria-disabled="true"]),
+.dashboard-sidebar .dashboard-nav-link--active:hover {
+  background-color: var(--spv-teal-strong);
+  color: var(--spv-white);
+}
+
+.dashboard-sidebar {
+  background: var(--spv-navy);
+  color: var(--spv-text-light);
+  border-right: 1px solid var(--spv-navy-light);
+}
+
+.dashboard-sidebar .dashboard-nav-link {
+  color: var(--spv-text-light);
+}
+
+.dashboard-sidebar .dashboard-nav-link:hover {
+  color: var(--spv-white);
+  background: var(--spv-navy-light);
+}
+
+.dashboard-sidebar .dashboard-nav-section-title {
+  color: var(--spv-teal-light);
+}
+
+.dashboard-sidebar .dashboard-nav-section-title::after {
+  background: var(--spv-navy-light);
+}
+
+.gos-wordmark {
+  color: var(--spv-logo-navy);
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+.dashboard-sidebar .gos-wordmark {
+  color: var(--spv-text-light);
+}
+
+.gos-wordmark-accent {
+  color: var(--spv-teal);
+}
+
+.gos-byline,
+.gos-suite-line {
+  font-family: var(--spv-font-ui);
+  color: var(--spv-muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.dashboard-sidebar .gos-byline,
+.dashboard-sidebar .gos-suite-line {
+  color: var(--spv-teal-light);
+}
+
+.gos-powered-by {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 12px !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483000 !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--spv-white);
+  color: var(--spv-navy);
+  border: 1px solid color-mix(in srgb, var(--spv-navy) 14%, var(--spv-white));
+  font-family: var(--spv-font-ui);
+  font-size: 12px;
+  line-height: 1.2;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.gos-powered-by strong {
+  font-weight: 600;
+}
+
+.gos-plan {
+  display: grid;
+  gap: 16px;
+}
+
+.gos-plan-card {
+  background: var(--spv-white);
+  color: var(--spv-navy);
+  border: 1px solid color-mix(in srgb, var(--spv-navy) 14%, var(--spv-white));
+  border-radius: var(--spv-radius);
+  padding: 20px;
+}
+
+.gos-plan-card h2 {
+  font-family: var(--spv-font-display);
+  font-weight: 400;
+  font-size: 1.75rem;
+  color: var(--spv-navy);
+}
+
+.gos-plan-muted {
+  color: var(--spv-muted);
+  font-family: var(--spv-font-ui);
+  font-size: 14px;
+}
+
+.gos-plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--spv-font-ui);
+  font-size: 14px;
+}
+
+.gos-plan-table th,
+.gos-plan-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--spv-navy) 10%, var(--spv-white));
+}
+
+.gos-plan-notice {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border-radius: var(--spv-radius);
+  background: var(--spv-white);
+  color: var(--spv-navy);
+  border: 1px solid var(--spv-teal);
+  font-family: var(--spv-font-ui);
+  font-size: 14px;
+}

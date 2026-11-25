@@ -129,6 +129,22 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.AssetUploads do
   defp process(socket, field) do
     %{profile: profile, theme_id: theme_id} = socket.assigns
 
+    if field == :logo_path and
+         not Tymeslot.Plans.BookingChrome.branding_change_allowed?(
+           profile.user_id,
+           :logo,
+           :logo_path,
+           "upload"
+         ) do
+      Flash.error(dgettext("plans", "Your logo and accent colour are part of Pro."))
+      socket
+    else
+      store_upload(socket, field, profile, theme_id)
+    end
+  end
+
+  defp store_upload(socket, field, profile, theme_id) do
+
     # The file must be stored inside the callback: the temporary upload is
     # deleted as soon as it returns.
     socket = remember_consumed(socket, field)

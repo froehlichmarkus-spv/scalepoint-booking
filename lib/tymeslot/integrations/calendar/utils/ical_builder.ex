@@ -105,7 +105,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
         [
           "BEGIN:VCALENDAR",
           "VERSION:2.0",
-          "PRODID:-//Tymeslot//CalDAV Client//EN"
+          "PRODID:-//ScalePoint//#{Tymeslot.Brands.product_name()} CalDAV Client//EN"
         ] ++
           time_zone_lines(event_data, zone) ++
           [

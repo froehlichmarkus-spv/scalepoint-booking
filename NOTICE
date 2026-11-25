@@ -15,3 +15,8 @@ used by the booking page.
 
 Corresponding source for a deployment is offered from the `/source` page.
 Set `SOURCE_OFFER_URL` to the public repository or mirror.
+
+Modified by ScalePoint Ventures on 25 November 2026: BookDesk24 plan gating
+(Free and Pro), the Growth OS design tokens in `brand/tokens.css`, and the
+customer-facing name BookDesk24. Internal module names stay `Tymeslot.*`.
+growth-os-billing is a separate service and is not part of this tree.

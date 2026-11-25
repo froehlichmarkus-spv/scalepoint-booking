@@ -237,7 +237,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.BookingUpdatePatchTest do
       assert [{"HEAD", @href, [], _head}, {"PUT", @href, ["\"etag-9\""], body}] = requests()
       lines = LineFolder.unfold_lines(body)
 
-      assert "PRODID:-//Tymeslot//CalDAV Client//EN" in lines
+      assert "PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN" in lines
       assert "TRIGGER:-PT30M" in lines
       assert "DTSTART:20261103T150000Z" in lines
     end
@@ -305,7 +305,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.BookingUpdatePatchTest do
         assert {"PUT", @href, [], body} = List.last(requests)
         lines = LineFolder.unfold_lines(body)
         assert "DTSTART:20261103T150000Z" in lines
-        assert "PRODID:-//Tymeslot//CalDAV Client//EN" in lines
+        assert "PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN" in lines
       end
     end
   end
@@ -348,7 +348,7 @@ defmodule Tymeslot.Integrations.Calendar.CalDAV.BookingUpdatePatchTest do
     """
     BEGIN:VCALENDAR\r
     VERSION:2.0\r
-    PRODID:-//Tymeslot//CalDAV Client//EN\r
+    PRODID:-//ScalePoint//BookDesk24 CalDAV Client//EN\r
     BEGIN:VEVENT\r
     UID:#{@event_uid}\r
     DTSTAMP:20261001T090000Z\r

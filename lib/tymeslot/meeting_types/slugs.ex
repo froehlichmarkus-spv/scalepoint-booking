@@ -15,6 +15,7 @@ defmodule Tymeslot.MeetingTypes.Slugs do
   alias Tymeslot.MeetingTypes.GroupAccess
   alias Tymeslot.MeetingTypes.MeetingTypeQueries
   alias Tymeslot.MeetingTypes.PaymentAccess
+  alias Tymeslot.Plans.PlanAccess
   alias Tymeslot.Repo
 
   @doc """
@@ -34,6 +35,7 @@ defmodule Tymeslot.MeetingTypes.Slugs do
       user_id
       |> MeetingTypeQueries.list_active_meeting_types()
       |> GroupAccess.reject_paused()
+      |> PlanAccess.reject_paused()
       |> PaymentAccess.reject_unsellable()
 
     # Prefer a type whose custom `slug` field is an exact match over one that

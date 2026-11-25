@@ -28,6 +28,7 @@ defmodule TymeslotWeb.Themes.Shared.SchedulingPage do
 
   use Phoenix.Component
 
+  alias Tymeslot.Payments
   alias TymeslotWeb.Themes.Shared.Components.{AwaitingPayment, DemoThemeSwitcher, ErrorComponent}
   alias TymeslotWeb.Themes.Shared.Journey
   alias TymeslotWeb.Themes.Shared.Journey.Components, as: JourneyComponents
@@ -94,7 +95,13 @@ defmodule TymeslotWeb.Themes.Shared.SchedulingPage do
   # visitor to win over, so their preview never carries the branding
   # extension's invitation to make a page of their own.
   defp branding(%{owner_preview: true}), do: false
-  defp branding(assigns), do: assigns[:should_show_branding]
+
+  defp branding(%{should_show_branding: shown}) when is_boolean(shown), do: shown
+
+  defp branding(%{organizer_user_id: user_id}) when is_integer(user_id),
+    do: Payments.show_branding?(user_id)
+
+  defp branding(_assigns), do: false
 
   # The documented dynamic-component pattern: the theme's wrapper is a
   # function component chosen at runtime, so it is applied directly.
