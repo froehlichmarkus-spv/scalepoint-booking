@@ -289,7 +289,9 @@ config :tymeslot, :oban_queues,
   # Oban queue monitoring (separate queue to detect maintenance queue issues)
   monitoring: 1,
   # Video transcoding (responsive variant generation from uploaded videos)
-  media_processing: 1
+  media_processing: 1,
+  # Entitlement resync for BookDesk24 plans. Idle when plans are disabled.
+  plans: 2
 
 # Aggregate calendar integration health alerting, evaluated hourly by
 # `Tymeslot.Workers.IntegrationHealthAlertWorker` and on each auto-pause run.

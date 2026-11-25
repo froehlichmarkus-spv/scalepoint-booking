@@ -24,6 +24,7 @@ defmodule Tymeslot.Integrations.Video.OAuthCallback do
   alias Tymeslot.Integrations.Video.VideoIntegrationQueries
   alias Tymeslot.Integrations.Video.VideoIntegrationSchema
   alias Tymeslot.Integrations.Video.Zoom.ZoomOAuthHelper
+  alias Tymeslot.Plans
 
   # Every helper exchanges with the same `(code, redirect_uri, opts)` shape;
   # the state and its flow are verified here, before the code is spent.
@@ -51,7 +52,7 @@ defmodule Tymeslot.Integrations.Video.OAuthCallback do
   def complete(provider, code, state, user_id) do
     helper = Map.fetch!(@exchange_helpers, provider)
 
-    with :ok <- Tymeslot.Plans.allow_oauth_video(user_id, provider),
+    with :ok <- Plans.allow_oauth_video(user_id, provider),
          {:ok, validated} <- State.verify(state, Map.fetch!(@state_providers, provider), user_id),
          {:ok, code_verifier} <- PendingFlow.consume(validated.nonce, user_id, provider),
          {:ok, tokens} <-

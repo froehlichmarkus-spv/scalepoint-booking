@@ -16,12 +16,12 @@ defmodule Tymeslot.Integrations.Calendar.Management do
   alias Tymeslot.Integrations.Calendar.Discovery
   alias Tymeslot.Integrations.Calendar.Preferences
   alias Tymeslot.Integrations.Calendar.PrimaryElection
-  alias Tymeslot.Plans.Limits
   alias Tymeslot.Integrations.Calendar.ProviderConfig
   alias Tymeslot.Integrations.Calendar.Runtime.BookingIntegrationResolver
   alias Tymeslot.Integrations.HealthCheck
   alias Tymeslot.Integrations.Shared.ReauthHandling
   alias Tymeslot.Meetings.MeetingSchema
+  alias Tymeslot.Plans.Limits
   alias Tymeslot.Repo
   require Logger
 
@@ -151,7 +151,7 @@ defmodule Tymeslot.Integrations.Calendar.Management do
   def insert_integration(%{user_id: user_id} = attrs) do
     PrimaryElection.under_lock(user_id, fn ->
       with :ok <- Limits.check_quota(user_id, :calendar_integrations),
-           :ok <- Limits.ensure_calendar_provider(user_id, attrs[:provider] || attrs["provider"]) do
+           :ok <- Limits.ensure_calendar_provider(user_id, provider_of(attrs)) do
         case CalendarIntegrationQueries.create(attrs) do
           {:ok, integration} ->
             PrimaryElection.adopt_if_vacant(integration)
@@ -164,6 +164,13 @@ defmodule Tymeslot.Integrations.Calendar.Management do
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp provider_of(attrs) when is_map(attrs) do
+    case Map.fetch(attrs, :provider) do
+      {:ok, provider} -> provider
+      :error -> Map.get(attrs, "provider")
+    end
   end
 
   @doc """

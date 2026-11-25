@@ -8,10 +8,9 @@ defmodule Tymeslot.Plans do
   self-host behaviour.
   """
 
-  import Ecto.Query, warn: false
-
-  alias Tymeslot.Auth.UserSchema
+  alias Tymeslot.Features
   alias Tymeslot.Plans.Entitlement
+  alias Tymeslot.Plans.Queries
   alias Tymeslot.Plans.WebhookDelivery
   alias Tymeslot.Repo
 
@@ -28,7 +27,7 @@ defmodule Tymeslot.Plans do
     analytics_allowed: true
   }
 
-  @pro_features Map.new(@free_features, fn {key, _} -> {key, true} end)
+  @pro_features Map.new(@free_features, fn {key, _unused50} -> {key, true} end)
 
   @doc "True when plan gating is switched on for this instance."
   @spec enabled?() :: boolean()
@@ -43,7 +42,7 @@ defmodule Tymeslot.Plans do
     end
   end
 
-  def effective_plan(_), do: :free
+  def effective_plan(_unused22), do: :free
 
   @doc "Quantity caps. `:infinity` means no cap."
   @spec limits(:free | :pro) :: %{
@@ -52,17 +51,17 @@ defmodule Tymeslot.Plans do
         }
   def limits(:pro), do: %{meeting_types: :infinity, calendar_integrations: :infinity}
   def limits(:free), do: %{meeting_types: 1, calendar_integrations: 1}
-  def limits(_), do: limits(:free)
+  def limits(_unused14), do: limits(:free)
 
   @doc "Feature flags for a plan. Unknown atoms stay allowed."
   @spec features(:free | :pro) :: %{optional(atom()) => boolean()}
   def features(plan) when plan in [:free, :pro] do
     base = if plan == :pro, do: @pro_features, else: @free_features
-    overrides = config(:features, %{}) |> Map.get(plan, %{})
+    overrides = Map.get(config(:features, %{}), plan, %{})
     Map.merge(base, overrides)
   end
 
-  def features(_), do: features(:free)
+  def features(_unused16), do: features(:free)
 
   @spec feature?(:free | :pro, atom()) :: boolean()
   def feature?(plan, feature) when is_atom(feature) do
@@ -78,8 +77,8 @@ defmodule Tymeslot.Plans do
         }
   def usage(user_id) when is_integer(user_id) do
     %{
-      meeting_types: count("meeting_types", user_id),
-      calendar_integrations: count("calendar_integrations", user_id)
+      meeting_types: Queries.count_meeting_types(user_id),
+      calendar_integrations: Queries.count_calendars(user_id)
     }
   end
 
@@ -93,10 +92,10 @@ defmodule Tymeslot.Plans do
   @spec allow_oauth_video(integer(), term()) :: :ok | {:error, atom()}
   def allow_oauth_video(user_id, provider) when is_integer(user_id) do
     if oauth_video_provider?(provider) do
-      case Tymeslot.Features.check_access(user_id, :oauth_video_allowed) do
+      case Features.check_access(user_id, :oauth_video_allowed) do
         :ok -> :ok
         {:error, :feature_access_checker_failed} = error -> error
-        {:error, _} -> {:error, :pro_required}
+        {:error, _unused18} -> {:error, :pro_required}
       end
     else
       :ok
@@ -147,8 +146,8 @@ defmodule Tymeslot.Plans do
 
     %Entitlement{}
     |> Entitlement.changeset(attrs)
-    |> Repo.insert(on_conflict: :nothing, conflict_target: :user_id)
-    |> tap(fn _ -> invalidate(user_id) end)
+    |> Queries.insert_entitlement(on_conflict: :nothing, conflict_target: :user_id)
+    |> tap(fn _unused15 -> invalidate(user_id) end)
   end
 
   @doc "Writes an entitlement when `source_version` is not older than the stored one."
@@ -208,11 +207,11 @@ defmodule Tymeslot.Plans do
     end
   end
 
-  def ingest_event(_), do: {:error, :invalid_payload}
+  def ingest_event(_unused20), do: {:error, :invalid_payload}
 
   @spec get_entitlement(integer()) :: Entitlement.t() | nil
   def get_entitlement(user_id) when is_integer(user_id) do
-    Repo.get_by(Entitlement, user_id: user_id)
+    Queries.get_entitlement(user_id)
   end
 
   @spec external_user_id(integer()) :: String.t()
@@ -222,20 +221,16 @@ defmodule Tymeslot.Plans do
   def parse_external_user_id("booking:" <> id) do
     case Integer.parse(id) do
       {n, ""} when n > 0 -> {:ok, n}
-      _ -> :error
+      _unused7 -> :error
     end
   end
 
-  def parse_external_user_id(_), do: :error
+  def parse_external_user_id(_unused30), do: :error
 
   @doc "Accounts the abandoned-signup purge must not delete."
   @spec protected_user_ids() :: [integer()]
   def protected_user_ids do
-    Repo.all(
-      from e in Entitlement,
-        where: e.status in ["active", "trialing", "past_due"],
-        select: e.user_id
-    )
+    Queries.protected_user_ids()
   end
 
   @doc "Drops the process cache and tells open dashboards to reload."
@@ -253,37 +248,33 @@ defmodule Tymeslot.Plans do
   end
 
   defp write_entitlement(attrs) do
-    existing =
-      Repo.one(
-        from e in Entitlement,
-          where: e.user_id == ^attrs.user_id,
-          lock: "FOR UPDATE"
-      )
+    existing = Queries.lock_entitlement(attrs.user_id)
 
-    cond do
-      existing && existing.source_version > attrs.source_version ->
-        existing
+    if existing && existing.source_version > attrs.source_version do
+      existing
+    else
+      changeset = Entitlement.changeset(existing || %Entitlement{}, attrs)
 
-      existing ->
-        existing |> Entitlement.changeset(attrs) |> Repo.update!()
-
-      true ->
-        %Entitlement{} |> Entitlement.changeset(attrs) |> Repo.insert!()
+      if existing do
+        Queries.update_entitlement!(changeset)
+      else
+        Queries.insert_entitlement!(changeset)
+      end
     end
   end
 
   defp reserve_delivery(event_id) do
-    if Repo.get_by(WebhookDelivery, event_id: event_id) do
+    if Queries.get_delivery(event_id) do
       :duplicate
     else
       case %WebhookDelivery{}
            |> WebhookDelivery.changeset(%{event_id: event_id})
-           |> Repo.insert() do
-        {:ok, _} ->
+           |> Queries.insert_delivery() do
+        {:ok, _stored} ->
           :ok
 
         {:error, changeset} ->
-          if unique_event?(changeset) or Repo.get_by(WebhookDelivery, event_id: event_id) do
+          if unique_event?(changeset) or Queries.get_delivery(event_id) do
             :duplicate
           else
             Repo.rollback(changeset)
@@ -294,8 +285,8 @@ defmodule Tymeslot.Plans do
 
   defp unique_event?(changeset) do
     Enum.any?(changeset.errors, fn
-      {:event_id, _} -> true
-      _ -> false
+      {:event_id, _unused19} -> true
+      _unused7 -> false
     end)
   end
 
@@ -321,7 +312,7 @@ defmodule Tymeslot.Plans do
          show_badge_on_pro: false
        }}
     else
-      _ -> :error
+      _unused7 -> :error
     end
   end
 
@@ -354,10 +345,10 @@ defmodule Tymeslot.Plans do
       n when is_binary(n) ->
         case Integer.parse(n) do
           {parsed, ""} when parsed >= 0 -> parsed
-          _ -> 0
+          _unused11 -> 0
         end
 
-      _ ->
+      _unused7 ->
         0
     end
   end
@@ -375,50 +366,34 @@ defmodule Tymeslot.Plans do
   end
 
   defp compute_plan(user_id) do
-    cond do
-      comped?(user_id) -> :pro
-      true -> classify(get_entitlement(user_id), now())
-    end
+    if comped?(user_id), do: :pro, else: classify(get_entitlement(user_id), now())
   end
 
-  defp classify(nil, _), do: :free
+  defp classify(nil, _unused22), do: :free
 
   defp classify(%{status: "trialing", trial_ends_at: %DateTime{} = ends}, now) do
     if DateTime.compare(ends, now) == :gt, do: :pro, else: :free
   end
 
-  defp classify(%{status: "active"}, _), do: :pro
+  defp classify(%{status: "active"}, _unused38), do: :pro
 
   defp classify(%{status: "past_due", grace_until: %DateTime{} = until}, now) do
     if DateTime.compare(until, now) == :gt, do: :pro, else: :free
   end
 
-  defp classify(_, _), do: :free
+  defp classify(_unused17, _unused20), do: :free
 
   defp comped?(user_id) do
     emails = config(:comped_user_emails, [])
 
-    case user_email(user_id) do
+    case Queries.user_email(user_id) do
       email when is_binary(email) and emails != [] ->
         down = String.downcase(email)
         Enum.any?(emails, &(String.downcase(String.trim(to_string(&1))) == down))
 
-      _ ->
+      _unused7 ->
         false
     end
-  end
-
-  defp user_email(user_id) do
-    Repo.one(from u in UserSchema, where: u.id == ^user_id, select: u.email)
-  end
-
-  defp count("meeting_types", user_id) do
-    Repo.one(from r in "meeting_types", where: r.user_id == ^user_id, select: count(r.id)) || 0
-  end
-
-  defp count("calendar_integrations", user_id) do
-    Repo.one(from r in "calendar_integrations", where: r.user_id == ^user_id, select: count(r.id)) ||
-      0
   end
 
   defp cache_get(user_id) do
@@ -428,7 +403,7 @@ defmodule Tymeslot.Plans do
       {plan, at} ->
         if System.monotonic_time(:millisecond) - at < 60_000, do: plan
 
-      _ ->
+      _unused7 ->
         nil
     end
   end
@@ -452,13 +427,13 @@ defmodule Tymeslot.Plans do
     Map.get(map, key) || Map.get(map, to_string(key))
   end
 
-  defp field(_, _), do: nil
+  defp field(_unused14, _unused17), do: nil
 
   defp string_field(map, key) do
     case field(map, key) do
       value when is_binary(value) -> value
       value when is_atom(value) and not is_nil(value) -> to_string(value)
-      _ -> nil
+      _unused7 -> nil
     end
   end
 
@@ -471,12 +446,12 @@ defmodule Tymeslot.Plans do
 
   defp parse_dt(iso) when is_binary(iso) do
     case DateTime.from_iso8601(iso) do
-      {:ok, dt, _} -> DateTime.truncate(dt, :second)
-      _ -> nil
+      {:ok, dt, _unused17} -> DateTime.truncate(dt, :second)
+      _unused7 -> nil
     end
   end
 
-  defp parse_dt(_), do: nil
+  defp parse_dt(_unused17), do: nil
 
-  defp now, do: DateTime.utc_now() |> DateTime.truncate(:second)
+  defp now, do: DateTime.utc_now(:second)
 end

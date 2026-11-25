@@ -13,6 +13,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
 
   import Mox
 
+  alias Tymeslot.Brands
   alias Tymeslot.Emails.Templates.CalendarInvitation
   alias Tymeslot.Integrations.Calendar.IcsGenerator
   alias Tymeslot.Meetings
@@ -46,7 +47,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
     :ok
   end
 
-  defp footer, do: "Scheduled with #{Tymeslot.Brands.product_name()}: #{@url}"
+  defp footer, do: "Scheduled with #{Brands.product_name()}: #{@url}"
 
   defp ics(overrides) do
     %{
@@ -108,7 +109,7 @@ defmodule Tymeslot.Integrations.Calendar.IcsGeneratorBrandingTest do
         "de"
       )
 
-    assert unfold(ics) =~ "Geplant mit #{Tymeslot.Brands.product_name()}: #{@url}"
+    assert unfold(ics) =~ "Geplant mit #{Brands.product_name()}: #{@url}"
   end
 
   test "a dashboard event's invitation email carries its organiser's footer" do

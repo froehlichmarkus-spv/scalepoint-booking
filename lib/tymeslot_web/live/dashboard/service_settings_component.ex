@@ -12,6 +12,7 @@ defmodule TymeslotWeb.Dashboard.ServiceSettingsComponent do
   alias Tymeslot.Meetings.PlannedSessions
   alias Tymeslot.MeetingTypes
   alias Tymeslot.MeetingTypes.{FixedDates, OfferedTimes}
+  alias Tymeslot.Plans.Limits
   alias Tymeslot.Security.RateLimiter
   alias Tymeslot.Utils.ChangesetErrors
   alias TymeslotWeb.Dashboard.BookingLinkShare
@@ -151,7 +152,7 @@ defmodule TymeslotWeb.Dashboard.ServiceSettingsComponent do
     opening = !socket.assigns.show_add_form
 
     if opening and
-         Tymeslot.Plans.Limits.at_quota?(
+         Limits.at_quota?(
            socket.assigns[:plan_limits],
            socket.assigns[:plan_usage],
            :meeting_types

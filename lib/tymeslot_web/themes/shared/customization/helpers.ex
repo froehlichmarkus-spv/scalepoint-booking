@@ -98,5 +98,5 @@ defmodule TymeslotWeb.Themes.Shared.Customization.Helpers do
 
   defp profile_user_id(%{user_id: user_id}) when is_integer(user_id), do: user_id
   defp profile_user_id(%{"user_id" => user_id}) when is_integer(user_id), do: user_id
-  defp profile_user_id(_), do: nil
+  defp profile_user_id(_profile), do: nil
 end

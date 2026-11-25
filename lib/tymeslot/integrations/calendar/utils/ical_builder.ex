@@ -32,6 +32,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
   does not model has to survive the write.
   """
 
+  alias Tymeslot.Brands
   alias Tymeslot.Integrations.Calendar.CalDAV.Scheduling
   alias Tymeslot.Integrations.Calendar.EventColour
   alias Tymeslot.Integrations.Calendar.ICalBuilder.Alarms
@@ -105,7 +106,7 @@ defmodule Tymeslot.Integrations.Calendar.ICalBuilder do
         [
           "BEGIN:VCALENDAR",
           "VERSION:2.0",
-          "PRODID:-//ScalePoint//#{Tymeslot.Brands.product_name()} CalDAV Client//EN"
+          "PRODID:-//ScalePoint//#{Brands.product_name()} CalDAV Client//EN"
         ] ++
           time_zone_lines(event_data, zone) ++
           [

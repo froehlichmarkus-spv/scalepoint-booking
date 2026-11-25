@@ -9,13 +9,13 @@ defmodule TymeslotWeb.Dashboard.PlanNoticeComponent do
 
   alias Tymeslot.Plans
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def update(assigns, socket) do
     user = assigns.current_user
     {:ok, socket |> assign(assigns) |> assign(:message, message(user.id))}
   end
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def render(assigns) do
     ~H"""
     <div id={@id}>
@@ -60,5 +60,5 @@ defmodule TymeslotWeb.Dashboard.PlanNoticeComponent do
     DateTime.diff(ends, DateTime.utc_now(), :second) in 0..(3 * 24 * 3600)
   end
 
-  defp ending_soon?(_), do: false
+  defp ending_soon?(_unused21), do: false
 end

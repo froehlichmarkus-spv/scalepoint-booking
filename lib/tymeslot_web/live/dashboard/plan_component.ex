@@ -9,16 +9,16 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
 
   alias Tymeslot.Plans
   alias Tymeslot.Plans.BillingClient
-  alias Tymeslot.Plans.Workers.EntitlementResync
+  alias TymeslotWeb.Live.Shared.Flash
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def update(assigns, socket) do
     socket = assign(socket, assigns)
 
     socket =
       if connected?(socket) and checkout_success?(assigns) and
            socket.assigns[:resync_armed] != true do
-        Process.send_after(self(), :plan_resync, 10_000)
+        Process.send_after(self(), {:plan_resync, assigns.id}, 10_000)
         assign(socket, :resync_armed, true)
       else
         socket
@@ -27,12 +27,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     {:ok, load(socket)}
   end
 
-  def handle_info(:plan_resync, socket) do
-    _ = EntitlementResync.enqueue(socket.assigns.current_user.id)
-    {:noreply, load(socket)}
-  end
-
-  @impl true
+  @impl Phoenix.LiveComponent
   def handle_event("checkout", %{"interval" => interval}, socket) do
     user = socket.assigns.current_user
     urls = %{success: success_url(), cancel: cancel_url()}
@@ -41,13 +36,9 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
       {:ok, %{url: url}} ->
         {:noreply, redirect(socket, external: url)}
 
-      {:error, _} ->
-        {:noreply,
-         put_flash(
-           socket,
-           :error,
-           dgettext("plans", "Billing is unavailable. Try again in a moment.")
-         )}
+      {:error, _reason} ->
+        Flash.error(dgettext("plans", "Billing is unavailable. Try again in a moment."))
+        {:noreply, socket}
     end
   end
 
@@ -56,17 +47,13 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
       {:ok, %{url: url}} ->
         {:noreply, redirect(socket, external: url)}
 
-      {:error, _} ->
-        {:noreply,
-         put_flash(
-           socket,
-           :error,
-           dgettext("plans", "Billing is unavailable. Try again in a moment.")
-         )}
+      {:error, _reason} ->
+        Flash.error(dgettext("plans", "Billing is unavailable. Try again in a moment."))
+        {:noreply, socket}
     end
   end
 
-  @impl true
+  @impl Phoenix.LiveComponent
   def render(assigns) do
     ~H"""
     <div class="gos-plan" id={@id}>
@@ -156,7 +143,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
 
   defp checkout_success?(assigns) do
     params = assigns[:params] || %{}
-    params["checkout"] == "success" or params[:checkout] == "success"
+    checkout_flag(params) == "success"
   end
 
   defp plan_line(%{
@@ -167,7 +154,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   end
 
   defp plan_line(%{plan: :pro}), do: dgettext("plans", "You are on Pro.")
-  defp plan_line(_), do: dgettext("plans", "You are on Free.")
+  defp plan_line(_unused18), do: dgettext("plans", "You are on Free.")
 
   defp usage(usage, key, limits) do
     cap = limits[key]
@@ -189,6 +176,17 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
       {dgettext("plans", "Your logo and accent"), "—", dgettext("plans", "On your booking page")}
     ]
   end
+
+  defp checkout_flag(params) when is_list(params), do: Keyword.get(params, :checkout)
+
+  defp checkout_flag(params) when is_map(params) do
+    case Map.fetch(params, :checkout) do
+      {:ok, value} -> value
+      :error -> Map.get(params, "checkout")
+    end
+  end
+
+  defp checkout_flag(_params), do: nil
 
   defp success_url, do: "/dashboard/plan?checkout=success"
   defp cancel_url, do: "/dashboard/plan?checkout=cancel"

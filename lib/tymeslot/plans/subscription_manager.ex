@@ -12,16 +12,16 @@ defmodule Tymeslot.Plans.SubscriptionManager do
   alias Tymeslot.Plans
   alias Tymeslot.Plans.BillingClient
 
-  @impl true
+  @impl Tymeslot.Payments.Behaviours.SubscriptionManager
   def should_show_branding?(user_id) when is_integer(user_id) do
     Plans.enabled?() and Plans.effective_plan(user_id) == :free
   end
 
-  def should_show_branding?(_), do: false
+  def should_show_branding?(_unused29), do: false
 
-  @impl true
+  @impl Tymeslot.Payments.Behaviours.SubscriptionManager
   def create_subscription_checkout(_price_id, _product, _amount, user_id, email, urls, metadata) do
-    interval = metadata[:interval] || metadata["interval"] || "month"
+    interval = interval_of(metadata)
 
     BillingClient.create_checkout(
       %{id: user_id, email: email},
@@ -30,11 +30,20 @@ defmodule Tymeslot.Plans.SubscriptionManager do
     )
   end
 
-  @impl true
+  @impl Tymeslot.Payments.Behaviours.SubscriptionManager
   def handle_checkout_completed(_session), do: {:error, :not_supported}
 
-  @impl true
+  @impl Tymeslot.Payments.Behaviours.SubscriptionManager
   def cancel_subscription(_subscription_id, user_id, opts) do
     BillingClient.cancel(user_id, opts)
   end
+
+  defp interval_of(metadata) when is_map(metadata) do
+    case Map.fetch(metadata, :interval) do
+      {:ok, interval} -> interval
+      :error -> Map.get(metadata, "interval", "month")
+    end
+  end
+
+  defp interval_of(_metadata), do: "month"
 end

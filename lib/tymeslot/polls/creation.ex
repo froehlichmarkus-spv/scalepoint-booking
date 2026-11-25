@@ -19,6 +19,7 @@ defmodule Tymeslot.Polls.Creation do
   """
 
   alias Tymeslot.Emails.EmailScheduler
+  alias Tymeslot.Features
   alias Tymeslot.Polls
 
   alias Tymeslot.Polls.{
@@ -97,10 +98,10 @@ defmodule Tymeslot.Polls.Creation do
   # it waits for nothing a link needs: not the calendar, nor the username,
   # nor a first time.
   defp ensure_polls(user_id) do
-    case Tymeslot.Features.check_access(user_id, :polls_allowed) do
+    case Features.check_access(user_id, :polls_allowed) do
       :ok -> :ok
       {:error, :feature_access_checker_failed} = error -> error
-      {:error, _} -> {:error, :polls_not_allowed}
+      {:error, _reason} -> {:error, :polls_not_allowed}
     end
   end
 

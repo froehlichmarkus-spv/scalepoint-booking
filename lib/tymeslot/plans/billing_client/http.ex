@@ -6,30 +6,32 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
   alias Tymeslot.Infrastructure.HTTPClient
   alias Tymeslot.Plans
 
-  @impl true
+  @impl Tymeslot.Plans.BillingClient
   def create_checkout(user, interval, urls) do
-    post("/v1/checkout-sessions", %{
+    body = %{
       "product" => "booking",
       "price_lookup_key" => lookup_key(interval),
       "external_user_id" => Plans.external_user_id(user.id),
       "email" => user.email,
-      "success_url" => urls[:success] || urls["success"],
-      "cancel_url" => urls[:cancel] || urls["cancel"]
-    })
-    |> url_result()
+      "success_url" => url_param(urls, :success),
+      "cancel_url" => url_param(urls, :cancel)
+    }
+
+    url_result(post("/v1/checkout-sessions", body))
   end
 
-  @impl true
+  @impl Tymeslot.Plans.BillingClient
   def create_portal(user, return_url) do
-    post("/v1/portal-sessions", %{
-      "product" => "booking",
-      "external_user_id" => Plans.external_user_id(user.id),
-      "return_url" => return_url
-    })
-    |> url_result()
+    url_result(
+      post("/v1/portal-sessions", %{
+        "product" => "booking",
+        "external_user_id" => Plans.external_user_id(user.id),
+        "return_url" => return_url
+      })
+    )
   end
 
-  @impl true
+  @impl Tymeslot.Plans.BillingClient
   def get_entitlement(user_id) do
     query =
       URI.encode_query(%{
@@ -43,7 +45,7 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
     end
   end
 
-  @impl true
+  @impl Tymeslot.Plans.BillingClient
   def register_account(user) do
     case post("/v1/accounts", %{
            "product" => "booking",
@@ -52,14 +54,14 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
            "name" => Map.get(user, :name),
            "trial" => true
          }) do
-      {:ok, _} -> :ok
+      {:ok, _unused13} -> :ok
       other -> other
     end
   end
 
-  @impl true
+  @impl Tymeslot.Plans.BillingClient
   def cancel(user_id, opts) do
-    external = Plans.external_user_id(user_id) |> URI.encode_www_form()
+    external = URI.encode_www_form(Plans.external_user_id(user_id))
     at_period_end = Keyword.get(List.wrap(opts), :at_period_end, false)
     reason = Keyword.get(List.wrap(opts), :reason, "account_deleted")
 
@@ -67,14 +69,21 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
            "reason" => reason,
            "at_period_end" => at_period_end
          }) do
-      {:ok, _} -> :ok
+      {:ok, _unused13} -> :ok
       {:error, {:http, 404}} -> :ok
       other -> other
     end
   end
 
+  defp url_param(urls, key) when is_map(urls) do
+    case Map.fetch(urls, key) do
+      {:ok, value} -> value
+      :error -> Map.get(urls, Atom.to_string(key))
+    end
+  end
+
   defp lookup_key("year"), do: "booking_pro_yearly"
-  defp lookup_key(_), do: "booking_pro_monthly"
+  defp lookup_key(_unused19), do: "booking_pro_monthly"
 
   defp post(path, body), do: request(:post, path, Jason.encode!(body))
 
@@ -109,7 +118,7 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
 
   defp url_result({:ok, %{"url" => url}}) when is_binary(url), do: {:ok, %{url: url}}
   defp url_result({:ok, %{url: url}}) when is_binary(url), do: {:ok, %{url: url}}
-  defp url_result({:ok, _}), do: {:error, :missing_url}
+  defp url_result({:ok, _unused25}), do: {:error, :missing_url}
   defp url_result(other), do: other
 
   defp decode(body) when is_map(body), do: body
@@ -117,11 +126,11 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
   defp decode(body) when is_binary(body) do
     case Jason.decode(body) do
       {:ok, map} -> map
-      _ -> %{}
+      _unused7 -> %{}
     end
   end
 
-  defp decode(_), do: %{}
+  defp decode(_unused15), do: %{}
 
   defp credentials do
     plans = Application.get_env(:tymeslot, :plans, [])

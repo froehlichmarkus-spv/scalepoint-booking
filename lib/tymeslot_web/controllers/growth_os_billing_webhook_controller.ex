@@ -21,8 +21,8 @@ defmodule TymeslotWeb.GrowthOsBillingWebhookController do
     case Webhook.verify(raw, timestamp, signature) do
       :ok ->
         case Webhook.process(raw) do
-          {:ok, _} -> send_resp(conn, 200, "")
-          {:error, _} -> send_resp(conn, 500, "")
+          {:ok, _unused17} -> send_resp(conn, 200, "")
+          {:error, _unused20} -> send_resp(conn, 500, "")
         end
 
       {:error, :not_configured} ->

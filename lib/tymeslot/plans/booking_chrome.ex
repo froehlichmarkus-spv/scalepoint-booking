@@ -57,14 +57,14 @@ defmodule Tymeslot.Plans.BookingChrome do
   end
 
   defp accent_hex(%{settings: settings}) when is_map(settings) do
-    case settings["accent"] || settings[:accent] do
-      "#" <> _ = hex -> if valid_hex?(hex), do: hex
-      id when is_binary(id) -> Accents.all() |> get_in([id, :color])
-      _ -> nil
+    case setting(settings, :accent) do
+      "#" <> _rest = hex -> if valid_hex?(hex), do: hex
+      id when is_binary(id) -> get_in(Accents.all(), [id, :color])
+      _other -> nil
     end
   end
 
-  defp accent_hex(_), do: nil
+  defp accent_hex(_unused19), do: nil
 
   defp clearing_logo?(field, value) do
     field in ["logo_path", :logo_path] and value in [nil, ""]
@@ -85,6 +85,13 @@ defmodule Tymeslot.Plans.BookingChrome do
       "#" <>
         Enum.map_join([nr, ng, nb], "", &String.pad_leading(Integer.to_string(&1, 16), 2, "0"))
     end)
+  end
+
+  defp setting(settings, key) when is_map(settings) do
+    case Map.fetch(settings, key) do
+      {:ok, value} -> value
+      :error -> Map.get(settings, Atom.to_string(key))
+    end
   end
 
   defp hex_bytes("#" <> rest) do

@@ -35,6 +35,7 @@ defmodule TymeslotWeb.DashboardLive do
   alias Tymeslot.Dashboard.DashboardContext
   alias Tymeslot.Meetings
   alias Tymeslot.Onboarding
+  alias Tymeslot.Plans.Workers.EntitlementResync
   alias TymeslotWeb.Components.DashboardLayout
   alias TymeslotWeb.Components.Shared.PickerPreferences
   alias TymeslotWeb.Components.TourOverlay
@@ -48,11 +49,13 @@ defmodule TymeslotWeb.DashboardLive do
   alias TymeslotWeb.Dashboard.MeetingFormMessages
   alias TymeslotWeb.Dashboard.OnboardingChecklist
   alias TymeslotWeb.Dashboard.PaymentsHandlers
+  alias TymeslotWeb.Dashboard.PlanComponent
   alias TymeslotWeb.Dashboard.PollEventHandlers
   alias TymeslotWeb.Dashboard.ScheduleSettingsComponent
   alias TymeslotWeb.Dashboard.ServiceSettingsComponent
   alias TymeslotWeb.Dashboard.TourEventHandlers
   alias TymeslotWeb.Helpers.PageTitles
+  alias TymeslotWeb.Hooks.PlanAssignsHook
 
   require Logger
 
@@ -509,7 +512,18 @@ defmodule TymeslotWeb.DashboardLive do
     do: PollEventHandlers.handle_poll_deadline_next(deadline, socket)
 
   def handle_info({:plan_updated, _user_id}, socket) do
-    {:noreply, TymeslotWeb.Hooks.PlanAssignsHook.refresh(socket)}
+    {:noreply, PlanAssignsHook.refresh(socket)}
+  end
+
+  def handle_info({:plan_resync, component_id}, socket) do
+    user = socket.assigns[:current_user]
+
+    if user do
+      EntitlementResync.enqueue(user.id)
+    end
+
+    send_update(PlanComponent, id: component_id)
+    {:noreply, socket}
   end
 
   def handle_info(:agenda_tick, socket) do

@@ -8,11 +8,9 @@ defmodule Tymeslot.Plans.PlanAccess do
   are not paused: they keep blocking conflicts so a guest is not double-booked.
   """
 
-  import Ecto.Query, warn: false
-
   alias Tymeslot.MeetingTypes.MeetingTypeQueries
   alias Tymeslot.Plans
-  alias Tymeslot.Repo
+  alias Tymeslot.Plans.Queries
 
   @doc "Drops paused types from a public list. A no-op while plans are off."
   @spec reject_paused([map()]) :: [map()]
@@ -39,7 +37,7 @@ defmodule Tymeslot.Plans.PlanAccess do
       MapSet.member?(paused_ids(user_id), id)
   end
 
-  def paused?(_), do: false
+  def paused?(_unused15), do: false
 
   @doc "Hard stop for a booking submit that still has the page open."
   @spec ensure_bookable(map()) :: :ok | {:error, :plan_paused}
@@ -47,7 +45,7 @@ defmodule Tymeslot.Plans.PlanAccess do
     if paused?(meeting_type), do: {:error, :plan_paused}, else: :ok
   end
 
-  def ensure_bookable(_), do: :ok
+  def ensure_bookable(_unused23), do: :ok
 
   @spec paused_ids(integer()) :: MapSet.t()
   def paused_ids(user_id) when is_integer(user_id) do
@@ -89,10 +87,10 @@ defmodule Tymeslot.Plans.PlanAccess do
         list when is_list(list) ->
           Enum.flat_map(list, fn
             %{video_integration_ids: ids} when is_list(ids) -> ids
-            _ -> []
+            _unused13 -> []
           end)
 
-        _ ->
+        _unused9 ->
           []
       end
 
@@ -105,12 +103,7 @@ defmodule Tymeslot.Plans.PlanAccess do
     if ids == [] do
       %{}
     else
-      Repo.all(
-        from v in "video_integrations",
-          where: v.id in ^ids,
-          select: {v.id, v.provider}
-      )
-      |> Map.new()
+      Map.new(Queries.video_providers(ids))
     end
   end
 end

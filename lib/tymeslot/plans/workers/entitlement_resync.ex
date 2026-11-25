@@ -6,16 +6,13 @@ defmodule Tymeslot.Plans.Workers.EntitlementResync do
 
   use Oban.Worker, queue: :plans, max_attempts: 5
 
-  import Ecto.Query, warn: false
-
   alias Tymeslot.Plans
   alias Tymeslot.Plans.BillingClient
-  alias Tymeslot.Plans.Entitlement
-  alias Tymeslot.Repo
+  alias Tymeslot.Plans.Queries
 
   @spec enqueue(integer()) :: {:ok, Oban.Job.t()} | {:error, term()}
   def enqueue(user_id) when is_integer(user_id) do
-    %{"user_id" => user_id} |> new() |> Oban.insert()
+    Oban.insert(new(%{"user_id" => user_id}))
   end
 
   @impl Oban.Worker
@@ -26,21 +23,13 @@ defmodule Tymeslot.Plans.Workers.EntitlementResync do
   def perform(%Oban.Job{args: %{"user_id" => user_id}}) when is_binary(user_id) do
     case Integer.parse(user_id) do
       {id, ""} -> sync(id)
-      _ -> :ok
+      _unused7 -> :ok
     end
   end
 
   def perform(%Oban.Job{}) do
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
-
-    ids =
-      Repo.all(
-        from e in Entitlement,
-          where:
-            e.status in ["trialing", "past_due"] or
-              (not is_nil(e.current_period_end) and e.current_period_end < ^now),
-          select: e.user_id
-      )
+    now = DateTime.utc_now(:second)
+    ids = Queries.due_user_ids(now)
 
     Enum.each(ids, &sync/1)
     :ok
@@ -54,10 +43,10 @@ defmodule Tymeslot.Plans.Workers.EntitlementResync do
           "version" => body["version"] || body["source_version"]
         }
 
-        _ = Plans.upsert_entitlement(payload)
+        _unused9 = Plans.upsert_entitlement(payload)
         :ok
 
-      {:error, _} ->
+      {:error, _unused16} ->
         {:error, :retry_later}
     end
   end

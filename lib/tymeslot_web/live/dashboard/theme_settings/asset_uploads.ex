@@ -29,6 +29,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.AssetUploads do
   import Phoenix.LiveView, only: [allow_upload: 3, consume_uploaded_entries: 3, send_update: 3]
 
   alias Tymeslot.Media.Uploads
+  alias Tymeslot.Plans.BookingChrome
   alias Tymeslot.Security.RateLimiter
   alias Tymeslot.ThemeCustomizations
   alias TymeslotWeb.Helpers.ImageUploadErrors
@@ -130,7 +131,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.AssetUploads do
     %{profile: profile, theme_id: theme_id} = socket.assigns
 
     if field == :logo_path and
-         not Tymeslot.Plans.BookingChrome.branding_change_allowed?(
+         not BookingChrome.branding_change_allowed?(
            profile.user_id,
            :logo,
            :logo_path,

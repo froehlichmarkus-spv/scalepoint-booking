@@ -8,10 +8,8 @@ defmodule Tymeslot.Plans.Limits do
   stay active after a downgrade; only adding another one is refused.
   """
 
-  import Ecto.Query, warn: false
-
   alias Tymeslot.Plans
-  alias Tymeslot.Repo
+  alias Tymeslot.Plans.Queries
 
   @resources [:meeting_types, :calendar_integrations]
 
@@ -46,23 +44,23 @@ defmodule Tymeslot.Plans.Limits do
     end
   end
 
-  def ensure_calendar_provider(_, _), do: :ok
+  def ensure_calendar_provider(_unused32, _unused35), do: :ok
 
   @spec at_quota?(map() | nil, map() | nil, atom()) :: boolean()
   def at_quota?(limits, usage, resource) when is_map(limits) and is_map(usage) do
     case Map.get(limits, resource) do
       max when is_integer(max) -> Map.get(usage, resource, 0) >= max
-      _ -> false
+      _unused7 -> false
     end
   end
 
-  def at_quota?(_, _, _), do: false
+  def at_quota?(_unused17, _unused20, _unused23), do: false
 
   defp lock_user(user_id) do
-    Repo.one(from u in "users", where: u.id == ^user_id, lock: "FOR UPDATE", select: u.id)
+    Queries.lock_user(user_id)
   end
 
   defp plans(key) do
-    :tymeslot |> Application.get_env(:plans, []) |> Keyword.get(key)
+    Keyword.get(Application.get_env(:tymeslot, :plans, []), key)
   end
 end

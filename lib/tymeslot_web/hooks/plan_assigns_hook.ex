@@ -58,7 +58,7 @@ defmodule TymeslotWeb.Hooks.PlanAssignsHook do
         Phoenix.PubSub.subscribe(Tymeslot.PubSub, "plans:#{id}")
         socket
 
-      _ ->
+      _unused7 ->
         socket
     end
   end

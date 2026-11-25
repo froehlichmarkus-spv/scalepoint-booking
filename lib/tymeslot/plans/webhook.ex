@@ -5,6 +5,7 @@ defmodule Tymeslot.Plans.Webhook do
   The tolerance is five minutes. Comparison uses `Plug.Crypto.secure_compare/2`.
   """
 
+  alias Plug.Crypto
   alias Tymeslot.Plans
 
   @tolerance 300
@@ -19,27 +20,26 @@ defmodule Tymeslot.Plans.Webhook do
          mac <- :crypto.mac(:hmac, :sha256, secret, "#{timestamp}.#{raw_body}"),
          expected <- Base.encode16(mac, case: :lower),
          true <-
-           byte_size(hex) == byte_size(expected) and Plug.Crypto.secure_compare(hex, expected) do
+           byte_size(hex) == byte_size(expected) and Crypto.secure_compare(hex, expected) do
       :ok
     else
       {:error, :not_configured} = error -> error
-      _ -> {:error, :invalid_signature}
+      _unused7 -> {:error, :invalid_signature}
     end
   end
 
-  def verify(_, _, _), do: {:error, :invalid_signature}
+  def verify(_unused14, _unused17, _unused20), do: {:error, :invalid_signature}
 
   @spec process(binary()) :: {:ok, term()} | {:error, term()}
   def process(raw_body) do
-    with {:ok, payload} <- Jason.decode(raw_body) do
-      Plans.ingest_event(payload)
-    else
-      _ -> {:error, :invalid_payload}
+    case Jason.decode(raw_body) do
+      {:ok, payload} -> Plans.ingest_event(payload)
+      _invalid -> {:error, :invalid_payload}
     end
   end
 
   defp secret do
-    value = :tymeslot |> Application.get_env(:plans, []) |> Keyword.get(:webhook_secret)
+    value = Keyword.get(Application.get_env(:tymeslot, :plans, []), :webhook_secret)
 
     if is_binary(value) and value != "" do
       {:ok, value}
@@ -51,9 +51,9 @@ defmodule Tymeslot.Plans.Webhook do
   defp parse_timestamp(ts) when is_binary(ts) do
     case Integer.parse(ts) do
       {n, ""} when n > 0 -> {:ok, n}
-      _ -> :error
+      _unused7 -> :error
     end
   end
 
-  defp parse_timestamp(_), do: :error
+  defp parse_timestamp(_unused24), do: :error
 end

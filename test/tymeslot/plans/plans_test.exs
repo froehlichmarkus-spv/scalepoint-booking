@@ -13,8 +13,10 @@ defmodule Tymeslot.PlansTest do
   alias Tymeslot.Plans
   alias Tymeslot.Plans.AccessChecker
   alias Tymeslot.Plans.BookingChrome
+  alias Tymeslot.Plans.Entitlement
   alias Tymeslot.Plans.PlanAccess
   alias Tymeslot.Plans.Webhook
+  alias Tymeslot.Repo
   alias Tymeslot.ThemeCustomizations.Tokens
 
   setup do
@@ -37,6 +39,8 @@ defmodule Tymeslot.PlansTest do
   end
 
   test "brand tokens file matches the Growth OS contract" do
+    Brands.reload()
+    assert Brands.product_name() == "BookDesk24"
     css = File.read!(Path.expand("brand/tokens.css"))
 
     assert css =~
@@ -59,7 +63,7 @@ defmodule Tymeslot.PlansTest do
     Plans.invalidate(user.id)
     assert Plans.effective_plan(user.id) == :pro
     assert {:ok, _again} = Plans.start_local_trial(user.id)
-    assert length(Tymeslot.Repo.all(Tymeslot.Plans.Entitlement)) == 1
+    assert length(Repo.all(Entitlement)) == 1
   end
 
   test "an older source version does not overwrite a newer entitlement", %{user: user} do

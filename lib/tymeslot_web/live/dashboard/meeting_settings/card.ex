@@ -9,8 +9,8 @@ defmodule TymeslotWeb.Dashboard.MeetingSettings.Card do
   alias Tymeslot.Integrations.Calendar.DisplayHelpers
   alias Tymeslot.MeetingTypes
   alias Tymeslot.MeetingTypes.Lengths
-  alias Tymeslot.Plans.PlanAccess
   alias Tymeslot.MeetingTypes.LocationOption
+  alias Tymeslot.Plans.PlanAccess
   alias TymeslotWeb.Components.CoreComponents.Buttons
   alias TymeslotWeb.Components.CoreComponents.Containers
   alias TymeslotWeb.Components.CoreComponents.Feedback

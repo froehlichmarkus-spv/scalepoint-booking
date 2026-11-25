@@ -19,6 +19,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Phoenix.LiveView.Socket
+  alias Tymeslot.Plans.BookingChrome
   alias Tymeslot.Security.RateLimiter
   alias Tymeslot.ThemeCustomizations
   alias Tymeslot.Themes.Catalog
@@ -158,7 +159,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
 
   defp set_option(socket, group, field, value) do
     if branding_blocked?(socket, group, field, value) do
-      TymeslotWeb.Live.Shared.Flash.error(
+        Flash.error(
         dgettext("plans", "Your logo and accent colour are part of Pro.")
       )
 
@@ -171,7 +172,7 @@ defmodule TymeslotWeb.Dashboard.ThemeSettings.ThemeCustomizationComponent do
   defp branding_blocked?(socket, group, field, value) do
     user_id = socket.assigns.current_user.id
 
-    not Tymeslot.Plans.BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
+      not BookingChrome.branding_change_allowed?(user_id, group.key, field, value)
   end
 
   defp do_set_option(socket, group, field, value) do

@@ -7,6 +7,7 @@ defmodule Tymeslot.Notifications.Orchestrator do
   require Logger
 
   alias Tymeslot.Emails.EmailScheduler
+  alias Tymeslot.Features
   alias Tymeslot.Infrastructure.Logging.LogFormat
   alias Tymeslot.Meetings.ApprovalJobs
   alias Tymeslot.Notifications.Events.Seats
@@ -238,7 +239,7 @@ defmodule Tymeslot.Notifications.Orchestrator do
     user_id = Map.get(meeting, :organizer_user_id) || Map.get(meeting, :user_id)
 
     is_integer(user_id) and
-      Tymeslot.Features.check_access(user_id, :reminders_allowed) != :ok
+      Features.check_access(user_id, :reminders_allowed) != :ok
   end
 
   defp replace_reminders(meeting, reminders) do

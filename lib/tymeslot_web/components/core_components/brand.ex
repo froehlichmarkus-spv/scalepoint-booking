@@ -3,6 +3,8 @@ defmodule TymeslotWeb.Components.CoreComponents.Brand do
   use Phoenix.Component
   use Gettext, backend: TymeslotWeb.Gettext
 
+  alias Tymeslot.Brands
+
   @doc """
   Renders the Tymeslot logo.
 
@@ -17,22 +19,22 @@ defmodule TymeslotWeb.Components.CoreComponents.Brand do
 
   @spec logo(map()) :: Phoenix.LiveView.Rendered.t()
   def logo(assigns) do
-    name = Tymeslot.Brands.product_name()
+    name = Brands.product_name()
     {head, accent} = wordmark(name)
 
     assigns =
       assigns
       |> assign(:head, head)
       |> assign(:accent, accent)
-      |> assign(:byline, Tymeslot.Brands.byline())
-      |> assign(:suite, Tymeslot.Brands.suite_title())
-      |> assign(:show_suite, Tymeslot.Brands.suite_title() != name)
+      |> assign(:byline, Brands.byline())
+      |> assign(:suite, Brands.suite_title())
+      |> assign(:show_suite, Brands.suite_title() != name)
 
     ~H"""
     <div class={["flex items-center gap-3", @class]}>
       <img
-        src={Tymeslot.Brands.chrome_logo()}
-        alt={Tymeslot.Brands.product_name()}
+        src={Brands.chrome_logo()}
+        alt={Brands.product_name()}
         class={[@img_class, "w-auto", @mode == :icon && "h-8"]}
       />
       <div :if={@mode == :full} class="min-w-0">
@@ -49,7 +51,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Brand do
   defp wordmark(name) do
     case String.split(name, "24", parts: 2) do
       [head, _tail] when head != "" -> {head, "24"}
-      _ -> {name, nil}
+      _unused7 -> {name, nil}
     end
   end
 end

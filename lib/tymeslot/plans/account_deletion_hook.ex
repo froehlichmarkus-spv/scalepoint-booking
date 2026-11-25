@@ -11,17 +11,17 @@ defmodule Tymeslot.Plans.AccountDeletionHook do
   alias Tymeslot.Plans
   alias Tymeslot.Plans.BillingClient
 
-  @impl true
+  @impl Tymeslot.Auth.Behaviours.AccountDeletionHook
   def on_deletion_requested(_user_id, _feedback), do: :ok
 
-  @impl true
+  @impl Tymeslot.Auth.Behaviours.AccountDeletionHook
   def on_deletion_restored(_user_id), do: :ok
 
-  @impl true
+  @impl Tymeslot.Auth.Behaviours.AccountDeletionHook
   def on_account_deletion(user_id) when is_integer(user_id) do
     BillingClient.cancel(user_id, reason: "account_deleted", at_period_end: false)
   end
 
-  @impl true
+  @impl Tymeslot.Auth.Behaviours.AccountDeletionHook
   def purge_protected_user_ids, do: {:ok, Plans.protected_user_ids()}
 end

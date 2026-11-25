@@ -10,12 +10,12 @@ defmodule Tymeslot.Plans.UserRegisteredHook do
   alias Tymeslot.Auth.UserSchema
   alias Tymeslot.Plans
   alias Tymeslot.Plans.BillingClient
-  alias Tymeslot.Repo
+  alias Tymeslot.Plans.Queries
 
-  @impl true
+  @impl Tymeslot.Auth.Behaviours.UserRegisteredHook
   def on_user_registered(user_id, _metadata) when is_integer(user_id) do
-    with {:ok, _} <- Plans.start_local_trial(user_id),
-         %UserSchema{} = user <- Repo.get(UserSchema, user_id),
+    with {:ok, _unused16} <- Plans.start_local_trial(user_id),
+         %UserSchema{} = user <- Queries.get_user(user_id),
          :ok <- BillingClient.register_account(user) do
       :ok
     else

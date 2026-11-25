@@ -36,6 +36,7 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
   alias Tymeslot.Integrations.Video
   alias Tymeslot.MeetingTypes.LocationOption
   alias Tymeslot.MeetingTypes.SeriesSettings
+  alias Tymeslot.Plans
   alias Tymeslot.Profiles
   alias Tymeslot.Utils.UriUtils
   alias Tymeslot.Venues
@@ -279,10 +280,10 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
         case Features.check_access(user_id, :reminders_allowed) do
           :ok -> :ok
           {:error, :feature_access_checker_failed} = error -> error
-          {:error, _} -> {:error, :reminders_not_allowed}
+          {:error, _reason} -> {:error, :reminders_not_allowed}
         end
 
-      _ ->
+      _other ->
         :ok
     end
   end
@@ -306,11 +307,11 @@ defmodule Tymeslot.MeetingTypes.FormValidation do
   defp validate_video_integration(_attrs, _user_id), do: :ok
 
   defp gate_oauth_video(user_id, integration) do
-    if Tymeslot.Plans.oauth_video_provider?(integration.provider) do
+    if Plans.oauth_video_provider?(integration.provider) do
       case Features.check_access(user_id, :oauth_video_allowed) do
         :ok -> :ok
         {:error, :feature_access_checker_failed} = error -> error
-        {:error, _} -> {:error, :oauth_video_not_allowed}
+        {:error, _reason} -> {:error, :oauth_video_not_allowed}
       end
     else
       :ok
