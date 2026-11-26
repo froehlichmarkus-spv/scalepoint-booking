@@ -22,7 +22,6 @@ defmodule Tymeslot.Plans.UserRegisteredHook do
     else
       nil -> :ok
       {:error, reason} -> {:error, reason}
-      other -> {:error, other}
     end
   end
 
@@ -113,8 +112,6 @@ defmodule Tymeslot.Plans.UserRegisteredHook do
   defp field(map, key) when is_map(map) do
     Map.get(map, key) || Map.get(map, Atom.to_string(key))
   end
-
-  defp field(_map, _key), do: nil
 
   defp blank?(value), do: value in [nil, ""]
 end
