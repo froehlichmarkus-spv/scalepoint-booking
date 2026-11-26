@@ -8,6 +8,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Tymeslot.Plans
+  alias Tymeslot.Plans.Billing
   alias Tymeslot.Plans.BillingClient
   alias TymeslotWeb.Live.Shared.Flash
 
@@ -58,7 +59,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
       <.dashboard_page icon="hero-credit-card" title={dgettext("plans", "Plan & billing")}>
         <div class="gos-plan">
           <p :if={@billing_unavailable} class="gos-alert" role="alert">
-            {Tymeslot.Plans.Billing.unavailable_message()}
+            {Billing.unavailable_message()}
           </p>
           <section class="gos-plan-card">
             <p class="gos-plan-muted">{plan_line(assigns)}</p>
@@ -147,7 +148,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   end
 
   defp billing_unavailable(socket) do
-    Flash.error(Tymeslot.Plans.Billing.unavailable_message())
+    Flash.error(Billing.unavailable_message())
     assign(socket, :billing_unavailable, true)
   end
 
