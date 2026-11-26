@@ -1,4 +1,4 @@
-/* ScalePoint Growth OS Design System v2.0.0 · GENERATED from tokens/tokens.json · do not edit by hand
+/* ScalePoint Growth OS Design System v2.5.0 · GENERATED from tokens/tokens.json · do not edit by hand
    Phoenix/plain CSS: copy fonts/ to priv/static/fonts and @import this file at the top of assets/css/app.css. Theme via <html data-theme="light|dark|system">. */
 @font-face{font-family:"Geist";src:url("/fonts/Geist-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"Geist Mono";src:url("/fonts/GeistMono-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
@@ -91,14 +91,20 @@
   --gos-success-soft: #E1F5EA;
   --gos-success-line: #A8DEC1;
   --gos-success-ink: #0F6B47;
+  --gos-success-hover: #1D9960;
+  --gos-on-success: #111E32;
   --gos-warning-fill: #F2A40E;
   --gos-warning-soft: #FFF3D6;
   --gos-warning-line: #F5D58A;
   --gos-warning-ink: #835000;
+  --gos-warning-hover: #D9930C;
+  --gos-on-warning: #111E32;
   --gos-danger-fill: #D23A2F;
   --gos-danger-soft: #FDECEA;
   --gos-danger-line: #F3B9B3;
   --gos-danger-ink: #B42318;
+  --gos-danger-hover: #B42318;
+  --gos-on-danger: #FFFFFF;
   --gos-info-fill: #2F6BFF;
   --gos-info-soft: #E8EFFF;
   --gos-info-line: #B8CCFF;
@@ -108,6 +114,7 @@
   --gos-gradient-hero-glow: radial-gradient(40% 60% at 36% 0%, rgba(46,196,182,.30), transparent 70%), radial-gradient(42% 55% at 56% 0%, rgba(76,141,255,.26), transparent 70%), radial-gradient(34% 55% at 72% 6%, rgba(139,92,246,.22), transparent 70%);
   --gos-gradient-app-glow: radial-gradient(700px 260px at 92% -40px, rgba(76,141,255,.09), transparent 70%), radial-gradient(500px 220px at 70% -60px, rgba(46,196,182,.08), transparent 70%);
   --gos-gradient-band: radial-gradient(40% 70% at 80% 0%, rgba(46,196,182,.28), transparent 70%), radial-gradient(30% 60% at 95% 20%, rgba(139,92,246,.24), transparent 70%), #0B1424;
+  --gos-gradient-hue: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
   --gos-font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --gos-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --gos-weight-regular: 400;
@@ -247,6 +254,7 @@
   --gos-size-control-md: 40px;
   --gos-size-control-lg: 44px;
   --gos-size-touch: 44px;
+  --gos-size-touch-target: 44px;
   --gos-size-sidebar: 232px;
   --gos-size-sidebar-collapsed: 64px;
   --gos-size-topbar: 56px;
@@ -281,6 +289,7 @@
   --gos-secondary-ink: #111E32;
   --gos-focus: #2F6BFF;
   --gos-overlay: rgba(13,24,40,.42);
+  --gos-overlay-hover: rgba(13,24,40,.65);
   --gos-accent-text-from: #0B7F76;
   --gos-accent-text-mid: #2F5FE0;
   --gos-accent-text-to: #6B3FD9;
@@ -320,6 +329,7 @@
   --gos-secondary-ink: #E6EBF2;
   --gos-focus: #7FB0FF;
   --gos-overlay: rgba(3,7,14,.66);
+  --gos-overlay-hover: rgba(3,7,14,.82);
   --gos-accent-text-from: #5EE6D8;
   --gos-accent-text-mid: #8FB6FF;
   --gos-accent-text-to: #B69CFF;
@@ -356,6 +366,7 @@
   --gos-danger-soft: #3B1A1A;
   --gos-danger-ink: #FF9C92;
   --gos-danger-line: rgba(210,58,47,0.35);
+  --gos-danger-hover: #C8322A;
   --gos-info-soft: #16264A;
   --gos-info-ink: #A5C3FF;
   --gos-info-line: rgba(47,107,255,0.35);
@@ -389,6 +400,7 @@
     --gos-secondary-ink: #E6EBF2;
     --gos-focus: #7FB0FF;
     --gos-overlay: rgba(3,7,14,.66);
+    --gos-overlay-hover: rgba(3,7,14,.82);
     --gos-accent-text-from: #5EE6D8;
     --gos-accent-text-mid: #8FB6FF;
     --gos-accent-text-to: #B69CFF;
@@ -425,6 +437,7 @@
     --gos-danger-soft: #3B1A1A;
     --gos-danger-ink: #FF9C92;
     --gos-danger-line: rgba(210,58,47,0.35);
+    --gos-danger-hover: #C8322A;
     --gos-info-soft: #16264A;
     --gos-info-ink: #A5C3FF;
     --gos-info-line: rgba(47,107,255,0.35);

@@ -79,12 +79,12 @@ msgstr "Domain hat eine ungültige Endung (.%{tld})"
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Domain has an invalid domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "Domain hat eine ungültige Endung (.%{tld}). Meintest .%{suggestion}?"
+msgstr "Domain hat eine ungültige Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "Domain hat eine unbekannte Endung (.%{tld}). Meintest .%{suggestion}?"
+msgstr "Domain hat eine unbekannte Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
@@ -144,12 +144,12 @@ msgstr "E-Mail hat eine ungültige Endung (.%{tld})"
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Email has an invalid domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "E-Mail hat eine ungültige Endung (.%{tld}). Meintest .%{suggestion}?"
+msgstr "E-Mail hat eine ungültige Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "E-Mail hat eine unbekannte Endung (.%{tld}). Meintest .%{suggestion}?"
+msgstr "E-Mail hat eine unbekannte Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format

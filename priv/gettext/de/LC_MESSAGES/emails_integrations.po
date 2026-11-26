@@ -411,7 +411,7 @@ msgstr "Dies ist die einzige Benachrichtigung zur Pausierung, die du für diese 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
 #, elixir-autogen, elixir-format
 msgid "This notification is sent when an integration needs attention. You will not receive another notice about this until you reconnect it."
-msgstr "Diese Benachrichtigung wird verschickt, wenn eine Integration deine Aufmerksamkeit erfordert. Bis du sie erneut verbinden, erhaltest dazu keinen weiteren Hinweis."
+msgstr "Diese Benachrichtigung wird verschickt, wenn eine Integration deine Aufmerksamkeit erfordert. Bis du sie erneut verbindest, erhaltest dazu keinen weiteren Hinweis."
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
 #, elixir-autogen, elixir-format
@@ -447,8 +447,8 @@ msgstr "Teste die Verbindung in deinen Integrationseinstellungen"
 #, elixir-autogen, elixir-format
 msgid "We've paused your %{integration} integration after %{count} day of failed health checks. Reconnect when you're ready and it'll resume."
 msgid_plural "We've paused your %{integration} integration after %{count} days of failed health checks. Reconnect when you're ready and it'll resume."
-msgstr[0] "Wir haben deine Integration %{integration} nach %{count} Tag fehlgeschlagener Statusprüfungen pausiert. Sobald du sie erneut verbinden, läuft sie weiter."
-msgstr[1] "Wir haben deine Integration %{integration} nach %{count} Tagen fehlgeschlagener Statusprüfungen pausiert. Sobald du sie erneut verbinden, läuft sie weiter."
+msgstr[0] "Wir haben deine Integration %{integration} nach %{count} Tag fehlgeschlagener Statusprüfungen pausiert. Sobald du sie erneut verbindest, läuft sie weiter."
+msgstr[1] "Wir haben deine Integration %{integration} nach %{count} Tagen fehlgeschlagener Statusprüfungen pausiert. Sobald du sie erneut verbindest, läuft sie weiter."
 
 #: lib/tymeslot/emails/templates/integration_paused.ex
 #, elixir-autogen, elixir-format

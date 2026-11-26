@@ -24,7 +24,6 @@ defmodule Tymeslot.BrandSeed do
   alias Tymeslot.Integrations.Calendar.Management
   alias Tymeslot.MeetingTypes
   alias Tymeslot.Profiles
-  alias Tymeslot.Profiles.Avatars
   alias Tymeslot.Profiles.ProfileQueries
   alias Tymeslot.ThemeCustomizations
   alias Tymeslot.Webhooks
@@ -150,17 +149,7 @@ defmodule Tymeslot.BrandSeed do
     Profiles.get_profile(profile.user_id)
   end
 
-  defp maybe_avatar(profile, %{portrait: true, house_brand: true}) do
-    path = Application.app_dir(:tymeslot, "priv/seed/markus-froehlich.jpg")
-
-    if profile.avatar in [nil, ""] and File.exists?(path) do
-      case Avatars.update_avatar(profile, %{path: path, client_name: "markus-froehlich.jpg"}) do
-        {:ok, _unused} -> :ok
-        other -> Logger.warning("avatar not stored", reason: LogFormat.reason(other))
-      end
-    end
-  end
-
+  # The public page draws a generated fallback, not a personal photograph.
   defp maybe_avatar(_profile, _brand), do: :ok
 
   defp theme(profile, brand) do

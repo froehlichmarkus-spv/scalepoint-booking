@@ -404,7 +404,7 @@ msgstr "Diese Pause überschneidet sich mit einer bestehenden Pause"
 #: lib/tymeslot_web/live/dashboard/schedule_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "You have reached the limit of %{count} schedules. Delete one to add another."
-msgstr "You have reached the limit of %{count} schedules. Delete one to add another.du hast das Limit von %{count} Zeitplänen erreicht. Lösche einen, um einen weiteren hinzuzufügen."
+msgstr "Du hast das Limit von %{count} Zeitplänen erreicht. Lösche einen, um einen weiteren hinzuzufügen."
 
 #: lib/tymeslot_web/live/dashboard/availability/schedule_switcher.ex
 #, elixir-autogen, elixir-format

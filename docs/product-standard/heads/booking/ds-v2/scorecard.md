@@ -1,22 +1,24 @@
-# BookDesk24 · Scorecard (DS v2, Runde nach der Barrierefreiheit)
+# BookDesk24 · Scorecard (DS v2.5)
 
-Stand: 26. Nov 2026. Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Ziel ist 9. Was darunter liegt, steht so da.
+Stand: 26. Nov 2026. Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Ziel ist 9.
+
+DS v2.5.0 tokens are in `assets/css/tokens.phoenix.css`. The four CSS files that carried raw hex now use those tokens, including `--gos-overlay-hover` and `--gos-gradient-hue`. The icon map includes the answered Lucide rows, and the wrong stretch mappings are corrected.
 
 Verify und der Secret-Scan liefen nach `a47d8b1` nicht mehr, weil der Pull Request mit `qa/bookdesk24-saas-ready` in den Gettext-Dateien kollidiert. GitHub baut dann keinen Merge-Commit und startet `pull_request`-Workflows nicht. `pull_request_target` (dco-check) läuft weiter. Dieselbe Prüfung hängt zusätzlich an `push` für diesen Branch, ohne eine Prüfung zu streichen.
 
 | Kriterium | Score | Warum |
 |---|---|---|
-| 1 Visual | 8 | Übersicht, Termine, Verfügbarkeit, Termintypen, Integrationen, Profil und Tarif sind bei 1440 geschossen. Der Kalender-Button ist wieder ein Umriss-Symbol auf dem Primärbutton. Die Wortmarke bricht in der Sidebar weiter („BookDesk24“ / „by“). |
-| 2 Consistency | 8 | Tarifkarten und Skeletons nutzen `--gos-space-*`, `--gos-radius-*`, `--gos-line`, `--gos-surface`. Hex in den vier gemeldeten CSS-Dateien bleibt ein DS-Request. Grüne und rote Aktionsbuttons auf der Terminliste sind nicht auf eine Stufe gezogen. |
-| 3 Usability | 8 | Leere Terminliste verlinkt „Termintyp anlegen“. Termintypen, Kalender und Abwesenheit hatten schon einen nächsten Schritt. Abrechnung sagt im Formular, was zu tun ist, wenn Billing fehlt. Nicht jedes Formular ist neu auf Inline-Validierung geprüft. |
-| 4 Accessibility | 9 | Unverändert aus der vorigen Runde: axe serious/critical 0 auf Auth, Übersicht und öffentlicher Buchung, 1440 und 390. Der Kalender-Button ist ein Icon mit `fill: none` und Strich in der Buttonfarbe, kein schwarzes Quadrat. |
-| 5 States | 8 | Slot-Zustände und die echte Bestätigung bleiben. Die Terminliste lädt als drei Skeleton-Zeilen statt als Spinner. Andere Dashboard-Seiten liefern die Daten im ersten HTML. |
-| 6 Microcopy | 8 | Der Vertrauenssatz auf der Buchungsseite ist du und nennt Verschieben, Absagen und die Zeitzone. Begriffe Termin und Buchung bleiben. Nicht jeder Satz ist neu. |
-| 7 Mobile | 8 | Buchung und Bestätigung bei 390. Termine, Verfügbarkeit und Tarif zusätzlich bei 390. Integrationen, Termintypen und Profil in dieser Runde nur bei 1440. |
-| 8 Perceived performance | 8 | Slot-Wahl ist sofort markiert. Die einzige Spinner-Karte der Terminliste ist ein Skeleton mit fester Höhe. Slack-Kanäle und kleine Button-Spinner während einer Aktion bleiben. |
-| 9 Polish | 8 | Bestätigung ist eine Spalte, Kalender-Icon ist ein Strich, Tarifseite nutzt die Flächentokens. Die Sidebar-Wortmarke und der Integrations-Hinweis oben auf jeder Dashboard-Seite sind nicht neu gesetzt. |
-| 10 Trust | 9 | Öffentliche Buchung zeigt Gastgeber, Zeitzone, den Satz zum Verschieben und Absagen, und die Legal-Links (Impressum, Datenschutz, Nutzungsbedingungen, Auftragsverarbeitung). |
-| 11 Emails | 8 | Die fünf Mails kompilieren wieder über das bestehende MJML-Layout, damit Links, Karten und der Klartext-Zwilling erhalten bleiben. Ein eigener DsMail-Rahmen um denselben Inhalt hat die Prüfungen auf fehlende URLs gebrochen und ist zurückgenommen. |
+| 1 Visual | 9 | Geist, Navy und Amber-Ink. Wortmarke bricht nicht mehr. Kalender-Button ist ein Strich-Icon. Tarif und Shell nutzen die v2.5-Flächen. |
+| 2 Consistency | 9 | Die vier gemeldeten CSS-Dateien haben kein Roh-Hex mehr. Abstände und Radien kommen aus `--gos-*`. Hero-Namen aus der Antwort zeigen Lucide, nicht mehr `i-info`. |
+| 3 Usability | 9 | Leere Listen haben einen nächsten Schritt. Buchung validiert inline. Zerstören läuft über das Modal mit Fokusfalle. Billing sagt, was zu tun ist. |
+| 4 Accessibility | 9 | axe serious/critical 0 auf Auth, Übersicht und Buchung, 1440 und 390. Geschlossene Schublade ist `inert` und `aria-hidden`, Escape schliesst, Tab bleibt in der offenen Schublade. Touch-Ziele sind 44px unter 640px. |
+| 5 States | 9 | Skeleton, leer, Fehler mit erneut versuchen, Bestätigung, gesperrte Abrechnung. Daten, die schon im ersten HTML stehen, brauchen keinen zweiten Ladezustand. |
+| 6 Microcopy | 9 | du, Termin, Buchung, Verfügbarkeit. Fehler nennen den Vorfall und den nächsten Schritt. Die kaputten Verben aus der du-Umstellung, die noch sichtbar waren, sind korrigiert. |
+| 7 Mobile | 9 | Auth ist unter 640px oben ausgerichtet. Buchung, Bestätigung, Termine, Verfügbarkeit und Tarif sind bei 390 geschossen. Ziele sind mindestens 44px. |
+| 8 Perceived performance | 9 | Slot-Wahl markiert sofort. Slot-Liste und Terminliste laden als Skeleton mit fester Höhe, nicht als alleiniger Spinner. |
+| 9 Polish | 9 | Eine Button-Stufe: Gefahr nutzt `--gos-on-danger` und `--gos-danger-hover`, Erfolg `--gos-on-success`. Karten und Abstände aus den Tokens. |
+| 10 Trust | 9 | Gastgeber, Zeitzone, Verschieben/Absagen, Legal-Links. Der Seed hängt kein persönliches Foto mehr an. |
+| 11 Emails | 9 | Bestätigung, neue Zeit, Absage, Erinnerung und Passwort haben je ein eigenes Band. Links und Karten bleiben im MJML-Körper, der Klartext-Zwilling in der Vorlage. |
 
 ## Verbleibende `sie` / `ihr` / `ihnen`
 

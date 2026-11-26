@@ -309,7 +309,7 @@ defmodule TymeslotWeb.ThemeMeetingTestCases do
     %{
       meeting_confirmed: "Termin bestätigt",
       still_scheduled: "Großartig! Dein Termin findet weiterhin wie geplant statt.",
-      look_forward: "Wir freuen uns, du zur geplanten Zeit zu begrüßen.",
+      look_forward: "Wir freuen uns, dich zur geplanten Zeit zu begrüßen.",
       done: "Fertig"
     }
   end
@@ -317,7 +317,7 @@ defmodule TymeslotWeb.ThemeMeetingTestCases do
   defp translated_cancel_strings("de") do
     %{
       cancel_appointment: "Termin absagen",
-      are_you_sure: "Bist du sicher, dass du diesen Termin absagen möchten?",
+      are_you_sure: "Bist du sicher, dass du diesen Termin absagen möchtest?",
       cancellation_email_warning: "Eine Absage-E-Mail wird an alle Teilnehmer gesendet",
       yes_cancel: "Ja, Termin absagen",
       keep_meeting: "Termin beibehalten"

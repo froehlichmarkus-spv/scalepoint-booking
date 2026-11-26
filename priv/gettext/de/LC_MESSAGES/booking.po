@@ -149,7 +149,7 @@ msgstr "Die Zahlung wurde abgebrochen. Bitte versuche die Buchung erneut."
 #: lib/tymeslot_web/live/scheduling/handlers/booking_submission_handler_component.ex
 #, elixir-autogen, elixir-format
 msgid "Please correct the errors below."
-msgstr "Bitte korrigierst die untenstehenden Fehler."
+msgstr "Bitte korrigiere die untenstehenden Fehler."
 
 #: lib/tymeslot_web/themes/shared/components/slot_list.ex
 #, elixir-autogen, elixir-format

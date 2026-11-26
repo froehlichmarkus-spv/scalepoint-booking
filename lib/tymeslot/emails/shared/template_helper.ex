@@ -69,9 +69,36 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   @doc "Compiles MJML content with organiser details into HTML."
   @spec compile_template(String.t(), organizer_details()) :: String.t()
   def compile_template(mjml_content, organizer_details) do
-    mjml_content
-    |> Layouts.transactional_layout(organizer_details)
-    |> MjmlEmail.compile_mjml()
+    html =
+      mjml_content
+      |> Layouts.transactional_layout(organizer_details)
+      |> MjmlEmail.compile_mjml()
+
+    layout =
+      Map.get(organizer_details, :layout) || layout_for(Map.get(organizer_details, :intent))
+
+    stamp(html, layout)
+  end
+
+  defp layout_for(:cancelled), do: :cancellation
+  defp layout_for(:confirmed), do: :confirmation
+  defp layout_for(_intent), do: :default
+
+  # A one-line band so the five main mails read apart, without removing the
+  # links and cards the MJML body already carries. Mail clients need the
+  # colour inline; these are the DS ink values.
+  defp stamp(html, :confirmation), do: band(html, "confirmation", "#0B6E66", "Termin")
+  defp stamp(html, :reschedule), do: band(html, "reschedule", "#835000", "Neue Zeit")
+  defp stamp(html, :cancellation), do: band(html, "cancellation", "#B42318", "Abgesagt")
+  defp stamp(html, :reminder), do: band(html, "reminder", "#111E32", "Erinnerung")
+  defp stamp(html, :password_reset), do: band(html, "password-reset", "#111E32", "Passwort")
+  defp stamp(html, _layout), do: html
+
+  defp band(html, layout, colour, label) do
+    mark =
+      ~s(<div data-mail-layout="#{layout}" style="border-left:3px solid #{colour};padding:8px 12px;margin:12px 0;font:600 12px/16px Geist,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#{colour}">#{label}</div>)
+
+    Regex.replace(~r/(<body[^>]*>)/, html, "\\1#{mark}", global: false)
   end
 
   @doc """
@@ -91,9 +118,12 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       |> maybe_put(:preview, preview)
       |> Keyword.merge(stage)
 
-    mjml_content
-    |> Layouts.system_layout(opts)
-    |> MjmlEmail.compile_mjml()
+    html =
+      mjml_content
+      |> Layouts.system_layout(opts)
+      |> MjmlEmail.compile_mjml()
+
+    stamp(html, opts[:layout] || :system)
   end
 
   @typedoc """

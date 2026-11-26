@@ -358,7 +358,7 @@ button.cal-qc-chip:hover,
   border-radius: var(--radius-lg);
   background: var(--color-tymeslot-900);
   box-shadow: var(--shadow-lg);
-  color: #fff;
+  color: var(--gos-warm-0);
   font-size: var(--font-size-sm);
   transform: translateX(-50%);
 }
@@ -377,7 +377,7 @@ button.cal-qc-chip:hover,
 }
 
 .cal-notice-close:hover {
-  color: #fff;
+  color: var(--gos-warm-0);
 }
 
 .cal-notice-close:focus-visible {

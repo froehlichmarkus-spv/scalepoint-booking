@@ -38,7 +38,7 @@ defmodule Tymeslot.Security.FieldValidators.TranslatedMessagesTest do
 
   test "a domain ending suggestion is translated with both endings" do
     assert {:error, message} = in_locale("de", fn -> TLDList.validate_tld("con", "Email") end)
-    assert message == "E-Mail hat eine unbekannte Endung (.con). Meintest .com?"
+    assert message == "E-Mail hat eine unbekannte Endung (.con). Meintest du .com?"
   end
 
   test "a sanitiser limit is translated" do

@@ -193,7 +193,7 @@ msgstr "Telefonat"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "%{name} has invited you to an event."
-msgstr "%{name} hat du zu einem Termin eingeladen."
+msgstr "%{name} hat dich zu einem Termin eingeladen."
 
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format

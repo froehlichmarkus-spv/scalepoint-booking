@@ -116,7 +116,7 @@ msgstr "Hier findest alles"
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away."
-msgstr "Your calendar is home. Meetings, availability, integrations, and your profile are all one click away.dein Kalender ist die Startseite. Termine, Verfügbarkeit, Integrationen und dein Profil sind nur einen Klick entfernt."
+msgstr "Dein Kalender ist die Startseite. Termine, Verfügbarkeit, Integrationen und dein Profil sind nur einen Klick entfernt."
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format

@@ -53,7 +53,7 @@ msgstr "Wird bestätigt…"
 #: lib/tymeslot_web/themes/shared/components/meeting_page_bodies.ex
 #, elixir-autogen, elixir-format
 msgid "Are you sure you want to cancel this appointment?"
-msgstr "Bist du sicher, dass du diesen Termin absagen möchten?"
+msgstr "Bist du sicher, dass du diesen Termin absagen möchtest?"
 
 #: lib/tymeslot_web/live/meeting_request_live/view.ex
 #, elixir-autogen, elixir-format
@@ -396,7 +396,7 @@ msgstr "Zu diesem Link wurde keine Einladung gefunden. Bitte prüfe, ob du den v
 #: lib/tymeslot_web/themes/shared/components/meeting_page_bodies.ex
 #, elixir-autogen, elixir-format
 msgid "We look forward to seeing you at the scheduled time."
-msgstr "Wir freuen uns, du zur geplanten Zeit zu begrüßen."
+msgstr "Wir freuen uns, dich zur geplanten Zeit zu begrüßen."
 
 #: lib/tymeslot_web/controllers/guest_rsvp_html.ex
 #, elixir-autogen, elixir-format

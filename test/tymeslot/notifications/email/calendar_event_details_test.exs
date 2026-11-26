@@ -63,7 +63,7 @@ defmodule Tymeslot.Notifications.Email.CalendarEventDetailsTest do
 
       email = CalendarInvitation.render("guest@example.com", details)
       # The organiser writes in German (see setup).
-      assert email.html_body =~ "Ada Lovelace hat du zu einem Termin eingeladen."
+      assert email.html_body =~ "Ada Lovelace hat dich zu einem Termin eingeladen."
       assert {sender, _instance_address} = email.from
       assert sender =~ "Ada Lovelace"
     end

@@ -766,7 +766,7 @@ msgstr "Die Webhook-URL fehlt. Füge sie erneut hinzu, um fortzufahren."
 #: lib/tymeslot/slack/error_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Your plan does not include Slack notifications. Upgrade to connect Slack."
-msgstr "Dein Tarif enthält keine Slack-Benachrichtigungen. Wechseln du auf einen höheren Tarif, um Slack zu verbinden."
+msgstr "Dein Tarif enthält keine Slack-Benachrichtigungen. Wechsle auf einen höheren Tarif, um Slack zu verbinden."
 
 #: lib/tymeslot/slack/error_messages.ex
 #, elixir-autogen, elixir-format

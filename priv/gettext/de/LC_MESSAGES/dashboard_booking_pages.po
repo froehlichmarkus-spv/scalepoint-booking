@@ -169,7 +169,7 @@ msgstr "Seite, die du gerade bearbeiten"
 #: lib/tymeslot/booking_pages/access.ex
 #, elixir-autogen, elixir-format
 msgid "This booking page is read-only on your current plan. Upgrade to change it."
-msgstr "Diese Buchungsseite ist in deinem aktuellen Tarif schreibgeschützt. Wechseln du auf einen höheren Tarif, um sie zu ändern."
+msgstr "Diese Buchungsseite ist in deinem aktuellen Tarif schreibgeschützt. Wechsle auf einen höheren Tarif, um sie zu ändern."
 
 #: lib/tymeslot_web/components/dashboard/booking_pages/delete_page_modal.ex
 #, elixir-autogen, elixir-format

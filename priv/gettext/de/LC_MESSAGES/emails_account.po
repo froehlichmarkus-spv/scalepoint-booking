@@ -473,7 +473,7 @@ msgstr "WAS DU WISSEN SOLLTEN:"
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
 msgid "We're excited to have you on board! To start scheduling meetings and simplify your calendar, please verify your email address."
-msgstr "wir freuen uns, du an Bord zu haben! Um mit der Terminplanung zu beginnen und deinen Kalender zu vereinfachen, bestätige bitte deine E-Mail-Adresse."
+msgstr "wir freuen uns, dich an Bord zu haben! Um mit der Terminplanung zu beginnen und deinen Kalender zu vereinfachen, bestätige bitte deine E-Mail-Adresse."
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format

@@ -4,21 +4,20 @@
  * every theme page and uses text-turquoise-600, text-turquoise-700, and
  * text-tymeslot-500. Because the theme CSS bundles are compiled independently
  * from app.css, they need their own @theme block so Tailwind v4 generates
- * these utilities. Hex values match app.css exactly.
+ * these utilities. Colours are DS tokens, not local hex aliases.
  */
 @theme {
-  --color-turquoise-600: var(--spv-teal, #469189);
-  --color-turquoise-700: var(--spv-teal-strong, #3a7872);
-  --color-tymeslot-500: var(--spv-muted, #65758b);
+  --color-turquoise-600: var(--gos-link);
+  --color-turquoise-700: var(--gos-teal-ink);
+  --color-tymeslot-500: var(--gos-text-3);
 
   /* Core components that also render on booking pages (the flash toasts,
-   * info_box) draw their corners with rounded-token-*. Map those utilities
-   * onto the radius scale shared/layout.css defines, as app.css does. */
-  --radius-token-sm: var(--radius-sm);
-  --radius-token-md: var(--radius-md);
-  --radius-token-lg: var(--radius-lg);
-  --radius-token-xl: var(--radius-xl);
-  --radius-token-2xl: var(--radius-2xl);
-  --radius-token-3xl: var(--radius-3xl);
-  --radius-token-full: var(--radius-full);
+   * info_box) draw their corners with rounded-token-*. */
+  --radius-token-sm: var(--gos-radius-sm);
+  --radius-token-md: var(--gos-radius-md);
+  --radius-token-lg: var(--gos-radius-lg);
+  --radius-token-xl: var(--gos-radius-xl);
+  --radius-token-2xl: var(--gos-radius-2xl);
+  --radius-token-3xl: var(--gos-radius-2xl);
+  --radius-token-full: var(--gos-radius-full);
 }

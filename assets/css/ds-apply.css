@@ -5,6 +5,50 @@ body.gos {
   color: var(--gos-text);
 }
 
+body.gos .gos-wordmark {
+  white-space: nowrap;
+}
+
+body.gos .action-button--danger,
+body.gos .gos-btn--danger {
+  background: var(--gos-danger-fill);
+  color: var(--gos-on-danger);
+}
+
+body.gos .action-button--danger:hover,
+body.gos .gos-btn--danger:hover {
+  background: var(--gos-danger-hover);
+  color: var(--gos-on-danger);
+}
+
+body.gos .action-button--success {
+  background: var(--gos-success-fill);
+  color: var(--gos-on-success);
+}
+
+body.gos .action-button--success:hover {
+  background: var(--gos-success-hover);
+  color: var(--gos-on-success);
+}
+
+@media (max-width: 640px) {
+  body.gos .gos-auth-form {
+    margin-top: var(--gos-space-4);
+    margin-bottom: 0;
+  }
+
+  body.gos button,
+  body.gos .gos-btn,
+  body.gos .action-button,
+  body.gos .folio-button,
+  body.gos .dashboard-nav-link,
+  body.gos input,
+  body.gos select,
+  body.gos textarea {
+    min-height: var(--gos-size-touch);
+  }
+}
+
 body.gos #dashboard-root {
   background: var(--gos-bg-sunken);
 }

@@ -203,7 +203,7 @@ msgstr "%{account} isn't responding. Your change to “%{title}” is saved here
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "%{account} needs you to sign in again. Until you do, its events may be out of date."
-msgstr "%{account} needs you to sign in again. Until you do, its events may be out of date.du musst sich bei %{account} erneut anmelden. Bis dahin sind die Ereignisse dieses Kontos möglicherweise nicht aktuell."
+msgstr "Du musst dich bei %{account} erneut anmelden. Bis dahin sind die Ereignisse dieses Kontos möglicherweise nicht aktuell."
 
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
@@ -734,7 +734,7 @@ msgstr "You've asked for several syncs recently. Try again in a few minutes.du h
 #: lib/tymeslot_web/live/dashboard/calendar/sync_banner.ex
 #, elixir-autogen, elixir-format
 msgid "Your change to “%{title}” is saved here and will be sent to %{account} automatically."
-msgstr "Your change to “%{title}” is saved here and will be sent to %{account} automatically.deine Änderung an „%{title}“ ist hier gespeichert und wird automatisch an %{account} übertragen."
+msgstr "Deine Änderung an „%{title}“ ist hier gespeichert und wird automatisch an %{account} übertragen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
 #, elixir-autogen, elixir-format
