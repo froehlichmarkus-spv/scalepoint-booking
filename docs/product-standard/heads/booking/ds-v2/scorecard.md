@@ -5,7 +5,7 @@ Stand: 26. Nov 2026. Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Zie
 | Kriterium | Score | Warum |
 |---|---|---|
 | 1 Visual | 7 | Auth ist das zweispaltige DS-Layout mit Claim und drei Belegen. Die Übersicht behält den Verlaufsbanner. |
-| 2 Consistency | 5 | Tokens und `gos.css` sind eingebunden. Hex bleibt in den Theme-CSS und in `tokens.phoenix.css` (Kopie, nicht von Hand geändert). Die meisten `hero-`-Icons ausserhalb von Shell und Auth sind noch da. Inter und DM Serif liegen weiter in `priv/static/fonts`. |
+| 2 Consistency | 6 | Jedes `hero-`-Icon rendert das Lucide-Sprite. Namen ohne Symbol stehen in `ds-requests.md` und fallen auf `i-info`. Die App-Schrift und Folio-Überschriften sind Geist. Theme-Schrift-IDs und Hex ausserhalb der Token-Dateien sind noch offen, ebenfalls in `ds-requests.md`. |
 | 3 Usability | 8 | Login, Signup, Passwort vergessen, Link gesendet, Verifizieren, Erfolg und der Login-Fehler sind erreichbar. Google/Microsoft nur, wenn ein Admin den Provider einschaltet. |
 | 4 Accessibility | 7 | Skip-Link, Fokus-Ring aus dem DS, lesbare Sidebar nach dem Kontrast-Fix. Kein neuer axe-Lauf in diesem Schritt. |
 | 5 States | 7 | Auth hat Skeleton, Empty, Permission, Lock mit Countdown und das Session-Modal. Listen im Dashboard haben diese Zustände noch nicht vollständig. Magic Link gibt es nicht. |

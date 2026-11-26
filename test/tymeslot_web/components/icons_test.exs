@@ -52,19 +52,18 @@ defmodule TymeslotWeb.Components.IconsTest do
   end
 
   describe "icon/1 component rendering" do
-    test "renders an inline <svg> with path markup for an outline icon" do
+    test "renders an outline icon from the Lucide sprite" do
       html = render_icon(%{name: "hero-academic-cap"})
 
       assert html =~ "<svg"
-      assert html =~ ~s(stroke="currentColor")
-      assert html =~ "<path"
+      assert html =~ "sprite.svg#i-"
     end
 
-    test "renders a filled <svg> for a solid icon" do
+    test "renders a solid icon from the Lucide sprite" do
       html = render_icon(%{name: "hero-academic-cap-solid"})
 
       assert html =~ "<svg"
-      assert html =~ ~s(fill="currentColor")
+      assert html =~ "sprite.svg#i-"
     end
 
     test "passes through size and colour classes" do
@@ -73,19 +72,18 @@ defmodule TymeslotWeb.Components.IconsTest do
       assert html =~ "w-5 h-5 text-rose-500"
     end
 
-    test "an unknown hero-* name degrades to an empty span, not a crash or leaked name" do
+    test "an unknown hero-* name uses the info sprite and does not leak the name" do
       html = render_icon(%{name: "hero-definitely-not-a-real-icon"})
 
-      assert html =~ "<span"
-      refute html =~ "<svg"
+      assert html =~ "sprite.svg#i-info"
       refute html =~ "definitely-not-a-real-icon"
     end
 
-    test "keeps the heroicon's own stroke weight, which a class can override" do
+    test "keeps a size class on a sprite icon" do
       html = render_icon(%{name: "hero-academic-cap", class: "stroke-3"})
 
-      assert html =~ ~s(stroke-width="1.5")
       assert html =~ "stroke-3"
+      assert html =~ "sprite.svg#i-"
     end
 
     test "passes global attributes through to the svg" do
