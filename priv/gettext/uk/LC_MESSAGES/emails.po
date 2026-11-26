@@ -606,19 +606,19 @@ msgstr "Заброньовано через вашу сторінку «%{page}�
 #: lib/tymeslot/emails/shared/ds_mail.ex
 #, elixir-autogen, elixir-format
 msgid "Legal notice"
-msgstr ""
+msgstr "Legal notice"
 
 #: lib/tymeslot/emails/shared/ds_mail.ex
 #, elixir-autogen, elixir-format
 msgid "Privacy"
-msgstr ""
+msgstr "Privacy"
 
 #: lib/tymeslot/emails/shared/ds_mail.ex
 #, elixir-autogen, elixir-format
 msgid "Reply to this email or write to support@scalepoint-ventures.com."
-msgstr ""
+msgstr "Reply to this email or write to support@scalepoint-ventures.com."
 
 #: lib/tymeslot/emails/shared/ds_mail.ex
 #, elixir-autogen, elixir-format
 msgid "Terms"
-msgstr ""
+msgstr "Terms"

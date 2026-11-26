@@ -985,4 +985,4 @@ msgstr "Aucun remboursement n'est possible, car le paiement fait l'objet d'un li
 #: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
 #, elixir-autogen, elixir-format
 msgid "Set up a meeting type"
-msgstr ""
+msgstr "Set up a meeting type"

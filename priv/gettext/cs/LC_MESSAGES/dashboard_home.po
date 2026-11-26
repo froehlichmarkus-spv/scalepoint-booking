@@ -267,6 +267,6 @@ msgstr "Bez kalendáře nemůže vaše rezervační stránka přijímat rezervac
 #, elixir-autogen, elixir-format
 msgid "%{count} day left in your Pro trial"
 msgid_plural "%{count} days left in your Pro trial"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%{count} day left in your Pro trial"
+msgstr[1] "%{count} days left in your Pro trial"
+msgstr[2] "%{count} days left in your Pro trial"

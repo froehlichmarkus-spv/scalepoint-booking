@@ -32,7 +32,14 @@ defmodule TymeslotWeb.Components.CoreComponentsButtonsTest do
         end)
 
       assert attr_of(doc, "button", "type") == ["button"]
-      assert classes(doc, "button") == ["action-button", "action-button--primary"]
+
+      assert classes(doc, "button") == [
+               "action-button",
+               "gos-btn",
+               "gos-btn--primary",
+               "action-button--primary"
+             ]
+
       assert doc |> LazyHTML.query("button") |> LazyHTML.text() |> String.trim() == "Save"
       assert Enum.empty?(LazyHTML.query(doc, "button svg"))
     end
@@ -139,6 +146,8 @@ defmodule TymeslotWeb.Components.CoreComponentsButtonsTest do
 
       assert classes(doc, "a") == [
                "action-button",
+               "gos-btn",
+               "gos-btn--secondary",
                "action-button--secondary",
                "action-button--sm"
              ]
@@ -293,12 +302,16 @@ defmodule TymeslotWeb.Components.CoreComponentsButtonsTest do
     test "gives a non-button element the look of an action button" do
       assert Buttons.button_classes(:secondary, :sm) == [
                "action-button",
+               "gos-btn",
+               "gos-btn--secondary",
                "action-button--secondary",
                "action-button--sm"
              ]
 
       assert Buttons.button_classes(:danger_soft) == [
                "action-button",
+               "gos-btn",
+               "gos-btn--danger",
                "action-button--danger-soft",
                nil
              ]

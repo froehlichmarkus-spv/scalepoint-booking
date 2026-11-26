@@ -991,4 +991,4 @@ msgstr "Zwrot nie jest możliwy, ponieważ płatność jest przedmiotem sporu. N
 #: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
 #, elixir-autogen, elixir-format
 msgid "Set up a meeting type"
-msgstr ""
+msgstr "Set up a meeting type"

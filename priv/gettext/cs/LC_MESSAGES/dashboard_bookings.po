@@ -995,4 +995,4 @@ msgstr "Platbu nelze vrátit, protože k ní probíhá spor. Nejprve ho vyřešt
 #: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
 #, elixir-autogen, elixir-format
 msgid "Set up a meeting type"
-msgstr ""
+msgstr "Set up a meeting type"

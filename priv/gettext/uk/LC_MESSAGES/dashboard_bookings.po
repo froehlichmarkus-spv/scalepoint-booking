@@ -995,4 +995,4 @@ msgstr "Повернення коштів неможливе, оскільки �
 #: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
 #, elixir-autogen, elixir-format
 msgid "Set up a meeting type"
-msgstr ""
+msgstr "Set up a meeting type"

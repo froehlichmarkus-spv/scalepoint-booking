@@ -95,8 +95,9 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotListTest do
       assert text(render_list(loading_slots: true), ".slot-list__loading") ==
                "Loading available times..."
 
-      assert text(render_list(calendar_error: "Calendar unavailable"), ".slot-list__error") ==
-               "Calendar unavailable"
+      error = text(render_list(calendar_error: "Calendar unavailable"), ".slot-list__error")
+      assert error =~ "Calendar unavailable"
+      assert error =~ "Try again"
 
       assert render_list(available_slots: []) |> Floki.find(".slot-list__empty p") |> length() ==
                2

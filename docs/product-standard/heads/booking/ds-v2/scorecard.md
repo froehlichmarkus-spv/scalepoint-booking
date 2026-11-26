@@ -16,7 +16,7 @@ Verify und der Secret-Scan liefen nach `a47d8b1` nicht mehr, weil der Pull Reque
 | 8 Perceived performance | 8 | Slot-Wahl ist sofort markiert. Die einzige Spinner-Karte der Terminliste ist ein Skeleton mit fester Höhe. Slack-Kanäle und kleine Button-Spinner während einer Aktion bleiben. |
 | 9 Polish | 8 | Bestätigung ist eine Spalte, Kalender-Icon ist ein Strich, Tarifseite nutzt die Flächentokens. Die Sidebar-Wortmarke und der Integrations-Hinweis oben auf jeder Dashboard-Seite sind nicht neu gesetzt. |
 | 10 Trust | 9 | Öffentliche Buchung zeigt Gastgeber, Zeitzone, den Satz zum Verschieben und Absagen, und die Legal-Links (Impressum, Datenschutz, Nutzungsbedingungen, Auftragsverarbeitung). |
-| 11 Emails | 8 | Bestätigung, Verschieben, Absage, Erinnerung und Passwort-Reset haben eigene Akzente und einen eigenen Streifen. Passwort-Reset hat den Button und keine Terminkarte. Der Fließtext ist weiter der bisherige Text, kein eigenes Satzbild pro Mail. Klartext-Zwillinge bleiben in den Templates. |
+| 11 Emails | 8 | Die fünf Mails kompilieren wieder über das bestehende MJML-Layout, damit Links, Karten und der Klartext-Zwilling erhalten bleiben. Ein eigener DsMail-Rahmen um denselben Inhalt hat die Prüfungen auf fehlende URLs gebrochen und ist zurückgenommen. |
 
 ## Verbleibende `sie` / `ihr` / `ihnen`
 

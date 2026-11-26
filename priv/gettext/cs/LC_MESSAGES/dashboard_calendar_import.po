@@ -116,7 +116,7 @@ msgstr[0] ""
 "1 z nich se opakuje v den, který některé měsíce nemají, a Outlook by ji přesunul na poslední den měsíce."
 msgstr[1] ""
 "%{count} z nich se opakují v den, který některé měsíce nemají, a Outlook by je přesunul na poslední den měsíce."
-msgstr[2] ""
+msgstr[2] "%{count} of them repeat on a day some months don't have, which Outlook would move to the month's last day."
 "%{count} z nich se opakuje v den, který některé měsíce nemají, a Outlook by je přesunul na poslední den měsíce."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex

@@ -189,7 +189,7 @@ msgstr[0] ""
 msgstr[1] ""
 "Účet %{account} neodpovídá. %{count} změny jsou uloženy zde a budou odeslány"
 " automaticky."
-msgstr[2] ""
+msgstr[2] "%{account} isn't responding. %{count} changes are saved here and will be sent automatically."
 "Účet %{account} neodpovídá. %{count} změn je uloženo zde a bude odesláno "
 "automaticky."
 
@@ -236,7 +236,7 @@ msgstr[0] ""
 msgstr[1] ""
 "%{count} změny jsou uloženy zde a budou automaticky odeslány do účtu "
 "%{account}."
-msgstr[2] ""
+msgstr[2] "%{count} changes are saved here and will be sent to %{account} automatically."
 "%{count} změn je uloženo zde a bude automaticky odesláno do účtu %{account}."
 
 #: lib/tymeslot_web/live/dashboard/calendar/client_strings.ex
