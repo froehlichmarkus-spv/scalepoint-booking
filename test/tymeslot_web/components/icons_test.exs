@@ -82,7 +82,7 @@ defmodule TymeslotWeb.Components.IconsTest do
     end
 
     test "keeps the heroicon's own stroke weight, which a class can override" do
-      html = render_icon(%{name: "hero-check", class: "stroke-3"})
+      html = render_icon(%{name: "hero-academic-cap", class: "stroke-3"})
 
       assert html =~ ~s(stroke-width="1.5")
       assert html =~ "stroke-3"

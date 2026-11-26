@@ -406,3 +406,8 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "At most %{count} bytes"
 msgstr ""
+
+#: lib/tymeslot_web/components/layouts/root.html.heex
+#, elixir-autogen, elixir-format
+msgid "Skip to content"
+msgstr ""

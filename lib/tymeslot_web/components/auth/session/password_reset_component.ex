@@ -162,7 +162,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
           <div
             class="space-y-1.5"
             id="reset-password-toggle-container"
-            phx-hook="PasswordToggle"
+            phx-hook="GosPassword"
             data-password-container
           >
             <.input
@@ -186,7 +186,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
           <div
             class="space-y-1.5"
             id="reset-confirm-password-toggle-container"
-            phx-hook="PasswordToggle"
+            phx-hook="GosPassword"
             data-password-container
           >
             <.input

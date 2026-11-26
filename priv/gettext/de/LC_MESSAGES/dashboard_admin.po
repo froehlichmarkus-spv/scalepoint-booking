@@ -78,12 +78,12 @@ msgstr "Aktiviert"
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a number between 0.0 and 1.0."
-msgstr "Bitte geben Sie eine Zahl zwischen 0,0 und 1,0 ein."
+msgstr "Bitte gib eine Zahl zwischen 0,0 und 1,0 ein."
 
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a valid email address."
-msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+msgstr "Bitte gib eine gültige E-Mail-Adresse ein."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -201,7 +201,7 @@ msgstr "Neuen Nutzern die Registrierung über die öffentliche Registrierungssei
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Cannot disable this login provider while it is the only working sign-in path for admins. Enable password authentication or another credentialed SSO provider first."
-msgstr "Dieser Anmeldeanbieter kann nicht deaktiviert werden, solange er der einzige funktionierende Anmeldeweg für Administratoren ist. Aktivieren Sie zuerst die Passwort-Authentifizierung oder einen anderen SSO-Anbieter mit Anmeldedaten."
+msgstr "Dieser Anmeldeanbieter kann nicht deaktiviert werden, solange er der einzige funktionierende Anmeldeweg für Administratoren ist. Aktiviere zuerst die Passwort-Authentifizierung oder einen anderen SSO-Anbieter mit Anmeldedaten."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -236,7 +236,7 @@ msgstr "Die Schaltfläche „Weiter mit Google“ bei Anmeldung und Registrierun
 #: lib/tymeslot_web/hooks/ensure_admin_hook.ex
 #, elixir-autogen, elixir-format
 msgid "Your admin access has been revoked."
-msgstr "Ihr Admin-Zugriff wurde widerrufen."
+msgstr "Dein Admin-Zugriff wurde widerrufen."
 
 #: lib/tymeslot_web/plugs/require_admin.ex
 #, elixir-autogen, elixir-format
@@ -246,12 +246,12 @@ msgstr "Administratorzugriff erforderlich."
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Cannot disable password authentication while at least one admin signs in with email and password - doing so would lock them out. Demote those admins or have them switch to an OAuth login first."
-msgstr "Die Passwort-Authentifizierung kann nicht deaktiviert werden, solange sich mindestens ein Administrator mit E-Mail und Passwort anmeldet - dies würde ihn aussperren. Stufen Sie diese Administratoren zuerst herab oder lassen Sie sie zu einer OAuth-Anmeldung wechseln."
+msgstr "Die Passwort-Authentifizierung kann nicht deaktiviert werden, solange sich mindestens ein Administrator mit E-Mail und Passwort anmeldet - dies würde ihn aussperren. Stufe diese Administratoren zuerst herab oder lass sie zu einer OAuth-Anmeldung wechseln."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Collect privacy-friendly analytics for booking pages on this instance: page views, traffic source (UTM/referrer), and conversion. Counts unique visitors with a daily-rotating, cookieless fingerprint - no raw IP is stored. Off by default; review your privacy policy before enabling."
-msgstr "Datenschutzfreundliche Analyse für Buchungsseiten dieser Instanz erfassen: Seitenaufrufe, Zugriffsquelle (UTM/Referrer) und Conversion. Zählt eindeutige Besucher mit einem täglich rotierenden, cookielosen Fingerabdruck - IP-Adressen werden nicht im Klartext gespeichert. Standardmäßig deaktiviert; prüfen Sie Ihre Datenschutzerklärung, bevor Sie sie aktivieren."
+msgstr "Datenschutzfreundliche Analyse für Buchungsseiten dieser Instanz erfassen: Seitenaufrufe, Zugriffsquelle (UTM/Referrer) und Conversion. Zählt eindeutige Besucher mit einem täglich rotierenden, cookielosen Fingerabdruck - IP-Adressen werden nicht im Klartext gespeichert. Standardmäßig deaktiviert; prüfe deine Datenschutzerklärung, bevor du sie aktivieren."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -316,7 +316,7 @@ msgstr "E-Mail-Logo aktualisiert."
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a hex colour such as #14b8a6."
-msgstr "Bitte geben Sie eine Hex-Farbe wie #14b8a6 ein."
+msgstr "Bitte gib eine Hex-Farbe wie #14b8a6 ein."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -356,7 +356,7 @@ msgstr "Dieser Dateityp wird nicht unterstützt."
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "That image could not be read. Try a PNG or JPEG."
-msgstr "Dieses Bild konnte nicht gelesen werden. Versuchen Sie es mit einem PNG oder JPEG."
+msgstr "Dieses Bild konnte nicht gelesen werden. Versuche es mit einem PNG oder JPEG."
 
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
@@ -376,7 +376,7 @@ msgstr "Hochladen"
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "Upload one logo at a time."
-msgstr "Bitte laden Sie nur ein Logo auf einmal hoch."
+msgstr "Bitte ladest nur ein Logo auf einmal hoch."
 
 #: lib/tymeslot_web/live/admin_live/components/email_branding.ex
 #, elixir-autogen, elixir-format
@@ -386,7 +386,7 @@ msgstr "Weißer Schaltflächentext auf dieser Farbe hat nur einen Kontrast von %
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "That image is too large. Pick one under %{limit}."
-msgstr "Dieses Bild ist zu groß. Bitte wählen Sie eines unter %{limit}."
+msgstr "Dieses Bild ist zu groß. Bitte wähle eines unter %{limit}."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -396,7 +396,7 @@ msgstr "Ausweichsprache der Buchungsseite"
 #: lib/tymeslot_web/live/admin_live.ex
 #, elixir-autogen, elixir-format
 msgid "Choose one of the supported languages."
-msgstr "Wählen Sie eine der unterstützten Sprachen."
+msgstr "Wähle eine der unterstützten Sprachen."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -536,12 +536,12 @@ msgstr "reCAPTCHA bei der Registrierung aktiviert."
 #: lib/tymeslot_web/live/admin_live/components/settings.ex
 #, elixir-autogen, elixir-format
 msgid "Changes here take effect immediately. A setting fixed by an environment variable, such as REGISTRATION_ENABLED, is greyed out and changes only when you edit that variable and restart Tymeslot."
-msgstr "Änderungen an dieser Stelle werden sofort wirksam. Eine Einstellung, die durch eine Umgebungsvariable wie REGISTRATION_ENABLED festgelegt ist, ist ausgegraut und ändert sich erst, wenn Sie diese Variable bearbeiten und Tymeslot neu starten."
+msgstr "Änderungen an dieser Stelle werden sofort wirksam. Eine Einstellung, die durch eine Umgebungsvariable wie REGISTRATION_ENABLED festgelegt ist, ist ausgegraut und ändert sich erst, wenn du diese Variable bearbeiten und Tymeslot neu starten."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Set by the %{variable} environment variable. To change it here, remove the variable and restart Tymeslot."
-msgstr "Durch die Umgebungsvariable %{variable} festgelegt. Um die Einstellung hier zu ändern, entfernen Sie die Variable und starten Sie Tymeslot neu."
+msgstr "Durch die Umgebungsvariable %{variable} festgelegt. Um die Einstellung hier zu ändern, entfernst die Variable und startest Tymeslot neu."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
@@ -551,7 +551,7 @@ msgstr "E-Mail-Adresse, die Admin-Benachrichtigungen erhält, wenn der obige Sch
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
 msgid "Alerts email you when something breaks on this install. Share what they catch on GitHub, so it gets fixed for everyone."
-msgstr "Mit Benachrichtigungen erhalten Sie eine E-Mail, wenn auf dieser Installation etwas schiefgeht. Teilen Sie auf GitHub, was sie erfassen, damit es für alle behoben wird."
+msgstr "Mit Benachrichtigungen erhaltest eine E-Mail, wenn auf dieser Installation etwas schiefgeht. Teile auf GitHub, was sie erfassen, damit es für alle behoben wird."
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
@@ -566,7 +566,7 @@ msgstr "Issue eröffnen"
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
 msgid "Report what you find"
-msgstr "Melden Sie, was Sie finden"
+msgstr "Melde, was du findest"
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
@@ -591,7 +591,7 @@ msgstr "Stern auf GitHub geben"
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
 msgid "Star us on GitHub"
-msgstr "Geben Sie uns einen Stern auf GitHub"
+msgstr "Gib uns einen Stern auf GitHub"
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
@@ -611,12 +611,12 @@ msgstr "Admin-Benachrichtigungen aktivieren"
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot is free to self-host. If it is useful to you, here are three ways to help it grow."
-msgstr "Tymeslot lässt sich kostenlos selbst hosten. Wenn es Ihnen nützt, gibt es drei Möglichkeiten, es beim Wachsen zu unterstützen."
+msgstr "Tymeslot lässt sich kostenlos selbst hosten. Wenn es dir nützt, gibt es drei Möglichkeiten, es beim Wachsen zu unterstützen."
 
 #: lib/tymeslot_web/live/admin_live/components/support_box.ex
 #, elixir-autogen, elixir-format
 msgid "When an admin alert arrives, share it as a GitHub issue (redacting anything sensitive), so it gets fixed for everyone."
-msgstr "Wenn eine Admin-Benachrichtigung eintrifft, teilen Sie sie als GitHub-Issue (sensible Angaben vorher entfernen), damit es für alle behoben wird."
+msgstr "Wenn eine Admin-Benachrichtigung eintrifft, teilst sie als GitHub-Issue (sensible Angaben vorher entfernen), damit es für alle behoben wird."
 
 #: lib/tymeslot_web/live/admin_live/components/layout.ex
 #, elixir-autogen, elixir-format
@@ -626,7 +626,7 @@ msgstr "Version %{version}"
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format
 msgid "Set STRIPE_SECRET_KEY and STRIPE_CONNECT_WEBHOOK_SECRET in the environment to enable meeting payments. Also set STRIPE_CONNECT_CLIENT_ID, or no new host can connect a Stripe account."
-msgstr "Legen Sie STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung fest, um Terminzahlungen zu aktivieren. Legen Sie außerdem STRIPE_CONNECT_CLIENT_ID fest, sonst kann kein neuer Gastgeber ein Stripe-Konto verbinden."
+msgstr "Lege STRIPE_SECRET_KEY und STRIPE_CONNECT_WEBHOOK_SECRET in der Umgebung fest, um Terminzahlungen zu aktivieren. Lege außerdem STRIPE_CONNECT_CLIENT_ID fest, sonst kann kein neuer Gastgeber ein Stripe-Konto verbinden."
 
 #: lib/tymeslot_web/live/admin_live/formatters.ex
 #, elixir-autogen, elixir-format

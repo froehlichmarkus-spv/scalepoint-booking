@@ -39,7 +39,7 @@ msgstr "Zahlung wird bestätigt…"
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "If there's no answer by %{deadline}, the request lapses and you're refunded automatically."
-msgstr "Antwortet bis %{deadline} niemand, verfällt die Anfrage und Sie erhalten automatisch eine Rückerstattung."
+msgstr "Antwortet bis %{deadline} niemand, verfällt die Anfrage und du erhältst automatisch eine Rückerstattung."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
@@ -54,7 +54,7 @@ msgstr "Niemand hat rechtzeitig geantwortet, daher ist die Anfrage verfallen."
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Nobody responded to this request in time, so it has lapsed. Your payment is being refunded."
-msgstr "Niemand hat rechtzeitig geantwortet, daher ist die Anfrage verfallen. Ihre Zahlung wird erstattet."
+msgstr "Niemand hat rechtzeitig geantwortet, daher ist die Anfrage verfallen. Deine Zahlung wird erstattet."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
@@ -74,7 +74,7 @@ msgstr "Zahlung eingegangen"
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Please wait while we confirm your booking."
-msgstr "Bitte warten Sie, während wir Ihre Buchung bestätigen."
+msgstr "Bitte wartest, während wir deine Buchung bestätigen."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
@@ -84,12 +84,12 @@ msgstr "Zurück zur Buchung"
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Thank you, your booking is confirmed for %{date}."
-msgstr "Vielen Dank, Ihre Buchung für %{date} ist bestätigt."
+msgstr "Vielen Dank, deine Buchung für %{date} ist bestätigt."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Thanks, your payment went through. Your booking is not confirmed yet though:"
-msgstr "Vielen Dank, Ihre Zahlung wurde erfolgreich durchgeführt. Ihre Buchung ist jedoch noch nicht bestätigt:"
+msgstr "Vielen Dank, deine Zahlung wurde erfolgreich durchgeführt. Deine Buchung ist jedoch noch nicht bestätigt:"
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
@@ -104,12 +104,12 @@ msgstr "Diese Buchung wurde nicht angenommen und findet daher nicht statt."
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "This booking wasn't accepted, so it won't be going ahead. Your payment is being refunded."
-msgstr "Diese Buchung wurde nicht angenommen und findet daher nicht statt. Ihre Zahlung wird erstattet."
+msgstr "Diese Buchung wurde nicht angenommen und findet daher nicht statt. Deine Zahlung wird erstattet."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking is not confirmed. You can return and try again at any time."
-msgstr "Ihre Buchung wurde nicht bestätigt. Sie können jederzeit zurückkehren und es erneut versuchen."
+msgstr "Deine Buchung wurde nicht bestätigt. Du kannst jederzeit zurückkehren und es erneut versuchen."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
@@ -119,12 +119,12 @@ msgstr "Bezahlt: %{amount}"
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking is not confirmed. Your invitation stays reserved for it until the unfinished checkout expires, and a link to book again will appear here as soon as it does."
-msgstr "Ihre Buchung wurde nicht bestätigt. Ihre Einladung bleibt für diese Buchung reserviert, bis der nicht abgeschlossene Bezahlvorgang abläuft. Sobald das geschieht, erscheint hier ein Link, um erneut zu buchen."
+msgstr "Deine Buchung wurde nicht bestätigt. Deine Einladung bleibt für diese Buchung reserviert, bis der nicht abgeschlossene Bezahlvorgang abläuft. Sobald das geschieht, erscheint hier ein Link, um erneut zu buchen."
 
 #: lib/tymeslot_web/themes/shared/payment_return_components.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking is not confirmed. To try again, open the invitation link you were sent."
-msgstr "Ihre Buchung wurde nicht bestätigt. Um es erneut zu versuchen, öffnen Sie den Einladungslink, den Sie erhalten haben."
+msgstr "Deine Buchung wurde nicht bestätigt. Um es erneut zu versuchen, öffne den Einladungslink, dest erhältst haben."
 
 #: lib/tymeslot/meeting_payments/checkout_sessions.ex
 #, elixir-autogen, elixir-format
@@ -137,5 +137,5 @@ msgstr[1] "%{name}, %{count} Termine"
 #, elixir-autogen, elixir-format
 msgid "Thank you, your %{count} session is confirmed, the first on %{date}."
 msgid_plural "Thank you, your %{count} sessions are confirmed, the first on %{date}."
-msgstr[0] "Vielen Dank, Ihr %{count} Termin ist bestätigt, der erste am %{date}."
-msgstr[1] "Vielen Dank, Ihre %{count} Termine sind bestätigt, der erste am %{date}."
+msgstr[0] "Vielen Dank, dein %{count} Termin ist bestätigt, der erste am %{date}."
+msgstr[1] "Vielen Dank, deine %{count} Termine sind bestätigt, der erste am %{date}."

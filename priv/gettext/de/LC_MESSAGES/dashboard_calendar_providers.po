@@ -24,12 +24,12 @@ msgstr "Abbrechen"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Confirm or update the server URL and credentials for this integration. You'll be able to review and adjust the synced calendars on the next step."
-msgstr "Bestätigen oder aktualisieren Sie die Server-URL und Anmeldedaten für diese Integration. Im nächsten Schritt können Sie die synchronisierten Kalender prüfen und anpassen."
+msgstr "Bestätigen oder aktualisierst die Server-URL und Anmeldedaten für diese Integration. Im nächsten Schritt kannst die synchronisierten Kalender prüfen und anpassen."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
 #, elixir-autogen, elixir-format
 msgid "Connect any CalDAV-compatible server"
-msgstr "Verbinden Sie einen beliebigen CalDAV-kompatiblen Server"
+msgstr "Verbinde einen beliebigen CalDAV-kompatiblen Server"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #, elixir-autogen, elixir-format
@@ -50,7 +50,7 @@ msgstr "Fertig"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Enter your server URL and credentials to discover calendars."
-msgstr "Geben Sie Ihre Server-URL und Anmeldedaten ein, um Kalender zu finden."
+msgstr "Gib deine Server-URL und Anmeldedaten ein, um Kalender zu finden."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
@@ -151,14 +151,14 @@ msgstr "Mein mailbox.org-Kalender"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "No calendars found. Try refreshing the integration."
-msgstr "Keine Kalender gefunden. Versuchen Sie, die Integration zu aktualisieren."
+msgstr "Keine Kalender gefunden. Versuche, die Integration zu aktualisieren."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "No calendars were discovered. Double-check your credentials or try again."
-msgstr "Es wurden keine Kalender gefunden. Überprüfen Sie Ihre Anmeldedaten oder versuchen Sie es erneut."
+msgstr "Es wurden keine Kalender gefunden. Überprüfe deine Anmeldedaten oder versuche es erneut."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
 #, elixir-autogen, elixir-format
@@ -173,7 +173,7 @@ msgstr "Passwort / App-Passwort"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Please select at least one calendar to sync."
-msgstr "Bitte wählen Sie mindestens einen Kalender zum Synchronisieren aus."
+msgstr "Bitte wähle mindestens einen Kalender zum Synchronisieren aus."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -209,7 +209,7 @@ msgstr "Kalender zum Synchronisieren auswählen:"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Select the calendars you want to sync for availability checks."
-msgstr "Wählen Sie die Kalender aus, die Sie für Verfügbarkeitsprüfungen synchronisieren möchten."
+msgstr "Wähle die Kalender aus, die du für Verfügbarkeitsprüfungen synchronisieren möchten."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
@@ -221,7 +221,7 @@ msgstr "Server-URL"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Session expired. Please start the reconnect process again."
-msgstr "Sitzung abgelaufen. Bitte starten Sie das erneute Verbinden noch einmal."
+msgstr "Sitzung abgelaufen. Bitte startest das erneute Verbinden noch einmal."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
@@ -237,27 +237,27 @@ msgstr "Anmelden und Sicherheit → App-spezifische Passwörter"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Something went wrong. Please try again."
-msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+msgstr "Etwas ist schiefgelaufen. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
 #, elixir-autogen, elixir-format
 msgid "Sync calendars from your Apple iCloud account"
-msgstr "Kalender aus Ihrem Apple iCloud-Konto synchronisieren"
+msgstr "Kalender aus deinem Apple iCloud-Konto synchronisieren"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
 #, elixir-autogen, elixir-format
 msgid "Sync calendars from your Nextcloud server"
-msgstr "Kalender von Ihrem Nextcloud-Server synchronisieren"
+msgstr "Kalender von deinem Nextcloud-Server synchronisieren"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
 #, elixir-autogen, elixir-format
 msgid "Sync calendars from your Zimbra server"
-msgstr "Kalender von Ihrem Zimbra-Server synchronisieren"
+msgstr "Kalender von deinem Zimbra-Server synchronisieren"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_family_config.ex
 #, elixir-autogen, elixir-format
 msgid "Sync calendars from your mailbox.org account"
-msgstr "Kalender aus Ihrem mailbox.org-Konto synchronisieren"
+msgstr "Kalender aus deinem mailbox.org-Konto synchronisieren"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #, elixir-autogen, elixir-format
@@ -346,17 +346,17 @@ msgstr "https://radicale.example.com:5232"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "If you have two-factor authentication enabled, generate an application-specific password under %{location} on mailbox.org and use that here instead of your regular password."
-msgstr "Wenn Sie die Zwei-Faktor-Authentifizierung aktiviert haben, generieren Sie unter %{location} auf mailbox.org ein anwendungsspezifisches Passwort und verwenden Sie dieses hier anstelle Ihres regulären Passworts."
+msgstr "Wenn du die Zwei-Faktor-Authentifizierung aktiviert haben, generierst unter %{location} auf mailbox.org ein anwendungsspezifisches Passwort und verwende dieses hier anstelle deines regulären Passworts."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "iCloud will not accept your Apple ID password here. Generate an %{app_specific_password} at %{link} under %{location}, then enter it below with your Apple ID email."
-msgstr "iCloud akzeptiert Ihr Apple-ID-Passwort hier nicht. Erstellen Sie auf %{link} unter %{location} ein %{app_specific_password} und geben Sie es dann unten zusammen mit Ihrer Apple-ID-E-Mail-Adresse ein."
+msgstr "iCloud akzeptiert dein Apple-ID-Passwort hier nicht. Erstelle auf %{link} unter %{location} ein %{app_specific_password} und gib es dann unten zusammen mit deiner Apple-ID-E-Mail-Adresse ein."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Select the calendars you want to sync for availability checks. Calendars you previously synced are already ticked - untick to stop syncing them, or tick new calendars to add them."
-msgstr "Wählen Sie die Kalender aus, die Sie für Verfügbarkeitsprüfungen synchronisieren möchten. Bereits synchronisierte Kalender sind schon angehakt - entfernen Sie das Häkchen, um die Synchronisierung zu beenden, oder haken Sie neue Kalender an, um sie hinzuzufügen."
+msgstr "Wähle die Kalender aus, die du für Verfügbarkeitsprüfungen synchronisieren möchten. Bereits synchronisierte Kalender sind schon angehakt - entfernst das Häkchen, um die Synchronisierung zu beenden, oder hakst neue Kalender an, um sie hinzuzufügen."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
 #, elixir-autogen, elixir-format
@@ -376,7 +376,7 @@ msgstr "Mein abonnierter Kalender"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
 #, elixir-autogen, elixir-format
 msgid "Paste the feed link your calendar gives you when you publish a calendar: Google's secret address in iCal format, Outlook's published calendar link, or any .ics URL. We check it for busy time only, and never write to it."
-msgstr "Fügen Sie den Feed-Link ein, den Ihr Kalender beim Veröffentlichen eines Kalenders ausgibt: die geheime Adresse im iCal-Format von Google, den veröffentlichten Kalenderlink von Outlook oder eine beliebige .ics-URL. Wir prüfen ihn nur auf belegte Zeiten und schreiben niemals hinein."
+msgstr "Füge den Feed-Link ein, den dein Kalender beim Veröffentlichen eines Kalenders ausgibt: die geheime Adresse im iCal-Format von Google, den veröffentlichten Kalenderlink von Outlook oder eine beliebige .ics-URL. Wir prüfen ihn nur auf belegte Zeiten und schreiben niemals hinein."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
 #, elixir-autogen, elixir-format
@@ -401,7 +401,7 @@ msgstr "Farbe"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "How this calendar's events are shown in your Tymeslot calendar."
-msgstr "So werden die Ereignisse dieses Kalenders in Ihrem Tymeslot-Kalender angezeigt."
+msgstr "So werden die Ereignisse dieses Kalenders in deinem Tymeslot-Kalender angezeigt."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
@@ -423,12 +423,12 @@ msgstr "EWS-Endpunkt-URL"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "Enter your EWS endpoint and credentials to discover the mailbox's calendars."
-msgstr "Geben Sie Ihren EWS-Endpunkt und Ihre Anmeldedaten ein, um die Kalender des Postfachs zu finden."
+msgstr "Gib deinen EWS-Endpunkt und deine Anmeldedaten ein, um die Kalender des Postfachs zu finden."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "Leave this on unless your server presents a self-signed certificate. Turning it off means the connection can no longer prove which server it reached."
-msgstr "Lassen Sie diese Option aktiviert, sofern Ihr Server kein selbstsigniertes Zertifikat verwendet. Wenn Sie sie deaktivieren, kann die Verbindung nicht mehr nachweisen, welchen Server sie erreicht hat."
+msgstr "Lass diese Option aktiviert, sofern dein Server kein selbstsigniertes Zertifikat verwendet. Wenn du sie deaktivieren, kann die Verbindung nicht mehr nachweisen, welchen Server sie erreicht hat."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
@@ -458,12 +458,12 @@ msgstr "Kalender auswählen, die im Dashboard angezeigt werden:"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "The mailbox address is the one your busy time is read from. It is often the same as your username, but on a server you sign in to with a domain login it is not."
-msgstr "Aus diesem Postfach werden Ihre belegten Zeiten gelesen. Die Adresse stimmt oft mit Ihrem Nutzernamen überein, auf einem Server, an dem Sie sich mit einer Domänenanmeldung anmelden, jedoch nicht."
+msgstr "Aus diesem Postfach werden deine belegten Zeiten gelesen. Die Adresse stimmt oft mit deinem Nutzernamen überein, auf einem Server, an dem du dich mit einer Domänenanmeldung anmelden, jedoch nicht."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "This choice controls what appears on your dashboard only. Exchange reports busy time for the whole mailbox, so every meeting in it blocks your availability whether or not its calendar is selected here."
-msgstr "Diese Auswahl bestimmt nur, was im Dashboard angezeigt wird. Exchange meldet die belegten Zeiten des gesamten Postfachs, daher blockiert jeder Termin darin Ihre Verfügbarkeit, unabhängig davon, ob sein Kalender hier ausgewählt ist."
+msgstr "Diese Auswahl bestimmt nur, was im Dashboard angezeigt wird. Exchange meldet die belegten Zeiten des gesamten Postfachs, daher blockiert jeder Termin darin deine Verfügbarkeit, unabhängig davon, ob sein Kalender hier ausgewählt ist."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
@@ -483,7 +483,7 @@ msgstr "Belegte Zeiten und Buchungen mit einem lokalen Exchange-Server synchroni
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/exchange_config.ex
 #, elixir-autogen, elixir-format
 msgid "This mailbox is read from and written to: it blocks the times you're already busy, and confirmed bookings are added to the calendar you choose as your booking destination. Exchange does not report which calendars your account may write to, so if you choose one it cannot write to, the first booking sent there fails."
-msgstr "Dieses Postfach wird gelesen und beschrieben: Es blockiert die Zeiten, in denen Sie bereits beschäftigt sind, und bestätigte Buchungen werden in den Kalender eingetragen, den Sie als Ziel für Ihre Buchungen wählen. Exchange gibt nicht an, in welche Kalender Ihr Konto schreiben darf. Wählen Sie also einen, in den es nicht schreiben kann, schlägt die erste dorthin gesendete Buchung fehl."
+msgstr "Dieses Postfach wird gelesen und beschrieben: Es blockiert die Zeiten, in denst bereits beschäftigt sind, und bestätigte Buchungen werden in den Kalender eingetragen, dest als Ziel für deine Buchungen wählen. Exchange gibt nicht an, in welche Kalender dein Konto schreiben darf. Wähle also einen, in den es nicht schreiben kann, schlägt die erste dorthin gesendete Buchung fehl."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
@@ -493,7 +493,7 @@ msgstr "App-Passwort"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Create an app password in Nextcloud under %{location} and enter it below together with your login name. A login password stops working here once two-factor authentication is switched on."
-msgstr "Erstellen Sie in Nextcloud unter %{location} ein App-Passwort und geben Sie es unten zusammen mit Ihrem Anmeldenamen ein. Ein Anmeldepasswort funktioniert hier nicht mehr, sobald die Zwei-Faktor-Authentifizierung aktiviert ist."
+msgstr "Erstelle in Nextcloud unter %{location} ein App-Passwort und gib es unten zusammen mit deinem Anmeldenamen ein. Ein Anmeldepasswort funktioniert hier nicht mehr, sobald die Zwei-Faktor-Authentifizierung aktiviert ist."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
@@ -523,7 +523,7 @@ msgstr "Nur belegte Zeiten"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Choose which calendars Tymeslot uses, and which of them block times on your booking page."
-msgstr "Wählen Sie, welche Kalender Tymeslot verwendet und welche davon Zeiten auf Ihrer Buchungsseite blockieren."
+msgstr "Wähle, welche Kalender Tymeslot verwendet und welche davon Zeiten auf deiner Buchungsseite blockieren."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -533,12 +533,12 @@ msgstr "Nicht blockieren"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Exchange reports busy times for your main calendar only."
-msgstr "Exchange meldet belegte Zeiten nur für Ihren Hauptkalender."
+msgstr "Exchange meldet belegte Zeiten nur für deinen Hauptkalender."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Exchange reports busy times for your whole mailbox from your main calendar, so this choice works whether or not the calendar is shown."
-msgstr "Exchange meldet die belegten Zeiten Ihres gesamten Postfachs über Ihren Hauptkalender. Diese Einstellung wirkt daher unabhängig davon, ob der Kalender angezeigt wird."
+msgstr "Exchange meldet die belegten Zeiten deines gesamten Postfachs über deinen Hauptkalender. Diese Einstellung wirkt daher unabhängig davon, ob der Kalender angezeigt wird."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -558,7 +558,7 @@ msgstr "Schreibgeschützt"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Shared with you as busy times only. Tymeslot can block these times but cannot show the events."
-msgstr "Nur mit belegten Zeiten für Sie freigegeben. Tymeslot kann diese Zeiten blockieren, die Ereignisse aber nicht anzeigen."
+msgstr "Nur mit belegten Zeiten für dich freigegeben. Tymeslot kann diese Zeiten blockieren, die Ereignisse aber nicht anzeigen."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -573,20 +573,20 @@ msgstr "Nur anzeigen"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/ics_url_config.ex
 #, elixir-autogen, elixir-format
 msgid "This calendar stays read-only: bookings are never written to it. Choose another calendar as your booking destination."
-msgstr "Dieser Kalender bleibt schreibgeschützt: Buchungen werden nie in ihn eingetragen. Wählen Sie einen anderen Kalender als Ziel für Ihre Buchungen."
+msgstr "Dieser Kalender bleibt schreibgeschützt: Buchungen werden nie in ihn eingetragen. Wähle einen anderen Kalender als Ziel für deine Buchungen."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/caldav_reconnect_modal.ex
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking calendar always blocks your availability."
-msgstr "Ihr Buchungskalender blockiert immer Ihre Verfügbarkeit."
+msgstr "Dein Buchungskalender blockiert immer deine Verfügbarkeit."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "%{used} of %{count} calendar in use, %{blocking} blocking your availability"
 msgid_plural "%{used} of %{count} calendars in use, %{blocking} blocking your availability"
-msgstr[0] "%{used} von %{count} Kalender in Verwendung, davon blockieren Ihre Verfügbarkeit: %{blocking}"
-msgstr[1] "%{used} von %{count} Kalendern in Verwendung, davon blockieren Ihre Verfügbarkeit: %{blocking}"
+msgstr[0] "%{used} von %{count} Kalender in Verwendung, davon blockieren deine Verfügbarkeit: %{blocking}"
+msgstr[1] "%{used} von %{count} Kalendern in Verwendung, davon blockieren deine Verfügbarkeit: %{blocking}"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -601,17 +601,17 @@ msgstr "Belegte Zeiten von %{calendar}"
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Exchange reports busy times for your whole mailbox, and they block your booking page. Refresh this connection to list your main calendar and choose there whether they do."
-msgstr "Exchange meldet die belegten Zeiten Ihres gesamten Postfachs, und diese blockieren Ihre Buchungsseite. Aktualisieren Sie diese Verbindung, damit Ihr Hauptkalender in der Liste erscheint, und legen Sie dort fest, ob sie blockieren."
+msgstr "Exchange meldet die belegten Zeiten deines gesamten Postfachs, und diese blockieren deine Buchungsseite. Aktualisiere diese Verbindung, damit dein Hauptkalender in der Liste erscheint, und legst dort fest, ob sie blockieren."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Show %{calendar} on your calendar"
-msgstr "%{calendar} in Ihrem Kalender anzeigen"
+msgstr "%{calendar} in deinem Kalender anzeigen"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This folder's events are shown only; busy times come from your whole mailbox."
-msgstr "Die Ereignisse dieses Ordners werden nur angezeigt; die belegten Zeiten stammen aus Ihrem gesamten Postfach."
+msgstr "Die Ereignisse dieses Ordners werden nur angezeigt; die belegten Zeiten stammen aus deinem gesamten Postfach."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/calendar_selection_modal.ex
 #, elixir-autogen, elixir-format
@@ -637,29 +637,29 @@ msgstr "Holiday and school-holiday calendars mark their events as free, so they 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "If you revoked the old app-specific password or changed your Apple ID password since connecting, the old one will not work again: generate a new one and enter it here."
-msgstr "Falls Sie das alte App-spezifische Passwort seit dem Verbinden widerrufen oder Ihr Apple-ID-Passwort geändert haben, funktioniert das alte nicht mehr: Erstellen Sie ein neues und geben Sie es hier ein."
+msgstr "Falls du das alte App-spezifische Passwort seit dem Verbinden widerrufen oder dein Apple-ID-Passwort geändert haben, funktioniert das alte nicht mehr: Erstelle ein neues und gib es hier ein."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Keep this password for as long as you use Tymeslot. Revoking it, or changing your Apple ID password, disconnects iCloud, and your booking page offers no times until you reconnect."
-msgstr "Behalten Sie dieses Passwort, solange Sie Tymeslot nutzen. Wenn Sie es widerrufen oder Ihr Apple-ID-Passwort ändern, wird iCloud getrennt, und Ihre Buchungsseite bietet keine Zeiten an, bis Sie iCloud erneut verbinden."
+msgstr "Behalte dieses Passwort, solange du Tymeslot nutzen. Wenn du es widerrufen oder dein Apple-ID-Passwort ändern, wird iCloud getrennt, und deine Buchungsseite bietet keine Zeiten an, bis du iCloud erneut verbinden."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Enter your Apple ID email and that password below."
-msgstr "Geben Sie unten die E-Mail-Adresse Ihrer Apple-ID und dieses Passwort ein."
+msgstr "Gib unten die E-Mail-Adresse deiner Apple-ID und dieses Passwort ein."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Open your Apple Account"
-msgstr "Öffnen Sie Ihren Apple Account"
+msgstr "Öffne deinen Apple Account"
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "Under Sign-In and Security, choose App-Specific Passwords and create one."
-msgstr "Wählen Sie unter „Anmelden und Sicherheit“ die Option „App-spezifische Passwörter“ und erstellen Sie ein neues Passwort."
+msgstr "Wähle unter „Anmelden und Sicherheit“ die Option „App-spezifische Passwörter“ und erstelle ein neues Passwort."
 
 #: lib/tymeslot_web/components/dashboard/integrations/calendar/shared_form_components.ex
 #, elixir-autogen, elixir-format
 msgid "iCloud needs an app-specific password, not your Apple ID password."
-msgstr "iCloud benötigt ein App-spezifisches Passwort, nicht das Passwort Ihrer Apple-ID."
+msgstr "iCloud benötigt ein App-spezifisches Passwort, nicht das Passwort deiner Apple-ID."

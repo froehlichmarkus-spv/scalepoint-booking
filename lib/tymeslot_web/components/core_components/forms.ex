@@ -509,6 +509,20 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
       <p class="text-tymeslot-500 font-bold uppercase tracking-wider text-token-2xs">
         {dgettext("common", "Password must contain:")}
       </p>
+      <p
+        id="password-byte-error"
+        class="gos-msg gos-msg--error"
+        role="alert"
+        hidden
+        data-byte-error={
+          dgettext(
+            "errors_input",
+            "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte.",
+            count: PasswordValidator.max_bytes()
+          )
+        }
+      >
+      </p>
       <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 sm:gap-x-4">
         <li
           :for={rule <- @rules}

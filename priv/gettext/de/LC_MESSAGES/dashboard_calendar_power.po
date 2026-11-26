@@ -104,17 +104,17 @@ msgstr "Kalendergruppen"
 #: lib/tymeslot_web/live/dashboard/calendar_focus.ex
 #, elixir-autogen, elixir-format
 msgid "Couldn't change focus mode. Please try again."
-msgstr "Der Fokusmodus konnte nicht geändert werden. Bitte versuchen Sie es erneut."
+msgstr "Der Fokusmodus konnte nicht geändert werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar/set_events.ex
 #, elixir-autogen, elixir-format
 msgid "Couldn't save the set. Give it a name of up to 40 characters."
-msgstr "Die Gruppe konnte nicht gespeichert werden. Geben Sie ihr einen Namen mit höchstens 40 Zeichen."
+msgstr "Die Gruppe konnte nicht gespeichert werden. Gib ihr einen Namen mit höchstens 40 Zeichen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/set_events.ex
 #, elixir-autogen, elixir-format
 msgid "Couldn't save the set. Please try again."
-msgstr "Die Gruppe konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+msgstr "Die Gruppe konnte nicht gespeichert werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar/shortcut_help.ex
 #, elixir-autogen, elixir-format
@@ -203,12 +203,12 @@ msgstr "Ausgewähltes Ereignis öffnen"
 #: lib/tymeslot_web/live/dashboard/calendar/shortcut_help.ex
 #, elixir-autogen, elixir-format
 msgid "Press ? to see every keyboard shortcut."
-msgstr "Drücken Sie ?, um alle Tastenkürzel anzuzeigen."
+msgstr "Drücke ?, um alle Tastenkürzel anzuzeigen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/shortcut_help.ex
 #, elixir-autogen, elixir-format
 msgid "Press T for today, J and K for the next and previous period, and D, X, W, M or A to change the view. Press 1 to 9 to apply a calendar set and 0 to leave it, F for focus mode on a wide screen, Ctrl K (Cmd K on a Mac) or / to search and run commands, and ? to see every shortcut."
-msgstr "Drücken Sie T für heute, J und K für den nächsten und vorherigen Zeitraum und D, X, W, M oder A, um die Ansicht zu wechseln. Mit 1 bis 9 wenden Sie eine Kalendergruppe an, mit 0 verlassen Sie sie, F schaltet auf einem breiten Bildschirm den Fokusmodus ein, Strg K (Cmd K auf dem Mac) oder / öffnet die Suche und die Befehle, und ? zeigt alle Tastenkürzel an."
+msgstr "Drücke T für heute, J und K für den nächsten und vorherigen Zeitraum und D, X, W, M oder A, um die Ansicht zu wechseln. Mit 1 bis 9 wendest eine Kalendergruppe an, mit 0 verlassst sie, F schaltet auf einem breiten Bildschirm den Fokusmodus ein, Strg K (Cmd K auf dem Mac) oder / öffnet die Suche und die Befehle, und ? zeigt alle Tastenkürzel an."
 
 #: lib/tymeslot_web/live/dashboard/calendar/rail_sets.ex
 #, elixir-autogen, elixir-format
@@ -218,7 +218,7 @@ msgstr "%{name} umbenennen oder löschen"
 #: lib/tymeslot_web/live/dashboard/calendar/rail_sets.ex
 #, elixir-autogen, elixir-format
 msgid "Save the calendars you show as a set, then press its number to switch to it."
-msgstr "Speichern Sie die angezeigten Kalender als Gruppe und drücken Sie dann ihre Nummer, um dorthin zu wechseln."
+msgstr "Speichere die angezeigten Kalender als Gruppe und drückst dann ihre Nummer, um dorthin zu wechseln."
 
 #: lib/tymeslot_web/live/dashboard/calendar/command_bar.ex
 #: lib/tymeslot_web/live/dashboard/calendar/phone_header.ex
@@ -277,7 +277,7 @@ msgstr "Beim Verschieben: Ereignis versetzen"
 #: lib/tymeslot_web/live/dashboard/calendar/set_events.ex
 #, elixir-autogen, elixir-format
 msgid "You can keep up to nine calendar sets."
-msgstr "Sie können bis zu neun Kalendergruppen anlegen."
+msgstr "Du kannst bis zu neun Kalendergruppen anlegen."
 
 #: lib/tymeslot_web/live/dashboard/calendar/shortcut_help.ex
 #, elixir-autogen, elixir-format
@@ -365,7 +365,7 @@ msgstr "Keine Treffer"
 #: lib/tymeslot_web/live/dashboard/calendar/command_bar.ex
 #, elixir-autogen, elixir-format
 msgid "Search failed. Try again."
-msgstr "Die Suche ist fehlgeschlagen. Versuchen Sie es erneut."
+msgstr "Die Suche ist fehlgeschlagen. Versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar/command_bar.ex
 #, elixir-autogen, elixir-format
@@ -482,19 +482,19 @@ msgstr "Dieser Browser unterstützt keine Benachrichtigungen."
 #: lib/tymeslot_web/live/dashboard/calendar/desktop_permission.ex
 #, elixir-autogen, elixir-format
 msgid "Blocked in your browser settings. Allow notifications for this site there, then switch desktop notifications on again."
-msgstr "In den Browsereinstellungen blockiert. Erlauben Sie dort Benachrichtigungen für diese Website und schalten Sie die Desktop-Benachrichtigungen dann wieder ein."
+msgstr "In den Browsereinstellungen blockiert. Erlaube dort Benachrichtigungen für diese Website und schaltest die Desktop-Benachrichtigungen dann wieder ein."
 
 #: lib/tymeslot_web/live/dashboard/calendar/desktop_permission.ex
 #, elixir-autogen, elixir-format
 msgid "Desktop notifications are on, but your browser has not allowed them yet."
-msgstr "Die Desktop-Benachrichtigungen sind eingeschaltet, aber Ihr Browser hat sie noch nicht erlaubt."
+msgstr "Die Desktop-Benachrichtigungen sind eingeschaltet, aber dein Browser hat sie noch nicht erlaubt."
 
 #: lib/tymeslot_web/live/dashboard/calendar/desktop_permission.ex
 #, elixir-autogen, elixir-format
 msgid "Desktop notifications are on, but your browser is blocking them. Allow notifications for this site in your browser settings and they will start."
-msgstr "Die Desktop-Benachrichtigungen sind eingeschaltet, aber Ihr Browser blockiert sie. Erlauben Sie Benachrichtigungen für diese Website in den Browsereinstellungen, dann werden sie aktiv."
+msgstr "Die Desktop-Benachrichtigungen sind eingeschaltet, aber dein Browser blockiert sie. Erlaube Benachrichtigungen für diese Website in den Browsereinstellungen, dann werden sie aktiv."
 
 #: lib/tymeslot_web/live/dashboard/calendar/desktop_permission.ex
 #, elixir-autogen, elixir-format
 msgid "Your browser did not allow notifications, so desktop notifications are still off."
-msgstr "Ihr Browser hat keine Benachrichtigungen erlaubt, daher sind die Desktop-Benachrichtigungen weiterhin ausgeschaltet."
+msgstr "Dein Browser hat keine Benachrichtigungen erlaubt, daher sind die Desktop-Benachrichtigungen weiterhin ausgeschaltet."

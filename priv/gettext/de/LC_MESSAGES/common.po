@@ -104,22 +104,22 @@ msgstr "Zeitzone auswählen"
 #: lib/tymeslot_web/components/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "This %{context} requires a modern browser with ES module support. Please upgrade to the latest version of Chrome, Firefox, Safari, or Edge."
-msgstr "Diese %{context} erfordert einen modernen Browser mit Unterstützung für ES-Module. Bitte aktualisieren Sie auf die neueste Version von Chrome, Firefox, Safari oder Edge."
+msgstr "Diese %{context} erfordert einen modernen Browser mit Unterstützung für ES-Module. Bitte aktualisiere auf die neueste Version von Chrome, Firefox, Safari oder Edge."
 
 #: lib/tymeslot_web/components/layouts/root.html.heex
 #, elixir-autogen, elixir-format
 msgid "This app requires JavaScript to function. Please enable it in your browser settings."
-msgstr "Diese App benötigt JavaScript, um zu funktionieren. Bitte aktivieren Sie es in Ihren Browsereinstellungen."
+msgstr "Diese App benötigt JavaScript, um zu funktionieren. Bitte aktivierst es in deinen Browsereinstellungen."
 
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format
 msgid "This timezone will be used for your availability and scheduling."
-msgstr "Diese Zeitzone wird für Ihre Verfügbarkeit und Terminplanung verwendet."
+msgstr "Diese Zeitzone wird für deine Verfügbarkeit und Terminplanung verwendet."
 
 #: lib/tymeslot_web/components/timezone_dropdown.ex
 #, elixir-autogen, elixir-format
 msgid "Your Timezone"
-msgstr "Ihre Zeitzone"
+msgstr "Deine Zeitzone"
 
 #: lib/tymeslot_web/components/layouts.ex
 #, elixir-autogen, elixir-format
@@ -317,7 +317,7 @@ msgstr "Erinnerung entfernen"
 #: lib/tymeslot_web/components/shared/reminder_picker.ex
 #, elixir-autogen, elixir-format
 msgid "Select a valid reminder unit"
-msgstr "Wählen Sie eine gültige Erinnerungseinheit"
+msgstr "Wähle eine gültige Erinnerungseinheit"
 
 #: lib/tymeslot_web/components/shared/reminder_picker.ex
 #, elixir-autogen, elixir-format
@@ -328,8 +328,8 @@ msgstr "Diese Erinnerung existiert bereits"
 #, elixir-autogen, elixir-format
 msgid "You can configure up to %{count} reminder"
 msgid_plural "You can configure up to %{count} reminders"
-msgstr[0] "Sie können bis zu %{count} Erinnerung konfigurieren"
-msgstr[1] "Sie können bis zu %{count} Erinnerungen konfigurieren"
+msgstr[0] "Du kannst bis zu %{count} Erinnerung konfigurieren"
+msgstr[1] "Du kannst bis zu %{count} Erinnerungen konfigurieren"
 
 #: lib/tymeslot_web/components/core_components/feedback.ex
 #, elixir-autogen, elixir-format
@@ -344,7 +344,7 @@ msgstr "✓ Bestätigt"
 #: lib/tymeslot_web/plugs/forgery_protection.ex
 #, elixir-autogen, elixir-format
 msgid "Your session has changed since this page was opened. Please try again."
-msgstr "Ihre Sitzung hat sich geändert, seit diese Seite geöffnet wurde. Bitte versuchen Sie es erneut."
+msgstr "Deine Sitzung hat sich geändert, seit diese Seite geöffnet wurde. Bitte versuche es erneut."
 
 #. Spoken name of the language menu button. Keep %{language} first: speech input users say the language name they see on the button.
 #: lib/tymeslot_web/components/language_switcher.ex
@@ -406,3 +406,8 @@ msgstr "Uhrzeit angeben"
 #, elixir-autogen, elixir-format
 msgid "At most %{count} bytes"
 msgstr "Höchstens %{count} Byte"
+
+#: lib/tymeslot_web/components/layouts/root.html.heex
+#, elixir-autogen, elixir-format
+msgid "Skip to content"
+msgstr "Zum Inhalt springen"

@@ -521,6 +521,7 @@ msgstr[1] "Пароль має містити щонайменше %{count} си
 msgstr[2] "Пароль має містити щонайменше %{count} символів"
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
+#: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte."
 msgstr "Пароль має бути не довшим за %{count} байтів. Літери з діакритичними знаками та емодзі займають більше одного байта."

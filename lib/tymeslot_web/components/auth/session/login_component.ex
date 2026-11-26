@@ -66,7 +66,7 @@ defmodule TymeslotWeb.Session.LoginComponent do
               />
               <div
                 id="login-password-toggle-container"
-                phx-hook="PasswordToggle"
+                phx-hook="GosPassword"
                 data-password-container
               >
                 <.input
@@ -98,7 +98,7 @@ defmodule TymeslotWeb.Session.LoginComponent do
             </div>
 
             <%= if FormValidationHelpers.field_errors(@errors, :general) != [] do %>
-              <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div class="gos-alert mt-4" role="alert">
                 <%= for message <- FormValidationHelpers.field_errors(@errors, :general) do %>
                   <p class="text-sm text-red-600">{message}</p>
                 <% end %>

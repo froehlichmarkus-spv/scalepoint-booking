@@ -47,8 +47,9 @@ defmodule TymeslotWeb.Components.DashboardLayout do
   def dashboard_layout(assigns) do
     ~H"""
     <div
-      class="flex flex-col h-dvh overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+      class="gos-shell flex flex-col h-dvh overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
       id="dashboard-root"
+      data-m="booking"
       data-calendar-focus={@focus && "true"}
       phx-hook="ClipboardCopy"
     >
@@ -81,13 +82,14 @@ defmodule TymeslotWeb.Components.DashboardLayout do
 
         <%!-- Main Content Area --%>
         <div
-          id="dashboard-content-container"
+          id="main"
           class={[
             "flex-1 min-w-0 w-full lg:ml-0",
             if(@full_width, do: "flex flex-col overflow-hidden", else: "overflow-y-auto")
           ]}
           phx-hook="ScrollReset"
           data-action={@current_action}
+          data-dashboard-content
         >
           <.refused_calendar_notice
             names={Map.get(@integration_status, :refused_calendars, [])}

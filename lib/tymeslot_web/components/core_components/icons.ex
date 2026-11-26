@@ -39,15 +39,66 @@ defmodule TymeslotWeb.Components.CoreComponents.Icons do
 
   @spec icon(map()) :: Phoenix.LiveView.Rendered.t()
   def icon(assigns) do
-    case fetch(assigns.name) do
-      {:ok, icon} -> svg(assign(assigns, :icon, icon))
-      :error -> unknown(assigns)
+    case lucide_id(assigns.name) do
+      nil ->
+        case fetch(assigns.name) do
+          {:ok, icon} -> svg(assign(assigns, :icon, icon))
+          :error -> unknown(assigns)
+        end
+
+      id ->
+        lucide(assign(assigns, :sprite_id, id))
     end
+  end
+
+  # Lucide names for the shell and auth. Anything else stays a Heroicon.
+  defp lucide_id("hero-x-mark"), do: "i-x"
+  defp lucide_id("hero-arrow-top-right-on-square"), do: "i-external-link"
+  defp lucide_id("hero-clipboard"), do: "i-copy"
+  defp lucide_id("hero-chevron-double-right"), do: "i-chevron-right"
+  defp lucide_id("hero-chevron-double-left"), do: "i-chevron-left"
+  defp lucide_id("hero-home"), do: "i-layout-dashboard"
+  defp lucide_id("hero-calendar-days"), do: "i-calendar"
+  defp lucide_id("hero-clock"), do: "i-clock"
+  defp lucide_id("hero-chart-bar"), do: "i-chart-column"
+  defp lucide_id("hero-squares-2x2"), do: "i-layout-dashboard"
+  defp lucide_id("hero-map-pin"), do: "i-map-pin"
+  defp lucide_id("hero-adjustments-horizontal"), do: "i-sliders-horizontal"
+  defp lucide_id("hero-hand-raised"), do: "i-users"
+  defp lucide_id("hero-rectangle-stack"), do: "i-file-text"
+  defp lucide_id("hero-language"), do: "i-globe"
+  defp lucide_id("hero-puzzle-piece"), do: "i-link-2"
+  defp lucide_id("hero-code-bracket"), do: "i-command"
+  defp lucide_id("hero-user"), do: "i-user"
+  defp lucide_id("hero-bolt"), do: "i-zap"
+  defp lucide_id("hero-bars-3"), do: "i-menu"
+  defp lucide_id("hero-envelope"), do: "i-mail"
+  defp lucide_id("hero-lock-closed"), do: "i-lock"
+  defp lucide_id("hero-arrow-left"), do: "i-arrow-left"
+  defp lucide_id("hero-arrow-left-mini"), do: "i-arrow-left"
+  defp lucide_id("hero-eye"), do: "i-eye"
+  defp lucide_id("hero-eye-slash"), do: "i-eye-off"
+  defp lucide_id("hero-arrow-path"), do: "i-refresh-cw"
+  defp lucide_id("hero-exclamation-circle"), do: "i-circle-alert"
+  defp lucide_id("hero-check"), do: "i-check"
+  defp lucide_id(_name), do: nil
+
+  attr :sprite_id, :string, required: true
+  attr :class, :any, default: nil
+  attr :style, :string, default: nil
+  attr :rest, :global
+
+  defp lucide(assigns) do
+    ~H"""
+    <svg class={["gos-icon", @class]} style={@style} aria-hidden="true" {@rest}>
+      <use href={"/images/sprite.svg#" <> @sprite_id} />
+    </svg>
+    """
   end
 
   @doc "Whether `name` is an icon `<.icon>` can draw."
   @spec known?(String.t()) :: boolean()
-  def known?(name), do: fetch(name) != :error
+  def known?(name), do: lucide_id(name) != nil or fetch(name) != :error
 
   @doc """
   Draws an already fetched icon (`assigns.icon`, from an `IconSource` set) as

@@ -71,7 +71,7 @@ msgstr "Kalender verbinden"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
 #, elixir-autogen, elixir-format
 msgid "Connect a calendar so Tymeslot can read your availability and stop meetings being booked when you're already busy."
-msgstr "Verbinden Sie einen Kalender, damit Tymeslot Ihre Verfügbarkeit lesen und verhindern kann, dass Termine gebucht werden, während Sie bereits beschäftigt sind."
+msgstr "Verbinde einen Kalender, damit Tymeslot deine Verfügbarkeit lesen und verhindern kann, dass Termine gebucht werden, während du bereits beschäftigt sind."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -186,12 +186,12 @@ msgstr "Link neu generieren"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
 #, elixir-autogen, elixir-format
 msgid "Share a read-only link that publishes when you're busy (not the event details) as a standard iCalendar feed, so other calendar systems can overlay your availability."
-msgstr "Teilen Sie einen schreibgeschützten Link, der als standardisierter iCalendar-Feed veröffentlicht, wann Sie beschäftigt sind (nicht die Ereignisdetails), sodass andere Kalendersysteme Ihre Verfügbarkeit einblenden können."
+msgstr "Teile einen schreibgeschützten Link, der als standardisierter iCalendar-Feed veröffentlicht, wann du beschäftigt sind (nicht die Ereignisdetails), sodass andere Kalendersysteme deine Verfügbarkeit einblenden können."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/component_view.ex
 #, elixir-autogen, elixir-format
 msgid "Sync your availability to prevent double bookings."
-msgstr "Synchronisieren Sie Ihre Verfügbarkeit, um Doppelbuchungen zu vermeiden."
+msgstr "Synchronisiere deine Verfügbarkeit, um Doppelbuchungen zu vermeiden."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/components.ex
 #, elixir-autogen, elixir-format
@@ -258,7 +258,7 @@ msgstr "Schreibgeschützt"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/config_view_component.ex
 #, elixir-autogen, elixir-format
 msgid "Something went wrong. Please try again."
-msgstr "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+msgstr "Etwas ist schiefgelaufen. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -317,7 +317,7 @@ msgstr[1] "%{count} hier vorgenommene Änderungen wurden nicht in diesem Kalende
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Could not retry the changes. Please try again."
-msgstr "Die Änderungen konnten nicht erneut gesendet werden. Bitte versuchen Sie es erneut."
+msgstr "Die Änderungen konnten nicht erneut gesendet werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -371,8 +371,8 @@ msgstr "Gerade eben synchronisiert"
 #, elixir-autogen, elixir-format
 msgid "%{count} calendar is no longer on your calendar server, so Tymeslot has stopped using it: %{calendars}"
 msgid_plural "%{count} calendars are no longer on your calendar server, so Tymeslot has stopped using them: %{calendars}"
-msgstr[0] "%{count} Kalender ist auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet Tymeslot ihn nicht mehr: %{calendars}"
-msgstr[1] "%{count} Kalender sind auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet Tymeslot sie nicht mehr: %{calendars}"
+msgstr[0] "%{count} Kalender ist auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet Tymeslot ihn nicht mehr: %{calendars}"
+msgstr[1] "%{count} Kalender sind auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet Tymeslot sie nicht mehr: %{calendars}"
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/connection_row.ex
 #, elixir-autogen, elixir-format
@@ -387,7 +387,7 @@ msgstr "Hinweis zu Kalendern ausblenden, die nicht mehr auf dem Server vorhanden
 #: lib/tymeslot_web/live/dashboard/calendar_settings/card_notice.ex
 #, elixir-autogen, elixir-format
 msgid "“%{calendar}” is no longer on your calendar server, so Tymeslot has stopped using it."
-msgstr "Der Kalender „%{calendar}“ ist auf Ihrem Kalenderserver nicht mehr vorhanden, daher verwendet Tymeslot ihn nicht mehr."
+msgstr "Der Kalender „%{calendar}“ ist auf deinem Kalenderserver nicht mehr vorhanden, daher verwendet Tymeslot ihn nicht mehr."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
@@ -402,7 +402,7 @@ msgstr "Nicht blockieren"
 #: lib/tymeslot_web/live/dashboard/calendar_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking calendar always blocks your availability."
-msgstr "Ihr Buchungskalender blockiert immer Ihre Verfügbarkeit."
+msgstr "Dein Buchungskalender blockiert immer deine Verfügbarkeit."
 
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
@@ -440,4 +440,4 @@ msgstr "read-only, every event blocks time, also those marked free"
 #: lib/tymeslot_web/live/dashboard/calendar_settings/feed_controls.ex
 #, elixir-autogen, elixir-format
 msgid "Turn on Block to use this: a calendar that doesn't block busy times has nothing for it to change"
-msgstr "Wählen Sie „Blockieren“, um diese Option zu nutzen: Bei einem Kalender, der belegte Zeiten nicht blockiert, ändert sie nichts"
+msgstr "Wähle „Blockieren“, um diese Option zu nutzen: Bei einem Kalender, der belegte Zeiten nicht blockiert, ändert sie nichts"

@@ -406,3 +406,8 @@ msgstr "Agrega una hora"
 #, elixir-autogen, elixir-format
 msgid "At most %{count} bytes"
 msgstr "At most %{count} bytes"
+
+#: lib/tymeslot_web/components/layouts/root.html.heex
+#, elixir-autogen, elixir-format
+msgid "Skip to content"
+msgstr ""

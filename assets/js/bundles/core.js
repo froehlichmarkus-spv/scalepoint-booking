@@ -32,6 +32,7 @@ import { installTooltips } from "../tooltip"
 import { liveSocketPath } from "../live_socket_path"
 import { takeAttendeePrefill } from "../attendee_prefill"
 import { isPhone } from "../calendar/viewport.js"
+import { GosPassword, GosModal, GosToast } from "../gos_hooks"
 
 // Reveal image fallbacks on load error (replaces inline onerror handlers).
 installImageFallback()
@@ -111,7 +112,11 @@ const CoreHooks = {
   StageScale,
   StickyNavClearance,
   ShareLink,
-  StageIframe
+  StageIframe,
+
+  GosPassword,
+  GosModal,
+  GosToast
 }
 
 // The onboarding stage's miniature is sized by a hook, which only mounts once

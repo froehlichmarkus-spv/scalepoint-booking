@@ -521,6 +521,7 @@ msgstr[1] "Heslo musí mít alespoň %{count} znaky"
 msgstr[2] "Heslo musí mít alespoň %{count} znaků"
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
+#: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte."
 msgstr "Heslo může mít nejvýše %{count} bajtů. Písmena s diakritikou a emoji zabírají více než jeden bajt."

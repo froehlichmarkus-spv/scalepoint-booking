@@ -165,4 +165,4 @@ msgstr "Traffic-Quellen"
 #: lib/tymeslot_web/live/dashboard/analytics_live.ex
 #, elixir-autogen, elixir-format
 msgid "Analytics are temporarily unavailable. Please try refreshing in a moment."
-msgstr "Die Analyse ist vorübergehend nicht verfügbar. Bitte versuchen Sie es gleich noch einmal."
+msgstr "Die Analyse ist vorübergehend nicht verfügbar. Bitte versuche es gleich noch einmal."

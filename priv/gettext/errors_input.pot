@@ -518,6 +518,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
+#: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte."
 msgstr ""

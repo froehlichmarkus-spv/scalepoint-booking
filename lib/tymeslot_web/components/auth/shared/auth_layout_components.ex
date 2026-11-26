@@ -59,10 +59,14 @@ defmodule TymeslotWeb.Shared.Auth.LayoutComponents do
     assigns =
       assigns
       |> assign_new(:subtitle, fn -> nil end)
-      |> assign_new(:video, fn -> true end)
+      |> assign_new(:video, fn -> false end)
 
     ~H"""
-    <main class="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-20 sm:p-6 sm:pt-24">
+    <main
+      id="main"
+      data-m="booking"
+      class="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-20 sm:p-6 sm:pt-24"
+    >
       <%!-- Video Background --%>
       <div :if={!@video} class="video-background-container fallback">
         <div class="absolute inset-0 bg-linear-to-br from-turquoise-600 to-blue-600 opacity-20"></div>

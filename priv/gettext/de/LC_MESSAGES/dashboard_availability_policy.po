@@ -104,12 +104,12 @@ msgstr "6 Monate"
 #: lib/tymeslot_web/live/dashboard/availability/policy_card.ex
 #, elixir-autogen, elixir-format
 msgid "A new booking can start this long after your previous meeting ends, at the earliest."
-msgstr "Eine neue Buchung kann frühestens so lange nach dem Ende Ihres vorherigen Termins beginnen."
+msgstr "Eine neue Buchung kann frühestens so lange nach dem Ende deines vorherigen Termins beginnen."
 
 #: lib/tymeslot_web/live/dashboard/availability/policy_card.ex
 #, elixir-autogen, elixir-format
 msgid "A new booking must end at least this long before your next meeting starts."
-msgstr "Eine neue Buchung muss mindestens so lange vor dem Beginn Ihres nächsten Termins enden."
+msgstr "Eine neue Buchung muss mindestens so lange vor dem Beginn deines nächsten Termins enden."
 
 #: lib/tymeslot/availability/policy_validation.ex
 #, elixir-autogen, elixir-format

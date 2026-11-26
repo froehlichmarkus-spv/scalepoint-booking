@@ -518,6 +518,7 @@ msgstr[0] "Le mot de passe doit contenir au moins %{count} caractère"
 msgstr[1] "Le mot de passe doit contenir au moins %{count} caractères"
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
+#: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte."
 msgstr "Le mot de passe ne doit pas dépasser %{count} octets. Les lettres accentuées et les emojis comptent pour plus d’un octet."

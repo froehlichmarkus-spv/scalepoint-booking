@@ -19,7 +19,7 @@ msgstr "%{amount} vom Karteninhaber angefochten"
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "A cardholder has disputed one of your booking payments."
-msgstr "Ein Karteninhaber hat eine Zahlung für eine Ihrer Buchungen angefochten."
+msgstr "Ein Karteninhaber hat eine Zahlung für eine deiner Buchungen angefochten."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
@@ -83,7 +83,7 @@ msgstr "Streitbetrag:"
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "If the dispute is closed in your favour, the booking will reconcile automatically. If lost, the booking is marked refunded."
-msgstr "Wird die Zahlungsstreitigkeit zu Ihren Gunsten abgeschlossen, wird die Buchung automatisch abgeglichen. Geht sie verloren, wird die Buchung als erstattet markiert."
+msgstr "Wird die Zahlungsstreitigkeit zu deinen Gunsten abgeschlossen, wird die Buchung automatisch abgeglichen. Geht sie verloren, wird die Buchung als erstattet markiert."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
@@ -94,7 +94,7 @@ msgstr "Termin:"
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
 msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
-msgstr "Sobald Stripe zufrieden ist, aktualisiert sich der Status Ihres Kontos automatisch. Auf Seiten von Tymeslot ist nichts weiter nötig."
+msgstr "Sobald Stripe zufrieden ist, aktualisiert sich der Status deines Kontos automatisch. Auf Seiten von Tymeslot ist nichts weiter nötig."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
@@ -105,12 +105,12 @@ msgstr "Stripe-Dashboard öffnen"
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
 msgid "Open the Stripe dashboard to see exactly what Stripe needs from you and complete any outstanding requirements."
-msgstr "Öffnen Sie das Stripe-Dashboard, um genau zu sehen, was Stripe von Ihnen benötigt, und erledigen Sie alle offenen Anforderungen."
+msgstr "Öffne das Stripe-Dashboard, um genau zu sehen, was Stripe von dir benötigt, und erledigst alle offenen Anforderungen."
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
 msgid "Open the Stripe dashboard to see what Stripe needs from you:"
-msgstr "Öffnen Sie das Stripe-Dashboard, um zu sehen, was Stripe von Ihnen benötigt:"
+msgstr "Öffne das Stripe-Dashboard, um zu sehen, was Stripe von dir benötigt:"
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -175,22 +175,22 @@ msgstr "Stripe-Zahlungsstreitigkeit eröffnet: %{amount}"
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
 msgid "Stripe has flagged your connected account as restricted. New paid bookings will continue to work only while charges remain enabled, so please act on this promptly."
-msgstr "Stripe hat Ihr verbundenes Konto als eingeschränkt markiert. Neue kostenpflichtige Buchungen funktionieren nur weiter, solange Zahlungen aktiviert bleiben. Bitte handeln Sie daher zeitnah."
+msgstr "Stripe hat dein verbundenes Konto als eingeschränkt markiert. Neue kostenpflichtige Buchungen funktionieren nur weiter, solange Zahlungen aktiviert bleiben. Bitte handeln du daher zeitnah."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "Stripe has opened a dispute on a %{amount} payment for one of your bookings."
-msgstr "Stripe hat für eine Ihrer Buchungen eine Zahlungsstreitigkeit über %{amount} eröffnet."
+msgstr "Stripe hat für eine deiner Buchungen eine Zahlungsstreitigkeit über %{amount} eröffnet."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "Stripe needs evidence from you within their stated deadline to challenge the dispute. Open the dispute in the Stripe dashboard to upload evidence or accept the dispute."
-msgstr "Stripe benötigt innerhalb der genannten Frist Nachweise von Ihnen, damit Sie der Zahlungsstreitigkeit widersprechen können. Öffnen Sie sie im Stripe-Dashboard, um Nachweise hochzuladen oder die Streitigkeit anzuerkennen."
+msgstr "Stripe benötigt innerhalb der genannten Frist Nachweise von dir, damit du der Zahlungsstreitigkeit widersprechen können. Öffne sie im Stripe-Dashboard, um Nachweise hochzuladen oder die Streitigkeit anzuerkennen."
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
 msgid "WHAT HAPPENS NEXT:"
-msgstr "WAS ALS NÄCHSTES PASSIERT:"
+msgstr "WAS ALS NÄCHSTES PASDURT:"
 
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #, elixir-autogen, elixir-format
@@ -200,12 +200,12 @@ msgstr "Was passiert als Nächstes?"
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
 msgid "Your Stripe account is restricted"
-msgstr "Ihr Stripe-Konto ist eingeschränkt"
+msgstr "Dein Stripe-Konto ist eingeschränkt"
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
 msgid "Your Stripe account needs attention to keep taking payments."
-msgstr "Ihr Stripe-Konto braucht Ihre Aufmerksamkeit, damit Sie weiterhin Zahlungen annehmen können."
+msgstr "Dein Stripe-Konto braucht deine Aufmerksamkeit, damit du weiterhin Zahlungen annehmen können."
 
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -250,7 +250,7 @@ msgstr "Details zur Rückerstattung"
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
 msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
-msgstr "Erstatten Sie dem Teilnehmer den Betrag über Ihre Zahlungen in Tymeslot oder über Ihr Stripe-Dashboard, oder teilen Sie ihm mit, wie es weitergeht."
+msgstr "Erstatte dem Teilnehmer den Betrag über deine Zahlungen in Tymeslot oder über dein Stripe-Dashboard, oder teilst ihm mit, wie es weitergeht."
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
@@ -300,4 +300,4 @@ msgstr "Was zu tun ist"
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
-msgstr "Sie haben die verbleibenden Termine einer Serie abgesagt, aber die Rückerstattung von %{amount} an den Teilnehmer war nicht möglich. Die Termine bleiben abgesagt."
+msgstr "Du hast die verbleibenden Termine einer Serie abgesagt, aber die Rückerstattung von %{amount} an den Teilnehmer war nicht möglich. Die Termine bleiben abgesagt."
