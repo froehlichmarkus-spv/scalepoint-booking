@@ -753,6 +753,6 @@ msgid "Triggers once when you decline a series request, instead of Booking Decli
 msgstr "Se activa una vez cuando rechazas una solicitud de serie, en lugar de «Reserva rechazada» para cada sesión"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Verify the token in your automation tool to ensure requests are from %{product}."
-msgstr "Verifica el token en tu herramienta de automatización para asegurarte de que las solicitudes vienen de Tymeslot."
+msgstr "Verify the token in your automation tool to ensure requests are from %{product}."

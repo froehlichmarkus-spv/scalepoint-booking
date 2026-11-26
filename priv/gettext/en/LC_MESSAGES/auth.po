@@ -787,16 +787,16 @@ msgid "Choose a new password for your %{product} account."
 msgstr ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
 msgstr ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Enter your email to receive a password reset link for your %{product} account."
 msgstr ""
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
 msgstr ""

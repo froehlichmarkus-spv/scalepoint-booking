@@ -604,7 +604,7 @@ msgstr "Ospite"
 #: lib/tymeslot_web/themes/core/dispatcher.ex
 #, elixir-autogen, elixir-format
 msgid "Something went wrong"
-msgstr "Si è verificato un problema"
+msgstr "Something went wrong"
 
 #: lib/tymeslot_web/themes/core/error_boundary.ex
 #, elixir-autogen, elixir-format
@@ -907,9 +907,9 @@ msgstr "Ti invieremo via email un link per confermare questa prenotazione."
 #: lib/tymeslot_web/themes/shared/components/legal_links.ex
 #, elixir-autogen, elixir-format
 msgid "Data processing agreement"
-msgstr ""
+msgstr "Data processing agreement"
 
 #: lib/tymeslot_web/themes/shared/components/legal_links.ex
 #, elixir-autogen, elixir-format
 msgid "Terms"
-msgstr ""
+msgstr "Terms"

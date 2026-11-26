@@ -525,4 +525,4 @@ msgstr "A senha precisa ter no máximo %{count} bytes. Letras acentuadas e emoji
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
 msgid "This password has appeared in a data breach. Choose a different one."
-msgstr ""
+msgstr "This password has appeared in a data breach. Choose a different one."

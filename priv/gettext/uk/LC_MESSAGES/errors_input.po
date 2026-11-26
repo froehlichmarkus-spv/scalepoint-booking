@@ -528,4 +528,4 @@ msgstr "Пароль має бути не довшим за %{count} байті�
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
 msgid "This password has appeared in a data breach. Choose a different one."
-msgstr ""
+msgstr "This password has appeared in a data breach. Choose a different one."

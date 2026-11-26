@@ -602,7 +602,7 @@ msgstr "Gość"
 #: lib/tymeslot_web/themes/core/dispatcher.ex
 #, elixir-autogen, elixir-format
 msgid "Something went wrong"
-msgstr "Coś poszło nie tak"
+msgstr "Something went wrong"
 
 #: lib/tymeslot_web/themes/core/error_boundary.ex
 #, elixir-autogen, elixir-format
@@ -911,9 +911,9 @@ msgstr "Wyślemy ci e-mailem link do potwierdzenia tej rezerwacji."
 #: lib/tymeslot_web/themes/shared/components/legal_links.ex
 #, elixir-autogen, elixir-format
 msgid "Data processing agreement"
-msgstr ""
+msgstr "Data processing agreement"
 
 #: lib/tymeslot_web/themes/shared/components/legal_links.ex
 #, elixir-autogen, elixir-format
 msgid "Terms"
-msgstr ""
+msgstr "Terms"

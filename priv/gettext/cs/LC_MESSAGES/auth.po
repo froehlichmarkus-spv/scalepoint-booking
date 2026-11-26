@@ -786,19 +786,19 @@ msgstr[2] "Vítejte zpět. Váš účet byl obnoven, ale integrace %{names} je p
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Choose a new password for your %{product} account."
-msgstr ""
+msgstr "Choose a new password for your %{product} account."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-msgstr "Vytvořte si účet Tymeslot a během několika minut začněte sdílet svou dostupnost. Bez platební karty."
+msgstr "Create a %{product} account and start sharing your availability in minutes. No credit card required."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Enter your email to receive a password reset link for your %{product} account."
-msgstr "Zadejte svůj e-mail a pošleme vám odkaz pro obnovení hesla k účtu Tymeslot."
+msgstr "Enter your email to receive a password reset link for your %{product} account."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-msgstr "Přihlaste se ke svému účtu Tymeslot a spravujte rezervační odkazy, dostupnost a rezervace."
+msgstr "Sign in to your %{product} account to manage scheduling links, availability, and bookings."

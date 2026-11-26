@@ -405,4 +405,4 @@ msgstr "Agrega una hora"
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "At most %{count} bytes"
-msgstr ""
+msgstr "At most %{count} bytes"

@@ -784,19 +784,19 @@ msgstr[1] "Hola de nuevo. Tu cuenta se restauró, pero hay que volver a conectar
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Choose a new password for your %{product} account."
-msgstr ""
+msgstr "Choose a new password for your %{product} account."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-msgstr "Crea una cuenta de Tymeslot y comparte tu disponibilidad en unos minutos. Sin tarjeta de crédito."
+msgstr "Create a %{product} account and start sharing your availability in minutes. No credit card required."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Enter your email to receive a password reset link for your %{product} account."
-msgstr "Escribe tu correo y te enviaremos un enlace para restablecer la contraseña de tu cuenta de Tymeslot."
+msgstr "Enter your email to receive a password reset link for your %{product} account."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-msgstr "Inicia sesión en tu cuenta de Tymeslot para gestionar tus enlaces de reservas, tu disponibilidad y tus reservas."
+msgstr "Sign in to your %{product} account to manage scheduling links, availability, and bookings."

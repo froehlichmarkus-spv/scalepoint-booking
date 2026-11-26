@@ -44,7 +44,9 @@ defmodule Tymeslot.Profiles.PublicLegalLinksTest do
 
     assert Profiles.public_legal_links(profile) == %{
              legal_notice_url: "https://me.example/impressum",
-             privacy_policy_url: "https://me.example/privacy"
+             privacy_policy_url: "https://me.example/privacy",
+             terms_url: nil,
+             dpa_url: nil
            }
   end
 
@@ -54,7 +56,9 @@ defmodule Tymeslot.Profiles.PublicLegalLinksTest do
 
     assert Profiles.public_legal_links(profile) == %{
              legal_notice_url: @default_notice,
-             privacy_policy_url: "https://me.example/privacy"
+             privacy_policy_url: "https://me.example/privacy",
+             terms_url: nil,
+             dpa_url: nil
            }
   end
 
@@ -63,7 +67,9 @@ defmodule Tymeslot.Profiles.PublicLegalLinksTest do
 
     assert Profiles.public_legal_links(nil) == %{
              legal_notice_url: @default_notice,
-             privacy_policy_url: @default_privacy
+             privacy_policy_url: @default_privacy,
+             terms_url: nil,
+             dpa_url: nil
            }
   end
 
@@ -72,7 +78,9 @@ defmodule Tymeslot.Profiles.PublicLegalLinksTest do
 
     assert Profiles.public_legal_links(build(:profile)) == %{
              legal_notice_url: nil,
-             privacy_policy_url: nil
+             privacy_policy_url: nil,
+             terms_url: nil,
+             dpa_url: nil
            }
   end
 end

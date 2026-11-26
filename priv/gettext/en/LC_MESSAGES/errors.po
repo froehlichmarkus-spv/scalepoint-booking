@@ -913,7 +913,7 @@ msgid "Meeting types that ask invitees to confirm their email cannot be booked a
 msgstr ""
 
 #: lib/tymeslot_web/controllers/error_html/500.html.heex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Error 500"
 msgstr ""
 
