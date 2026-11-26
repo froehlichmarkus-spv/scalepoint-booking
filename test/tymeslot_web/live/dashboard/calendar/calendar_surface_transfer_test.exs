@@ -205,7 +205,9 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceTransferTest do
     open_panel(lv, "event-#{copy.id}")
     choose_calendar(lv, "#{integration.id}:family")
 
-    assert render(lv) =~ "This is a booking. Reschedule or cancel it from Bookings.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen."
+    assert render(lv) =~
+             "This is a booking. Reschedule or cancel it from Bookings.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen."
+
     refute_receive {:provider_call, _pid, _call}, 100
   end
 
@@ -365,7 +367,8 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceTransferTest do
       open_panel(lv, "event-#{lunch.id}")
       choose_calendar(lv, "#{integration.id}:family")
 
-      assert render(lv) =~ "Another event is moving. Try again in a moment.Ein anderes Ereignis wird gerade verschoben. Versuche es gleich noch einmal.Ein anderes Ereignis wird gerade verschoben. Versuche es gleich noch einmal."
+      assert render(lv) =~
+               "Another event is moving. Try again in a moment.Ein anderes Ereignis wird gerade verschoben. Versuche es gleich noch einmal.Ein anderes Ereignis wird gerade verschoben. Versuche es gleich noch einmal."
     end
   end
 
