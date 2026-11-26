@@ -72,6 +72,8 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
     {prose, facts} = split_copy(mjml_content)
 
     DsMail.document(%{
+      layout:
+        Map.get(organizer_details, :layout) || layout_for(Map.get(organizer_details, :intent)),
       eyebrow: Map.get(organizer_details, :eyebrow),
       title: Map.get(organizer_details, :stage_title),
       preheader: Map.get(organizer_details, :stage_subtitle),
@@ -82,6 +84,10 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       cta_url: nil
     })
   end
+
+  defp layout_for(:cancelled), do: :cancellation
+  defp layout_for(:confirmed), do: :confirmation
+  defp layout_for(_intent), do: :default
 
   @doc """
   Compiles MJML content for system emails into HTML.
@@ -100,13 +106,17 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       |> maybe_put(:preview, preview)
       |> Keyword.merge(stage)
 
+    body = readable(mjml_content)
+
     DsMail.document(%{
+      layout: opts[:layout] || :system,
       eyebrow: opts[:eyebrow],
       title: opts[:stage_title] || opts[:title],
       preheader: opts[:preview],
-      body: readable(mjml_content),
-      cta_label: nil,
-      cta_url: nil
+      body: body,
+      cta_label: opts[:cta_label],
+      cta_url: opts[:cta_url],
+      facts: []
     })
   end
 

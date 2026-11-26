@@ -52,7 +52,10 @@ defmodule Tymeslot.Emails.Templates.PasswordReset do
       intent: @intent,
       eyebrow: dgettext("emails_account", "Security"),
       stage_title: dgettext("emails_account", "Reset your password"),
-      stage_subtitle: dgettext("emails_account", "A fresh password and you're back in.")
+      stage_subtitle: dgettext("emails_account", "A fresh password and you're back in."),
+      layout: :password_reset,
+      cta_label: dgettext("emails_account", "Set New Password"),
+      cta_url: reset_url
     )
   end
 

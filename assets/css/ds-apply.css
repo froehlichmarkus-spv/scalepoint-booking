@@ -163,6 +163,58 @@ body.gos .gos-alert {
   margin-top: var(--gos-space-2);
 }
 
+body.gos [data-dashboard-content] .gos-plan {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  gap: var(--gos-space-4);
+}
+
+body.gos [data-dashboard-content] .gos-plan-card {
+  background: var(--gos-surface);
+  color: var(--gos-text);
+  border: 1px solid var(--gos-line);
+  border-radius: var(--gos-radius-xl);
+  padding: var(--gos-space-5);
+}
+
+body.gos [data-dashboard-content] .gos-plan-muted,
+body.gos [data-dashboard-content] .gos-plan-table {
+  color: var(--gos-text-2);
+  font-family: var(--gos-font-sans);
+}
+
+body.gos [data-dashboard-content] .gos-plan-table th,
+body.gos [data-dashboard-content] .gos-plan-table td {
+  padding: var(--gos-space-2) var(--gos-space-3);
+  border-bottom: 1px solid var(--gos-line);
+}
+
+body.gos .gos-skel {
+  display: grid;
+  gap: var(--gos-space-3);
+}
+
+body.gos .gos-skel i {
+  display: block;
+  height: var(--gos-space-16);
+  border-radius: var(--gos-radius-lg);
+  background: var(--gos-line);
+}
+
+body.gos .gos-alert {
+  margin: 0 0 var(--gos-space-4);
+  padding: var(--gos-space-3) var(--gos-space-4);
+  border: 1px solid var(--gos-danger-line);
+  border-left: 3px solid var(--gos-danger-ink);
+  border-radius: var(--gos-radius-md);
+  background: var(--gos-danger-soft);
+  color: var(--gos-danger-ink);
+  font-size: var(--gos-text-sm, 0.875rem);
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.gos *,
   body.gos *::before,

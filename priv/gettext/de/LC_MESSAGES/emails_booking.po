@@ -328,6 +328,7 @@ msgstr "Bereit, pünktlich beizutreten?"
 msgid "Reference: %{ref}"
 msgstr "Referenz: %{ref}"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
 msgid "Reminder"
@@ -351,6 +352,7 @@ msgstr "Geplante Erinnerungen"
 msgid "Reschedule"
 msgstr "Verschieben"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Rescheduled"

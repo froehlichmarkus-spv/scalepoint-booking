@@ -915,3 +915,8 @@ msgstr "Data processing agreement"
 #, elixir-autogen, elixir-format
 msgid "Terms"
 msgstr "Terms"
+
+#: lib/tymeslot_web/themes/folio/scheduling/wrapper.ex
+#, elixir-autogen, elixir-format
+msgid "You can move or cancel the appointment from the confirmation email. Times follow your timezone."
+msgstr ""

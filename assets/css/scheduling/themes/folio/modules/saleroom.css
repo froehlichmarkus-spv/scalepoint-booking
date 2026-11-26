@@ -327,3 +327,11 @@
 .folio-page[data-layout] .folio-outcome-page .folio-identity__name {
   font-size: var(--theme-font-size-xl);
 }
+
+.folio-page[data-layout] .room-trust {
+  max-width: var(--folio-column);
+  margin: var(--space-md) auto 0;
+  padding: 0 var(--folio-gutter);
+  color: var(--gos-text-2);
+  font-size: var(--theme-font-size-sm);
+}

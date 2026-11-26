@@ -148,6 +148,7 @@ msgstr "DETAILS ZUM ABGESAGTEN TERMIN:"
 msgid "CANCELLED SPOT:"
 msgstr "STORNIERTER PLATZ:"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format

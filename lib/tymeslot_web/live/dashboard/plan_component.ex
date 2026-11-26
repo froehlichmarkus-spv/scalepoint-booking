@@ -37,8 +37,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
         {:noreply, redirect(socket, external: url)}
 
       {:error, _reason} ->
-        Flash.error(dgettext("plans", "Billing is unavailable. Try again in a moment."))
-        {:noreply, socket}
+        {:noreply, billing_unavailable(socket)}
     end
   end
 
@@ -48,8 +47,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
         {:noreply, redirect(socket, external: url)}
 
       {:error, _reason} ->
-        Flash.error(dgettext("plans", "Billing is unavailable. Try again in a moment."))
-        {:noreply, socket}
+        {:noreply, billing_unavailable(socket)}
     end
   end
 
@@ -59,6 +57,9 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     <div id={@id}>
       <.dashboard_page icon="hero-credit-card" title={dgettext("plans", "Plan & billing")}>
         <div class="gos-plan">
+          <p :if={@billing_unavailable} class="gos-alert" role="alert">
+            {dgettext("plans", "Billing is unavailable. Try again in a moment.")}
+          </p>
           <section class="gos-plan-card">
             <p class="gos-plan-muted">{plan_line(assigns)}</p>
             <p :if={@checkout_success} class="gos-plan-muted" data-testid="checkout-pending">
@@ -141,7 +142,14 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     |> assign(:usage, Plans.usage(user.id))
     |> assign(:prices, prices)
     |> assign(:checkout_success, checkout_success?(socket.assigns))
+    |> assign(:billing_unavailable, socket.assigns[:billing_unavailable] || false)
     |> assign(:rows, comparison_rows())
+  end
+
+  defp billing_unavailable(socket) do
+    message = dgettext("plans", "Billing is unavailable. Try again in a moment.")
+    Flash.error(message)
+    assign(socket, :billing_unavailable, true)
   end
 
   defp checkout_success?(assigns) do

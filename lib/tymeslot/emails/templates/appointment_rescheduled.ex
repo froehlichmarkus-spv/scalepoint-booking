@@ -87,6 +87,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
           intent: @intent,
+          layout: :reschedule,
           eyebrow: dgettext("emails_booking", "Rescheduled"),
           stage_title: attendee_stage_title(appointment_details),
           stage_subtitle:
@@ -141,6 +142,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
           intent: @intent,
+          layout: :reschedule,
           eyebrow: dgettext("emails_booking", "Rescheduled"),
           stage_title: dgettext("emails_booking", "The meeting has moved."),
           stage_subtitle:
@@ -211,6 +213,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
           intent: @intent,
+          layout: :reschedule,
           eyebrow: dgettext("emails_booking", "Rescheduled"),
           stage_title: dgettext("emails_booking", "Meeting rescheduled"),
           stage_subtitle: organizer_moved_line(appointment_details)

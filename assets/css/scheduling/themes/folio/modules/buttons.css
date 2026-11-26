@@ -69,6 +69,11 @@
   flex: none;
   width: var(--icon-sm);
   height: var(--icon-sm);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* The actions row: the way back on the left, the primary action on the

@@ -429,6 +429,7 @@ msgstr "Це посилання дійсне 24 години. Якщо ви не
 msgid "This link expires in 24 hours. Once confirmed, you'll sign in with your new email address."
 msgstr "Це посилання дійсне 24 години. Після підтвердження ви зможете входити з новою адресою електронної пошти."
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "This link is valid for the next 2 hours."

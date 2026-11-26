@@ -59,6 +59,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
           intent: @intent,
+          layout: :reminder,
           eyebrow: dgettext("emails_booking", "Reminder"),
           stage_title: dgettext("emails_booking", "Our meeting is coming up"),
           stage_subtitle:
@@ -122,6 +123,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
           intent: @intent,
+          layout: :reminder,
           eyebrow: dgettext("emails_booking", "Reminder"),
           stage_title: dgettext("emails_booking", "The meeting is coming up"),
           stage_subtitle:
@@ -181,6 +183,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
           intent: @intent,
+          layout: :reminder,
           eyebrow: dgettext("emails_booking", "Starting soon"),
           stage_title: organizer_stage_title(appointment_details),
           stage_subtitle:

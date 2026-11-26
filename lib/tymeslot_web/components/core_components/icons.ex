@@ -219,7 +219,13 @@ defmodule TymeslotWeb.Components.CoreComponents.Icons do
 
   defp lucide(assigns) do
     ~H"""
-    <svg class={["gos-icon", @class]} style={@style} aria-hidden="true" {@rest}>
+    <svg
+      viewBox="0 0 24 24"
+      class={["gos-icon", @class]}
+      style={@style}
+      aria-hidden="true"
+      {@rest}
+    >
       <use href={"/images/sprite.svg#" <> @sprite_id} />
     </svg>
     """

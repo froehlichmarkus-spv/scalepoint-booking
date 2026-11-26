@@ -981,3 +981,8 @@ msgstr "Eine Rückerstattung ist nicht möglich, da die Zahlung außerhalb der E
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "Eine Rückerstattung ist nicht möglich, da die Zahlung angefochten wird. Kläre die Anfechtung zuerst in Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
+#, elixir-autogen, elixir-format
+msgid "Set up a meeting type"
+msgstr "Termintyp anlegen"

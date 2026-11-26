@@ -1,22 +1,22 @@
-# BookDesk24 · Scorecard (DS v2, Barrierefreiheit und Buchung)
+# BookDesk24 · Scorecard (DS v2, Runde nach der Barrierefreiheit)
 
 Stand: 26. Nov 2026. Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Ziel ist 9. Was darunter liegt, steht so da.
 
-axe-core, nur serious und critical, nach den Kontrast-Fixes: Auth, Übersicht und `/nordlicht/intro` bei 1440 und 390 jeweils 0. Eine echte Buchung (Mara Köhler, 30. November, 12:00) liegt auf der Bestätigungsseite. Die Bestätigungsmail ist in HTML und als Klartext geschossen.
+Verify und der Secret-Scan liefen nach `a47d8b1` nicht mehr, weil der Pull Request mit `qa/bookdesk24-saas-ready` in den Gettext-Dateien kollidiert. GitHub baut dann keinen Merge-Commit und startet `pull_request`-Workflows nicht. `pull_request_target` (dco-check) läuft weiter. Dieselbe Prüfung hängt zusätzlich an `push` für diesen Branch, ohne eine Prüfung zu streichen.
 
 | Kriterium | Score | Warum |
 |---|---|---|
-| 1 Visual | 8 | Auth zweispaltig, Übersicht mit navy Banner, Buchung und Bestätigung in Folio/Geist. Der Kalender-Button auf der Bestätigung zeigt ein schwarzes Quadrat statt des Kalender-Symbols. |
-| 2 Consistency | 7 | Kontrast und die Bestätigungskarte nutzen vorhandene Tokens (`--gos-text-2`, `--gos-text-3`, `--gos-booking-ink`, `--gos-success-ink`). Abstände der Bestätigung kommen aus `--space-*` und `--folio-column`. Hex in den vier gemeldeten CSS-Dateien bleibt ein DS-Request. |
-| 3 Usability | 8 | Login bis Fehler, Buchung von Tag über Slot und Formular bis „Termin bestätigt“. Google/Microsoft nur, wenn ein Admin den Provider einschaltet. |
-| 4 Accessibility | 9 | axe serious/critical 0 auf Auth, Shell/Übersicht und öffentlicher Buchung, 1440 und 390. Amber-Text am Wortmarkenzeichen ist `--gos-booking-ink`. Fokusring aus Folio, Fehler mit `role="alert"`, Slot-Status für Screenreader. Tab erreicht Tag und Slot (native Buttons). `prefers-reduced-motion` setzt Animation und Transition auf 0,01 ms. |
-| 5 States | 8 | Skeleton, leere Zeiten, Fehler mit „Erneut versuchen“, und die Bestätigung nach einer echten Buchung, 1440 und 390. |
-| 6 Microcopy | 8 | du, „Termin“ in Bestätigung und Mail. Ein holpriger Imperativ („Hake ab, was du nicht benötigen“) ist korrigiert. Die 179 `sie`/`ihr`/`ihnen` sind weiter keine Anrede. Nicht jeder Satz im Produkt ist neu gefasst. |
-| 7 Mobile | 8 | Auth, Übersicht, Buchung und Bestätigung bei 390. |
-| 8 Perceived performance | 7 | Die Slot-Liste lädt als Skeleton und markiert die gewählte Zeit sofort (`slot-list__slot--selected`), bevor die Antwort da ist. Andere Datenflächen der Übersicht haben weiter kein Skeleton. |
-| 9 Polish | 7 | Die Bestätigung ist eine lesbare Spalte (640 px) statt der überlagerten Karte. Die Mail-Karte hat eine Amber-Ink-Kante. Offen: schwarzes Quadrat im Kalender-Button, Logo-Zeile „BookDesk24 / by“. |
-| 10 Trust | 8 | Navy als Primärbutton, Passwortregel sichtbar, Legal-Links auf `/growthos/legal/*`, Bestätigung nennt Gastgeber, Zeit und Ort. |
-| 11 Emails | 8 | `DsMail` setzt Termintyp, Dauer, Ort und Beschreibung in eine Tabelle (Ink `#835000`, weil Mail keine CSS-Variablen trägt). Klartext-Zwilling bleibt im Template und ist geschossen. Nicht jede der 12 Mails hat ein eigenes Layout, alle laufen durch denselben Rahmen. |
+| 1 Visual | 8 | Übersicht, Termine, Verfügbarkeit, Termintypen, Integrationen, Profil und Tarif sind bei 1440 geschossen. Der Kalender-Button ist wieder ein Umriss-Symbol auf dem Primärbutton. Die Wortmarke bricht in der Sidebar weiter („BookDesk24“ / „by“). |
+| 2 Consistency | 8 | Tarifkarten und Skeletons nutzen `--gos-space-*`, `--gos-radius-*`, `--gos-line`, `--gos-surface`. Hex in den vier gemeldeten CSS-Dateien bleibt ein DS-Request. Grüne und rote Aktionsbuttons auf der Terminliste sind nicht auf eine Stufe gezogen. |
+| 3 Usability | 8 | Leere Terminliste verlinkt „Termintyp anlegen“. Termintypen, Kalender und Abwesenheit hatten schon einen nächsten Schritt. Abrechnung sagt im Formular, was zu tun ist, wenn Billing fehlt. Nicht jedes Formular ist neu auf Inline-Validierung geprüft. |
+| 4 Accessibility | 9 | Unverändert aus der vorigen Runde: axe serious/critical 0 auf Auth, Übersicht und öffentlicher Buchung, 1440 und 390. Der Kalender-Button ist ein Icon mit `fill: none` und Strich in der Buttonfarbe, kein schwarzes Quadrat. |
+| 5 States | 8 | Slot-Zustände und die echte Bestätigung bleiben. Die Terminliste lädt als drei Skeleton-Zeilen statt als Spinner. Andere Dashboard-Seiten liefern die Daten im ersten HTML. |
+| 6 Microcopy | 8 | Der Vertrauenssatz auf der Buchungsseite ist du und nennt Verschieben, Absagen und die Zeitzone. Begriffe Termin und Buchung bleiben. Nicht jeder Satz ist neu. |
+| 7 Mobile | 8 | Buchung und Bestätigung bei 390. Termine, Verfügbarkeit und Tarif zusätzlich bei 390. Integrationen, Termintypen und Profil in dieser Runde nur bei 1440. |
+| 8 Perceived performance | 8 | Slot-Wahl ist sofort markiert. Die einzige Spinner-Karte der Terminliste ist ein Skeleton mit fester Höhe. Slack-Kanäle und kleine Button-Spinner während einer Aktion bleiben. |
+| 9 Polish | 8 | Bestätigung ist eine Spalte, Kalender-Icon ist ein Strich, Tarifseite nutzt die Flächentokens. Die Sidebar-Wortmarke und der Integrations-Hinweis oben auf jeder Dashboard-Seite sind nicht neu gesetzt. |
+| 10 Trust | 9 | Öffentliche Buchung zeigt Gastgeber, Zeitzone, den Satz zum Verschieben und Absagen, und die Legal-Links (Impressum, Datenschutz, Nutzungsbedingungen, Auftragsverarbeitung). |
+| 11 Emails | 8 | Bestätigung, Verschieben, Absage, Erinnerung und Passwort-Reset haben eigene Akzente und einen eigenen Streifen. Passwort-Reset hat den Button und keine Terminkarte. Der Fließtext ist weiter der bisherige Text, kein eigenes Satzbild pro Mail. Klartext-Zwillinge bleiben in den Templates. |
 
 ## Verbleibende `sie` / `ihr` / `ihnen`
 

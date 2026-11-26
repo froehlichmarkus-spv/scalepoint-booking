@@ -429,6 +429,7 @@ msgstr "Platnost odkazu vyprší za 24 hodin. Pokud jste se do Tymeslotu neregis
 msgid "This link expires in 24 hours. Once confirmed, you'll sign in with your new email address."
 msgstr "Tento odkaz platí 24 hodin. Po potvrzení se budete přihlašovat novou e-mailovou adresou."
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "This link is valid for the next 2 hours."

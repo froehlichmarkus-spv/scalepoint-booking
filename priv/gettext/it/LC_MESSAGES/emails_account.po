@@ -429,6 +429,7 @@ msgstr "Questo link scade tra 24 ore. Se non hai effettuato tu la registrazione 
 msgid "This link expires in 24 hours. Once confirmed, you'll sign in with your new email address."
 msgstr "Questo link scade tra 24 ore. Dopo la conferma, potrai accedere con il tuo nuovo indirizzo email."
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "This link is valid for the next 2 hours."
