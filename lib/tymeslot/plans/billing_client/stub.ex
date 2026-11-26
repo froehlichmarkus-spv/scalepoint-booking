@@ -3,8 +3,9 @@ defmodule Tymeslot.Plans.BillingClient.Stub do
   Stand-in for growth-os-billing.
 
   Checkout, the portal, entitlement reads, registration and cancellation all
-  answer locally. Nothing on this module opens a socket. When the central
-  service is ready, point `:billing_client` at `Tymeslot.Plans.BillingClient.HTTP`.
+  answer locally. Nothing on this module opens a socket. Runtime selects
+  `Tymeslot.Plans.BillingClient.HTTP` when `GROWTH_OS_BILLING_URL` and
+  `GROWTH_OS_BILLING_API_KEY` are both set.
   """
 
   @behaviour Tymeslot.Plans.BillingClient
