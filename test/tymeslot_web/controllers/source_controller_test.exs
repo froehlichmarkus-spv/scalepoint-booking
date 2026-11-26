@@ -9,7 +9,7 @@ defmodule TymeslotWeb.SourceControllerTest do
   import Phoenix.Component, only: [sigil_H: 2]
   import Phoenix.LiveViewTest, only: [rendered_to_string: 1]
 
-  @moduletag :licensing
+  @moduletag :legal
 
   alias Tymeslot.Licensing.SourceOffer
   alias TymeslotWeb.Themes.Shared.Components.LegalLinks
