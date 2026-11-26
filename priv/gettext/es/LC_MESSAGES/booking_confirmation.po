@@ -116,7 +116,6 @@ msgstr "Lugar"
 msgid "Meeting Confirmed!"
 msgstr "¡Reunión confirmada!"
 
-#: lib/tymeslot/emails/shared/template_helper.ex
 #: lib/tymeslot_web/themes/folio/scheduling/components/confirmation_component.ex
 #: lib/tymeslot_web/themes/rhythm/scheduling/components/confirmation_component.ex
 #, elixir-autogen, elixir-format
