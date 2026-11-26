@@ -149,7 +149,7 @@ defmodule TymeslotWeb.Dashboard.DashboardOverviewComponent do
   end
 
   defp trial_days(%{id: user_id}) do
-      case Plans.get_entitlement(user_id) do
+    case Plans.get_entitlement(user_id) do
       %{status: "trialing", trial_ends_at: %DateTime{} = ends} ->
         days = DateTime.diff(ends, DateTime.utc_now(), :day)
         if days > 0, do: days
