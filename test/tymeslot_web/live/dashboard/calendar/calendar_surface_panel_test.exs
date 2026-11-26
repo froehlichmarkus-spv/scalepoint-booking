@@ -103,7 +103,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfacePanelTest do
     assert has_element?(
              lv,
              "#calendar-panel-read-only",
-             "This is a booking. Reschedule or cancel it from Bookings.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen."
+             "This is a booking. Reschedule or cancel it from Bookings."
            )
 
     assert has_element?(lv, "#calendar-panel-title[disabled]")

@@ -98,7 +98,7 @@ defmodule Tymeslot.Emails.Templates.CalendarsRemovedTest do
       assert_received {:email, email}
 
       assert email.subject ==
-               "Der Kalender „Projects“ ist auf Ihrem Kalenderserver nicht mehr vorhanden"
+               "Der Kalender „Projects“ ist auf deinem Kalenderserver nicht mehr vorhanden"
 
       assert email.text_body =~ "Kalendereinstellungen"
     end

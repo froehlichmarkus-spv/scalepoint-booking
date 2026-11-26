@@ -14,8 +14,7 @@ defmodule TymeslotWeb.Dashboard.CalendarEditMessagesTest do
     assert {:warning, "Too many edits. Please wait a moment."} =
              CalendarEditMessages.refusal({:error, :rate_limited, "slow down"})
 
-    assert {:warning,
-            "This is a booking. Reschedule or cancel it from Bookings.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen."} =
+    assert {:warning, "This is a booking. Reschedule or cancel it from Bookings."} =
              CalendarEditMessages.refusal({:error, :booking})
   end
 

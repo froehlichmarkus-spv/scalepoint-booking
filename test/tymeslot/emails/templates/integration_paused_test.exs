@@ -75,7 +75,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationPausedTest do
 
       for body <- [email.html_body, email.text_body] do
         assert body =~
-                 "Wir haben Ihre Integration Nextcloud-Kalender nach 14 Tagen fehlgeschlagener Statusprüfungen pausiert."
+                 "Wir haben deine Integration Nextcloud-Kalender nach 14 Tagen fehlgeschlagener Statusprüfungen pausiert."
 
         assert body =~ "Integrationseinstellungen öffnen"
         refute body =~ "Open Integration Settings"

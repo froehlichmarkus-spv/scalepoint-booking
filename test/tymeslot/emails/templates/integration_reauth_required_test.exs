@@ -218,7 +218,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequiredTest do
 
       email = IntegrationReauthRequired.render(user, integration, :video)
 
-      assert email.subject == "Bitte verbinden Sie Ihre Integration Zoom erneut"
+      assert email.subject == "Bitte verbinde deine Integration Zoom erneut"
 
       for body <- [email.html_body, email.text_body] do
         assert body =~ "Zoom fehlt die für das Absagen von Meetings erforderliche Berechtigung."
@@ -227,7 +227,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequiredTest do
       end
 
       assert email.html_body =~
-               "Klicken Sie in der Zeile Zoom auf <strong>Erneut verbinden</strong>"
+               "Klicke in der Zeile Zoom auf <strong>Erneut verbinden</strong>"
     end
   end
 end

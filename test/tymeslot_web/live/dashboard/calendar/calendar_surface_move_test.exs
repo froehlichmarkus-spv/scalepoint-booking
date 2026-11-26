@@ -410,8 +410,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMoveTest do
       assert %{start: "2026-10-15T14:00", editable: true, movable: false} =
                snapped_back(lv, copy_id)
 
-      assert render(lv) =~
-               "This is a booking. Reschedule or cancel it from Bookings.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen.Dies ist eine Buchung. Du kannst sie unter Buchungen verschieben oder absagen."
+      assert render(lv) =~ "This is a booking. Reschedule or cancel it from Bookings."
     end
 
     test "a move the rate limit refuses", %{lv: lv, user: user, id: id} do
