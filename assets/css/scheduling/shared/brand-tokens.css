@@ -7,17 +7,19 @@
  * these utilities. Colours are DS tokens, not local hex aliases.
  */
 @theme {
-  --color-turquoise-600: var(--gos-link);
-  --color-turquoise-700: var(--gos-teal-ink);
-  --color-tymeslot-500: var(--gos-text-3);
+  /* Fallbacks match the light-theme token values so a theme bundle that is
+     checked on its own still resolves. They are not the retired v1 hexes. */
+  --color-turquoise-600: var(--gos-link, #0B6E66);
+  --color-turquoise-700: var(--gos-teal-ink, #0B6E66);
+  --color-tymeslot-500: var(--gos-text-3, #5B6372);
 
   /* Core components that also render on booking pages (the flash toasts,
    * info_box) draw their corners with rounded-token-*. */
-  --radius-token-sm: var(--gos-radius-sm);
-  --radius-token-md: var(--gos-radius-md);
-  --radius-token-lg: var(--gos-radius-lg);
-  --radius-token-xl: var(--gos-radius-xl);
-  --radius-token-2xl: var(--gos-radius-2xl);
-  --radius-token-3xl: var(--gos-radius-2xl);
-  --radius-token-full: var(--gos-radius-full);
+  --radius-token-sm: var(--gos-radius-sm, 6px);
+  --radius-token-md: var(--gos-radius-md, 10px);
+  --radius-token-lg: var(--gos-radius-lg, 14px);
+  --radius-token-xl: var(--gos-radius-xl, 18px);
+  --radius-token-2xl: var(--gos-radius-2xl, 24px);
+  --radius-token-3xl: var(--gos-radius-2xl, 24px);
+  --radius-token-full: var(--gos-radius-full, 999px);
 }
