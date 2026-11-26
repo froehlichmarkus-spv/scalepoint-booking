@@ -173,11 +173,6 @@ msgstr[1] "Minuten"
 msgid "reply to this email"
 msgstr "auf diese E-Mail antworten"
 
-#: lib/tymeslot/emails/shared/text.ex
-#, elixir-autogen, elixir-format
-msgid "Having trouble with the button? Copy and paste this link into your browser:"
-msgstr "Probleme mit dem Button? Kopiere diesen Link in deinen Browser:"
-
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "hour"
@@ -371,7 +366,6 @@ msgstr "Nachricht von %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} über %{brand}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -594,22 +588,8 @@ msgstr "Videoanruf:"
 msgid "Booked through your %{page} page"
 msgstr "Gebucht über deine Seite „%{page}“"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
+#: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
-msgid "Legal notice"
-msgstr "Impressum"
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Privacy"
-msgstr "Datenschutz"
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Reply to this email or write to support@scalepoint-ventures.com."
-msgstr "Antworte auf diese E-Mail oder schreib an support@scalepoint-ventures.com."
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Terms"
-msgstr "Bedingungen"
+msgid "Button not working? Paste this link into your browser:"
+msgstr "Der Button funktioniert nicht? Füge diesen Link in deinen Browser ein:"

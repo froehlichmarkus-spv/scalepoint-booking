@@ -95,7 +95,7 @@ defmodule Tymeslot.MailerTest do
     test "lists exactly the API-key-based providers, by name" do
       names = Mailer.api_providers() |> Enum.map(& &1.name) |> Enum.sort()
 
-      assert names == ~w(ahasend mailgun postmark sendgrid)
+      assert names == ~w(ahasend mailgun postmark resend sendgrid)
     end
   end
 

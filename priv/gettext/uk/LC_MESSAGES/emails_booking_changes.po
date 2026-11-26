@@ -149,7 +149,6 @@ msgstr "ДЕТАЛІ СКАСОВАНОЇ ЗУСТРІЧІ:"
 msgid "CANCELLED SPOT:"
 msgstr "СКАСОВАНЕ МІСЦЕ:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
@@ -727,3 +726,13 @@ msgstr "Зустріч скасовано: %{name} скасував(-ла) – %
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "Ніхто інший не підтвердив місце на попередній час, тому ту зустріч скасовано."
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Refund"
+msgstr "Повернуто"
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Total"
+msgstr ""

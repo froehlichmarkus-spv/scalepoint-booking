@@ -234,20 +234,21 @@ defmodule Tymeslot.Emails.Shared.Text do
     <mj-section padding="8px 0 0 0">
       <mj-column>
         <mj-text
-          font-size="12px"
-          color="#{Styles.ink_muted()}"
-          line-height="1.6"
-          align="center"
+          font-size="13px"
+          color="#5B6372"
+          line-height="20px"
+          align="left"
           padding="0 0 8px 0"
         >
-          #{dgettext("emails", "Having trouble with the button? Copy and paste this link into your browser:")}
+          #{dgettext("emails", "Button not working? Paste this link into your browser:")}
         </mj-text>
         <mj-text
-          font-size="12px"
-          align="center"
-          color="#{Styles.ink_muted()}"
+          font-size="13px"
+          align="left"
+          color="#5B6372"
+          line-height="20px"
         >
-          <a href="#{safe_url}" style="color: #{Styles.ink_muted()}; text-decoration: underline; word-break: break-all;">#{safe_url}</a>
+          <a class="lk" href="#{safe_url}" style="color:#0B6E66;word-break:break-all;text-decoration:underline">#{safe_url}</a>
         </mj-text>
       </mj-column>
     </mj-section>

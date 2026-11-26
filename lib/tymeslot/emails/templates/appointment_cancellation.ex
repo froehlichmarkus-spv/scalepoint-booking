@@ -62,7 +62,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent,
+          intent: @intent, card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Spot cancelled"),
           stage_subtitle:
@@ -113,7 +113,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent,
+          intent: @intent, card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Meeting cancelled"),
           stage_subtitle:
@@ -165,7 +165,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent,
+          intent: @intent, card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Meeting cancelled"),
           stage_subtitle:
@@ -216,7 +216,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent,
+          intent: @intent, card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Meeting cancelled"),
           stage_subtitle: organizer_stage_subtitle(appointment_details)

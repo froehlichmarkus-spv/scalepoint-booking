@@ -3,7 +3,6 @@ defmodule Tymeslot.Emails.Shared.ButtonsTest do
   @moduletag :emails
 
   alias Tymeslot.Emails.Shared.Buttons
-  alias Tymeslot.Emails.Shared.Styles
   alias Tymeslot.Utils.Colour
 
   describe "action_button/4" do
@@ -34,26 +33,21 @@ defmodule Tymeslot.Emails.Shared.ButtonsTest do
       refute html_default =~ "mobile-button"
     end
 
-    test "renders on the deep accent variant, not the raw accent, for every intent" do
+    test "renders the suite navy button for every intent" do
       for intent <- [:confirmed, :alert, :cancelled] do
         html = Buttons.action_button(intent, "Go", "https://example.com")
-        accent_deep = Styles.intent_accent_deep(intent)
-        expected_text = Styles.button_text_color(accent_deep)
 
-        assert html =~ ~s(background-color="#{accent_deep}")
-        assert html =~ ~s(color="#{expected_text}")
+        assert html =~ ~s(background-color="#111E32")
+        assert html =~ ~s(color="#FFFFFF")
       end
     end
 
-    test "the stock brand button clears 4.5:1 and resolves to light text, not dark ink" do
+    test "the suite navy button clears 4.5:1 against white text" do
       html = Buttons.action_button(:confirmed, "Go", "https://example.com")
-      accent_deep = Styles.intent_accent_deep(:confirmed)
-      expected_text = Styles.button_text_color(accent_deep)
 
-      assert html =~ ~s(background-color="#{accent_deep}")
-      assert html =~ ~s(color="#{Styles.surface()}")
-      assert expected_text == Styles.surface()
-      assert Colour.contrast_ratio(expected_text, accent_deep) >= 4.5
+      assert html =~ ~s(background-color="#111E32")
+      assert html =~ ~s(color="#FFFFFF")
+      assert Colour.contrast_ratio("#FFFFFF", "#111E32") >= 4.5
     end
   end
 end

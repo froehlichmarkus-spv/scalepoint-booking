@@ -87,7 +87,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent,
+          intent: @intent, card: :slot,
           eyebrow: dgettext("emails_booking", "Confirmed"),
           stage_title: dgettext("emails_booking", "You're booked."),
           stage_subtitle:
@@ -159,7 +159,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent,
+          intent: @intent, card: :slot,
           eyebrow: dgettext("emails_booking", "You're invited"),
           stage_title: dgettext("emails_booking", "You've been added as a guest"),
           stage_subtitle:
@@ -231,7 +231,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       organizer_details =
         TemplateHelper.build_organizer_details(
           appointment_details,
-          [intent: @intent] ++ organizer_stage(appointment_details)
+          [intent: @intent, card: :slot] ++ organizer_stage(appointment_details)
         )
 
       html_body = TemplateHelper.compile_template(mjml_content, organizer_details)

@@ -43,14 +43,14 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequiredTest do
       html =
         IntegrationReauthRequired.render(@user, integration(sync_error: nil), :video).html_body
 
-      assert html =~ "Zoom needs reconnecting before Tymeslot can use it again."
+      assert html =~ "Zoom needs reconnecting before BookDesk24 can use it again."
     end
 
     test "treats a blank reason as no reason rather than rendering an empty callout" do
       html =
         IntegrationReauthRequired.render(@user, integration(sync_error: "   "), :video).html_body
 
-      assert html =~ "Zoom needs reconnecting before Tymeslot can use it again."
+      assert html =~ "Zoom needs reconnecting before BookDesk24 can use it again."
     end
 
     test "renders a complete HTML document" do

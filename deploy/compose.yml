@@ -46,6 +46,10 @@ services:
       DATABASE_URL: ecto://booking:${POSTGRES_PASSWORD}@postgres:5432/booking
       TYMESLOT_EMBEDDED_DB: "false"
       EMAIL_ADAPTER: smtp
+      SEND_EMAILS: ${SEND_EMAILS:-false}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-BookDesk24 <noreply@scalepoint-ventures.com>}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-support@scalepoint-ventures.com}
       EMAIL_FROM_ADDRESS: ${SPV_SENDER_EMAIL:-booking@scalepoint-ventures.com}
       EMAIL_FROM_NAME: ${SPV_SENDER_NAME:-ScalePoint Ventures}
       DEFAULT_BRAND_KEY: scalepoint

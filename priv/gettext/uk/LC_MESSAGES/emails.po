@@ -174,11 +174,6 @@ msgstr[2] "хвилин"
 msgid "reply to this email"
 msgstr "відповісти на цей лист"
 
-#: lib/tymeslot/emails/shared/text.ex
-#, elixir-autogen, elixir-format
-msgid "Having trouble with the button? Copy and paste this link into your browser:"
-msgstr "Не працює кнопка? Скопіюйте та вставте це посилання у свій браузер:"
-
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "hour"
@@ -377,7 +372,6 @@ msgstr "Повідомлення від %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} через %{brand}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -603,22 +597,8 @@ msgstr "Відеодзвінок:"
 msgid "Booked through your %{page} page"
 msgstr "Заброньовано через вашу сторінку «%{page}»"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
+#: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
-msgid "Legal notice"
-msgstr "Legal notice"
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Privacy"
-msgstr "Privacy"
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Reply to this email or write to support@scalepoint-ventures.com."
-msgstr "Reply to this email or write to support@scalepoint-ventures.com."
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Terms"
-msgstr "Terms"
+msgid "Button not working? Paste this link into your browser:"
+msgstr ""

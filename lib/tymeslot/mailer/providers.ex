@@ -14,7 +14,9 @@ defmodule Tymeslot.Mailer.Providers do
       | `sendgrid`      | `Swoosh.Adapters.Sendgrid` | `:api`  | `SENDGRID_API_KEY` |
       | `mailgun`       | `Swoosh.Adapters.Mailgun`  | `:api`  | `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, optional `MAILGUN_BASE_URL` |
       | `ahasend`       | `Swoosh.Adapters.AhaSend`  | `:api`  | `AHASEND_API_KEY`, `AHASEND_ACCOUNT_ID` |
+      | `resend`        | `Swoosh.Adapters.Resend`   | `:api`  | `RESEND_API_KEY` |
       | `test`          | `Swoosh.Adapters.Test`     | `:dev`  | none — mail is discarded |
+      | `logger`        | `Swoosh.Adapters.Logger`   | `:dev`  | none — logs the mail, sends nothing |
       | `local`         | `Swoosh.Adapters.Local`    | `:dev`  | none — development mailbox, refused in production |
 
   `Tymeslot.Mailer.api_providers/0` treats a provider as API-key-based when
@@ -143,9 +145,31 @@ defmodule Tymeslot.Mailer.Providers do
       probe: :ahasend,
       dev_only: false
     },
+    # Sending-access keys cannot list domains. `probe: :none` means boot
+    # never calls the Resend API. The key is exercised on the first send.
+    "resend" => %{
+      label: "Resend",
+      adapter: Swoosh.Adapters.Resend,
+      required_config: [:api_key],
+      env_vars: %{api_key: "RESEND_API_KEY"},
+      optional_env_vars: [],
+      kind: :api,
+      probe: :none,
+      dev_only: false
+    },
     "test" => %{
       label: "Test",
       adapter: Swoosh.Adapters.Test,
+      required_config: [],
+      env_vars: %{},
+      optional_env_vars: [],
+      kind: :dev,
+      probe: :none,
+      dev_only: false
+    },
+    "logger" => %{
+      label: "Logger",
+      adapter: Swoosh.Adapters.Logger,
       required_config: [],
       env_vars: %{},
       optional_env_vars: [],
@@ -251,6 +275,37 @@ defmodule Tymeslot.Mailer.Providers do
 
       {:error, reason} ->
         raise ArgumentError, "EMAIL_ADAPTER=#{String.trim(name)} is not usable: #{reason}"
+    end
+  end
+
+  @doc """
+  Picks the adapter name for this environment.
+
+  In production a present `RESEND_API_KEY` selects Resend when
+  `EMAIL_ADAPTER` is unset, blank, `smtp`, or `resend`. That is how the
+  current SMTP server switches: add the key and recreate the app
+  container. An explicit adapter other than SMTP still wins, so a
+  deployment that named Postmark, SendGrid, Mailgun, or AhaSend is left
+  alone. Without the key, the previous SMTP choice is unchanged.
+
+  Outside production the key does not override an explicit adapter. The
+  test environment never reaches this function: `config/test.exs` pins
+  `Swoosh.Adapters.Test`.
+  """
+  @spec choose(atom(), String.t() | nil, String.t() | nil) :: String.t() | nil
+  def choose(:prod, explicit, resend_key) do
+    cond do
+      is_binary(resend_key) and explicit in [nil, "smtp", "resend"] -> "resend"
+      is_binary(explicit) -> explicit
+      true -> nil
+    end
+  end
+
+  def choose(_env, explicit, resend_key) do
+    cond do
+      is_binary(explicit) -> explicit
+      is_binary(resend_key) -> "resend"
+      true -> nil
     end
   end
 
@@ -398,8 +453,17 @@ defmodule Tymeslot.Mailer.Providers do
     end
   end
 
+  defp build_config("resend") do
+    # The configured key is send-only. Do not add a domains lookup here:
+    # that endpoint returns 401/403 for a sending key and would fail boot.
+    with {:ok, api_key} <- env_present("RESEND_API_KEY") do
+      {:ok, [adapter: Swoosh.Adapters.Resend, api_key: api_key]}
+    end
+  end
+
   defp build_config("test"), do: {:ok, [adapter: Swoosh.Adapters.Test]}
   defp build_config("local"), do: {:ok, [adapter: Swoosh.Adapters.Local]}
+  defp build_config("logger"), do: {:ok, [adapter: Swoosh.Adapters.Logger, level: :info]}
 
   # Absent means "not configured" and is recoverable; set-but-blank is a
   # mistake worth stopping for, in every environment.

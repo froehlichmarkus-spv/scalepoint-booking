@@ -18,6 +18,8 @@ defmodule Tymeslot.Mailer do
 
   import Swoosh.Email, only: [put_private: 3, put_provider_option: 3]
 
+  alias Tymeslot.Emails.Shared.DsMail
+  alias Tymeslot.Emails.Shared.MjmlEmail
   alias Tymeslot.Mailer.Providers
 
   @tracking_key :tymeslot_tracking
@@ -47,8 +49,17 @@ defmodule Tymeslot.Mailer do
 
   def deliver(%Swoosh.Email{} = email, config) do
     email
+    |> ensure_text_footer()
     |> apply_tracking(config)
     |> super(config)
+  end
+
+  defp ensure_text_footer(%Swoosh.Email{text_body: text} = email) do
+    locale = MjmlEmail.mail_locale(email) || Gettext.get_locale(TymeslotWeb.Gettext)
+
+    Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
+      %{email | text_body: DsMail.append_text_footer(text)}
+    end)
   end
 
   @spec apply_tracking(Swoosh.Email.t(), Keyword.t()) :: Swoosh.Email.t()

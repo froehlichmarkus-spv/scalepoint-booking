@@ -149,7 +149,6 @@ msgstr "SZCZEGÓŁY ODWOŁANEGO SPOTKANIA:"
 msgid "CANCELLED SPOT:"
 msgstr "ODWOŁANE MIEJSCE:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
@@ -727,3 +726,13 @@ msgstr "Spotkanie odwołane: %{name} rezygnuje z miejsca – %{date}"
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "Nikt inny nie potwierdził miejsca w poprzednim terminie, więc tamto spotkanie zostało odwołane."
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Refund"
+msgstr "Zwrócono"
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Total"
+msgstr ""

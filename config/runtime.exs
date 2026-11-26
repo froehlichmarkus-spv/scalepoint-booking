@@ -367,13 +367,28 @@ if config_env() == :prod do
   email_adapter_explicit =
     "EMAIL_ADAPTER" |> System.get_env() |> Tymeslot.Mailer.Providers.blank_to_nil()
 
+  resend_api_key =
+    "RESEND_API_KEY" |> System.get_env() |> Tymeslot.Mailer.Providers.blank_to_nil()
+
+  # Nothing is delivered unless SEND_EMAILS=true. The default is off so a
+  # boot, a CI run, or a recreate cannot send mail by accident.
+  send_emails? = System.get_env("SEND_EMAILS") in ["true", "1", "yes"]
+
+  # A sending key selects Resend over the default SMTP adapter. Any other
+  # explicit EMAIL_ADAPTER still wins. See Tymeslot.Mailer.Providers.choose/3.
+  chosen_adapter =
+    if send_emails? do
+      Tymeslot.Mailer.Providers.choose(:prod, email_adapter_explicit, resend_api_key)
+    else
+      "logger"
+    end
+
   mailer_config =
     cond do
-      # Explicit adapter always wins — user knows what they want
-      email_adapter_explicit != nil ->
-        if Tymeslot.Mailer.Providers.dev_only?(email_adapter_explicit) do
+      chosen_adapter != nil ->
+        if Tymeslot.Mailer.Providers.dev_only?(chosen_adapter) do
           raise """
-          EMAIL_ADAPTER=#{String.trim(email_adapter_explicit)} is a development-only adapter.
+          EMAIL_ADAPTER=#{chosen_adapter} is a development-only adapter.
 
           Swoosh's in-memory mailbox is disabled in production, so it cannot
           deliver anything. Configure a real provider, or set EMAIL_ADAPTER=test
@@ -381,7 +396,7 @@ if config_env() == :prod do
           """
         end
 
-        Tymeslot.Mailer.Providers.build!(email_adapter_explicit)
+        Tymeslot.Mailer.Providers.build!(chosen_adapter)
 
       # Cloudron sendmail addon auto-detection (no explicit EMAIL_ADAPTER set)
       deployment_type == "cloudron" and System.get_env("CLOUDRON_MAIL_SMTP_SERVER") != nil ->
@@ -412,10 +427,13 @@ if config_env() not in [:prod, :test] do
   email_adapter_default = Application.get_env(:tymeslot, :email_adapter_default, "smtp")
 
   email_adapter =
-    "EMAIL_ADAPTER"
-    |> System.get_env()
-    |> Tymeslot.Mailer.Providers.blank_to_nil()
-    |> Kernel.||(email_adapter_default)
+    Tymeslot.Mailer.Providers.choose(
+      config_env(),
+      "EMAIL_ADAPTER"
+      |> System.get_env()
+      |> Tymeslot.Mailer.Providers.blank_to_nil(),
+      "RESEND_API_KEY" |> System.get_env() |> Tymeslot.Mailer.Providers.blank_to_nil()
+    ) || email_adapter_default
 
   # A provider whose credentials are absent falls back to the local mailbox at
   # /dev/mailbox rather than failing to boot: an unconfigured development
@@ -438,49 +456,32 @@ if config_env() not in [:prod, :test] do
   config :tymeslot, Tymeslot.Mailer, mailer_config
 end
 
-# Configure email settings
-# On Cloudron, fall back to sendmail addon values if user hasn't set EMAIL_FROM_ADDRESS
-from_email =
-  System.get_env("EMAIL_FROM_ADDRESS") ||
-    System.get_env("CLOUDRON_MAIL_FROM") ||
-    cond do
-      config_env() == :prod ->
-        raise "environment variable EMAIL_FROM_ADDRESS is missing"
+# Platform sender. MAIL_FROM / MAIL_REPLY_TO win. EMAIL_FROM_* remains the
+# fallback so a server that has not set MAIL_FROM keeps its current sender.
+# The test suite still asserts the historical sender name and address.
+mail_identity =
+  if config_env() == :test do
+    test_from = System.get_env("EMAIL_FROM_ADDRESS") || "hello@tymeslot.app"
 
-      config_env() == :test ->
-        "hello@tymeslot.app"
+    %{
+      from_name: System.get_env("EMAIL_FROM_NAME") || "Scheduler",
+      from_email: test_from,
+      reply_to:
+        System.get_env("MAIL_REPLY_TO") || System.get_env("EMAIL_SUPPORT_ADDRESS") || test_from
+    }
+  else
+    Tymeslot.Mailer.Identity.resolve()
+  end
 
-      true ->
-        "booking@localhost"
-    end
+from_name = mail_identity.from_name
+from_email = mail_identity.from_email
 
-# Cloudron's CLOUDRON_MAIL_FROM_DISPLAY_NAME requires supportsDisplayName in the manifest
-# (not currently set) — fall back to app name when sendmail addon is active
-from_name =
-  System.get_env("EMAIL_FROM_NAME") ||
-    (System.get_env("CLOUDRON_MAIL_FROM") && "BookDesk24") ||
-    cond do
-      config_env() == :prod ->
-        raise "environment variable EMAIL_FROM_NAME is missing"
-
-      # The test suite still asserts the historical sender name.
-      config_env() == :test ->
-        "Scheduler"
-
-      true ->
-        "BookDesk24"
-    end
-
-support_email =
-  System.get_env("EMAIL_SUPPORT_ADDRESS") ||
-    if(config_env() == :dev,
-      do: "support@scalepoint-ventures.com",
-      else: from_email
-    )
+support_email = System.get_env("EMAIL_SUPPORT_ADDRESS") || mail_identity.reply_to
 
 config :tymeslot, :email,
   from_name: from_name,
   from_email: from_email,
+  reply_to: mail_identity.reply_to,
   support_email: support_email,
   contact_recipient: System.get_env("EMAIL_CONTACT_RECIPIENT") || from_email,
   domain:

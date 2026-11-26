@@ -157,7 +157,7 @@ defmodule Tymeslot.Emails.EmailServiceTest do
       email = next_email()
       assert email.to == [{"Test User", "owner@example.com"}]
       assert email.subject == "You already have a Tymeslot account"
-      assert email.text_body =~ "tried to create a new Tymeslot account with this email address"
+      assert email.text_body =~ "tried to create a new BookDesk24 account with this email address"
       assert email.html_body =~ ~s(href="#{sign_in_url}")
       assert email.html_body =~ ~s(href="#{reset_url}")
       assert email.text_body =~ reset_url

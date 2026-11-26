@@ -174,16 +174,6 @@ msgstr "Запит на зміну електронної пошти на: %{new
 msgid "For security, a copy of this confirmation was sent to your previous email address."
 msgstr "З міркувань безпеки копію цього підтвердження надіслано на вашу попередню адресу електронної пошти."
 
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for Tymeslot, no further action is needed."
-msgstr "З міркувань безпеки це посилання дійсне протягом 24 годин. Якщо ви не реєструвалися в Tymeslot, жодних додаткових дій не потрібно."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for Tymeslot, you can ignore this email."
-msgstr "З міркувань безпеки це посилання дійсне протягом 24 годин. Якщо ви не реєструвалися в Tymeslot, можете проігнорувати цей лист."
-
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Forgot your password? Reset it here."
@@ -218,11 +208,6 @@ msgstr "Якщо ви не просили скинути пароль, прос�
 #, elixir-autogen, elixir-format
 msgid "If you didn't request this change, your account is still secure - you can simply delete this email."
 msgstr "Якщо ви не запитували цю зміну, ваш обліковий запис у безпеці – ви можете просто видалити цей лист."
-
-#: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Instructions to reset your Tymeslot password."
-msgstr "Інструкції для скидання пароля Tymeslot."
 
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
@@ -429,7 +414,6 @@ msgstr "Це посилання дійсне 24 години. Якщо ви не
 msgid "This link expires in 24 hours. Once confirmed, you'll sign in with your new email address."
 msgstr "Це посилання дійсне 24 години. Після підтвердження ви зможете входити з новою адресою електронної пошти."
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "This link is valid for the next 2 hours."
@@ -490,21 +474,6 @@ msgstr "Повідомляємо на випадок, якщо це були н�
 #, elixir-autogen, elixir-format
 msgid "Welcome"
 msgstr "Вітаємо"
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to Tymeslot"
-msgstr "Ласкаво просимо до Tymeslot"
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to Tymeslot - please verify your email."
-msgstr "Ласкаво просимо до Tymeslot – будь ласка, підтвердьте свою електронну пошту."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to Tymeslot!"
-msgstr "Ласкаво просимо до Tymeslot!"
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -795,3 +764,28 @@ msgstr "Адміністратор створив для вас облікови
 #, elixir-autogen, elixir-format
 msgid "Your Tymeslot account is ready. Accept the invitation to sign in."
 msgstr "Ваш обліковий запис Tymeslot готовий. Прийміть запрошення, щоб увійти."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Confirm your email"
+msgstr "Підтвердьте нову електронну адресу"
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "For your security, this link expires in 24 hours. If you didn't create an account, no further action is needed."
+msgstr "З міркувань безпеки це посилання дійсне протягом 24 годин. Якщо ви не реєструвалися в Tymeslot, жодних додаткових дій не потрібно."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "For your security, this link expires in 24 hours. If you didn't create an account, you can ignore this email."
+msgstr "З міркувань безпеки це посилання дійсне протягом 24 годин. Якщо ви не реєструвалися в Tymeslot, жодних додаткових дій не потрібно."
+
+#: lib/tymeslot/emails/templates/password_reset.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Instructions to reset your password."
+msgstr "Інструкції для скидання пароля Tymeslot."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Please verify your email address."
+msgstr ""

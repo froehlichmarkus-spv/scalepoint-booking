@@ -185,8 +185,8 @@ defmodule Tymeslot.Workers.PollManagementEmailsTest do
       assert host_email == ctx.user.email
       assert email.text_body =~ "your reply goes straight to"
 
-      # A host whose address is the instance's own sender gets no Reply-To, so
-      # a reply would never reach them and the email does not ask for one.
+      # A host whose address is the instance sender is not the Reply-To.
+      # A reply goes to the platform mailbox instead.
       Repo.update!(Changeset.change(ctx.user, email: MjmlEmail.fetch_from_email()))
       other = insert(:poll, user: ctx.user, status: :open, title: "Second")
       insert(:poll_participant, poll: other, email: "grace@example.com")
@@ -196,7 +196,7 @@ defmodule Tymeslot.Workers.PollManagementEmailsTest do
                perform_job(EmailWorker, cancellation_args(other))
 
       assert_receive {:email, quiet}, 1000
-      assert quiet.reply_to == nil
+      assert quiet.reply_to == {"", Application.get_env(:tymeslot, :email)[:reply_to]}
       refute quiet.text_body =~ "reply"
     end
 

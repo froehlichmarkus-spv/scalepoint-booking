@@ -148,7 +148,6 @@ msgstr "DETAILS ZUM ABGESAGTEN TERMIN:"
 msgid "CANCELLED SPOT:"
 msgstr "STORNIERTER PLATZ:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
@@ -723,3 +722,13 @@ msgstr "Termin abgesagt: %{name} hat storniert - %{date}"
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "Zum früheren Zeitpunkt hat sonst niemand einen Platz bestätigt, daher wurde jener Termin abgesagt."
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Refund"
+msgstr "Erstattung"
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Total"
+msgstr "Summe"

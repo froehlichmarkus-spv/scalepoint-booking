@@ -55,7 +55,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
         AdminAlert.render("ops@example.com", "General", :warning, "Test alert", %{}).html_body
 
       assert html =~ "<!doctype html>"
-      assert html =~ "<title>Tymeslot Admin Alert</title>"
+      assert html =~ "<title>BookDesk24 Admin Alert</title>"
       assert html =~ "Test alert"
       assert String.ends_with?(String.trim(html), "</html>")
     end

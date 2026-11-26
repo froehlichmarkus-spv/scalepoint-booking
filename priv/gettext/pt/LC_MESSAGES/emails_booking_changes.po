@@ -148,7 +148,6 @@ msgstr "DETALHES DO COMPROMISSO CANCELADO:"
 msgid "CANCELLED SPOT:"
 msgstr "VAGA CANCELADA:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
@@ -723,3 +722,13 @@ msgstr "Reunião cancelada: %{name} cancelou - %{date}"
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "Ninguém mais tem vaga confirmada no horário anterior, então aquela reunião foi cancelada."
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Refund"
+msgstr "Reembolsado"
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Total"
+msgstr ""

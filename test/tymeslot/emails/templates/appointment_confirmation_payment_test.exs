@@ -147,7 +147,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmationPaymentTest do
 
       assert email.html_body =~ "You received"
       assert email.html_body =~ "€49.75"
-      assert email.html_body =~ "Tymeslot platform fee"
+      assert email.html_body =~ "BookDesk24 platform fee"
     end
 
     # The amount still includes Stripe's processing fees, which Stripe takes

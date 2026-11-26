@@ -613,7 +613,13 @@ defmodule Tymeslot.Brands do
   end
 
   defp protected_ranges(text) do
-    [~r/href\s*=\s*(?:"[^"]*"|'[^']*')/i, ~r/https?:\/\/[^\s<>"']+/i, ~r/mailto:[^\s<>"']+/i]
+    [
+      ~r/href\s*=\s*(?:"[^"]*"|'[^']*')/i,
+      ~r/https?:\/\/[^\s<>"']+/i,
+      ~r/mailto:[^\s<>"']+/i,
+      ~r/<span class="legal-entity">.*?<\/span>/s,
+      ~r/ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finland · Business ID 3620767-9/
+    ]
     |> Enum.flat_map(&ranges(&1, text))
     |> Kernel.++(ranges(~r/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/, text))
     |> Kernel.++(

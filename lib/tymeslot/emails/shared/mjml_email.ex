@@ -23,10 +23,13 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   alias Swoosh.Attachment
   alias Tymeslot.Brands
   alias Tymeslot.Emails.Branding
-  alias Tymeslot.Emails.Shared.{AvatarHelper, Frame, Sanitise, Stage, Styles, Urls}
+  alias Tymeslot.Emails.Shared.{AvatarHelper, Frame, Sanitise, Stage, Styles}
   alias Tymeslot.Emails.Shared.Styles.{CSS, Tokens}
+  alias Tymeslot.Infrastructure.Logging.LogFormat
   alias Tymeslot.Mailer
   alias Tymeslot.Mailer.Providers
+
+  @locale_key :tymeslot_mail_locale
 
   use Gettext, backend: TymeslotWeb.Gettext
 
@@ -96,9 +99,16 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
     new()
     |> from({fetch_from_name(), fetch_from_email()})
+    |> reply_to({"", fetch_reply_to()})
     |> Mailer.put_tracking(tracking)
-    |> attach_logo()
+    |> put_private(@locale_key, Gettext.get_locale(TymeslotWeb.Gettext))
+    |> attach_headers()
+    |> maybe_attach_custom_logo()
   end
+
+  @doc "The locale stashed by `base_email/1`, for the plain-text footer."
+  @spec mail_locale(Swoosh.Email.t()) :: String.t() | nil
+  def mail_locale(%Swoosh.Email{private: private}), do: private[@locale_key]
 
   @doc """
   Sets `Reply-To` to the other party of a booking, so that a reply reaches
@@ -140,18 +150,121 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   # is the only value that renders correctly across all four.
   @logo_cid "bookdesk24-logo.png"
 
-  @doc "The Content-ID used for the inline logo attachment."
+  # Same shape as the suite asset notes: `header-light@booking.scalepoint`.
+  # Resend sends this as `content_id`. The filename stays the PNG name.
+  @header_cids %{
+    "header-booking-light@2x.png" => "header-booking-light@booking.scalepoint",
+    "header-booking-dark@2x.png" => "header-booking-dark@booking.scalepoint"
+  }
+
+  @doc "The Content-ID used for a tenant's own logo, when one is uploaded."
   @spec logo_cid() :: String.t()
   def logo_cid, do: @logo_cid
 
-  @doc """
-  Attaches the instance logo as an inline image — the custom logo when a
-  self-hosted instance has uploaded one, the stock Tymeslot logo otherwise.
-  Swallowed silently if neither PNG can be read: the email still sends, the
-  logo simply won't render.
+  @doc "Content-ID for a suite header PNG."
+  @spec header_cid(String.t()) :: String.t()
+  def header_cid(filename), do: Map.fetch!(@header_cids, filename)
 
-  The filename and cid stay fixed regardless of which logo is attached, for
-  the ESP-compatibility reason documented on `@logo_cid`.
+  @doc "Header PNG filename and Content-ID pairs, light then dark."
+  @spec header_assets() :: [{String.t(), String.t()}]
+  def header_assets,
+    do: [
+      {"header-booking-light@2x.png", header_cid("header-booking-light@2x.png")},
+      {"header-booking-dark@2x.png", header_cid("header-booking-dark@2x.png")}
+    ]
+
+  @doc """
+  Compiles a body fragment to HTML.
+
+  The fragment is the caller's MJML sections. The suite shell in
+  `Tymeslot.Emails.Shared.DsMail` supplies the header, eyebrow, and footer,
+  so this document has no stage band and no logo header of its own.
+  """
+  @spec compile_fragment(String.t()) :: String.t()
+  def compile_fragment(mjml_content) do
+    mjml = """
+    <mjml>
+      <mj-head>
+        <mj-attributes>
+          <mj-all font-family="Geist, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" />
+          <mj-text font-size="15px" line-height="24px" color="#3C4656" />
+          <mj-button border-radius="10px" font-weight="600" inner-padding="0 26px" />
+        </mj-attributes>
+      </mj-head>
+      <mj-body background-color="#FFFFFF" width="520px">
+        #{mjml_content}
+      </mj-body>
+    </mjml>
+    """
+
+    mjml
+    |> compile_mjml()
+    |> extract_body()
+  end
+
+  defp extract_body(html) do
+    case Regex.run(~r/<body[^>]*>(.*)<\/body>/s, html) do
+      [_all, inner] -> inner
+      _other -> html
+    end
+  end
+
+  defp attach_headers(email) do
+    Enum.reduce(header_assets(), email, fn {filename, cid}, email ->
+      path = Path.join([:code.priv_dir(:tymeslot), "static", "images", "email", filename])
+
+      case File.read(path) do
+        {:ok, bytes} ->
+          attachment(
+            email,
+            Attachment.new(
+              {:data, bytes},
+              filename: filename,
+              content_type: "image/png",
+              type: :inline,
+              cid: cid
+            )
+          )
+
+        {:error, reason} ->
+          Logger.warning("Email header image could not be read",
+            path: path,
+            reason: LogFormat.reason(reason)
+          )
+
+          email
+      end
+    end)
+  end
+
+  defp maybe_attach_custom_logo(email) do
+    case Branding.custom_logo_path() do
+      path when is_binary(path) ->
+        case File.read(path) do
+          {:ok, bytes} ->
+            attachment(
+              email,
+              Attachment.new(
+                {:data, bytes},
+                filename: @logo_cid,
+                content_type: "image/png",
+                type: :inline,
+                cid: @logo_cid
+              )
+            )
+
+          _error ->
+            email
+        end
+
+      _other ->
+        email
+    end
+  end
+
+  @doc """
+  Attaches the stock or uploaded logo. The suite shell uses the header
+  images instead. Kept for callers that still want the mark as its own part.
   """
   @spec attach_logo(Swoosh.Email.t()) :: Swoosh.Email.t()
   def attach_logo(email) do
@@ -178,21 +291,59 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
     end
   end
 
-  @doc "Returns the configured from-email."
+  @doc """
+  The platform from-address.
+
+  A tenant that is not the house brand keeps its own sender address.
+  The house brand sends as `MAIL_FROM` / `EMAIL_FROM_ADDRESS`, so one
+  verified domain carries SPF and DKIM.
+  """
   @spec fetch_from_email() :: String.t()
   def fetch_from_email do
     case Brands.mail_identity() do
-      %{sender_email: email} when is_binary(email) and email != "" -> email
-      _unused -> get_config_email_setting(:from_email)
+      %{house_brand: false, sender_email: email} when is_binary(email) and email != "" ->
+        email
+
+      _unused ->
+        get_config_email_setting(:from_email)
     end
   end
 
-  @doc "Returns the configured from-name."
+  @doc """
+  Display name on `From`.
+
+  A white-label tenant's `sender_name` wins when it is set. The house
+  brand uses the platform name (`MAIL_FROM`, default BookDesk24).
+  """
   @spec fetch_from_name() :: String.t()
   def fetch_from_name do
     case Brands.mail_identity() do
-      %{sender_name: name} when is_binary(name) and name != "" -> name
-      _unused -> get_config_email_setting(:from_name)
+      %{house_brand: false, sender_name: name} when is_binary(name) and name != "" ->
+        name
+
+      _unused ->
+        get_config_email_setting(:from_name) || "BookDesk24"
+    end
+  end
+
+  @doc """
+  Reply-To used when a template does not name the other party.
+
+  A white-label tenant does not advertise the house support address.
+  """
+  @spec fetch_reply_to() :: String.t()
+  def fetch_reply_to do
+    address =
+      get_config_email_setting(:reply_to) ||
+        get_config_email_setting(:support_email) ||
+        "support@scalepoint-ventures.com"
+
+    case Brands.mail_identity() do
+      %{house_brand: false, sender_email: email} when is_binary(email) and email != "" ->
+        if Brands.leak?(address), do: email, else: address
+
+      _unused ->
+        address
     end
   end
 
@@ -250,23 +401,38 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   """
   @spec logo_header() :: String.t()
   def logo_header do
-    """
-    <mj-section
-      padding="4px 0 22px 0"
-      background-color="#{Styles.canvas()}"
-      css-class="email-canvas"
-    >
-      <mj-column>
+    alt = Sanitise.sanitize_for_email(Branding.brand_name())
+
+    plate =
+      if Branding.custom_logo_path() do
+        """
         <mj-image
           src="cid:#{@logo_cid}"
-          alt="#{Sanitise.sanitize_for_email(Branding.brand_name())}"
-          href="#{Urls.get_app_url()}"
+          alt="#{alt}"
           width="150px"
           align="center"
-          padding="0"
+          padding="12px 0 0 0"
           border="0"
           css-class="#{CSS.logo_plate_class()}"
         />
+        """
+      else
+        ""
+      end
+
+    """
+    <mj-section padding="0" background-color="#{Styles.canvas()}" css-class="email-canvas">
+      <mj-column>
+        <mj-image
+          src="cid:#{header_cid("header-booking-light@2x.png")}"
+          alt="#{alt}"
+          width="600px"
+          align="center"
+          padding="0"
+          border="0"
+          css-class="hdr-l"
+        />
+        #{plate}
       </mj-column>
     </mj-section>
     """

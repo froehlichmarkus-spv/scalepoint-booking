@@ -31,8 +31,10 @@ defmodule Tymeslot.Mailer.ProvidersTest do
       assert Providers.names() == [
                "ahasend",
                "local",
+               "logger",
                "mailgun",
                "postmark",
+               "resend",
                "sendgrid",
                "smtp",
                "test"
@@ -55,8 +57,10 @@ defmodule Tymeslot.Mailer.ProvidersTest do
       assert Enum.sort(Map.keys(all)) == [
                "ahasend",
                "local",
+               "logger",
                "mailgun",
                "postmark",
+               "resend",
                "sendgrid",
                "smtp",
                "test"
@@ -69,7 +73,7 @@ defmodule Tymeslot.Mailer.ProvidersTest do
       error = assert_raise(ArgumentError, fn -> Providers.fetch!("mailchimp") end)
 
       assert error.message =~ ~s(Unknown EMAIL_ADAPTER: "mailchimp")
-      assert error.message =~ "ahasend, local, mailgun, postmark, sendgrid, smtp, test"
+      assert error.message =~ "ahasend, local, logger, mailgun, postmark, resend, sendgrid, smtp, test"
       assert error.message =~ "EMAIL_ADAPTER=smtp"
     end
   end
@@ -494,6 +498,43 @@ defmodule Tymeslot.Mailer.ProvidersTest do
     test "providers without tracking options are left alone" do
       assert Providers.tracking_options(Tymeslot.Mailer.SMTPAdapter, :marketing) == []
       assert Providers.tracking_options(Swoosh.Adapters.Test, :lifecycle) == []
+      assert Providers.tracking_options(Swoosh.Adapters.Resend, :marketing) == []
+    end
+  end
+
+  describe "resend" do
+    test "builds from RESEND_API_KEY and does not read a domain" do
+      with_env([{"RESEND_API_KEY", "re_test_sending_key"}], fn ->
+        assert {:ok, config} = Providers.build("resend")
+        assert config[:adapter] == Swoosh.Adapters.Resend
+        assert config[:api_key] == "re_test_sending_key"
+        refute Keyword.has_key?(config, :domain)
+      end)
+    end
+
+    test "reports a missing key without calling the network" do
+      with_env([{"RESEND_API_KEY", nil}], fn ->
+        assert {:error, message} = Providers.build("resend")
+        assert message =~ "RESEND_API_KEY is not set"
+      end)
+    end
+
+    test "a sending key selects Resend over SMTP in production" do
+      assert Providers.choose(:prod, "smtp", "re_test") == "resend"
+      assert Providers.choose(:prod, nil, "re_test") == "resend"
+    end
+
+    test "an explicit non-SMTP adapter still wins in production" do
+      assert Providers.choose(:prod, "postmark", "re_test") == "postmark"
+    end
+
+    test "production without the key keeps SMTP" do
+      assert Providers.choose(:prod, "smtp", nil) == "smtp"
+      assert Providers.choose(:prod, nil, nil) == nil
+    end
+
+    test "boot probe is none, so a sending key is not asked to list domains" do
+      assert Providers.fetch!("resend").probe == :none
     end
   end
 

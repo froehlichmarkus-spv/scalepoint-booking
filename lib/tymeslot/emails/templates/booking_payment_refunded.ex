@@ -114,7 +114,18 @@ defmodule Tymeslot.Emails.Templates.BookingPaymentRefunded do
               do: dgettext("emails_booking_changes", "Your payment was refunded."),
               else: dgettext("emails_booking_changes", "A partial refund was issued.")
             ),
-          stage_subtitle: refund_subtitle(context, refunded_amount)
+          stage_subtitle: refund_subtitle(context, refunded_amount),
+          invoice: %{
+            plan: "BookDesk24",
+            invoice_no: "",
+            status: dgettext("emails_booking_changes", "Refunded"),
+            tone: :success,
+            line: dgettext("emails_booking_changes", "Refund"),
+            amount: refunded_amount,
+            total_label: dgettext("emails_booking_changes", "Total"),
+            total: refunded_amount,
+            note: ""
+          }
         )
 
       html_body = TemplateHelper.compile_template(mjml_content, organizer_details)

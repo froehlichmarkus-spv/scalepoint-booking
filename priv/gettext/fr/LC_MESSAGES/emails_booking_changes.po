@@ -148,7 +148,6 @@ msgstr "DÉTAILS DU RENDEZ-VOUS ANNULÉ :"
 msgid "CANCELLED SPOT:"
 msgstr "PLACE ANNULÉE :"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
@@ -723,3 +722,13 @@ msgstr "Réunion annulée : %{name} a annulé - %{date}"
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "Personne d’autre n’a confirmé sa place à l’horaire précédent : cette réunion a donc été annulée."
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Refund"
+msgstr "Remboursé"
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Total"
+msgstr ""

@@ -174,16 +174,6 @@ msgstr "Se pidió cambiar el correo a %{new_email}"
 msgid "For security, a copy of this confirmation was sent to your previous email address."
 msgstr "Por seguridad, se envió una copia de esta confirmación a tu correo anterior."
 
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for Tymeslot, no further action is needed."
-msgstr "Por seguridad, este enlace expira en 24 horas. Si no te registraste en Tymeslot, no hace falta que hagas nada."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't sign up for Tymeslot, you can ignore this email."
-msgstr "Por seguridad, este enlace expira en 24 horas. Si no te registraste en Tymeslot, puedes pasar por alto este correo."
-
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Forgot your password? Reset it here."
@@ -218,11 +208,6 @@ msgstr "Si no pediste restablecer tu contraseña, puedes pasar por alto este cor
 #, elixir-autogen, elixir-format
 msgid "If you didn't request this change, your account is still secure - you can simply delete this email."
 msgstr "Si no pediste este cambio, tu cuenta sigue segura: basta con que borres este correo."
-
-#: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Instructions to reset your Tymeslot password."
-msgstr "Cómo restablecer tu contraseña de Tymeslot."
 
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
@@ -429,7 +414,6 @@ msgstr "Este enlace expira en 24 horas. Si no te registraste en Tymeslot, puedes
 msgid "This link expires in 24 hours. Once confirmed, you'll sign in with your new email address."
 msgstr "Este enlace expira en 24 horas. Después de confirmar, usarás tu nuevo correo para iniciar sesión."
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "This link is valid for the next 2 hours."
@@ -490,21 +474,6 @@ msgstr "Te lo comunicamos por si no fuiste tú."
 #, elixir-autogen, elixir-format
 msgid "Welcome"
 msgstr "Te damos la bienvenida"
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to Tymeslot"
-msgstr "Te damos la bienvenida a Tymeslot"
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to Tymeslot - please verify your email."
-msgstr "Te damos la bienvenida a Tymeslot. Verifica tu correo."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Welcome to Tymeslot!"
-msgstr "Te damos la bienvenida a Tymeslot"
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -795,3 +764,28 @@ msgstr "Un administrador ha creado una cuenta de Tymeslot para ti. Acepta la inv
 #, elixir-autogen, elixir-format
 msgid "Your Tymeslot account is ready. Accept the invitation to sign in."
 msgstr "Tu cuenta de Tymeslot está lista. Acepta la invitación para iniciar sesión."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Confirm your email"
+msgstr "Confirma tu nuevo correo"
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "For your security, this link expires in 24 hours. If you didn't create an account, no further action is needed."
+msgstr "Por seguridad, este enlace expira en 24 horas. Si no te registraste en Tymeslot, no hace falta que hagas nada."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "For your security, this link expires in 24 hours. If you didn't create an account, you can ignore this email."
+msgstr "Por seguridad, este enlace expira en 24 horas. Si no te registraste en Tymeslot, no hace falta que hagas nada."
+
+#: lib/tymeslot/emails/templates/password_reset.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Instructions to reset your password."
+msgstr "Cómo restablecer tu contraseña de Tymeslot."
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Please verify your email address."
+msgstr ""

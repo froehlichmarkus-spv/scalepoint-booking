@@ -67,18 +67,22 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSection do
         </mj-text>
         <mj-button
           href="#{safe_url}"
-          background-color="#{tokens.accent_deep}"
-          color="#{Styles.button_text_color(tokens.accent_deep)}"
-          font-weight="700"
+          background-color="#111E32"
+          color="#FFFFFF"
+          font-weight="600"
           font-size="15px"
           align="left"
           width="auto"
-          inner-padding="13px 24px"
-          border-radius="#{Styles.radius(:pill)}"
-          css-class="mobile-button"
+          inner-padding="0 26px"
+          border-radius="10px"
+          css-class="btn mobile-button"
         >
           #{safe_button_text}
         </mj-button>
+        <mj-text font-size="13px" color="#5B6372" align="left" padding="8px 0 0 0" line-height="20px">
+          #{dgettext("emails", "Button not working? Paste this link into your browser:")}<br/>
+          <a href="#{safe_url}" class="lk" style="color:#0B6E66;word-break:break-all">#{safe_url}</a>
+        </mj-text>
       </mj-column>
     </mj-section>
     """)

@@ -149,7 +149,6 @@ msgstr "ÚDAJE O ZRUŠENÉ SCHŮZCE:"
 msgid "CANCELLED SPOT:"
 msgstr "ZRUŠENÉ MÍSTO:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format
@@ -727,3 +726,13 @@ msgstr "Schůzka zrušena: %{name} zrušil(a) - %{date}"
 #, elixir-autogen, elixir-format
 msgid "No one else has confirmed a spot at the earlier time, so that meeting has been cancelled."
 msgstr "V původním termínu nemá nikdo další potvrzené místo, takže tamní schůzka byla zrušena."
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Refund"
+msgstr "Vráceno"
+
+#: lib/tymeslot/emails/templates/booking_payment_refunded.ex
+#, elixir-autogen, elixir-format
+msgid "Total"
+msgstr ""
