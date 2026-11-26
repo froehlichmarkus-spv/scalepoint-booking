@@ -9,7 +9,7 @@ Verify und der Secret-Scan liefen nach `a47d8b1` nicht mehr, weil der Pull Reque
 | Kriterium | Score | Warum |
 |---|---|---|
 | 1 Visual | 9 | Geist, Navy und Amber-Ink. Wortmarke bricht nicht mehr. Kalender-Button ist ein Strich-Icon. Tarif und Shell nutzen die v2.5-Flächen. |
-| 2 Consistency | 9 | Die vier gemeldeten CSS-Dateien haben kein Roh-Hex mehr. Abstände und Radien kommen aus `--gos-*`. Hero-Namen aus der Antwort zeigen Lucide, nicht mehr `i-info`. |
+| 2 Consistency | 9 | Die vier gemeldeten CSS-Dateien lesen `--gos-*`. `brand-tokens.css` behält die Hell-Werte von v2.5 nur als Fallback, weil der Scheduling-Check ein nacktes `var()` ohne Definition ablehnt. Die alten Werte `#469189`, `#3a7872` und `#65758b` sind weg. Hero-Namen aus der Antwort zeigen Lucide, nicht mehr `i-info`. |
 | 3 Usability | 9 | Leere Listen haben einen nächsten Schritt. Buchung validiert inline. Zerstören läuft über das Modal mit Fokusfalle. Billing sagt, was zu tun ist. |
 | 4 Accessibility | 9 | axe serious/critical 0 auf Auth, Übersicht und Buchung, 1440 und 390. Geschlossene Schublade ist `inert` und `aria-hidden`, Escape schliesst, Tab bleibt in der offenen Schublade. Touch-Ziele sind 44px unter 640px. |
 | 5 States | 9 | Skeleton, leer, Fehler mit erneut versuchen, Bestätigung, gesperrte Abrechnung. Daten, die schon im ersten HTML stehen, brauchen keinen zweiten Ladezustand. |
