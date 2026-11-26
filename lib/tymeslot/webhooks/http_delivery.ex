@@ -5,9 +5,10 @@ defmodule Tymeslot.Webhooks.HttpDelivery do
   Req's built-in redirect step is disabled so that each hop is independently
   re-validated by `Tymeslot.Webhooks.SsrfValidator` — a 3xx from a public
   host therefore cannot redirect the request to loopback or link-local
-  ranges that the initial validation rejected. Sensitive request headers
-  (`X-Tymeslot-Token`, `Authorization`) are stripped when a redirect crosses
-  origins so they cannot leak to a third-party host.
+  ranges that the initial validation rejected.   Sensitive request headers
+  (`X-BookDesk24-Token`, the legacy token headers, and `Authorization`) are
+  stripped when a redirect crosses origins so they cannot leak to a
+  third-party host.
   """
 
   require Logger
@@ -15,6 +16,7 @@ defmodule Tymeslot.Webhooks.HttpDelivery do
   alias Tymeslot.Infrastructure.Config
   alias Tymeslot.Infrastructure.RedirectLocation
   alias Tymeslot.Security.ConnectionPinning
+  alias Tymeslot.Webhooks.Headers
   alias Tymeslot.Webhooks.SsrfValidator
 
   @delivery_timeout_ms 10_000
@@ -120,9 +122,8 @@ defmodule Tymeslot.Webhooks.HttpDelivery do
       headers
     else
       Enum.reject(headers, fn
-        {"X-Tymeslot-Token", _value} -> true
         {"Authorization", _value} -> true
-        _other -> false
+        {name, _value} -> Headers.sensitive_token?(name)
       end)
     end
   end

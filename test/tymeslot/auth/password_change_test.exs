@@ -299,13 +299,16 @@ defmodule Tymeslot.Auth.PasswordChangeTest do
     end
 
     test "applies the shared password policy to the new password", %{user: user} do
-      # Long enough, but missing the special character the policy requires.
-      assert {:error, %{new_password: "Password must contain at least one special character"}} =
+      assert {:error,
+              %{
+                new_password:
+                  "This password has appeared in a data breach. Choose a different one."
+              }} =
                Auth.update_user_password(
                  user,
                  "CurrentPass123!",
-                 "NewPass4567",
-                 "NewPass4567",
+                 "password",
+                 "password",
                  ClientIP.request_opts(%Plug.Conn{})
                )
     end

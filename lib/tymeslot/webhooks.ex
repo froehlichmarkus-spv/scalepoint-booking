@@ -22,6 +22,7 @@ defmodule Tymeslot.Webhooks do
   alias Tymeslot.Security.EncryptedString
 
   alias Tymeslot.Webhooks.{
+    Headers,
     HttpDelivery,
     MeetingSnapshot,
     PayloadBuilder,
@@ -165,16 +166,15 @@ defmodule Tymeslot.Webhooks do
     with {:ok, webhook} <- WebhookQueries.get_webhook(id, user_id), do: fun.(webhook)
   end
 
-  @signature_header "X-Tymeslot-Signature"
-
   @doc """
   Builds the standard headers for a webhook request whose body is `body`, the
   exact bytes that will be posted.
 
-  With a token, the request carries it in `X-Tymeslot-Token` and is signed in
-  `X-Tymeslot-Signature` (see `sign/3`), so a receiver can check that the body
-  and timestamp it got are the ones Tymeslot sent. The token header is kept
-  for receivers that only compare the token.
+  With a token, the request carries it in `X-BookDesk24-Token` and is signed in
+  `X-BookDesk24-Signature` (see `sign/3`), so a receiver can check that the body
+  and timestamp it got are the ones that were sent. The token header is kept
+  for receivers that only compare the token. Legacy `X-Tymeslot-*` and
+  `X-the scheduler-*` names are no longer sent; see `Tymeslot.Webhooks.Headers`.
   """
   @spec build_headers(binary(), String.t() | nil) :: [{String.t(), String.t()}]
   def build_headers(body, token) when is_binary(body) do
@@ -182,14 +182,14 @@ defmodule Tymeslot.Webhooks do
 
     base_headers = [
       {"Content-Type", "application/json"},
-      {"User-Agent", "Tymeslot-Webhooks/1.0"},
-      {"X-Tymeslot-Timestamp", DateTime.to_iso8601(now)}
+      {"User-Agent", Headers.user_agent()},
+      {Headers.timestamp(), DateTime.to_iso8601(now)}
     ]
 
     if token do
       [
-        {"X-Tymeslot-Token", token},
-        {@signature_header, sign(token, DateTime.to_unix(now), body)}
+        {Headers.token(), token},
+        {Headers.signature(), sign(token, DateTime.to_unix(now), body)}
         | base_headers
       ]
     else
@@ -198,7 +198,7 @@ defmodule Tymeslot.Webhooks do
   end
 
   @doc """
-  Returns the `X-Tymeslot-Signature` value for `body` sent at `timestamp`
+  Returns the `X-BookDesk24-Signature` value for `body` sent at `timestamp`
   (Unix seconds): `t=<timestamp>,v1=<signature>`, where the signature is the
   lowercase hex HMAC-SHA256 of `"<timestamp>.<body>"` keyed with the webhook
   token.

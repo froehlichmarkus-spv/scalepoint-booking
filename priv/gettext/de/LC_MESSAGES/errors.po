@@ -912,7 +912,28 @@ msgstr "darf bei diesem Rhythmus höchstens %{max} betragen, damit jeder Termin 
 msgid "Meeting types that ask invitees to confirm their email cannot be booked as a series."
 msgstr "Termintypen, bei denen Gäste ihre E-Mail-Adresse bestätigen, können nicht als Serie gebucht werden."
 
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Error 500"
+msgstr "Fehler 500"
+
+#: lib/tymeslot_web/controllers/error_html/404.html.heex
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Go to %{product}"
+msgstr "Weiter zu %{product}"
+
 #: lib/tymeslot_web/controllers/error_html/404.html.heex
 #, elixir-autogen, elixir-format
-msgid "Go to the scheduler"
-msgstr "Go to the scheduler"
+msgid "If you need help, write to %{email}."
+msgstr "Wenn du Hilfe brauchst, schreib an %{email}."
+
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Please try again in a moment. If it keeps happening, write to %{email}."
+msgstr "Versuch es gleich noch einmal. Wenn es so bleibt, schreib an %{email}."
+
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Something went wrong"
+msgstr "Da ist etwas schiefgelaufen"

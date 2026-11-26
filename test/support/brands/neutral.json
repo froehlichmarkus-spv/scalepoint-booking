@@ -52,7 +52,7 @@
       "bio": "An example booking page. Its name, logo, colours, sender and footer come from configuration, and can be replaced without a code change."
     },
     "de": {
-      "hero": "W\u00e4hlen Sie eine Zeit. Die Best\u00e4tigung kommt von dieser Seite.",
+      "hero": "W\u00e4hle eine Zeit. Die Best\u00e4tigung kommt von dieser Seite.",
       "bio": "Eine Beispielseite. Name, Logo, Farben, Absender und Fu\u00dfzeile stehen in der Konfiguration und lassen sich ohne Code\u00e4nderung tauschen."
     }
   },

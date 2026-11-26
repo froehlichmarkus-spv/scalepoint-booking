@@ -402,16 +402,6 @@ msgstr "Choisissez un nouveau mot de passe"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your Tymeslot account."
-msgstr "Choisissez un nouveau mot de passe fort pour votre compte Tymeslot."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
-msgstr "Créez un compte Tymeslot et commencez à partager vos disponibilités en quelques minutes. Aucune carte bancaire requise."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
 msgid "Create an Account"
 msgstr "Créer un compte"
 
@@ -424,11 +414,6 @@ msgstr "L’adresse e-mail est requise pour terminer l’inscription."
 #, elixir-autogen, elixir-format
 msgid "Email address is required to complete registration. Please provide your email address."
 msgstr "L’adresse e-mail est requise pour terminer l’inscription. Veuillez indiquer votre adresse e-mail."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your Tymeslot account."
-msgstr "Saisissez votre e-mail pour recevoir un lien de réinitialisation du mot de passe de votre compte Tymeslot."
 
 #: lib/tymeslot/auth/registration.ex
 #: lib/tymeslot_web/controllers/auth/helpers/controller_helpers.ex
@@ -455,11 +440,6 @@ msgstr "Veuillez indiquer une adresse e-mail valide."
 #, elixir-autogen, elixir-format
 msgid "Registration failed due to validation errors. Please check your information and try again."
 msgstr "L’inscription a échoué en raison d’erreurs de validation. Veuillez vérifier vos informations et réessayer."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
-msgstr "Connectez-vous à votre compte Tymeslot pour gérer vos liens de planification, vos disponibilités et vos réservations."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format
@@ -800,3 +780,23 @@ msgid "Welcome back. Your account has been restored, but %{names} needs reconnec
 msgid_plural "Welcome back. Your account has been restored, but %{names} need reconnecting. Until you reconnect them, your booking page may not offer times or take bookings."
 msgstr[0] "Bon retour parmi nous. Votre compte a été restauré, mais l’intégration %{names} doit être reconnectée. Tant que vous ne l’aurez pas reconnectée, votre page de réservation pourrait ne proposer aucun créneau ni recevoir de réservations."
 msgstr[1] "Bon retour parmi nous. Votre compte a été restauré, mais les intégrations %{names} doivent être reconnectées. Tant que vous ne les aurez pas reconnectées, votre page de réservation pourrait ne proposer aucun créneau ni recevoir de réservations."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a new password for your %{product} account."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
+msgstr "Créez un compte Tymeslot et commencez à partager vos disponibilités en quelques minutes. Aucune carte bancaire requise."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Enter your email to receive a password reset link for your %{product} account."
+msgstr "Saisissez votre e-mail pour recevoir un lien de réinitialisation du mot de passe de votre compte Tymeslot."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
+msgstr "Connectez-vous à votre compte Tymeslot pour gérer vos liens de planification, vos disponibilités et vos réservations."

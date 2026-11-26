@@ -4,9 +4,9 @@ defmodule Tymeslot.Workers.WebhookWorker do
 
   Handles:
   - HTTP POST delivery with timeout protection
-  - Signed requests: an `X-Tymeslot-Signature` HMAC-SHA256 over the
+  - Signed requests: an `X-BookDesk24-Signature` HMAC-SHA256 over the
     timestamp and the exact body posted (`Tymeslot.Webhooks.sign/3`),
-    alongside the plain `X-Tymeslot-Token`
+    alongside the plain `X-BookDesk24-Token`
   - Retries spread over hours (`backoff/1`), so a receiver that is down for
     a deploy still gets the event
   - Circuit breaker (auto-disable after consecutive failures)
@@ -25,7 +25,7 @@ defmodule Tymeslot.Workers.WebhookWorker do
   are written after the claim settles, so a log write that fails after a
   successful post cannot release the claim and post the event again.
 
-  Every request therefore carries an `X-Tymeslot-Delivery-Id` header: the
+  Every request therefore carries an `X-BookDesk24-Delivery-Id` header: the
   Oban job id, identical on every attempt of the same delivery and different
   for every other one. A receiver that records it can discard a second copy.
   """
@@ -48,6 +48,7 @@ defmodule Tymeslot.Workers.WebhookWorker do
   alias Tymeslot.Workers.MeetingNotificationJob
 
   alias Tymeslot.Webhooks.{
+    Headers,
     HttpDelivery,
     MeetingSnapshot,
     PayloadBuilder,
@@ -55,7 +56,7 @@ defmodule Tymeslot.Workers.WebhookWorker do
     WebhookSchema
   }
 
-  @delivery_id_header "X-Tymeslot-Delivery-Id"
+  @delivery_id_header Headers.delivery_id()
 
   @behaviour ExpectedJobOutcome
 

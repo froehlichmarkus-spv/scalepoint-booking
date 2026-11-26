@@ -402,16 +402,6 @@ msgstr "Scegli una nuova password"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your Tymeslot account."
-msgstr "Scegli una nuova password sicura per il tuo account Tymeslot."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
-msgstr "Crea un account Tymeslot e inizia a condividere la tua disponibilità in pochi minuti. Nessuna carta di credito richiesta."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
 msgid "Create an Account"
 msgstr "Crea un account"
 
@@ -424,11 +414,6 @@ msgstr "L'indirizzo email è obbligatorio per completare la registrazione."
 #, elixir-autogen, elixir-format
 msgid "Email address is required to complete registration. Please provide your email address."
 msgstr "L'indirizzo email è obbligatorio per completare la registrazione. Fornisci il tuo indirizzo email."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your Tymeslot account."
-msgstr "Inserisci la tua email per ricevere un link di reimpostazione della password per il tuo account Tymeslot."
 
 #: lib/tymeslot/auth/registration.ex
 #: lib/tymeslot_web/controllers/auth/helpers/controller_helpers.ex
@@ -455,11 +440,6 @@ msgstr "Fornisci un indirizzo email valido."
 #, elixir-autogen, elixir-format
 msgid "Registration failed due to validation errors. Please check your information and try again."
 msgstr "Registrazione non riuscita a causa di errori di convalida. Controlla i tuoi dati e riprova."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
-msgstr "Accedi al tuo account Tymeslot per gestire i link di pianificazione, la disponibilità e le prenotazioni."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format
@@ -800,3 +780,23 @@ msgid "Welcome back. Your account has been restored, but %{names} needs reconnec
 msgid_plural "Welcome back. Your account has been restored, but %{names} need reconnecting. Until you reconnect them, your booking page may not offer times or take bookings."
 msgstr[0] "Ti diamo il bentornato. Il tuo account è stato ripristinato, ma l'integrazione %{names} va ricollegata. Finché non la ricolleghi, la tua pagina di prenotazione potrebbe non offrire fasce orarie né ricevere prenotazioni."
 msgstr[1] "Ti diamo il bentornato. Il tuo account è stato ripristinato, ma le integrazioni %{names} vanno ricollegate. Finché non le ricolleghi, la tua pagina di prenotazione potrebbe non offrire fasce orarie né ricevere prenotazioni."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a new password for your %{product} account."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
+msgstr "Crea un account Tymeslot e inizia a condividere la tua disponibilità in pochi minuti. Nessuna carta di credito richiesta."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Enter your email to receive a password reset link for your %{product} account."
+msgstr "Inserisci la tua email per ricevere un link di reimpostazione della password per il tuo account Tymeslot."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
+msgstr "Accedi al tuo account Tymeslot per gestire i link di pianificazione, la disponibilità e le prenotazioni."

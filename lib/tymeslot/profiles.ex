@@ -35,7 +35,9 @@ defmodule Tymeslot.Profiles do
   @type uploaded_entry :: map()
   @type legal_links :: %{
           legal_notice_url: String.t() | nil,
-          privacy_policy_url: String.t() | nil
+          privacy_policy_url: String.t() | nil,
+          terms_url: String.t() | nil,
+          dpa_url: String.t() | nil
         }
   @type profile_settings :: %{
           timezone: timezone,
@@ -292,7 +294,9 @@ defmodule Tymeslot.Profiles do
   def public_legal_links(profile) do
     %{
       legal_notice_url: legal_link(profile, :legal_notice_url, :booking_legal_notice_url),
-      privacy_policy_url: legal_link(profile, :privacy_policy_url, :booking_privacy_policy_url)
+      privacy_policy_url: legal_link(profile, :privacy_policy_url, :booking_privacy_policy_url),
+      terms_url: Application.get_env(:tymeslot, :legal_terms_url),
+      dpa_url: Application.get_env(:tymeslot, :legal_dpa_url)
     }
   end
 

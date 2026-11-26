@@ -29,6 +29,7 @@
       {assigns[:page_title] || dgettext("common", "Schedule a Meeting")}
     </.live_title>
     <link rel="icon" href={Tymeslot.Brands.favicon()} />
+    <link rel="manifest" href={~p"/site.webmanifest"} />
     <%!-- Default app styles --%>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <%!-- A page with the onboarding stage fits it before the first paint:

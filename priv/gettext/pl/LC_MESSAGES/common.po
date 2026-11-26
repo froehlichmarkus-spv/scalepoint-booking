@@ -69,21 +69,6 @@ msgstr "Poznaj nowoczesne przeglądarki"
 
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
-msgid "One lowercase letter"
-msgstr "Jedna mała litera"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One number"
-msgstr "Jedna cyfra"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One uppercase letter"
-msgstr "Jedna wielka litera"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
 msgid "Password must contain:"
 msgstr "Hasło musi zawierać:"
 
@@ -196,11 +181,6 @@ msgstr "Zapisywanie zmian…"
 #, elixir-autogen, elixir-format
 msgid "At least %{count} characters"
 msgstr "Minimalna liczba znaków: %{count}"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One special character"
-msgstr "Jeden znak specjalny"
 
 #: lib/tymeslot_web/components/core_components/navigation.ex
 #, elixir-autogen, elixir-format
@@ -422,3 +402,8 @@ msgstr "Dodaj datę"
 #, elixir-autogen, elixir-format
 msgid "Add a time"
 msgstr "Dodaj godzinę"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "At most %{count} bytes"
+msgstr ""

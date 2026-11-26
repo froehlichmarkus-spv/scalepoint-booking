@@ -903,3 +903,13 @@ msgstr "%{page} avec %{name}"
 #, elixir-autogen, elixir-format
 msgid "We'll email you a link to confirm this booking."
 msgstr "Nous vous enverrons par e-mail un lien pour confirmer cette réservation."
+
+#: lib/tymeslot_web/themes/shared/components/legal_links.ex
+#, elixir-autogen, elixir-format
+msgid "Data processing agreement"
+msgstr ""
+
+#: lib/tymeslot_web/themes/shared/components/legal_links.ex
+#, elixir-autogen, elixir-format
+msgid "Terms"
+msgstr ""

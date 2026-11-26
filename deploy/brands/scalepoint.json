@@ -13,7 +13,7 @@
   "name_env": "SPV_BRAND_NAME",
   "footer": "ScalePoint Ventures",
   "footer_env": "SPV_FOOTER",
-  "powered_by": "Powered by ScalePoint Booking",
+  "powered_by": "Powered by BookDesk24",
   "logo": "/images/brand/scalepoint-logo.png",
   "chrome_logo": "/images/brand/scalepoint-booking.svg",
   "favicon": "/favicon.ico",
@@ -40,8 +40,10 @@
   "role": "Founder & Senior Strategic Lead",
   "company": "ScalePoint Ventures Oy",
   "legal": {
-    "notice": "https://scalepoint-ventures.com/en/legal-notice",
-    "privacy": "https://scalepoint-ventures.com/en/privacy"
+    "notice": "https://scalepoint-ventures.com/growthos/legal/notice",
+    "privacy": "https://scalepoint-ventures.com/growthos/legal/privacy",
+    "terms": "https://scalepoint-ventures.com/growthos/legal/terms",
+    "dpa": "https://scalepoint-ventures.com/growthos/legal/dpa"
   },
   "links": [
     {"label": "LinkedIn", "url": "https://www.linkedin.com/in/froehlichm/"},

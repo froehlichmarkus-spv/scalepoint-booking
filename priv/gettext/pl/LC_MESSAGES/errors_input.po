@@ -527,20 +527,5 @@ msgstr "Maksymalna długość hasła w bajtach: %{count}. Litery ze znakami diak
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
-msgid "Password must contain at least one lowercase letter"
-msgstr "Hasło musi zawierać co najmniej jedną małą literę"
-
-#: lib/tymeslot/security/field_validators/password_validator.ex
-#, elixir-autogen, elixir-format
-msgid "Password must contain at least one number"
-msgstr "Hasło musi zawierać co najmniej jedną cyfrę"
-
-#: lib/tymeslot/security/field_validators/password_validator.ex
-#, elixir-autogen, elixir-format
-msgid "Password must contain at least one special character"
-msgstr "Hasło musi zawierać co najmniej jeden znak specjalny"
-
-#: lib/tymeslot/security/field_validators/password_validator.ex
-#, elixir-autogen, elixir-format
-msgid "Password must contain at least one uppercase letter"
-msgstr "Hasło musi zawierać co najmniej jedną wielką literę"
+msgid "This password has appeared in a data breach. Choose a different one."
+msgstr ""

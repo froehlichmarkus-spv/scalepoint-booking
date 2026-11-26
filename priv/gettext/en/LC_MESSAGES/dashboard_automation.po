@@ -407,11 +407,6 @@ msgstr ""
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
-msgid "Verify the token in your automation tool to ensure requests are from Tymeslot."
-msgstr ""
-
-#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
-#, elixir-autogen, elixir-format
 msgid "Verify the webhook is working correctly"
 msgstr ""
 
@@ -755,4 +750,9 @@ msgstr ""
 #: lib/tymeslot/notifications/event_options.ex
 #, elixir-autogen, elixir-format
 msgid "Triggers once when you decline a series request, instead of Booking Declined for each session"
+msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Verify the token in your automation tool to ensure requests are from %{product}."
 msgstr ""

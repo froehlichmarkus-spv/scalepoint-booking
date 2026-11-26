@@ -8,10 +8,22 @@ defmodule TymeslotWeb.ErrorHTML do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Phoenix.Controller
+  alias Tymeslot.Brands
 
-  # A branded, self-contained 404 page lives in `error_html/404.html.heex` and is
-  # picked up by `embed_templates` as the `render("404.html", assigns)` clause.
-  # Every other status falls through to the plain-text clause below.
+  @doc "Product name for the branded error pages."
+  @spec product_name() :: String.t()
+  def product_name, do: Brands.product_name()
+
+  @doc "Support address shown on the branded error pages."
+  @spec support_email() :: String.t()
+  def support_email do
+    email = Application.get_env(:tymeslot, :email, [])
+    email[:support_email] || "support@scalepoint-ventures.com"
+  end
+
+  # Branded, self-contained 404 and 500 pages live in `error_html/*.html.heex`
+  # and are picked up by `embed_templates`. Every other status falls through
+  # to the plain-text clause below.
   embed_templates "error_html/*"
 
   # The default is to render a plain text page based on

@@ -49,16 +49,16 @@ defmodule Tymeslot.Workers.WebhookWorkerSecurityTest do
 
       expect(Tymeslot.HTTPClientMock, :post, fn _url, _body, headers, _opts ->
         # Verify token header is present and correct
-        token_header = Enum.find(headers, fn {key, _value} -> key == "X-Tymeslot-Token" end)
-        assert token_header, "Expected X-Tymeslot-Token header"
+        token_header = Enum.find(headers, fn {key, _value} -> key == "X-BookDesk24-Token" end)
+        assert token_header, "Expected X-BookDesk24-Token header"
         {_key, value} = token_header
         assert value == webhook.webhook_token
 
         # Verify timestamp header is present
         timestamp_header =
-          Enum.find(headers, fn {key, _value} -> key == "X-Tymeslot-Timestamp" end)
+          Enum.find(headers, fn {key, _value} -> key == "X-BookDesk24-Timestamp" end)
 
-        assert timestamp_header, "Expected X-Tymeslot-Timestamp header"
+        assert timestamp_header, "Expected X-BookDesk24-Timestamp header"
 
         {_timestamp_key, timestamp} = timestamp_header
 
@@ -109,7 +109,7 @@ defmodule Tymeslot.Workers.WebhookWorkerSecurityTest do
                })
 
       assert_received {:posted, body, headers}
-      assert {"X-Tymeslot-Token", ^token} = List.keyfind(headers, "X-Tymeslot-Token", 0)
+      assert {"X-BookDesk24-Token", ^token} = List.keyfind(headers, "X-BookDesk24-Token", 0)
       assert_signed(headers, body, token)
     end
 
@@ -125,7 +125,7 @@ defmodule Tymeslot.Workers.WebhookWorkerSecurityTest do
       assert :ok = Webhooks.test_webhook_connection("https://example.com/webhook", token)
 
       assert_received {:posted, body, headers}
-      assert {"X-Tymeslot-Token", ^token} = List.keyfind(headers, "X-Tymeslot-Token", 0)
+      assert {"X-BookDesk24-Token", ^token} = List.keyfind(headers, "X-BookDesk24-Token", 0)
       assert_signed(headers, body, token)
     end
 
@@ -337,8 +337,8 @@ defmodule Tymeslot.Workers.WebhookWorkerSecurityTest do
   # Verifies the signature as a receiver would, from the raw body it got:
   # HMAC-SHA256 of "<t>.<body>" keyed with the token, with `t` recent.
   defp assert_signed(headers, body, token) do
-    assert {"X-Tymeslot-Signature", signature} =
-             List.keyfind(headers, "X-Tymeslot-Signature", 0)
+    assert {"X-BookDesk24-Signature", signature} =
+             List.keyfind(headers, "X-BookDesk24-Signature", 0)
 
     assert [_match, timestamp, digest] = Regex.run(~r/\At=(\d+),v1=([0-9a-f]{64})\z/, signature)
 

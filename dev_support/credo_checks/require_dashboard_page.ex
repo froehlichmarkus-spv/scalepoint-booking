@@ -95,6 +95,7 @@ defmodule CredoChecks.RequireDashboardPage do
     "dashboard_overview_component",
     "email_preferences_component",
     "payments_settings_component",
+    "plan_notice_component",
     "service_settings_component",
     "theme_customization_component",
     "video_settings_component"

@@ -99,6 +99,12 @@ defmodule TymeslotWeb.Router do
       get "/embed-test", EmbedTestController, :index
     end
 
+    scope "/dev" do
+      pipe_through :browser
+
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+
     scope "/dev", TymeslotWeb do
       pipe_through :browser
 

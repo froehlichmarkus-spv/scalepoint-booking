@@ -73,21 +73,6 @@ msgstr "Zjistit více o moderních prohlížečích"
 
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
-msgid "One lowercase letter"
-msgstr "Jedno malé písmeno"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One number"
-msgstr "Jednu číslici"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One uppercase letter"
-msgstr "Jedno velké písmeno"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
 msgid "Password must contain:"
 msgstr "Heslo musí obsahovat:"
 
@@ -200,11 +185,6 @@ msgstr "Ukládání změn…"
 #, elixir-autogen, elixir-format
 msgid "At least %{count} characters"
 msgstr "Alespoň %{count} znaků"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One special character"
-msgstr "Jeden speciální znak"
 
 #: lib/tymeslot_web/components/core_components/navigation.ex
 #, elixir-autogen, elixir-format
@@ -426,3 +406,8 @@ msgstr "Doplňte datum"
 #, elixir-autogen, elixir-format
 msgid "Add a time"
 msgstr "Doplňte čas"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "At most %{count} bytes"
+msgstr ""

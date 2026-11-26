@@ -43,7 +43,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminderTest do
 
       # The reminder points at an already-booked meeting, so it ships no ICS —
       # the only attachment is the logo the template references inline.
-      assert [%Swoosh.Attachment{filename: "tymeslot-logo.png", content_type: "image/png"}] =
+      assert [%Swoosh.Attachment{filename: "bookdesk24-logo.png", content_type: "image/png"}] =
                email.attachments
     end
 
@@ -160,7 +160,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminderTest do
       details = build_appointment_details()
       email = AppointmentReminder.render(:attendee, "attendee@example.com", details)
 
-      assert [%Swoosh.Attachment{filename: "tymeslot-logo.png", content_type: "image/png"}] =
+      assert [%Swoosh.Attachment{filename: "bookdesk24-logo.png", content_type: "image/png"}] =
                email.attachments
     end
 

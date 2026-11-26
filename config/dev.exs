@@ -40,7 +40,7 @@ config :tymeslot, TymeslotWeb.Endpoint,
       "http://127.0.0.1:#{port}"
     ]),
   code_reloader: true,
-  debug_errors: true,
+  debug_errors: System.get_env("DEBUG_ERRORS", "true") != "false",
   secret_key_base:
     System.get_env("SECRET_KEY_BASE") ||
       "1H+dLz1eQCL1mH8vjh5SJUR2Z5QULWP9bH3j8+BwnBSfS9J74akhHrGFpjezqJqd",

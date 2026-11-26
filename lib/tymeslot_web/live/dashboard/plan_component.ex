@@ -56,73 +56,76 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   @impl Phoenix.LiveComponent
   def render(assigns) do
     ~H"""
-    <div class="gos-plan" id={@id}>
-      <section class="gos-plan-card">
-        <h2>{dgettext("plans", "Plan & billing")}</h2>
-        <p class="gos-plan-muted">{plan_line(assigns)}</p>
-        <p :if={@checkout_success} class="gos-plan-muted" data-testid="checkout-pending">
-          {dgettext("plans", "Activating your plan…")}
-        </p>
-        <p class="gos-plan-muted">
-          {dgettext("plans", "Event types")}: {usage(@usage, :meeting_types, @limits)} · {dgettext(
-            "plans",
-            "Calendars"
-          )}: {usage(@usage, :calendar_integrations, @limits)}
-        </p>
-        <div class="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            class="action-button action-button--primary"
-            phx-click="checkout"
-            phx-value-interval="month"
-            phx-target={@myself}
-          >
-            {dgettext("plans", "Pro monthly – %{price}", price: @prices.monthly.amount)}
-          </button>
-          <button
-            type="button"
-            class="action-button action-button--primary"
-            phx-click="checkout"
-            phx-value-interval="year"
-            phx-target={@myself}
-          >
-            {dgettext("plans", "Pro yearly – %{price}", price: @prices.yearly.amount)}
-            <span :if={@prices.yearly[:note]}>({@prices.yearly.note})</span>
-          </button>
-          <button
-            type="button"
-            class="action-button action-button--secondary"
-            phx-click="portal"
-            phx-target={@myself}
-          >
-            {dgettext("plans", "Manage billing")}
-          </button>
+    <div id={@id}>
+      <.dashboard_page icon="hero-credit-card" title={dgettext("plans", "Plan & billing")}>
+        <div class="gos-plan">
+          <section class="gos-plan-card">
+            <p class="gos-plan-muted">{plan_line(assigns)}</p>
+            <p :if={@checkout_success} class="gos-plan-muted" data-testid="checkout-pending">
+              {dgettext("plans", "Activating your plan…")}
+            </p>
+            <p class="gos-plan-muted">
+              {dgettext("plans", "Event types")}: {usage(@usage, :meeting_types, @limits)} · {dgettext(
+                "plans",
+                "Calendars"
+              )}: {usage(@usage, :calendar_integrations, @limits)}
+            </p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="action-button action-button--primary"
+                phx-click="checkout"
+                phx-value-interval="month"
+                phx-target={@myself}
+              >
+                {dgettext("plans", "Pro monthly – %{price}", price: @prices.monthly.amount)}
+              </button>
+              <button
+                type="button"
+                class="action-button action-button--primary"
+                phx-click="checkout"
+                phx-value-interval="year"
+                phx-target={@myself}
+              >
+                {dgettext("plans", "Pro yearly – %{price}", price: @prices.yearly.amount)}
+                <span :if={@prices.yearly[:note]}>({@prices.yearly.note})</span>
+              </button>
+              <button
+                type="button"
+                class="action-button action-button--secondary"
+                phx-click="portal"
+                phx-target={@myself}
+              >
+                {dgettext("plans", "Manage billing")}
+              </button>
+            </div>
+          </section>
+          <section class="gos-plan-card">
+            <table class="gos-plan-table">
+              <thead>
+                <tr>
+                  <th>{dgettext("plans", "Feature")}</th>
+                  <th>Free</th>
+                  <th>Pro</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr :for={{label, free, pro} <- @rows}>
+                  <td>{label}</td>
+                  <td>{free}</td>
+                  <td>{pro}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="gos-plan-muted mt-3">
+              {dgettext(
+                "plans",
+                "Prices are net. VAT IDs for reverse charge are collected by billing. No Stripe Tax."
+              )}
+            </p>
+          </section>
         </div>
-      </section>
-      <section class="gos-plan-card">
-        <table class="gos-plan-table">
-          <thead>
-            <tr>
-              <th>{dgettext("plans", "Feature")}</th>
-              <th>Free</th>
-              <th>Pro</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr :for={{label, free, pro} <- @rows}>
-              <td>{label}</td>
-              <td>{free}</td>
-              <td>{pro}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="gos-plan-muted mt-3">
-          {dgettext(
-            "plans",
-            "Prices are net. VAT IDs for reverse charge are collected by billing. No Stripe Tax."
-          )}
-        </p>
-      </section>
+      </.dashboard_page>
     </div>
     """
   end

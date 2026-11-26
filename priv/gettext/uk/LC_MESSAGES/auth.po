@@ -403,16 +403,6 @@ msgstr "Створіть новий пароль"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your Tymeslot account."
-msgstr "Створіть надійний новий пароль для свого облікового запису Tymeslot."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
-msgstr "Створіть обліковий запис Tymeslot і почніть ділитися своєю доступністю вже за кілька хвилин. Кредитна картка не потрібна."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
 msgid "Create an Account"
 msgstr "Створити обліковий запис"
 
@@ -425,11 +415,6 @@ msgstr "Для завершення реєстрації потрібно вка
 #, elixir-autogen, elixir-format
 msgid "Email address is required to complete registration. Please provide your email address."
 msgstr "Для завершення реєстрації потрібно вказати електронну адресу. Будь ласка, введіть її."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your Tymeslot account."
-msgstr "Введіть свою електронну адресу, щоб отримати посилання для скидання пароля до облікового запису Tymeslot."
 
 #: lib/tymeslot/auth/registration.ex
 #: lib/tymeslot_web/controllers/auth/helpers/controller_helpers.ex
@@ -456,11 +441,6 @@ msgstr "Введіть коректну електронну адресу."
 #, elixir-autogen, elixir-format
 msgid "Registration failed due to validation errors. Please check your information and try again."
 msgstr "Помилка реєстрації через некоректні дані. Перевірте введену інформацію та спробуйте ще раз."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
-msgstr "Увійдіть до свого облікового запису Tymeslot, щоб керувати посиланнями для бронювання, доступністю та бронюваннями."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format
@@ -802,3 +782,23 @@ msgid_plural "Welcome back. Your account has been restored, but %{names} need re
 msgstr[0] "З поверненням. Ваш обліковий запис відновлено, але інтеграцію %{names} потрібно перепідключити. Доки ви її не перепідключите, ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань."
 msgstr[1] "З поверненням. Ваш обліковий запис відновлено, але інтеграції %{names} потрібно перепідключити. Доки ви їх не перепідключите, ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань."
 msgstr[2] "З поверненням. Ваш обліковий запис відновлено, але інтеграції %{names} потрібно перепідключити. Доки ви їх не перепідключите, ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a new password for your %{product} account."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
+msgstr "Створіть обліковий запис Tymeslot і почніть ділитися своєю доступністю вже за кілька хвилин. Кредитна картка не потрібна."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Enter your email to receive a password reset link for your %{product} account."
+msgstr "Введіть свою електронну адресу, щоб отримати посилання для скидання пароля до облікового запису Tymeslot."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
+msgstr "Увійдіть до свого облікового запису Tymeslot, щоб керувати посиланнями для бронювання, доступністю та бронюваннями."

@@ -79,7 +79,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
 
   @doc """
   Creates a base Swoosh email pre-configured for the given tracking category
-  and with the Tymeslot logo attached inline (CID `tymeslot-logo.png`) so the
+  and with the product logo attached inline (CID `bookdesk24-logo.png`) so the
   system layout's logo header renders identically in every email client
   without needing an external URL.
 
@@ -138,7 +138,7 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
   # Mailgun drops `cid:` entirely and keys inline images by filename.
   # Postmark and AhaSend echo the `cid:` we set. Matching filename and cid
   # is the only value that renders correctly across all four.
-  @logo_cid "tymeslot-logo.png"
+  @logo_cid "bookdesk24-logo.png"
 
   @doc "The Content-ID used for the inline logo attachment."
   @spec logo_cid() :: String.t()

@@ -109,6 +109,38 @@ end
 booking_legal_link.("BOOKING_LEGAL_NOTICE_URL", :booking_legal_notice_url)
 booking_legal_link.("BOOKING_PRIVACY_POLICY_URL", :booking_privacy_policy_url)
 
+# House defaults for the public BookDesk24 site. A self-hosted install overrides
+# these with the env vars above, or sets ENFORCE_LEGAL_AGREEMENTS=false.
+# Tests keep the unset config from config/test.exs.
+if config_env() != :test do
+  growthos = "https://scalepoint-ventures.com/growthos/legal"
+
+  unless Application.get_env(:tymeslot, :booking_legal_notice_url) do
+    config :tymeslot, booking_legal_notice_url: growthos <> "/notice"
+  end
+
+  unless Application.get_env(:tymeslot, :booking_privacy_policy_url) do
+    config :tymeslot, booking_privacy_policy_url: growthos <> "/privacy"
+  end
+
+  config :tymeslot,
+    legal_terms_url: System.get_env("LEGAL_TERMS_URL") || growthos <> "/terms",
+    legal_privacy_url: System.get_env("LEGAL_PRIVACY_URL") || growthos <> "/privacy",
+    legal_dpa_url: System.get_env("LEGAL_DPA_URL") || growthos <> "/dpa"
+
+  enforce =
+    case System.get_env("ENFORCE_LEGAL_AGREEMENTS") do
+      value when value in ["false", "0", "no"] -> false
+      _other -> true
+    end
+
+  config :tymeslot, enforce_legal_agreements: enforce
+
+  config :tymeslot,
+         :breached_password_lookup,
+         Tymeslot.Security.BreachedPasswords.Hibp
+end
+
 if config_env() == :prod do
   # Set environment for runtime detection
   config :tymeslot, :environment, :prod
@@ -426,15 +458,30 @@ from_email =
 # (not currently set) — fall back to app name when sendmail addon is active
 from_name =
   System.get_env("EMAIL_FROM_NAME") ||
-    (System.get_env("CLOUDRON_MAIL_FROM") && "Scheduler") ||
-    if config_env() == :prod,
-      do: raise("environment variable EMAIL_FROM_NAME is missing"),
-      else: "Scheduler"
+    (System.get_env("CLOUDRON_MAIL_FROM") && "BookDesk24") ||
+    cond do
+      config_env() == :prod ->
+        raise "environment variable EMAIL_FROM_NAME is missing"
+
+      # The test suite still asserts the historical sender name.
+      config_env() == :test ->
+        "Scheduler"
+
+      true ->
+        "BookDesk24"
+    end
+
+support_email =
+  System.get_env("EMAIL_SUPPORT_ADDRESS") ||
+    if(config_env() == :dev,
+      do: "support@scalepoint-ventures.com",
+      else: from_email
+    )
 
 config :tymeslot, :email,
   from_name: from_name,
   from_email: from_email,
-  support_email: System.get_env("EMAIL_SUPPORT_ADDRESS") || from_email,
+  support_email: support_email,
   contact_recipient: System.get_env("EMAIL_CONTACT_RECIPIENT") || from_email,
   domain:
     System.get_env("PHX_HOST") ||

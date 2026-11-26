@@ -73,21 +73,6 @@ msgstr "Дізнатися про сучасні браузери"
 
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
-msgid "One lowercase letter"
-msgstr "Одна мала літера"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One number"
-msgstr "Одна цифра"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One uppercase letter"
-msgstr "Одна велика літера"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
 msgid "Password must contain:"
 msgstr "Пароль має містити:"
 
@@ -200,11 +185,6 @@ msgstr "Збереження змін…"
 #, elixir-autogen, elixir-format
 msgid "At least %{count} characters"
 msgstr "Кількість символів: від %{count}"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One special character"
-msgstr "Один спеціальний символ"
 
 #: lib/tymeslot_web/components/core_components/navigation.ex
 #, elixir-autogen, elixir-format
@@ -426,3 +406,8 @@ msgstr "Додайте дату"
 #, elixir-autogen, elixir-format
 msgid "Add a time"
 msgstr "Додайте час"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "At most %{count} bytes"
+msgstr ""
