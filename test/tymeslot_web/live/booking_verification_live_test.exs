@@ -147,7 +147,7 @@ defmodule TymeslotWeb.BookingVerificationLiveTest do
 
       {:ok, view, _html} = live(conn, path(meeting))
 
-      assert render(view) =~ "Ihre Buchung ist bis"
+      assert render(view) =~ "Deine Buchung ist bis"
       refute render(view) =~ "Your booking is held until"
       assert has_element?(view, "[data-testid='confirm-booking']", "Buchung bestätigen")
       # Screen readers take the language from the markup, and the root

@@ -361,7 +361,7 @@ defmodule TymeslotWeb.Dashboard.BookingsManagementCancelRefundTest do
     assert has_element?(
              view,
              "#cancel-meeting-form",
-             "Die Absage erstattet dem Teilnehmer nichts, da die Zahlung angefochten wird. Klären Sie die Anfechtung zuerst in Stripe."
+             "Die Absage erstattet dem Teilnehmer nichts, da die Zahlung angefochten wird. Kläre die Anfechtung zuerst in Stripe."
            )
   end
 end

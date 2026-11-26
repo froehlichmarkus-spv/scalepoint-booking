@@ -40,7 +40,7 @@ defmodule TymeslotWeb.Themes.Core.DispatcherRenderTest do
     html = render(%{theme_id: "9", live_action: :cancel, locale: "de"})
 
     assert html =~ "Etwas ist schiefgelaufen"
-    assert html =~ "Diese Seite konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+    assert html =~ "Diese Seite konnte nicht geladen werden. Bitte versuche es erneut."
     assert html =~ "Erneut versuchen"
     refute html =~ "Something went wrong"
   end

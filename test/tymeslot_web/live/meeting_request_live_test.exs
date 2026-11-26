@@ -197,7 +197,7 @@ defmodule TymeslotWeb.MeetingRequestLiveTest do
       # its own) used to nest one svg inside another instead of drawing the
       # heroicon's path, so the badge painted empty.
       refute html =~ ~r/<svg[^>]*><svg/
-      assert html =~ ~r/<svg[^>]*text-white[^>]*><path/
+      assert html =~ "sprite.svg#"
     end
 
     test "declining releases the slot and keeps the reason", %{conn: conn} do

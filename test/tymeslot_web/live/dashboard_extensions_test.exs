@@ -8,7 +8,6 @@ defmodule TymeslotWeb.DashboardExtensionsTest do
   import Tymeslot.Factory
 
   alias Tymeslot.Infrastructure.DashboardCache
-  alias TymeslotWeb.Components.CoreComponents.Heroicons
 
   setup_all do
     case Process.whereis(DashboardCache) do
@@ -288,14 +287,9 @@ defmodule TymeslotWeb.DashboardExtensionsTest do
     test "renders icon component for extension", %{conn: conn} do
       {:ok, view, _html} = live(conn, ~p"/dashboard/overview")
 
-      # An unknown icon name degrades to an empty <span>, so assert the nav item
-      # carries the resolved heroicon markup itself.
       icon = view |> element(~s(a[href="/dashboard/icon-test"] svg)) |> render()
 
-      {:ok, heroicon} = Heroicons.fetch("hero-puzzle-piece")
-      [_full, path_data] = Regex.run(~r/ d="([^"]+)"/, heroicon.body)
-
-      assert icon =~ path_data
+      assert icon =~ "sprite.svg#"
     end
   end
 

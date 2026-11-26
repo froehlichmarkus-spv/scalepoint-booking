@@ -38,7 +38,7 @@ defmodule TymeslotWeb.Themes.Core.DispatcherErrorCardTest do
       assert text(document, "h1") == "Etwas ist schiefgelaufen"
 
       assert Floki.text(document) =~
-               "Diese Seite konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+               "Diese Seite konnte nicht geladen werden. Bitte versuche es erneut."
 
       assert text(document, "#theme-error-retry-button") == "Erneut versuchen"
     end
@@ -64,7 +64,7 @@ defmodule TymeslotWeb.Themes.Core.DispatcherErrorCardTest do
       assert text(document, "h1") == "Etwas ist schiefgelaufen"
 
       assert Floki.text(document) =~
-               "Ihre letzte Aktion konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+               "Deine letzte Aktion konnte nicht abgeschlossen werden. Bitte versuche es erneut."
 
       assert text(document, "#theme-error-retry-button") == "Erneut versuchen"
     end

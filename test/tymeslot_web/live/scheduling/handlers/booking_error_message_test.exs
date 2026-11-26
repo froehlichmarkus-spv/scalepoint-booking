@@ -130,7 +130,7 @@ defmodule TymeslotWeb.Live.Scheduling.Handlers.BookingErrorMessageTest do
     test "is translated from the booking errors catalogue" do
       Gettext.with_locale(TymeslotWeb.Gettext, "de", fn ->
         assert BookingErrorMessage.message(:managed_by_host) ==
-                 "Dieser Termin wurde per Umfrage festgelegt, daher kann nur der Gastgeber ihn verschieben. Wenn Ihnen die neue Zeit nicht passt, antworten Sie auf Ihre Einladung."
+                 "Dieser Termin wurde per Umfrage festgelegt, daher kann nur der Gastgeber ihn verschieben. Wenn dir die neue Zeit nicht passt, antwortest auf deine Einladung."
       end)
     end
   end

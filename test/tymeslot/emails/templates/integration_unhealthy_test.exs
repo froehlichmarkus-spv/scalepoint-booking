@@ -58,7 +58,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationUnhealthyTest do
 
       email = IntegrationUnhealthy.render(user, %{provider: :zoom}, :video)
 
-      assert email.subject == "Ihre Video-Integration erfordert möglicherweise Aufmerksamkeit"
+      assert email.subject == "Deine Video-Integration erfordert möglicherweise Aufmerksamkeit"
 
       for body <- [email.html_body, email.text_body] do
         assert body =~ "Zoom-Video"

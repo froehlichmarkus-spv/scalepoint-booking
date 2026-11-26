@@ -221,7 +221,7 @@ defmodule Tymeslot.Emails.Templates.CalendarSyncErrorTest do
 
       refute text =~ ":refused"
       refute text =~ "Your calendar declined to add this event."
-      assert text =~ "Ihr Kalender"
+      assert text =~ "Dein Kalender"
     end
 
     test "handles missing organizer_user_id" do

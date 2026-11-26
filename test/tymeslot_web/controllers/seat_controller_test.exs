@@ -298,7 +298,7 @@ defmodule TymeslotWeb.SeatControllerTest do
 
       html = conn |> get(~p"/seat/#{leaver.management_token}/cancel") |> html_response(200)
 
-      assert html =~ "Ihren Platz stornieren?"
+      assert html =~ "Deinen Platz stornieren?"
       assert html =~ ~s(lang="de")
     end
 

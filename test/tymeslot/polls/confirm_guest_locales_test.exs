@@ -142,7 +142,7 @@ defmodule Tymeslot.Polls.ConfirmGuestLocalesTest do
 
     emails = guest_emails()
 
-    assert emails[@ben].subject =~ "Sie sind eingeladen"
+    assert emails[@ben].subject =~ "Du bist eingeladen"
     assert emails[@ben].text_body =~ "Uhrzeit: #{local_time(meeting.start_time, :ben)}"
     assert emails[@ben].text_body =~ "(America/New_York)"
     refute emails[@ben].text_body =~ "Europe/London"
@@ -259,7 +259,7 @@ defmodule Tymeslot.Polls.ConfirmGuestLocalesTest do
       send_confirmations(meeting)
 
       assert_received {:email, %Swoosh.Email{to: [{_name, "plus-one@example.com"}]} = email}
-      assert email.subject =~ "Sie sind eingeladen"
+      assert email.subject =~ "Du bist eingeladen"
       assert email.text_body =~ "Uhrzeit: #{local_time(start_time, :ben)}"
       assert email.text_body =~ "(America/New_York)"
     end

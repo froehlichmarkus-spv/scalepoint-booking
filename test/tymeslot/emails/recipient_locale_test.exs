@@ -85,7 +85,7 @@ defmodule Tymeslot.Emails.RecipientLocaleTest do
           Gettext.dgettext(TymeslotWeb.Gettext, "emails_account", "Verify your email address")
         end)
 
-      assert translated == "Bestätigen Sie Ihre E-Mail-Adresse"
+      assert translated == "Bestätige deine E-Mail-Adresse"
     end
   end
 end

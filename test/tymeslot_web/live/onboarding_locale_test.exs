@@ -12,8 +12,8 @@ defmodule TymeslotWeb.OnboardingLocaleTest do
   test "a host whose language is German sees the wizard in German", %{conn: conn} do
     {:ok, view, html, _user} = setup_onboarding(setup_onboarding_session(conn), %{locale: "de"})
 
-    assert html =~ "Ihr Link"
-    assert render(view) =~ "Ihr Link"
+    assert html =~ "Dein Link"
+    assert render(view) =~ "Dein Link"
     refute render(view) =~ "Your link"
   end
 

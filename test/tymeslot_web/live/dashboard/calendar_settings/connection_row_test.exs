@@ -394,7 +394,7 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.ConnectionRowTest do
         )
 
       assert html =~
-               "Der Buchungskalender existiert bei Google nicht mehr. Bitte verbinden Sie die Integration erneut und wählen Sie einen anderen Kalender."
+               "Der Buchungskalender existiert bei Google nicht mehr. Bitte verbinde die Integration erneut und wähle einen anderen Kalender."
     end
 
     # sync_error also carries transient failures, which are not the owner's to fix.

@@ -71,7 +71,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationPausedTest do
 
       email = IntegrationPaused.render(user, %{provider: :nextcloud}, :calendar, 14)
 
-      assert email.subject == "Ihre Kalender-Integration wurde pausiert"
+      assert email.subject == "Deine Kalender-Integration wurde pausiert"
 
       for body <- [email.html_body, email.text_body] do
         assert body =~

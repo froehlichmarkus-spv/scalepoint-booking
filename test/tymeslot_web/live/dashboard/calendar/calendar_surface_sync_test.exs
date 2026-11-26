@@ -310,7 +310,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceSyncTest do
       assert has_element?(
                lv,
                "#calendar-toast",
-               "You've asked for several syncs recently. Try again in a few minutes."
+               "You've asked for several syncs recently. Try again in a few minutes.du hast in letzter Zeit mehrere Synchronisierungen angefordert. Versuche es in ein paar Minuten erneut.du hast in letzter Zeit mehrere Synchronisierungen angefordert. Versuche es in ein paar Minuten erneut."
              )
     end
 

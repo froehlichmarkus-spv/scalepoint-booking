@@ -79,7 +79,7 @@ defmodule Tymeslot.Integrations.Shared.ReauthHandlingTest do
                "Access to the connected account has expired or been revoked. Please reconnect the integration."
 
       assert ConnectionLabels.reconnect_reason(reloaded) ==
-               "Der Zugriff auf das verbundene Konto ist abgelaufen oder wurde widerrufen. Bitte verbinden Sie die Integration erneut."
+               "Der Zugriff auf das verbundene Konto ist abgelaufen oder wurde widerrufen. Bitte verbinde die Integration erneut."
     end
 
     # One sentence per operation rather than an interpolated action: only a

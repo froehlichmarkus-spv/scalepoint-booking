@@ -97,7 +97,7 @@ defmodule TymeslotWeb.SlackOAuthControllerTest do
       assert redirected_to(conn) == "/dashboard/automation"
 
       assert Flash.get(conn.assigns.flash, :error) =~
-               "Ihr Tarif enthält keine Slack-Benachrichtigungen"
+               "Dein Tarif enthält keine Slack-Benachrichtigungen"
     end
   end
 

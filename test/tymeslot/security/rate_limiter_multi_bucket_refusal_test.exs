@@ -128,8 +128,8 @@ defmodule Tymeslot.Security.RateLimiterMultiBucketRefusalTest do
         end)
 
       assert message ==
-               "Sie haben das Limit von 5 Registrierungsversuchen pro 10 Minuten erreicht. " <>
-                 "Bitte versuchen Sie es in 10 Minuten erneut."
+               "Du hast das Limit von 5 Registrierungsversuchen pro 10 Minuten erreicht. " <>
+                 "Bitte versuche es in 10 Minuten erneut."
     end
 
     test "the log line stays English while the sentence is translated" do
