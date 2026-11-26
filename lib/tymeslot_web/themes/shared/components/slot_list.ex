@@ -38,6 +38,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
   use Phoenix.Component
   use Gettext, backend: TymeslotWeb.Gettext
 
+  alias Phoenix.LiveView.JS
   alias Tymeslot.Themes.Catalog
   alias TymeslotWeb.Components.MeetingUtils
   alias TymeslotWeb.Live.Scheduling.CalendarHelpers
@@ -236,6 +237,12 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
     """
   end
 
+  defp select_time(time, target) do
+    JS.remove_class("slot-list__slot--selected", to: "#slots-container .slot-list__slot")
+    |> JS.add_class("slot-list__slot--selected")
+    |> JS.push("select_time", value: %{time: time}, target: target)
+  end
+
   # One definition of the slot button, so the flat grid and the minutes nested
   # under an expanded hour cannot drift apart in markup, nor either of them
   # drop the seat badge. Takes the normalised slot map
@@ -262,9 +269,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
       data-fact="time"
       data-value={@slot.time}
       aria-pressed={to_string(@selected)}
-      phx-click="select_time"
-      phx-value-time={@slot.time}
-      phx-target={@target}
+      phx-click={select_time(@slot.time, @target)}
     >
       <span class="slot-list__time">
         {LocalizationHelpers.format_time_by_locale(CalendarHelpers.parse_slot_time(@slot.time))}

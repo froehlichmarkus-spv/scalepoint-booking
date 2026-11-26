@@ -36,6 +36,30 @@ body.gos .dashboard-sidebar .dashboard-nav-link--active .gos-icon {
   color: var(--m-fill);
 }
 
+body.gos .dashboard-nav-section-title,
+body.gos .dashboard-sidebar .dashboard-nav-section-title,
+body.gos .dashboard-sidebar .gos-byline,
+body.gos .dashboard-sidebar .gos-suite-line {
+  color: var(--gos-text-3);
+}
+
+body.gos .gos-wordmark-accent {
+  color: var(--gos-booking-ink);
+}
+
+body.gos .text-tymeslot-400 {
+  color: var(--gos-text-2);
+}
+
+body.gos .text-green-600 {
+  color: var(--gos-success-ink);
+}
+
+body.gos .bg-turquoise-100 {
+  background: var(--gos-teal-soft);
+  color: var(--gos-teal-ink);
+}
+
 @media (min-width: 1024px) {
   body.gos .dashboard-sidebar:not(.dashboard-sidebar--rail) {
     width: var(--gos-size-sidebar);
@@ -137,6 +161,15 @@ body.gos .gos-alert {
 .gos-welcome__trial {
   color: color-mix(in srgb, var(--gos-primary-ink) 82%, transparent);
   margin-top: var(--gos-space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.gos *,
+  body.gos *::before,
+  body.gos *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .gos-auth-art .proof .gos-icon {

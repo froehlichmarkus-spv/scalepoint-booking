@@ -16,7 +16,7 @@ defmodule Tymeslot.Emails.Shared.DsMail do
     eyebrow = Sanitise.sanitize_for_email(fields[:eyebrow] || "")
     body = fields[:body] || ""
     cta = cta_html(fields[:cta_label], fields[:cta_url])
-    info = info_html(fields[:info_title], fields[:info_body])
+    info = info_html(fields[:info_title], fields[:facts] || fields[:info_body])
 
     """
     <!doctype html><html lang="de"><head><meta charset="utf-8">
@@ -71,9 +71,29 @@ defmodule Tymeslot.Emails.Shared.DsMail do
 
   defp info_html(nil, _body), do: ""
   defp info_html(_title, nil), do: ""
+  defp info_html(_title, []), do: ""
 
-  defp info_html(title, body) do
-    ~s(<p style="background:#F6F5F2;border:1px solid #E7E5E0;border-left:3px solid #2F6BFF;border-radius:12px;padding:14px 16px"><b>#{Sanitise.sanitize_for_email(title)}</b><br>#{body}</p>)
+  defp info_html(title, rows) when is_list(rows) do
+    body =
+      Enum.map_join(rows, "", fn {label, value} ->
+        """
+        <tr>
+        <td style="padding:8px 16px 8px 0;font:600 12px/18px Geist,Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#835000;vertical-align:top;width:120px">#{Sanitise.sanitize_for_email(label)}</td>
+        <td style="padding:8px 0;font:500 15px/22px Geist,Arial,sans-serif;color:#111E32;vertical-align:top">#{Sanitise.sanitize_for_email(value)}</td>
+        </tr>
+        """
+      end)
+
+    """
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;background:#F6F5F2;border:1px solid #E7E5E0;border-left:3px solid #835000;border-radius:12px">
+    <tr><td colspan="2" style="padding:14px 16px 4px;font:600 12px/16px Geist,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#835000">#{Sanitise.sanitize_for_email(title)}</td></tr>
+    <tr><td colspan="2" style="padding:0 16px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">#{body}</table></td></tr>
+    </table>
+    """
+  end
+
+  defp info_html(title, body) when is_binary(body) do
+    ~s(<p style="background:#F6F5F2;border:1px solid #E7E5E0;border-left:3px solid #835000;border-radius:12px;padding:14px 16px"><b style="color:#835000">#{Sanitise.sanitize_for_email(title)}</b><br>#{body}</p>)
   end
 
   defp header_src do

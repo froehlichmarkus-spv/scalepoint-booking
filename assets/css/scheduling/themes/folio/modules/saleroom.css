@@ -242,7 +242,7 @@
   background: var(--room-card);
   color: var(--room-card-text);
   --theme-text: var(--room-card-text);
-  --theme-text-secondary: var(--folio-room-ink-muted);
+  --theme-text-secondary: var(--gos-text-2);
   --theme-background: var(--room-card);
   --theme-surface: var(--room-card);
   --theme-canvas: var(--room-card);
@@ -254,7 +254,7 @@
 }
 
 .folio-page[data-layout="sales_room"] .journey--continuous > :not(.folio-masthead) {
-  --theme-text-secondary: var(--folio-room-ink-muted);
+  --theme-text-secondary: var(--gos-text-2);
 }
 
 .folio-page[data-layout="neutral"] .journey--continuous > :not(.folio-masthead) {
@@ -295,4 +295,35 @@
   .folio-page[data-layout] .folio-identity__name {
     font-size: 2.15rem;
   }
+}
+
+.folio-page[data-layout] .journey--continuous > .folio-outcome-page {
+  grid-column: 1 / span 2;
+  width: min(var(--folio-column), 100%);
+  justify-self: center;
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-masthead {
+  position: static;
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-portrait {
+  width: var(--folio-portrait-size-slim);
+  height: var(--folio-portrait-size-slim);
+  max-height: var(--folio-portrait-size-slim);
+  aspect-ratio: auto;
+  margin: 0;
+  border-radius: var(--radius-full);
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-identity__name {
+  font-size: var(--theme-font-size-xl);
 }

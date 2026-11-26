@@ -164,7 +164,7 @@ msgstr[1] "%{count} Teilnehmende"
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format
 msgid "A few recommended steps. Tick off the ones you don't need."
-msgstr "Ein paar empfohlene Schritte. Hake ab, was du nicht benötigen."
+msgstr "Ein paar empfohlene Schritte. Hake ab, was du nicht benötigst."
 
 #: lib/tymeslot_web/live/dashboard/onboarding_checklist.ex
 #, elixir-autogen, elixir-format

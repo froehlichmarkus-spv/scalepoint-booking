@@ -69,11 +69,15 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   @doc "Compiles MJML content with organiser details into HTML."
   @spec compile_template(String.t(), organizer_details()) :: String.t()
   def compile_template(mjml_content, organizer_details) do
+    {prose, facts} = split_copy(mjml_content)
+
     DsMail.document(%{
       eyebrow: Map.get(organizer_details, :eyebrow),
       title: Map.get(organizer_details, :stage_title),
       preheader: Map.get(organizer_details, :stage_subtitle),
-      body: readable(mjml_content),
+      body: Enum.join(prose, "<br>"),
+      info_title: dgettext("booking_confirmation", "Meeting Details"),
+      facts: facts,
       cta_label: nil,
       cta_url: nil
     })
@@ -108,9 +112,55 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
 
   defp readable(mjml) do
     mjml
-    |> String.replace(~r/<[^>]+>/, " ")
-    |> String.replace(~r/\s+/, " ")
+    |> blocks()
+    |> Enum.join(" ")
+  end
+
+  @meeting_labels ~w(termintyp dauer ort datum uhrzeit zeitzone gastgeber beschreibung date time duration location timezone host where when type)
+
+  defp split_copy(mjml) do
+    pair(blocks(mjml), [], [])
+  end
+
+  defp pair([], prose, facts), do: {Enum.reverse(prose), Enum.reverse(facts)}
+
+  defp pair([line | rest], prose, facts) do
+    cond do
+      labeled = labeled_fact(line) ->
+        pair(rest, prose, [labeled | facts])
+
+      label?(line) and match?([_next | _more], rest) and not label?(hd(rest)) ->
+        [value | rest] = rest
+        pair(rest, prose, [{line, value} | facts])
+
+      true ->
+        pair(rest, [line | prose], facts)
+    end
+  end
+
+  defp blocks(mjml) do
+    mjml
+    |> String.replace(~r/<br\s*\/?>/i, "\n")
+    |> String.replace(~r/<\/(mj-text|p|div|li|h1|h2|tr)>/i, "\n")
+    |> String.replace(~r/<[^>]+>/, "")
+    |> String.split("\n")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp labeled_fact(line) do
+    case Regex.run(~r/^([^:]{2,24}):\s+(\S.*)$/, line) do
+      [_line, label, value] -> if label?(label), do: {String.trim(label), String.trim(value)}
+      _no -> nil
+    end
+  end
+
+  defp label?(line) do
+    line
     |> String.trim()
+    |> String.trim_trailing(":")
+    |> String.downcase()
+    |> then(&(&1 in @meeting_labels))
   end
 
   @typedoc """
