@@ -17,6 +17,7 @@ defmodule TymeslotWeb.Dashboard.DashboardOverviewComponent do
   alias Tymeslot.Agenda.Entry
   # Aliased to disambiguate from the stdlib `Calendar` module.
   alias Tymeslot.Integrations.Calendar, as: CalendarContext
+  alias Tymeslot.Plans
   alias TymeslotWeb.Dashboard.AgendaTimeline
   alias TymeslotWeb.Dashboard.DashboardFormat
   alias TymeslotWeb.Dashboard.DashboardOverview.ComponentView
@@ -29,6 +30,7 @@ defmodule TymeslotWeb.Dashboard.DashboardOverviewComponent do
      socket
      |> assign(assigns)
      |> assign(:agenda, agenda)
+     |> assign(:trial_days, trial_days(assigns[:current_user]))
      # Survive the 60s agenda tick: a re-render must not close a modal the user
      # has open, so keep any already-selected entry rather than resetting it.
      |> assign_new(:selected_entry, fn -> nil end)
@@ -145,6 +147,19 @@ defmodule TymeslotWeb.Dashboard.DashboardOverviewComponent do
     |> Enum.uniq_by(& &1.id)
     |> Enum.sort_by(& &1.start_at, DateTime)
   end
+
+  defp trial_days(%{id: user_id}) do
+      case Plans.get_entitlement(user_id) do
+      %{status: "trialing", trial_ends_at: %DateTime{} = ends} ->
+        days = DateTime.diff(ends, DateTime.utc_now(), :day)
+        if days > 0, do: days
+
+      _other ->
+        nil
+    end
+  end
+
+  defp trial_days(_user), do: nil
 
   @impl Phoenix.LiveComponent
   def render(assigns), do: ComponentView.agenda(assigns)

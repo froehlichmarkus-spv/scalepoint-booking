@@ -479,6 +479,7 @@ msgstr[0] "%{hour}, %{count} horario disponible"
 msgstr[1] "%{hour}, %{count} horarios disponibles"
 
 #: lib/tymeslot_web/live/scheduling/handlers/slot_fetching_handler_component.ex
+#: lib/tymeslot_web/themes/folio/scheduling/components/when_moment.ex
 #, elixir-autogen, elixir-format
 msgid "No time slots could be loaded. Please try again."
 msgstr "No se pudieron cargar los horarios. Inténtalo de nuevo."
@@ -707,6 +708,7 @@ msgid "This step could not be opened. Please try again."
 msgstr "No se pudo abrir este paso. Inténtalo de nuevo."
 
 #: lib/tymeslot_web/themes/core/dispatcher.ex
+#: lib/tymeslot_web/themes/shared/components/slot_list.ex
 #, elixir-autogen, elixir-format
 msgid "Try again"
 msgstr "Inténtalo de nuevo"

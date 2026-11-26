@@ -111,3 +111,27 @@
 .slot-list__empty p + p {
   margin-top: var(--space-3xs);
 }
+
+.slot-list__skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-xs);
+}
+
+.slot-list__skeleton-chip {
+  display: block;
+  height: var(--space-2xl);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--theme-text) 8%, var(--theme-surface));
+}
+
+.slot-list__retry {
+  margin-top: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-control);
+  border: var(--border-width-thin) solid var(--theme-text);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  font: inherit;
+  cursor: pointer;
+}

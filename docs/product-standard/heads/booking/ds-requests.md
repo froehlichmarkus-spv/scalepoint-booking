@@ -56,4 +56,4 @@ Hex remains in these files because no existing `--gos-*` token is the same colou
 
 ## Type
 
-Booking-theme font ids (`inter`, `classic`, `editorial`) still name the Inter and Fraunces files in `fonts.css`, because `FontPreload` and its test couple the stack name to those file paths. The app shell, the bridge and Folio headings use Geist.
+`inter`, `classic`, `editorial`, `plex`, `literary` and `quiet` stay in the font picker. That picker is a product feature: a host chooses a face for the booking page. The default of Folio, Quill and Rhythm is now `geist` (`--font-stack-geist`), which loads Geist and preloads nothing extra because the app shell already preloads `Geist-Variable.woff2`.

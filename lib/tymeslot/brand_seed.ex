@@ -168,7 +168,7 @@ defmodule Tymeslot.BrandSeed do
 
     ThemeCustomizations.upsert_theme_customization(profile.id, "4", %{
       "color_scheme" => scheme,
-      "font" => "classic",
+      "font" => "geist",
       "radius" => "soft"
     })
   rescue

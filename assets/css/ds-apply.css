@@ -119,6 +119,26 @@ body.gos .gos-alert {
   padding: var(--gos-space-6);
 }
 
+.gos-welcome {
+  background: var(--gos-primary);
+  color: var(--gos-primary-ink);
+  border-radius: var(--gos-radius-lg);
+  border-left: 3px solid var(--m-fill);
+  padding: var(--gos-space-4) var(--gos-space-6);
+}
+
+.gos-welcome__title {
+  font-size: var(--gos-page-title-size);
+  font-weight: 600;
+  letter-spacing: var(--gos-page-title-tracking);
+}
+
+.gos-welcome__sub,
+.gos-welcome__trial {
+  color: color-mix(in srgb, var(--gos-primary-ink) 82%, transparent);
+  margin-top: var(--gos-space-2);
+}
+
 .gos-auth-art .proof .gos-icon {
   color: var(--gos-teal-ink);
 }

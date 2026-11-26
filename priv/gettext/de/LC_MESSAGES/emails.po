@@ -371,6 +371,7 @@ msgstr "Nachricht von %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} über %{brand}"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -592,3 +593,23 @@ msgstr "Videoanruf:"
 #, elixir-autogen, elixir-format
 msgid "Booked through your %{page} page"
 msgstr "Gebucht über deine Seite „%{page}“"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Legal notice"
+msgstr "Impressum"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Privacy"
+msgstr "Datenschutz"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Reply to this email or write to support@scalepoint-ventures.com."
+msgstr "Antworte auf diese E-Mail oder schreib an support@scalepoint-ventures.com."
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Terms"
+msgstr "Bedingungen"

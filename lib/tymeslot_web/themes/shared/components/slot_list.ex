@@ -123,15 +123,29 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
             </div>
           <% @loading_slots -> %>
             <%= if @loading == [] do %>
-              <div class="slot-list__loading">
-                <span>{dgettext("booking", "Loading available times...")}</span>
+              <div class="slot-list__loading" role="status">
+                <span class="sr-only">{dgettext("booking", "Loading available times...")}</span>
+                <div class="slot-list__skeleton" aria-hidden="true">
+                  <span :for={_ <- 1..6} class="slot-list__skeleton-chip"></span>
+                </div>
               </div>
             <% else %>
               {render_slot(@loading)}
             <% end %>
           <% @calendar_error -> %>
             <%= if @error == [] do %>
-              <div class="slot-list__error">{@calendar_error}</div>
+              <div class="slot-list__error" role="alert">
+                <p>{@calendar_error}</p>
+                <button
+                  type="button"
+                  class="slot-list__retry"
+                  phx-click="select_date"
+                  phx-target={@target}
+                  phx-value-date={@selected_date}
+                >
+                  {dgettext("booking", "Try again")}
+                </button>
+              </div>
             <% else %>
               {render_slot(@error, @calendar_error)}
             <% end %>

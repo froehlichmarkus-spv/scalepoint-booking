@@ -58,12 +58,14 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.WhenMoment do
       )
 
     assigns =
-      assign(assigns,
+      assigns
+      |> assign(
         days: days,
         month_notice: month_notice(days, assigns),
         prev_month_label: month_label(assigns.current_year, assigns.current_month, -1),
         next_month_label: month_label(assigns.current_year, assigns.current_month, 1)
       )
+      |> with_state_preview()
 
     ~H"""
     <section
@@ -260,6 +262,41 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Components.WhenMoment do
       />
     </section>
     """
+  end
+
+  defp with_state_preview(assigns) do
+    case state_preview(assigns) do
+      "slot_loading" ->
+        preview_slots(assigns, true, nil)
+
+      "slot_empty" ->
+        preview_slots(assigns, false, nil)
+
+      "slot_error" ->
+        preview_slots(
+          assigns,
+          false,
+          dgettext("booking", "No time slots could be loaded. Please try again.")
+        )
+
+      _other ->
+        assigns
+    end
+  end
+
+  defp preview_slots(assigns, loading, error) do
+    assign(assigns,
+      loading_slots: loading,
+      calendar_error: error,
+      available_slots: [],
+      selected_date: assigns.selected_date || Date.to_iso8601(Date.utc_today())
+    )
+  end
+
+  defp state_preview(assigns) do
+    if Application.get_env(:tymeslot, :state_preview, false) do
+      get_in(assigns, [:page_query_params, "state"])
+    end
   end
 
   # The name of the month `delta` months from the one on screen, which labels

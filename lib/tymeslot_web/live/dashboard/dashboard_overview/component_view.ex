@@ -32,23 +32,28 @@ defmodule TymeslotWeb.Dashboard.DashboardOverview.ComponentView do
     <div>
       <.dashboard_page icon="hero-home" title={dgettext("dashboard_common", "Overview")}>
         <%!-- Welcome Section --%>
-        <div class="bg-linear-to-br from-turquoise-600 via-cyan-600 to-blue-600 rounded-token-3xl px-8 py-3 lg:px-12 lg:py-4 text-white shadow-2xl shadow-turquoise-500/20 relative overflow-hidden">
-          <div class="dashboard-sheen" aria-hidden="true"></div>
-          <div class="relative z-10">
-            <p class="text-token-xl lg:text-token-2xl font-black mb-1 tracking-tight">
-              {if @first_dashboard_visit,
-                do: dgettext("dashboard_home", "Welcome"),
-                else: dgettext("dashboard_home", "Welcome back")}{if @profile.full_name,
-                do: ", #{@profile.full_name}",
-                else: ""}!
-            </p>
-            <p class="text-lg text-white/90 font-medium max-w-4xl leading-snug">
-              {dgettext(
-                "dashboard_home",
-                "Here's an overview of your scheduling setup and recent activity."
-              )}
-            </p>
-          </div>
+        <div class="gos-welcome" data-m="booking">
+          <p class="gos-welcome__title">
+            {if @first_dashboard_visit,
+              do: dgettext("dashboard_home", "Welcome"),
+              else: dgettext("dashboard_home", "Welcome back")}{if @profile.full_name,
+              do: ", #{@profile.full_name}",
+              else: ""}!
+          </p>
+          <p class="gos-welcome__sub">
+            {dgettext(
+              "dashboard_home",
+              "Here's an overview of your scheduling setup and recent activity."
+            )}
+          </p>
+          <p :if={@trial_days} class="gos-welcome__trial">
+            {dngettext(
+              "dashboard_home",
+              "%{count} day left in your Pro trial",
+              "%{count} days left in your Pro trial",
+              @trial_days
+            )}
+          </p>
         </div>
 
         <%!-- Onboarding checklist — only while setup is incomplete and not dismissed --%>

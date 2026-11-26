@@ -10,7 +10,7 @@
      350px  bare     — last-resort trims for the tiniest landscape viewports */
 :root {
   /* Typography - Comprehensive scale */
-  --theme-font-family: var(--font-stack-inter);
+  --theme-font-family: var(--font-stack-geist);
 
   /* Font size scale - fluid responsive using clamp() */
   --theme-font-size-3xs: clamp(0.688rem, 1.1vw, 0.75rem);     /* ~11-12px - tiny labels */

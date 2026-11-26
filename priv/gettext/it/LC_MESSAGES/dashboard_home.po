@@ -260,3 +260,10 @@ msgstr "Scrivi"
 #, elixir-autogen, elixir-format
 msgid "Your booking page can't take bookings without one"
 msgstr "Senza un calendario la tua pagina di prenotazione non può accettare prenotazioni"
+
+#: lib/tymeslot_web/live/dashboard/dashboard_overview/component_view.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} day left in your Pro trial"
+msgid_plural "%{count} days left in your Pro trial"
+msgstr[0] ""
+msgstr[1] ""

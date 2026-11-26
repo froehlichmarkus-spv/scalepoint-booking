@@ -32,6 +32,7 @@ defmodule TymeslotWeb.Themes.Folio.Theme do
       voice: :personal,
       surface: :editorial_print
     ],
+    font: "geist",
     voice: TymeslotWeb.Themes.Folio.Voice,
     page_shell: &Pages.page_shell/1
 

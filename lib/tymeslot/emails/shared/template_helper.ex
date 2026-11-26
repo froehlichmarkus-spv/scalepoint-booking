@@ -8,7 +8,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   """
 
   alias Tymeslot.Emails.Branding
-  alias Tymeslot.Emails.Shared.{Layouts, MjmlEmail, Stage}
+  alias Tymeslot.Emails.Shared.{DsMail, Stage}
   alias Tymeslot.Emails.Shared.Styles.Tokens
 
   use Gettext, backend: TymeslotWeb.Gettext
@@ -69,9 +69,14 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   @doc "Compiles MJML content with organiser details into HTML."
   @spec compile_template(String.t(), organizer_details()) :: String.t()
   def compile_template(mjml_content, organizer_details) do
-    mjml_content
-    |> Layouts.transactional_layout(organizer_details)
-    |> MjmlEmail.compile_mjml()
+    DsMail.document(%{
+      eyebrow: Map.get(organizer_details, :eyebrow),
+      title: Map.get(organizer_details, :stage_title),
+      preheader: Map.get(organizer_details, :stage_subtitle),
+      body: readable(mjml_content),
+      cta_label: nil,
+      cta_url: nil
+    })
   end
 
   @doc """
@@ -91,9 +96,21 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       |> maybe_put(:preview, preview)
       |> Keyword.merge(stage)
 
-    mjml_content
-    |> Layouts.system_layout(opts)
-    |> MjmlEmail.compile_mjml()
+    DsMail.document(%{
+      eyebrow: opts[:eyebrow],
+      title: opts[:stage_title] || opts[:title],
+      preheader: opts[:preview],
+      body: readable(mjml_content),
+      cta_label: nil,
+      cta_url: nil
+    })
+  end
+
+  defp readable(mjml) do
+    mjml
+    |> String.replace(~r/<[^>]+>/, " ")
+    |> String.replace(~r/\s+/, " ")
+    |> String.trim()
   end
 
   @typedoc """
