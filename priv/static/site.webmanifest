@@ -7,12 +7,7 @@
   "theme_color": "#469189",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "48x48",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "/images/brand/favicon.svg",
+      "src": "/images/brand/scalepoint-mark.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }

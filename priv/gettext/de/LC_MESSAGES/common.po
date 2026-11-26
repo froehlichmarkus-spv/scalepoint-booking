@@ -403,12 +403,32 @@ msgstr "Datum angeben"
 msgid "Add a time"
 msgstr "Uhrzeit angeben"
 
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "At most %{count} bytes"
-msgstr "Höchstens %{count} Byte"
-
 #: lib/tymeslot_web/components/layouts/root.html.heex
 #, elixir-autogen, elixir-format
 msgid "Skip to content"
 msgstr "Zum Inhalt springen"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "At most 72 bytes"
+msgstr "Höchstens 72 Byte"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One lowercase letter"
+msgstr "Ein Kleinbuchstabe"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One number"
+msgstr "Eine Zahl"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One special character"
+msgstr "Ein Sonderzeichen"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One uppercase letter"
+msgstr "Ein Großbuchstabe"

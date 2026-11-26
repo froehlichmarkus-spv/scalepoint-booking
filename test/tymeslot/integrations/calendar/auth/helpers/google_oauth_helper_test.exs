@@ -26,7 +26,9 @@ defmodule Tymeslot.Integrations.Calendar.Google.OAuthHelperTest do
     test "returns URL from base helper" do
       url = OAuthHelper.authorization_url(1, "http://uri")
       assert url =~ "https://accounts.google.com/o/oauth2/v2/auth"
-      assert url =~ "scope=openid+email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar"
+
+      assert url =~
+               "scope=openid+email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.calendarlist.readonly"
     end
 
     test "handles custom scopes" do

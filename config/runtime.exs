@@ -1040,6 +1040,25 @@ config :tymeslot, :plans,
     }
   }
 
+# Keep this address aligned with Tymeslot.Licensing.SourceOffer.default_url/0.
+source_offer_url =
+  case System.get_env("SOURCE_OFFER_URL") do
+    nil ->
+      if config_env() == :test,
+        do: nil,
+        else: "https://github.com/froehlichmarkus-spv/scalepoint-booking"
+
+    "" ->
+      nil
+
+    url ->
+      String.trim(url)
+  end
+
+if is_binary(source_offer_url) and source_offer_url != "" do
+  config :tymeslot, :source_offer_url, source_offer_url
+end
+
 if ics_branding_url = System.get_env("ICS_BRANDING_URL") do
   trimmed = String.trim(ics_branding_url)
 
@@ -1055,7 +1074,7 @@ if plans_enabled?.() do
   config :tymeslot, :show_branding, true
   config :tymeslot, :user_registered_hook, Tymeslot.Plans.UserRegisteredHook
   config :tymeslot, :account_deletion_hook, Tymeslot.Plans.AccountDeletionHook
-  config :tymeslot, :billing_client, Tymeslot.Plans.BillingClient.HTTP
+  config :tymeslot, :billing_client, Tymeslot.Plans.BillingClient.Stub
 
   config :tymeslot,
          :dashboard_additional_hooks,

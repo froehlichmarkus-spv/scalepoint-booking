@@ -6,6 +6,7 @@ defmodule TymeslotWeb.Shared.SocialAuthButtons do
   across the login and signup forms.
   """
   use TymeslotWeb, :html
+  use Gettext, backend: TymeslotWeb.Gettext
 
   alias Tymeslot.Auth.OAuth.Providers
   alias TymeslotWeb.Components.Icons.ProviderIcon
@@ -32,6 +33,7 @@ defmodule TymeslotWeb.Shared.SocialAuthButtons do
 
     ~H"""
     <div :if={@providers != []} class="space-y-4">
+      <p class="sub">{dgettext("auth", "Or continue with")}</p>
       <div class={"grid grid-cols-1 gap-4 #{@grid_cols}"}>
         <.social_auth_button
           :for={provider <- @providers}

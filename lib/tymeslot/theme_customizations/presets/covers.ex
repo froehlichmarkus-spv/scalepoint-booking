@@ -4,14 +4,12 @@ defmodule Tymeslot.ThemeCustomizations.Presets.Covers do
   theme with an `Options.Cover` group, which lists the ids it offers.
 
   Each cover is `%{name:, src:, thumb:}`, `src` and `thumb` its public paths.
-  The first four reuse the shipped background images under
-  `priv/static/images/themes/backgrounds/` (Pixabay Content Licence, like
-  every shipped background) rather than copying them, under the background
-  presets' ids and names, so an organiser sees the same image under the same
-  name in both pickers. A cover of its own lives under
+  The first four reuse the generated background visuals under
+  `priv/static/images/themes/backgrounds/`, under the background presets'
+  ids and names, so an organiser sees the same visual under the same name
+  in both pickers. A cover of its own lives under
   `priv/static/images/themes/covers/` (`botanical`, `studio-light`,
-  `paper-texture`), a Pixabay image at the background images' size, with its
-  source page in `source`.
+  `paper-texture`). Every file is a generated gradient, not a photograph.
   """
 
   alias Tymeslot.ThemeCustomizations.Presets.Images
@@ -50,20 +48,17 @@ defmodule Tymeslot.ThemeCustomizations.Presets.Covers do
     "botanical" => %{
       name: "Botanical",
       src: @covers_dir <> "botanical.webp",
-      thumb: @covers_dir <> "botanical-thumbnail.webp",
-      source: "https://pixabay.com/photos/eucalyptus-flowers-floral-leaf-3854084/"
+      thumb: @covers_dir <> "botanical-thumbnail.webp"
     },
     "studio-light" => %{
       name: "Studio Light",
       src: @covers_dir <> "studio-light.webp",
-      thumb: @covers_dir <> "studio-light-thumbnail.webp",
-      source: "https://pixabay.com/photos/natural-nature-landscape-9954257/"
+      thumb: @covers_dir <> "studio-light-thumbnail.webp"
     },
     "paper-texture" => %{
       name: "Paper Texture",
       src: @covers_dir <> "paper-texture.webp",
-      thumb: @covers_dir <> "paper-texture-thumbnail.webp",
-      source: "https://pixabay.com/photos/paper-white-gray-handmade-1332019/"
+      thumb: @covers_dir <> "paper-texture-thumbnail.webp"
     }
   }
 

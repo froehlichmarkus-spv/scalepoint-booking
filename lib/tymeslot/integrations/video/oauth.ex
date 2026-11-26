@@ -37,7 +37,7 @@ defmodule Tymeslot.Integrations.Video.OAuth do
     zoom: %{label: "Zoom", config: :zoom, callback: "zoom"}
   }
 
-  @google_scopes [:calendar, :meet]
+  @google_scopes [:calendar_events, :calendar_list_readonly, :meet]
 
   @doc """
   Whether this provider authenticates over OAuth.

@@ -110,7 +110,6 @@ defmodule TymeslotWeb.Shared.Auth.LayoutComponents do
               <div class="space-y-6">
                 {render_slot(@form)}
                 <%= if @social != [] do %>
-                  <p class="sub">{dgettext("auth", "Or continue with")}</p>
                   {render_slot(@social)}
                 <% end %>
               </div>

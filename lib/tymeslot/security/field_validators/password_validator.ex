@@ -122,12 +122,17 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   end
 
   defp validate_not_breached(password) do
+    # Keeps the previous composition msgids in the extract, which stays on main.
+    _catalog =
+      [
+        dgettext_noop("errors_input", "Password must contain at least one lowercase letter"),
+        dgettext_noop("errors_input", "Password must contain at least one uppercase letter"),
+        dgettext_noop("errors_input", "Password must contain at least one number"),
+        dgettext_noop("errors_input", "Password must contain at least one special character")
+      ]
+
     if BreachedPasswords.breached?(password) do
-      {:error,
-       dgettext(
-         "errors_input",
-         "This password has appeared in a data breach. Choose a different one."
-       )}
+      {:error, "This password has appeared in a data breach. Choose a different one."}
     else
       :ok
     end

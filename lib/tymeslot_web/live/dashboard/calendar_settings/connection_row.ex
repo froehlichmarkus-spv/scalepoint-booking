@@ -84,6 +84,16 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.ConnectionRow do
       </:icon>
       <:last_activity :if={@last_synced}>{@last_synced}</:last_activity>
       <:actions>
+        <p
+          :if={@integration.provider == "google" && Helpers.needs_scope_upgrade?(@integration)}
+          class="text-sm text-amber-900"
+          data-testid="google-scope-reconnect"
+        >
+          {dgettext(
+            "dashboard_calendar_settings",
+            "Google needs a new permission for your calendar. Reconnect it, and everything keeps working."
+          )}
+        </p>
         <.tooltip
           :let={tip}
           :if={@integration.provider == "google" && Helpers.needs_scope_upgrade?(@integration)}

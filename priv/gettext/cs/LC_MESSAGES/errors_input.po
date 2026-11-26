@@ -528,5 +528,20 @@ msgstr "Heslo může mít nejvýše %{count} bajtů. Písmena s diakritikou a em
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
-msgid "This password has appeared in a data breach. Choose a different one."
-msgstr "This password has appeared in a data breach. Choose a different one."
+msgid "Password must contain at least one lowercase letter"
+msgstr "Heslo musí obsahovat alespoň jedno malé písmeno"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one number"
+msgstr "Heslo musí obsahovat alespoň jednu číslici"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one special character"
+msgstr "Heslo musí obsahovat alespoň jeden speciální znak"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one uppercase letter"
+msgstr "Heslo musí obsahovat alespoň jedno velké písmeno"

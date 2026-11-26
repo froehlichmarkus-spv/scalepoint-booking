@@ -912,13 +912,17 @@ msgstr "ne peut pas dépasser %{max} à ce rythme, afin que chaque séance tombe
 msgid "Meeting types that ask invitees to confirm their email cannot be booked as a series."
 msgstr "Les types de réunion qui demandent aux invités de confirmer leur adresse e-mail ne peuvent pas être réservés en série."
 
+#: lib/tymeslot_web/controllers/error_html/404.html.heex
+#, elixir-autogen, elixir-format
+msgid "Go to the scheduler"
+msgstr "Go to the scheduler"
+
 #: lib/tymeslot_web/controllers/error_html/500.html.heex
 #, elixir-autogen, elixir-format
 msgid "Error 500"
-msgstr "Error 500"
+msgstr "Erreur 404"
 
-#: lib/tymeslot_web/controllers/error_html/404.html.heex
-#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#: lib/tymeslot_web/controllers/error_html.ex
 #, elixir-autogen, elixir-format
 msgid "Go to %{product}"
 msgstr "Go to %{product}"

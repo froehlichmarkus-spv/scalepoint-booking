@@ -53,8 +53,8 @@ defmodule Tymeslot.Emails.BrandingTest do
   defp png_path, do: temp_file(png_bytes())
 
   describe "brand_name/0" do
-    test "defaults to Tymeslot when the instance has not set one" do
-      assert Branding.brand_name() == "Tymeslot"
+    test "defaults to BookDesk24 when the instance has not set one" do
+      assert Branding.brand_name() == "BookDesk24"
     end
 
     test "returns the configured name" do
@@ -63,11 +63,11 @@ defmodule Tymeslot.Emails.BrandingTest do
       assert Branding.brand_name() == "Beaver Dental"
     end
 
-    test "falls back to Tymeslot when the override is cleared" do
+    test "falls back to BookDesk24 when the override is cleared" do
       {:ok, _settings} = AppSettings.update(%{email_brand_name: "Beaver Dental"})
       {:ok, _settings} = AppSettings.update(%{email_brand_name: nil})
 
-      assert Branding.brand_name() == "Tymeslot"
+      assert Branding.brand_name() == "BookDesk24"
     end
   end
 
@@ -300,11 +300,11 @@ defmodule Tymeslot.Emails.BrandingTest do
       )
     end
 
-    test "the stock branding renders the Tymeslot name and turquoise accent" do
+    test "the stock branding renders the BookDesk24 name and turquoise accent" do
       mjml = transactional_mjml()
 
-      assert mjml =~ ~s(alt="Tymeslot")
-      assert mjml =~ "Jane Smith via Tymeslot"
+      assert mjml =~ ~s(alt="BookDesk24")
+      assert mjml =~ "Jane Smith via BookDesk24"
       assert mjml =~ "#0d786c"
     end
 

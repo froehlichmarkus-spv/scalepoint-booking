@@ -17,6 +17,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.OAuthHelper do
   alias Tymeslot.Integrations.Calendar.CalendarIntegrationSchema
   alias Tymeslot.Integrations.Calendar.CallbackPersistence
   alias Tymeslot.Integrations.Calendar.Google.Provider, as: GoogleProvider
+  alias Tymeslot.Integrations.Shared.GoogleConfig
   alias Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelper
   alias Tymeslot.Integrations.Shared.OAuth.State
   alias Tymeslot.Meetings.MeetingListQueries
@@ -26,12 +27,17 @@ defmodule Tymeslot.Integrations.Calendar.Google.OAuthHelper do
   @doc """
   Generates the OAuth authorization URL for Google Calendar.
 
-  The URL requests the full calendar scope, which Google Meet creation needs.
+  The URL requests event write and a read-only calendar list. A token that
+  already holds the broader calendar grant still covers both.
   """
   @impl Tymeslot.Integrations.Calendar.Auth.OAuthHelperBehaviour
   @spec authorization_url(pos_integer(), String.t()) :: String.t()
   def authorization_url(user_id, redirect_uri) do
-    GoogleOAuthHelper.authorization_url(user_id, redirect_uri, [:calendar])
+    GoogleOAuthHelper.authorization_url(
+      user_id,
+      redirect_uri,
+      GoogleConfig.calendar_scopes()
+    )
   end
 
   @doc """
@@ -39,7 +45,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.OAuthHelper do
 
   Accepts a keyword list as the third argument. When a list of atoms/strings is
   given it is treated as scopes (backward compatible). When a keyword list is
-  given, `:scopes` defaults to `[:calendar]` and other keys (e.g. `:return_to`)
+  given, `:scopes` defaults to the narrow calendar scopes and other keys (e.g. `:return_to`)
   are forwarded to the shared helper.
   """
   @impl Tymeslot.Integrations.Calendar.Auth.OAuthHelperBehaviour
@@ -47,7 +53,9 @@ defmodule Tymeslot.Integrations.Calendar.Google.OAuthHelper do
           String.t()
   def authorization_url(user_id, redirect_uri, opts) when is_list(opts) do
     if Keyword.keyword?(opts) do
-      scopes = Keyword.get(opts, :scopes, [:calendar])
+      scopes =
+        Keyword.get(opts, :scopes, GoogleConfig.calendar_scopes())
+
       GoogleOAuthHelper.authorization_url(user_id, redirect_uri, scopes, opts)
     else
       GoogleOAuthHelper.authorization_url(user_id, redirect_uri, opts)

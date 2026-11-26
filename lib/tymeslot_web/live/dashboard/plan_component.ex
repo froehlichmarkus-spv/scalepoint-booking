@@ -58,7 +58,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
       <.dashboard_page icon="hero-credit-card" title={dgettext("plans", "Plan & billing")}>
         <div class="gos-plan">
           <p :if={@billing_unavailable} class="gos-alert" role="alert">
-            {dgettext("plans", "Billing is unavailable. Try again in a moment.")}
+            {Tymeslot.Plans.Billing.unavailable_message()}
           </p>
           <section class="gos-plan-card">
             <p class="gos-plan-muted">{plan_line(assigns)}</p>
@@ -89,7 +89,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
                 phx-target={@myself}
               >
                 {dgettext("plans", "Pro yearly – %{price}", price: @prices.yearly.amount)}
-                <span :if={@prices.yearly[:note]}>({@prices.yearly.note})</span>
+                <span :if={@prices.yearly[:note]}>({price_note(@prices.yearly.note)})</span>
               </button>
               <button
                 type="button"
@@ -121,7 +121,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
             <p class="gos-plan-muted mt-3">
               {dgettext(
                 "plans",
-                "Prices are net. VAT IDs for reverse charge are collected by billing. No Stripe Tax."
+                "Prices are net. VAT IDs for reverse charge are collected by billing."
               )}
             </p>
           </section>
@@ -147,10 +147,12 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   end
 
   defp billing_unavailable(socket) do
-    message = dgettext("plans", "Billing is unavailable. Try again in a moment.")
-    Flash.error(message)
+    Flash.error(Tymeslot.Plans.Billing.unavailable_message())
     assign(socket, :billing_unavailable, true)
   end
+
+  defp price_note("2 months free"), do: dgettext("plans", "2 months free")
+  defp price_note(note), do: note
 
   defp checkout_success?(assigns) do
     params = assigns[:params] || %{}

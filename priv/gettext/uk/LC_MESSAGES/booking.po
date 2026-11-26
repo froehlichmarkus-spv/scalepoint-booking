@@ -927,3 +927,8 @@ msgstr "Terms"
 #, elixir-autogen, elixir-format
 msgid "You can move or cancel the appointment from the confirmation email. Times follow your timezone."
 msgstr "You can move or cancel the appointment from the confirmation email. Times follow your timezone."
+
+#: lib/tymeslot_web/themes/shared/components/legal_links.ex
+#, elixir-autogen, elixir-format
+msgid "Quellcode (AGPLv3)"
+msgstr "Quellcode (AGPLv3)"

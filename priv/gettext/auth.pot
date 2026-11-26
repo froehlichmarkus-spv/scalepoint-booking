@@ -170,7 +170,7 @@ msgstr ""
 msgid "New Password"
 msgstr ""
 
-#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#: lib/tymeslot_web/components/auth/shared/social_auth_buttons.ex
 #, elixir-autogen, elixir-format
 msgid "Or continue with"
 msgstr ""
@@ -778,26 +778,6 @@ msgid_plural "Welcome back. Your account has been restored, but %{names} need re
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Choose a new password for your %{product} account."
-msgstr ""
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-msgstr ""
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your %{product} account."
-msgstr ""
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-msgstr ""
-
 #: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #, elixir-autogen, elixir-format
 msgid "14-day trial, no card"
@@ -876,4 +856,24 @@ msgstr ""
 #: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #, elixir-autogen, elixir-format
 msgid "or reset your password."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a strong new password for your Tymeslot account."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your email to receive a password reset link for your Tymeslot account."
+msgstr ""
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
 msgstr ""

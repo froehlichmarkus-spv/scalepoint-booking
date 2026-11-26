@@ -525,5 +525,20 @@ msgstr ""
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
-msgid "This password has appeared in a data breach. Choose a different one."
+msgid "Password must contain at least one lowercase letter"
+msgstr ""
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one number"
+msgstr ""
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one special character"
+msgstr ""
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one uppercase letter"
 msgstr ""

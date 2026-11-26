@@ -1449,7 +1449,7 @@ Presets are defined under `lib/tymeslot/theme_customizations/presets/`, one modu
 - `"preset:elegant-still-life"`
 - `"preset:ocean-sunset"`
 
-**Available Cover Presets** (`Presets.Covers`, for an `Options.Cover` group's `presets:`; the last three are covers of their own under `/images/themes/covers/`, each entry recording its Pixabay `source`):
+**Available Cover Presets** (`Presets.Covers`, for an `Options.Cover` group's `presets:`; the last three are generated covers of their own under `/images/themes/covers/`):
 - `"elegant-still-life"`
 - `"artistic-studio"`
 - `"ocean-sunset"`

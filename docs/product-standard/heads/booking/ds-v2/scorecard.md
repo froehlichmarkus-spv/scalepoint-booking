@@ -1,6 +1,8 @@
 # BookDesk24 · Scorecard (DS v2.5)
 
-Stand: 26. Nov 2026. Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Ziel ist 9.
+Stand: 26. Nov 2026, nach dem Merge von `qa/bookdesk24-saas-ready` (`ad5b9e5`). Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Ziel ist 9.
+
+Belege dieser Runde: `after/auth-login-1440.png` und `after/auth-login-390.png` (oben, ohne leeres „Oder fortfahren mit“), `after/dash-plan-1440.png` („Du nutzt Pro“), `after/booking-trust-1440.png` und `after/booking-trust-390.png` (Monogramm LH), `after/mail-confirmation.png` (BookDesk24, du, Fakten, Legal). Die wählbaren Cover und Hintergrund-Presets sind generierte Verläufe, keine Pixabay-Fotos.
 
 DS v2.5.0 tokens are in `assets/css/tokens.phoenix.css`. The four CSS files that carried raw hex now use those tokens, including `--gos-overlay-hover` and `--gos-gradient-hue`. The icon map includes the answered Lucide rows, and the wrong stretch mappings are corrected.
 

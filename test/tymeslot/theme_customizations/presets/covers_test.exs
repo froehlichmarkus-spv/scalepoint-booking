@@ -37,9 +37,9 @@ defmodule Tymeslot.ThemeCustomizations.Presets.CoversTest do
            end) == []
   end
 
-  # A cover of its own (not a reused background) is a Pixabay image whose
-  # source page is recorded beside it, so its licence can be traced.
-  test "a cover of its own records its Pixabay source page" do
+  # A cover of its own is a generated visual. It does not point at a stock
+  # library, and its thumbnail sits beside the full image.
+  test "a cover of its own is a generated visual with no stock source" do
     own =
       for {id, cover} <- Covers.all(),
           String.starts_with?(cover.src, "/images/themes/covers/"),
@@ -49,7 +49,7 @@ defmodule Tymeslot.ThemeCustomizations.Presets.CoversTest do
              ~w(botanical paper-texture studio-light)
 
     assert Enum.reject(own, fn {_id, cover} ->
-             match?("https://pixabay.com/" <> _rest, cover[:source]) and
+             cover[:source] == nil and
                String.starts_with?(cover.thumb, "/images/themes/covers/")
            end) == []
   end

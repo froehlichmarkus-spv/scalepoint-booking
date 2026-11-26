@@ -525,5 +525,20 @@ msgstr "Das Passwort darf höchstens %{count} Byte lang sein. Buchstaben mit Akz
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
-msgid "This password has appeared in a data breach. Choose a different one."
-msgstr "Dieses Passwort ist in einem Datenleck aufgetaucht. Wähle ein anderes."
+msgid "Password must contain at least one lowercase letter"
+msgstr "Das Passwort muss mindestens einen Kleinbuchstaben enthalten"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one number"
+msgstr "Das Passwort muss mindestens eine Zahl enthalten"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one special character"
+msgstr "Das Passwort muss mindestens ein Sonderzeichen enthalten"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one uppercase letter"
+msgstr "Das Passwort muss mindestens einen Großbuchstaben enthalten"

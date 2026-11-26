@@ -167,7 +167,7 @@ msgstr "Logowanie…"
 msgid "New Password"
 msgstr "Nowe hasło"
 
-#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#: lib/tymeslot_web/components/auth/shared/social_auth_buttons.ex
 #, elixir-autogen, elixir-format
 msgid "Or continue with"
 msgstr "Lub kontynuuj przez"
@@ -777,26 +777,6 @@ msgstr[0] "Witaj z powrotem. Konto zostało przywrócone, ale integracja %{names
 msgstr[1] "Witaj z powrotem. Konto zostało przywrócone, ale integracje %{names} wymagają ponownego połączenia. Dopóki nie połączysz ich ponownie, strona rezerwacji może nie oferować terminów ani przyjmować rezerwacji."
 msgstr[2] "Witaj z powrotem. Konto zostało przywrócone, ale integracje %{names} wymagają ponownego połączenia. Dopóki nie połączysz ich ponownie, strona rezerwacji może nie oferować terminów ani przyjmować rezerwacji."
 
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Choose a new password for your %{product} account."
-msgstr "Choose a new password for your %{product} account."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-msgstr "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your %{product} account."
-msgstr "Enter your email to receive a password reset link for your %{product} account."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-msgstr "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-
 #: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #, elixir-autogen, elixir-format
 msgid "14-day trial, no card"
@@ -876,3 +856,23 @@ msgstr "Sesja wygasła. Zaloguj się ponownie."
 #, elixir-autogen, elixir-format
 msgid "or reset your password."
 msgstr "or reset your password."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a strong new password for your Tymeslot account."
+msgstr "Choose a strong new password for your Tymeslot account."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+msgstr "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your email to receive a password reset link for your Tymeslot account."
+msgstr "Enter your email to receive a password reset link for your Tymeslot account."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+msgstr "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."

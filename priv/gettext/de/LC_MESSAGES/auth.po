@@ -170,7 +170,7 @@ msgstr "Anmeldung läuft…"
 msgid "New Password"
 msgstr "Neues Passwort"
 
-#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#: lib/tymeslot_web/components/auth/shared/social_auth_buttons.ex
 #, elixir-autogen, elixir-format
 msgid "Or continue with"
 msgstr "Oder fortfahren mit"
@@ -778,26 +778,6 @@ msgid_plural "Welcome back. Your account has been restored, but %{names} need re
 msgstr[0] "Willkommen zurück. Dein Konto wurde wiederhergestellt, aber die Integration %{names} muss erneut verbunden werden. Solange du sie nicht erneut verbindest, bietet deine Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
 msgstr[1] "Willkommen zurück. Dein Konto wurde wiederhergestellt, aber die Integrationen %{names} müssen erneut verbunden werden. Solange du sie nicht erneut verbindest, bietet deine Buchungsseite möglicherweise keine Zeiten an und nimmt keine Buchungen entgegen."
 
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Choose a new password for your %{product} account."
-msgstr "Wähle ein neues Passwort für dein %{product}-Konto."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-msgstr "Leg ein %{product}-Konto an und teile deine Verfügbarkeit in wenigen Minuten. Keine Kreditkarte nötig."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your %{product} account."
-msgstr "Gib deine E-Mail-Adresse ein. Du bekommst einen Link, um das Passwort für dein %{product}-Konto zurückzusetzen."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-msgstr "Melde dich in deinem %{product}-Konto an, um Termine, Verfügbarkeit und Buchungen zu verwalten."
-
 #: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #, elixir-autogen, elixir-format
 msgid "14-day trial, no card"
@@ -877,3 +857,23 @@ msgstr "Deine Sitzung ist abgelaufen"
 #, elixir-autogen, elixir-format
 msgid "or reset your password."
 msgstr "oder setze dein Passwort zurück."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a strong new password for your Tymeslot account."
+msgstr "Wähle ein starkes neues Passwort für dein Tymeslot-Konto."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+msgstr "Leg ein Tymeslot-Konto an und teile deine Verfügbarkeit in wenigen Minuten. Keine Kreditkarte nötig."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your email to receive a password reset link for your Tymeslot account."
+msgstr "Gib deine E-Mail-Adresse ein. Du bekommst einen Link, um das Passwort für dein Tymeslot-Konto zurückzusetzen."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+msgstr "Melde dich in deinem Tymeslot-Konto an, um Termine, Verfügbarkeit und Buchungen zu verwalten."

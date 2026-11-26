@@ -28,11 +28,6 @@ msgstr "Immer"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
-msgid "Billing is unavailable. Try again in a moment."
-msgstr "Die Abrechnung ist nicht erreichbar. Versuch es gleich noch einmal."
-
-#: lib/tymeslot_web/live/dashboard/plan_component.ex
-#, elixir-autogen, elixir-format
 msgid "Calendars"
 msgstr "Kalender"
 
@@ -123,11 +118,6 @@ msgstr "Bereitgestellt von BookDesk24"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
-msgid "Prices are net. VAT IDs for reverse charge are collected by billing. No Stripe Tax."
-msgstr "Preise sind netto. USt-IdNr. für das Reverse-Charge-Verfahren erhebt die Abrechnung. Kein Stripe Tax."
-
-#: lib/tymeslot_web/live/dashboard/plan_component.ex
-#, elixir-autogen, elixir-format
 msgid "Pro monthly – %{price}"
 msgstr "Pro monatlich – %{price}"
 
@@ -202,3 +192,18 @@ msgstr "Dein Logo und Akzent"
 #, elixir-autogen, elixir-format
 msgid "Your logo and accent colour are part of Pro."
 msgstr "Dein Logo und deine Akzentfarbe gehören zu Pro."
+
+#: lib/tymeslot/plans/billing.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 billing is not connected yet. Try again later or write to %{email}."
+msgstr "Die Abrechnung von BookDesk24 ist noch nicht da. Versuch es später noch einmal oder schreib an %{email}."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "2 months free"
+msgstr "2 Monate gratis"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Prices are net. VAT IDs for reverse charge are collected by billing."
+msgstr "Preise sind netto. USt-IdNr. für das Reverse-Charge-Verfahren erhebt die Abrechnung."

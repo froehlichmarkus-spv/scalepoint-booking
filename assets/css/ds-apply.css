@@ -5,8 +5,20 @@ body.gos {
   color: var(--gos-text);
 }
 
-body.gos .gos-wordmark {
+body.gos .gos-wordmark,
+body.gos .gos-byline {
   white-space: nowrap;
+}
+
+body.gos .brand-nav .h-16 {
+  height: auto;
+  min-height: 3.5rem;
+  overflow: visible;
+}
+
+body.gos .brand-nav img {
+  height: 2rem;
+  width: auto;
 }
 
 body.gos .action-button--danger,

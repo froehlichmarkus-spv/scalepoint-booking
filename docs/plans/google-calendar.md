@@ -15,7 +15,7 @@ Die Scopes stehen in `Tymeslot.Integrations.Shared.GoogleConfig`:
 
 - `openid`
 - `email`
-- `https://www.googleapis.com/auth/calendar` für den Kalender, in den geschrieben wird
+- `https://www.googleapis.com/auth/calendar.events` und `https://www.googleapis.com/auth/calendar.calendarlist.readonly` für neue Verbindungen. Ein schon erteiltes `https://www.googleapis.com/auth/calendar` gilt weiter. Siehe `docs/google-oauth-scopes.md`.
 - `https://www.googleapis.com/auth/meetings.space.created` für Google Meet
 
 `calendar.readonly` reicht nicht. Der Google-Provider lehnt einen reinen Lese-Scope ab, weil Meet und das Eintragen über `events.insert` Schreibrecht brauchen. Ein Kalender, der nur mitgelesen wird, darf danach trotzdem als Konfliktquelle markiert sein. Das ist eine Einstellung pro Kalender, nicht ein zweiter Scope.

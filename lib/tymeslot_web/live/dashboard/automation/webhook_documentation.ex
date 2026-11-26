@@ -171,9 +171,9 @@ defmodule TymeslotWeb.Dashboard.Automation.WebhookDocumentation do
                   <p class="text-tymeslot-600 text-token-xs font-medium mt-2">
                     {dgettext(
                       "dashboard_automation",
-                      "Verify the token in your automation tool to ensure requests are from %{product}.",
-                      product: Tymeslot.Brands.product_name()
-                    )}
+                      "Verify the token in your automation tool to ensure requests are from Tymeslot."
+                    )
+                    |> String.replace("Tymeslot", Tymeslot.Brands.product_name())}
                   </p>
                   <p class="text-tymeslot-600 text-token-xs font-medium mt-2">
                     {dgettext(
