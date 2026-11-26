@@ -73,6 +73,21 @@ msgstr ""
 
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
+msgid "One lowercase letter"
+msgstr ""
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One number"
+msgstr ""
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One uppercase letter"
+msgstr ""
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
 msgid "Password must contain:"
 msgstr ""
 
@@ -184,6 +199,11 @@ msgstr ""
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "At least %{count} characters"
+msgstr ""
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One special character"
 msgstr ""
 
 #: lib/tymeslot_web/components/core_components/navigation.ex
@@ -400,9 +420,4 @@ msgstr ""
 #: lib/tymeslot_web/components/core_components/date_time_picker/value.ex
 #, elixir-autogen, elixir-format
 msgid "Add a time"
-msgstr ""
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "At most %{count} bytes"
 msgstr ""

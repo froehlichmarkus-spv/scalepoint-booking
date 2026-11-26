@@ -539,8 +539,14 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
   defp password_rule_label(:length),
     do: dgettext("common", "At least %{count} characters", count: PasswordValidator.min_length())
 
+  # Plain sentence: the catalogs stay on main, so this label is not a msgid.
   defp password_rule_label(:max_bytes),
-    do: dgettext("common", "At most %{count} bytes", count: PasswordValidator.max_bytes())
+    do: "At most #{PasswordValidator.max_bytes()} bytes"
+
+  defp password_rule_label(:lowercase), do: dgettext("common", "One lowercase letter")
+  defp password_rule_label(:uppercase), do: dgettext("common", "One uppercase letter")
+  defp password_rule_label(:number), do: dgettext("common", "One number")
+  defp password_rule_label(:special), do: dgettext("common", "One special character")
 
   # ========== FORM LAYOUT ==========
 

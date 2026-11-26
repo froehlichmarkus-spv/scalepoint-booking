@@ -407,6 +407,11 @@ msgstr "Utilisez-le pour la vérification d’en-tête dans n8n/Zapier"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
+msgid "Verify the token in your automation tool to ensure requests are from Tymeslot."
+msgstr "Vérifiez le jeton dans votre outil d’automatisation pour vous assurer que les requêtes proviennent bien de Tymeslot."
+
+#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
+#, elixir-autogen, elixir-format
 msgid "Verify the webhook is working correctly"
 msgstr "Vérifiez que le webhook fonctionne correctement"
 
@@ -751,8 +756,3 @@ msgstr "Se déclenche une seule fois lorsqu’une personne demande une série de
 #, elixir-autogen, elixir-format
 msgid "Triggers once when you decline a series request, instead of Booking Declined for each session"
 msgstr "Se déclenche une seule fois lorsque vous refusez une demande de série, au lieu de « Réservation refusée » pour chaque séance"
-
-#: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
-#, elixir-autogen, elixir-format
-msgid "Verify the token in your automation tool to ensure requests are from %{product}."
-msgstr "Verify the token in your automation tool to ensure requests are from %{product}."

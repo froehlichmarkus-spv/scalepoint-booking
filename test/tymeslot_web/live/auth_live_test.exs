@@ -306,7 +306,7 @@ defmodule TymeslotWeb.AuthLiveTest do
        "Reset Password · ScalePoint Growth OS · Booking",
        "Enter your email to receive a password reset link for your BookDesk24 account."},
       {"reset password form", :token, "Choose a New Password · ScalePoint Growth OS · Booking",
-       "Choose a new password for your BookDesk24 account."}
+       "Choose a strong new password for your BookDesk24 account."}
     ]
 
     for {name, path, title, description} <- @indexable_auth_pages do

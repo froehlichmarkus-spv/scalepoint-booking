@@ -14,6 +14,10 @@ defmodule TymeslotWeb.ErrorHTML do
   @spec product_name() :: String.t()
   def product_name, do: Brands.product_name()
 
+  @doc "Home link on the error pages. Not a catalog entry."
+  @spec home_label() :: String.t()
+  def home_label, do: "Go to #{product_name()}"
+
   @doc "Support address shown on the branded error pages."
   @spec support_email() :: String.t()
   def support_email do

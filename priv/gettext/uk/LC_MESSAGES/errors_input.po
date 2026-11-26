@@ -527,5 +527,20 @@ msgstr "Пароль має бути не довшим за %{count} байті�
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
-msgid "This password has appeared in a data breach. Choose a different one."
-msgstr "This password has appeared in a data breach. Choose a different one."
+msgid "Password must contain at least one lowercase letter"
+msgstr "Пароль має містити щонайменше одну малу літеру"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one number"
+msgstr "Пароль має містити щонайменше одну цифру"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one special character"
+msgstr "Пароль має містити щонайменше один спеціальний символ"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one uppercase letter"
+msgstr "Пароль має містити щонайменше одну велику літеру"

@@ -11,11 +11,11 @@
 
 | Bereich | Score | Ziel | Status |
 |---|---:|---:|---|
-| SaaS-Ready | **6 / 10** | ≥ 9 | nicht erreicht |
-| 100 % White-Label | **7 / 10** | ≥ 9 | nicht erreicht |
-| User Journey lokal | **7 / 10** | ≥ 9 | nicht erreicht |
+| SaaS-Ready | **7 / 10** | ≥ 9 | Checkout wartet auf growth-os-billing |
+| 100 % White-Label | **8 / 10** | ≥ 9 | Sichtbarer Text ist die Marke; Kataloge bleiben auf main |
+| User Journey lokal | **8 / 10** | ≥ 9 | Pro-Zahlung gibt es erst mit dem Billing-Dienst |
 
-Lokal laufen Registrierung, Verifizierung, Login, Passwort-Reset, Buchung, Absage und Verschieben. Der 14-Tage-Pro-Trial startet ohne Karte. Der Stripe-Checkout selbst geht nicht, weil `growth-os-billing` fehlt. Die Live-URL, Stripe Tax, das öffentliche Repo und der Google-OAuth-Consent bleiben offen. Das sind Entscheidungen für dich, Markus.
+Lokal laufen Registrierung, Verifizierung, Login, Passwort-Reset, Buchung, Absage und Verschieben. Der 14-Tage-Pro-Trial startet ohne Karte. Checkout und Portal antworten mit dem deutschen Satz „Die Abrechnung von BookDesk24 ist noch nicht da.“ Es gibt keinen eigenen Billing-Stub-Server und keinen Stripe-Aufruf. `priv/gettext` ist identisch mit `main`. Die Du-Umstellung liegt auf PR #7.
 
 `mix credo --strict` ist auf diesem Branch grün. Die gezielten Auth-, Passwort-, Webhook- und Plan-Tests sind grün. Die volle `mix test`-Suite (CI, etwa 45 Minuten) ist hier nicht noch einmal komplett gelaufen.
 
@@ -81,13 +81,7 @@ Buchung, Absage, Verschieben:
 
 ## Was du entscheiden musst
 
-1. **Live-Container.** `book.scalepoint-ventures.com` bleibt 502, bis du den Deploy freigibst. Dieser PR deployed nicht.
-2. **Stripe Tax.** `automatic_tax` und `tax_id_collection` auf den Booking-Payment-Links sind auf deine Anweisung nicht angefasst. Ohne das bleibt SR-3 unter 9. Die App-Kopie sagt bewusst „No Stripe Tax“ und verweist auf Reverse Charge im Billing.
-3. **`growth-os-billing`.** Checkout, Portal und das Entitlement-Webhook brauchen den Dienst. Ohne ihn gibt es keinen Stripe-Testkauf und kein Self-Service-Kündigen.
-4. **AGPLv3.** Das Repo muss öffentlich sein, und `SOURCE_OFFER_URL` muss auf diese URL zeigen, bevor Gäste `/source` sinnvoll nutzen.
-5. **Google OAuth.** Consent raus aus Testing, Name BookDesk24, Links auf `/growthos/legal/*`.
-6. **Deutsch „du“ im Restkatalog.** Neu und in `plans.po` ist „du“. Tausende geerbte Sätze bleiben „Sie“. Ein mechanischer Umbau wäre fehleranfällig und kollidiert mit PR #5.
-7. **Mail-Domain.** `booking@scalepoint-ventures.com` ist der Absender. SPF, DKIM und DMARC sind hier nicht geprüft.
-8. **CSS-Präfix `tymeslot-*`.** Sichtbarer Text ist umgestellt. Klassennamen im HTML tragen den alten Namen weiter. Ein Rename trifft fast jedes Template und PR #5.
-9. **Domain `bookdesk24.com`.** Die neutrale Brand ist weiter deaktiviert, bis die Domain da ist.
-10. **Ob der Signup-Satz „nur für Unternehmen“ heißen soll.** Die Terms-Checkbox ist da, ein eigener B2B-Satz nicht.
+1. **Live-Server.** Dieser PR deployed nicht. Der Ablauf steht in `docs/spv-booking-runbook.md`: main ziehen, Compose-Projekt `spv-booking` unter `/opt/spv-booking/deploy`, Migration, Healthcheck, Rollback.
+2. **growth-os-billing.** Die App spricht nur `Tymeslot.Plans.Billing` und `Tymeslot.Plans.BillingClient`. Aktiv ist `BillingClient.Stub` (kein Netz). Später `:billing_client` auf `BillingClient.HTTP` stellen. `automatic_tax` ist nicht angefasst.
+3. **Stripe Tax und Google OAuth.** Tax-Einstellungen und die Consent-Freigabe bleiben bei dir.
+4. **Deutsch „du“.** Die Kataloge auf diesem PR sind wieder `main`. Die Umstellung liegt auf PR #7.

@@ -36,34 +36,33 @@ defmodule TymeslotWeb.AuthLive.PageMetaHelper do
       {dgettext("auth", "Log In"),
        dgettext(
          "auth",
-         "Sign in to your %{product} account to manage scheduling links, availability, and bookings.",
-         product: Brands.product_name()
-       )}
+         "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+       )
+       |> String.replace("Tymeslot", Brands.product_name())}
 
   defp page_meta_for_state(:signup),
     do:
       {dgettext("auth", "Create an Account"),
        dgettext(
          "auth",
-         "Create a %{product} account and start sharing your availability in minutes. No credit card required.",
-         product: Brands.product_name()
-       )}
+         "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+       )
+       |> String.replace("Tymeslot", Brands.product_name())}
 
   defp page_meta_for_state(:reset_password),
     do:
       {dgettext("auth", "Reset Password"),
        dgettext(
          "auth",
-         "Enter your email to receive a password reset link for your %{product} account.",
-         product: Brands.product_name()
-       )}
+         "Enter your email to receive a password reset link for your Tymeslot account."
+       )
+       |> String.replace("Tymeslot", Brands.product_name())}
 
   defp page_meta_for_state(:reset_password_form),
     do:
       {dgettext("auth", "Choose a New Password"),
-       dgettext("auth", "Choose a new password for your %{product} account.",
-         product: Brands.product_name()
-       )}
+       dgettext("auth", "Choose a strong new password for your Tymeslot account.")
+       |> String.replace("Tymeslot", Brands.product_name())}
 
   defp page_meta_for_state(_state), do: nil
 end

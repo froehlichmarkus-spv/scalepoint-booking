@@ -436,7 +436,7 @@ defmodule Tymeslot.Webhooks.PayloadBuilderTest do
       assert payload.data.test == true
 
       assert payload.data.message ==
-               "This is a test webhook from Tymeslot. " <>
+               "This is a test webhook from BookDesk24. " <>
                  "If you receive this, your webhook is configured correctly!"
     end
   end

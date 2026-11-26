@@ -605,7 +605,7 @@ msgstr "Host"
 #: lib/tymeslot_web/themes/core/dispatcher.ex
 #, elixir-autogen, elixir-format
 msgid "Something went wrong"
-msgstr "Something went wrong"
+msgstr "Něco se pokazilo"
 
 #: lib/tymeslot_web/themes/core/error_boundary.ex
 #, elixir-autogen, elixir-format
@@ -910,13 +910,3 @@ msgstr "%{page} s %{name}"
 #, elixir-autogen, elixir-format
 msgid "We'll email you a link to confirm this booking."
 msgstr "E-mailem vám pošleme odkaz k potvrzení této rezervace."
-
-#: lib/tymeslot_web/themes/shared/components/legal_links.ex
-#, elixir-autogen, elixir-format
-msgid "Data processing agreement"
-msgstr "Data processing agreement"
-
-#: lib/tymeslot_web/themes/shared/components/legal_links.ex
-#, elixir-autogen, elixir-format
-msgid "Terms"
-msgstr "Terms"

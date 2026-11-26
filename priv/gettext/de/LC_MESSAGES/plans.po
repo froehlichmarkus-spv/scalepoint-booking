@@ -14,12 +14,12 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "A payment is past due. Update billing to keep Pro."
-msgstr "Eine Zahlung ist überfällig. Aktualisiere die Abrechnung, um Pro zu behalten."
+msgstr "Eine Zahlung ist überfällig. Aktualisieren Sie die Abrechnung, um Pro zu behalten."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "Activating your plan…"
-msgstr "Dein Tarif wird aktiviert…"
+msgstr "Ihr Tarif wird aktiviert…"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -29,7 +29,7 @@ msgstr "Immer"
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "Billing is unavailable. Try again in a moment."
-msgstr "Die Abrechnung ist nicht erreichbar. Versuch es gleich noch einmal."
+msgstr "Die Abrechnung ist nicht erreichbar. Versuchen Sie es gleich noch einmal."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -84,7 +84,7 @@ msgstr "Abrechnung verwalten"
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "On your booking page"
-msgstr "Auf deiner Buchungsseite"
+msgstr "Auf Ihrer Buchungsseite"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -94,7 +94,7 @@ msgstr "Eine"
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "Only your oldest bookable event type is public. The others are paused, not deleted."
-msgstr "Nur deine älteste buchbare Terminart ist öffentlich. Die anderen sind pausiert, nicht gelöscht."
+msgstr "Nur Ihre älteste buchbare Terminart ist öffentlich. Die anderen sind pausiert, nicht gelöscht."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
@@ -149,18 +149,18 @@ msgstr "Erinnerungs-E-Mails gehören zu Pro."
 #: lib/tymeslot_web/components/shared/reminder_picker.ex
 #, elixir-autogen, elixir-format
 msgid "Reminder emails are part of Pro. You can still turn existing ones off."
-msgstr "Erinnerungs-E-Mails gehören zu Pro. Bestehende kannst du weiterhin abschalten."
+msgstr "Erinnerungs-E-Mails gehören zu Pro. Bestehende können Sie weiterhin abschalten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #: lib/tymeslot_web/live/dashboard/service_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "The Free plan includes 1 event type. Upgrade to Pro for unlimited event types."
-msgstr "Der Free-Tarif umfasst 1 Terminart. Wechsle zu Pro für unbegrenzte Terminarten."
+msgstr "Der Free-Tarif umfasst 1 Terminart. Wechseln Sie zu Pro für unbegrenzte Terminarten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
 msgid "This needs BookDesk24 Pro."
-msgstr "Dafür brauchst du BookDesk24 Pro."
+msgstr "Dafür brauchen Sie BookDesk24 Pro."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -175,30 +175,30 @@ msgstr "Sichtbar bei Free: Bereitgestellt von %{product}"
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "You are on Free."
-msgstr "Du nutzt Free."
+msgstr "Sie nutzen Free."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "You are on Pro."
-msgstr "Du nutzt Pro."
+msgstr "Sie nutzen Pro."
 
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "You are using %{count} of 1 calendars. Upgrade or remove the extra ones. Existing calendars still block double bookings."
-msgstr "Du nutzt %{count} von 1 Kalendern. Wechsle den Tarif oder entferne die zusätzlichen. Bestehende Kalender verhindern weiterhin Doppelbuchungen."
+msgstr "Sie nutzen %{count} von 1 Kalendern. Wechseln Sie den Tarif oder entfernen Sie die zusätzlichen. Bestehende Kalender verhindern weiterhin Doppelbuchungen."
 
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your Pro trial ends within 3 days."
-msgstr "Deine Pro-Testphase endet innerhalb von 3 Tagen."
+msgstr "Ihre Pro-Testphase endet innerhalb von 3 Tagen."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your logo and accent"
-msgstr "Dein Logo und Akzent"
+msgstr "Ihr Logo und Akzent"
 
 #: lib/tymeslot_web/live/dashboard/theme_settings/asset_uploads.ex
 #: lib/tymeslot_web/live/dashboard/theme_settings/theme_customization_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your logo and accent colour are part of Pro."
-msgstr "Dein Logo und deine Akzentfarbe gehören zu Pro."
+msgstr "Ihr Logo und Ihre Akzentfarbe gehören zu Pro."

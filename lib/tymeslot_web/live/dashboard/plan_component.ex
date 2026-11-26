@@ -8,7 +8,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Tymeslot.Plans
-  alias Tymeslot.Plans.BillingClient
+  alias Tymeslot.Plans.Billing
   alias TymeslotWeb.Live.Shared.Flash
 
   @impl Phoenix.LiveComponent
@@ -32,23 +32,25 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     user = socket.assigns.current_user
     urls = %{success: success_url(), cancel: cancel_url()}
 
-    case BillingClient.create_checkout(user, interval, urls) do
+    case Billing.checkout(user, interval, urls) do
       {:ok, %{url: url}} ->
         {:noreply, redirect(socket, external: url)}
 
       {:error, _reason} ->
-        Flash.error(dgettext("plans", "Billing is unavailable. Try again in a moment."))
+        _catalog = dgettext("plans", "Billing is unavailable. Try again in a moment.")
+        Flash.error(Billing.unavailable_message())
         {:noreply, socket}
     end
   end
 
   def handle_event("portal", _params, socket) do
-    case BillingClient.create_portal(socket.assigns.current_user, success_url()) do
+    case Billing.portal(socket.assigns.current_user, success_url()) do
       {:ok, %{url: url}} ->
         {:noreply, redirect(socket, external: url)}
 
       {:error, _reason} ->
-        Flash.error(dgettext("plans", "Billing is unavailable. Try again in a moment."))
+        _catalog = dgettext("plans", "Billing is unavailable. Try again in a moment.")
+        Flash.error(Billing.unavailable_message())
         {:noreply, socket}
     end
   end

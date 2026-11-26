@@ -73,6 +73,21 @@ msgstr "Más sobre los navegadores actuales"
 
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
+msgid "One lowercase letter"
+msgstr "Una letra minúscula"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One number"
+msgstr "Un número"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One uppercase letter"
+msgstr "Una letra mayúscula"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
 msgid "Password must contain:"
 msgstr "La contraseña debe contener:"
 
@@ -185,6 +200,11 @@ msgstr "Guardando los cambios…"
 #, elixir-autogen, elixir-format
 msgid "At least %{count} characters"
 msgstr "Al menos %{count} caracteres"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One special character"
+msgstr "Un carácter especial"
 
 #: lib/tymeslot_web/components/core_components/navigation.ex
 #, elixir-autogen, elixir-format
@@ -401,8 +421,3 @@ msgstr "Agrega una fecha"
 #, elixir-autogen, elixir-format
 msgid "Add a time"
 msgstr "Agrega una hora"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "At most %{count} bytes"
-msgstr "At most %{count} bytes"

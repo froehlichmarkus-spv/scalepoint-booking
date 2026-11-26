@@ -524,5 +524,20 @@ msgstr "Le mot de passe ne doit pas dépasser %{count} octets. Les lettres accen
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
 #, elixir-autogen, elixir-format
-msgid "This password has appeared in a data breach. Choose a different one."
-msgstr "This password has appeared in a data breach. Choose a different one."
+msgid "Password must contain at least one lowercase letter"
+msgstr "Le mot de passe doit contenir au moins une lettre minuscule"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one number"
+msgstr "Le mot de passe doit contenir au moins un chiffre"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one special character"
+msgstr "Le mot de passe doit contenir au moins un caractère spécial"
+
+#: lib/tymeslot/security/field_validators/password_validator.ex
+#, elixir-autogen, elixir-format
+msgid "Password must contain at least one uppercase letter"
+msgstr "Le mot de passe doit contenir au moins une lettre majuscule"

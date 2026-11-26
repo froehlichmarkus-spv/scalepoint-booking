@@ -403,6 +403,16 @@ msgstr "Nastavení nového hesla"
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
+msgid "Choose a strong new password for your Tymeslot account."
+msgstr "Zvolte si silné nové heslo pro svůj účet Tymeslot."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+msgstr "Vytvořte si účet Tymeslot a během několika minut začněte sdílet svou dostupnost. Bez platební karty."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
 msgid "Create an Account"
 msgstr "Vytvoření účtu"
 
@@ -415,6 +425,11 @@ msgstr "K dokončení registrace je potřeba e-mailová adresa."
 #, elixir-autogen, elixir-format
 msgid "Email address is required to complete registration. Please provide your email address."
 msgstr "K dokončení registrace je potřeba e-mailová adresa. Zadejte prosím svou e-mailovou adresu."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your email to receive a password reset link for your Tymeslot account."
+msgstr "Zadejte svůj e-mail a pošleme vám odkaz pro obnovení hesla k účtu Tymeslot."
 
 #: lib/tymeslot/auth/registration.ex
 #: lib/tymeslot_web/controllers/auth/helpers/controller_helpers.ex
@@ -441,6 +456,11 @@ msgstr "Zadejte prosím platnou e-mailovou adresu."
 #, elixir-autogen, elixir-format
 msgid "Registration failed due to validation errors. Please check your information and try again."
 msgstr "Registrace se nezdařila kvůli chybám ve formuláři. Zkontrolujte prosím zadané údaje a zkuste to znovu."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+msgstr "Přihlaste se ke svému účtu Tymeslot a spravujte rezervační odkazy, dostupnost a rezervace."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format
@@ -782,23 +802,3 @@ msgid_plural "Welcome back. Your account has been restored, but %{names} need re
 msgstr[0] "Vítejte zpět. Váš účet byl obnoven, ale integraci %{names} je potřeba připojit znovu. Dokud ji znovu nepřipojíte, vaše rezervační stránka nemusí nabízet termíny ani přijímat rezervace."
 msgstr[1] "Vítejte zpět. Váš účet byl obnoven, ale integrace %{names} je potřeba připojit znovu. Dokud je znovu nepřipojíte, vaše rezervační stránka nemusí nabízet termíny ani přijímat rezervace."
 msgstr[2] "Vítejte zpět. Váš účet byl obnoven, ale integrace %{names} je potřeba připojit znovu. Dokud je znovu nepřipojíte, vaše rezervační stránka nemusí nabízet termíny ani přijímat rezervace."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Choose a new password for your %{product} account."
-msgstr "Choose a new password for your %{product} account."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-msgstr "Create a %{product} account and start sharing your availability in minutes. No credit card required."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your %{product} account."
-msgstr "Enter your email to receive a password reset link for your %{product} account."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
-msgstr "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
