@@ -19,6 +19,11 @@ config :bcrypt_elixir, log_rounds: 4
 # Core tests must not enforce legal agreements.
 config :tymeslot, enforce_legal_agreements: false
 
+# The breach check stays on the local list. The network lookup is not used.
+config :tymeslot,
+       :breached_password_lookup,
+       Tymeslot.Security.BreachedPasswords.Offline
+
 # Poll tests in async modules share a handful of addresses and request links
 # on one poll repeatedly, so the per-address and per-poll budgets are raised
 # beyond their reach. Tests of the limits fill the buckets explicitly.

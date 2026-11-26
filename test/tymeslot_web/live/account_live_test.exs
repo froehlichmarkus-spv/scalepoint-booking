@@ -611,8 +611,8 @@ defmodule TymeslotWeb.AccountLiveTest do
     |> render_click()
   end
 
-  # A password that met the policy of its day but lacks the uppercase letter
-  # and symbol today's policy requires of a new one.
+  # A password stored before the current rules. Login still accepts it; a new
+  # password has to meet the length and breach checks.
   defp set_legacy_password(user) do
     user
     |> Changeset.change(%{password_hash: Password.hash_password("legacypassword1")})

@@ -64,7 +64,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.ProviderTest do
       refute Provider.needs_scope_upgrade?(integration)
     end
 
-    test "returns false when scope contains calendar.events" do
+    test "returns true when only calendar.events was granted" do
       user = insert(:user)
 
       integration =
@@ -72,6 +72,20 @@ defmodule Tymeslot.Integrations.Calendar.Google.ProviderTest do
           user: user,
           provider: "google",
           oauth_scope: "https://www.googleapis.com/auth/calendar.events"
+        )
+
+      assert Provider.needs_scope_upgrade?(integration)
+    end
+
+    test "returns false for the narrow event and calendar-list scopes" do
+      user = insert(:user)
+
+      integration =
+        insert(:calendar_integration,
+          user: user,
+          provider: "google",
+          oauth_scope:
+            "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly"
         )
 
       refute Provider.needs_scope_upgrade?(integration)

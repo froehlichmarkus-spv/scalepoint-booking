@@ -64,6 +64,25 @@ defmodule Tymeslot.Payments.Webhooks.TrialWillEndHandler do
   def handle(_event), do: {:error, :permanent, :missing_fields}
 
   defp notify_trial_ending(subscription_id, trial_ends_at) do
+    # growth-os-billing sends the trial-ending mail. The upstream template
+    # stays off once this app is talking to that service.
+    if billing_sends_trial_mail?() do
+      Logger.info("Trial ending mail is sent by growth-os-billing",
+        subscription_id: subscription_id
+      )
+
+      {:ok, :billing_owns_trial_mail}
+    else
+      notify_local_trial_ending(subscription_id, trial_ends_at)
+    end
+  end
+
+  defp billing_sends_trial_mail? do
+    Application.get_env(:tymeslot, :plans_enabled) == true and
+      Application.get_env(:tymeslot, :billing_client) == Tymeslot.Plans.BillingClient.HTTP
+  end
+
+  defp notify_local_trial_ending(subscription_id, trial_ends_at) do
     # Find subscription in our database for local notifications
     case CustomerLookup.get_subscription_by_subscription_id(subscription_id) do
       nil ->

@@ -33,33 +33,18 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidatorTest do
   end
 
   describe "validate/2" do
-    test "returns :ok for valid passwords" do
+    test "returns :ok for valid passwords without composition rules" do
       assert :ok = PasswordValidator.validate("StrongPass123!")
-      assert :ok = PasswordValidator.validate("Another@456")
-      assert :ok = PasswordValidator.validate("P@ssw0rd2026")
+      assert :ok = PasswordValidator.validate("anotherpass")
+      assert :ok = PasswordValidator.validate("nouppercase123")
     end
 
-    test "returns error for missing special character" do
-      assert {:error, "Password must contain at least one special character"} =
-               PasswordValidator.validate("StrongPass123")
+    test "rejects a password from the common-breach list" do
+      assert {:error, "This password has appeared in a data breach. Choose a different one."} =
+               PasswordValidator.validate("password")
 
-      assert {:error, "Password must contain at least one special character"} =
-               PasswordValidator.validate("NoSpecialChars1")
-    end
-
-    test "returns error for missing number" do
-      assert {:error, "Password must contain at least one number"} =
-               PasswordValidator.validate("StrongPass!")
-    end
-
-    test "returns error for missing uppercase" do
-      assert {:error, "Password must contain at least one uppercase letter"} =
-               PasswordValidator.validate("weakpass123!")
-    end
-
-    test "returns error for missing lowercase" do
-      assert {:error, "Password must contain at least one lowercase letter"} =
-               PasswordValidator.validate("STRONGPASS123!")
+      assert {:error, "This password has appeared in a data breach. Choose a different one."} =
+               PasswordValidator.validate("Password")
     end
 
     test "returns error for short password" do
@@ -70,19 +55,18 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidatorTest do
     # bcrypt reads only the first 72 bytes, so anything past them would be
     # accepted but silently ignored when the password is checked.
     test "accepts a password of exactly 72 bytes" do
-      assert :ok = PasswordValidator.validate("Aa1!" <> String.duplicate("a", 68))
+      assert :ok = PasswordValidator.validate(String.duplicate("a", 72))
     end
 
     test "rejects a password longer than 72 bytes" do
-      assert {:error, message} =
-               PasswordValidator.validate("Aa1!" <> String.duplicate("a", 69))
+      assert {:error, message} = PasswordValidator.validate(String.duplicate("a", 73))
 
       assert message =~ "at most 72 bytes"
     end
 
     test "counts the cap in bytes, not characters" do
       # 40 characters, but "é" takes two bytes each: 4 + 36 * 2 = 76 bytes.
-      password = "Aa1!" <> String.duplicate("é", 36)
+      password = "abcd" <> String.duplicate("é", 36)
       assert String.length(password) == 40
 
       assert {:error, message} = PasswordValidator.validate(password)

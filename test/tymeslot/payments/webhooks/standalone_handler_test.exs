@@ -49,6 +49,9 @@ defmodule Tymeslot.Payments.Webhooks.StandaloneHandlerTest do
 
   defp with_object(event, object), do: Map.put(event, "data", %{"object" => object})
 
+  defp restore_env(key, nil), do: Application.delete_env(:tymeslot, key)
+  defp restore_env(key, value), do: Application.put_env(:tymeslot, key, value)
+
   defp setup_test_configs(user) do
     original_provider = Application.get_env(:tymeslot, :stripe_provider)
 
@@ -146,6 +149,39 @@ defmodule Tymeslot.Payments.Webhooks.StandaloneHandlerTest do
 
       assert {:ok, :trial_ending_notified} =
                TrialWillEndHandler.handle(event)
+    end
+
+    test "leaves the trial-ending template off when growth-os-billing sends it" do
+      previous_plans = Application.get_env(:tymeslot, :plans_enabled)
+      previous_client = Application.get_env(:tymeslot, :billing_client)
+      Application.put_env(:tymeslot, :plans_enabled, true)
+
+      Application.put_env(
+        :tymeslot,
+        :billing_client,
+        Tymeslot.Plans.BillingClient.HTTP
+      )
+
+      on_exit(fn ->
+        restore_env(:plans_enabled, previous_plans)
+        restore_env(:billing_client, previous_client)
+      end)
+
+      stub_recorded_subscription(insert(:user).id)
+      trial_end = DateTime.add(DateTime.utc_now(), 2, :day)
+
+      event = %{
+        "type" => "customer.subscription.trial_will_end",
+        "data" => %{
+          "object" => %{
+            "id" => "sub_billing",
+            "customer" => "cus_billing",
+            "trial_end" => DateTime.to_unix(trial_end)
+          }
+        }
+      }
+
+      assert {:ok, :billing_owns_trial_mail} = TrialWillEndHandler.handle(event)
     end
   end
 

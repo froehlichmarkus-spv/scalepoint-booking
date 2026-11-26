@@ -2,16 +2,16 @@ defmodule Tymeslot.Plans.BillingClient do
   @moduledoc """
   HTTP client for growth-os-billing.
 
-  The app never creates Stripe subscriptions itself. Subscription webhooks
-  stay on the billing service and are pushed back here, signed, to
-  `/webhooks/growth-os-billing` — not to `/webhooks/stripe`.
+  Dashboard code calls `Tymeslot.Plans.Billing`, not this module. The app
+  never creates Stripe subscriptions itself. Subscription webhooks stay on
+  the billing service and are pushed back here, signed, to
+  `/webhooks/growth-os-billing`.
   """
 
-  @callback create_checkout(map(), String.t(), map()) ::
-              {:ok, %{url: String.t()}} | {:error, term()}
-  @callback create_portal(map(), String.t()) :: {:ok, %{url: String.t()}} | {:error, term()}
+  @callback create_checkout(map(), String.t(), map()) :: {:ok, map()} | {:error, term()}
+  @callback create_portal(map(), String.t()) :: {:ok, map()} | {:error, term()}
   @callback get_entitlement(integer()) :: {:ok, map()} | {:error, term()}
-  @callback register_account(map()) :: :ok | {:error, term()}
+  @callback register_account(map()) :: :ok | {:ok, map()} | {:error, term()}
   @callback cancel(integer(), keyword() | map()) :: :ok | {:error, term()}
 
   @spec create_checkout(term(), term(), term()) :: term()
@@ -28,6 +28,6 @@ defmodule Tymeslot.Plans.BillingClient do
   def cancel(user_id, opts \\ []), do: impl().cancel(user_id, opts)
 
   defp impl do
-    Application.get_env(:tymeslot, :billing_client, Tymeslot.Plans.BillingClient.HTTP)
+    Application.get_env(:tymeslot, :billing_client, Tymeslot.Plans.BillingClient.Stub)
   end
 end

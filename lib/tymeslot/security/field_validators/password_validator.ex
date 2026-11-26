@@ -1,71 +1,47 @@
 defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   @moduledoc """
-  Password field validation with security requirements.
+  Password field validation.
 
-  Validates password complexity, length, and security patterns
-  while providing specific feedback for security requirements.
+  The rules are a minimum of 8 characters, a maximum of 72 bytes, and a
+  rejection of passwords that already appear in known data breaches. There is
+  no composition rule: a passphrase of ordinary words is fine when it is long
+  enough and not already breached.
 
-  The rules live here as data (`rules/0`) rather than as a hand-written
-  `cond`, because they have two audiences: this module enforces them, and the
-  on-screen checklist has to state them. One source drives both, so a password
-  satisfying every rule the user can see is never rejected by a hidden one.
+  bcrypt only reads the first 72 bytes and would silently ignore the rest, so
+  anything longer is refused with a message that says so. The cap is in bytes,
+  not characters.
 
-  Every message returned here reaches the person typing the password — the
-  reset form, the signup form, the account security page — so each one resolves
-  through the `auth` gettext domain at call time. The complexity messages are
-  stored as msgids (`dgettext_noop/2`) because a `dgettext/2` call in a module
-  attribute would freeze them at the compile-time locale.
+  `rules/0` is what the on-screen checklist renders. The breach check has no
+  pattern a browser can evaluate, so it is enforced here and explained when it
+  fails.
   """
 
   use Gettext, backend: TymeslotWeb.Gettext
 
+  alias Tymeslot.Security.BreachedPasswords
+
   @password_min_length 8
-  # bcrypt only reads the first 72 bytes of its input and silently ignores the
-  # rest, so a longer password would be accepted but only partly protected.
-  # The cap is in bytes, not characters: accented letters, most non-Latin
-  # scripts and emoji take two to four bytes each.
   @password_max_bytes 72
 
-  # Ordered as they are enforced, so the message names the first rule broken
-  # and the checklist lists them in the same order it checks them. Each rule
-  # carries the pattern's source, not just the compiled regex, because the
-  # browser-side checklist tests against the very same source — which is what
-  # keeps what we enforce and what we tell the user from drifting apart.
-  @complexity_rules [
-    {:lowercase, ~S([a-z]),
-     dgettext_noop("errors_input", "Password must contain at least one lowercase letter")},
-    {:uppercase, ~S([A-Z]),
-     dgettext_noop("errors_input", "Password must contain at least one uppercase letter")},
-    {:number, ~S([0-9]),
-     dgettext_noop("errors_input", "Password must contain at least one number")},
-    {:special, ~S([^A-Za-z0-9]),
-     dgettext_noop("errors_input", "Password must contain at least one special character")}
-  ]
-
-  @compiled_complexity_rules Enum.map(@complexity_rules, fn {key, pattern, message} ->
-                               {key, Regex.compile!(pattern), message}
-                             end)
-
   @rules [
-    %{key: :length, pattern: "^.{#{@password_min_length},}$"}
-    | Enum.map(@complexity_rules, fn {key, pattern, _message} ->
-        %{key: key, pattern: pattern}
-      end)
+    %{key: :length, pattern: "^.{#{@password_min_length},}$"},
+    %{
+      key: :max_bytes,
+      pattern: "^[\\s\\S]{0,#{@password_max_bytes}}$",
+      max_bytes: @password_max_bytes
+    }
   ]
 
   @doc """
-  Validates password with security requirements and specific error messages.
+  Validates a password.
 
   ## Examples
 
-      iex> validate("StrongPass123")
+      iex> validate("a long enough passphrase")
       :ok
 
-      iex> validate("weak")
+      iex> validate("short")
       {:error, "Password must be at least 8 characters long"}
-
-      iex> validate("nouppercase123")
-      {:error, "Password must contain at least one uppercase letter"}
   """
   @spec validate(any(), keyword()) :: :ok | {:error, String.t()}
   def validate(password, opts \\ [])
@@ -77,7 +53,7 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
     min_length = Keyword.get(opts, :min_length, @password_min_length)
 
     with :ok <- validate_length(password, min_length) do
-      validate_complexity(password)
+      validate_not_breached(password)
     end
   end
 
@@ -86,24 +62,24 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   end
 
   @doc """
-  The rules a password must satisfy, in the order they are enforced.
+  The rules a password must satisfy that the browser can check live.
 
-  Each rule carries a regular-expression source rather than a compiled
-  `Regex`, so the same pattern can be handed to the browser for the live
-  checklist. The syntax used is common to Elixir and JavaScript.
+  Each rule carries a regular-expression source. `:max_bytes` also carries
+  `max_bytes`, which the browser measures with `TextEncoder` because a
+  character-count pattern understates letters that take more than one byte.
   """
-  @spec rules() :: [%{key: atom(), pattern: String.t()}]
+  @spec rules() :: [%{optional(:max_bytes) => pos_integer(), key: atom(), pattern: String.t()}]
   def rules, do: @rules
 
-  @doc """
-  The minimum password length, for callers that need to state it.
-  """
+  @doc "The minimum password length."
   @spec min_length() :: pos_integer()
   def min_length, do: @password_min_length
 
-  @doc """
-  Validates password confirmation matches original password.
-  """
+  @doc "The maximum password length in bytes, matching bcrypt's input."
+  @spec max_bytes() :: pos_integer()
+  def max_bytes, do: @password_max_bytes
+
+  @doc "Whether the confirmation matches the password."
   @spec validate_confirmation(String.t(), String.t()) :: :ok | {:error, String.t()}
   def validate_confirmation(password, password) when is_binary(password) do
     :ok
@@ -120,8 +96,6 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
   def validate_confirmation(_password, _confirmation) do
     {:error, dgettext("errors_input", "Password confirmation does not match")}
   end
-
-  # Private helper functions
 
   defp validate_length(password, min_length) do
     cond do
@@ -147,15 +121,20 @@ defmodule Tymeslot.Security.FieldValidators.PasswordValidator do
     end
   end
 
-  defp validate_complexity(password) do
-    case Enum.find(@compiled_complexity_rules, fn {_key, regex, _message} ->
-           not String.match?(password, regex)
-         end) do
-      nil ->
-        :ok
+  defp validate_not_breached(password) do
+    # Keeps the previous composition msgids in the extract, which stays on main.
+    _catalog =
+      [
+        dgettext_noop("errors_input", "Password must contain at least one lowercase letter"),
+        dgettext_noop("errors_input", "Password must contain at least one uppercase letter"),
+        dgettext_noop("errors_input", "Password must contain at least one number"),
+        dgettext_noop("errors_input", "Password must contain at least one special character")
+      ]
 
-      {_key, _regex, message} ->
-        {:error, Gettext.dgettext(TymeslotWeb.Gettext, "errors_input", message)}
+    if BreachedPasswords.breached?(password) do
+      {:error, "This password has appeared in a data breach. Choose a different one."}
+    else
+      :ok
     end
   end
 end

@@ -12,6 +12,8 @@ defmodule TymeslotWeb.AuthLive.PageMetaHelper do
 
   import Phoenix.Component, only: [assign: 3]
 
+  alias Tymeslot.Brands
+
   @doc """
   Assigns page_title and meta_description to the socket based on current_state.
   Only assigns values when both are defined for the state.
@@ -32,31 +34,47 @@ defmodule TymeslotWeb.AuthLive.PageMetaHelper do
   defp page_meta_for_state(:login),
     do:
       {dgettext("auth", "Log In"),
-       dgettext(
-         "auth",
-         "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+       String.replace(
+         dgettext(
+           "auth",
+           "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+         ),
+         "Tymeslot",
+         Brands.product_name()
        )}
 
   defp page_meta_for_state(:signup),
     do:
       {dgettext("auth", "Create an Account"),
-       dgettext(
-         "auth",
-         "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+       String.replace(
+         dgettext(
+           "auth",
+           "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+         ),
+         "Tymeslot",
+         Brands.product_name()
        )}
 
   defp page_meta_for_state(:reset_password),
     do:
       {dgettext("auth", "Reset Password"),
-       dgettext(
-         "auth",
-         "Enter your email to receive a password reset link for your Tymeslot account."
+       String.replace(
+         dgettext(
+           "auth",
+           "Enter your email to receive a password reset link for your Tymeslot account."
+         ),
+         "Tymeslot",
+         Brands.product_name()
        )}
 
   defp page_meta_for_state(:reset_password_form),
     do:
       {dgettext("auth", "Choose a New Password"),
-       dgettext("auth", "Choose a strong new password for your Tymeslot account.")}
+       String.replace(
+         dgettext("auth", "Choose a strong new password for your Tymeslot account."),
+         "Tymeslot",
+         Brands.product_name()
+       )}
 
   defp page_meta_for_state(_state), do: nil
 end

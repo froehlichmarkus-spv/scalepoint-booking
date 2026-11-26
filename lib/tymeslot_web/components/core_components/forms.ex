@@ -515,6 +515,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
           id={"req-#{rule.key}"}
           data-password-rule={rule.key}
           data-password-pattern={rule.pattern}
+          data-password-max-bytes={rule[:max_bytes]}
           class="flex items-center text-tymeslot-600 font-medium"
         >
           <%!-- Both states are rendered; password_toggle.js shows one as the rule is met --%>
@@ -537,6 +538,10 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
 
   defp password_rule_label(:length),
     do: dgettext("common", "At least %{count} characters", count: PasswordValidator.min_length())
+
+  # Plain sentence: the catalogs stay on main, so this label is not a msgid.
+  defp password_rule_label(:max_bytes),
+    do: "At most #{PasswordValidator.max_bytes()} bytes"
 
   defp password_rule_label(:lowercase), do: dgettext("common", "One lowercase letter")
   defp password_rule_label(:uppercase), do: dgettext("common", "One uppercase letter")

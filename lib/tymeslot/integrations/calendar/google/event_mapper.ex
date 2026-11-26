@@ -4,6 +4,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventMapper do
   API event format. Pure data transformations with no side effects.
   """
 
+  alias Tymeslot.Brands
   alias Tymeslot.Integrations.Calendar.Attendee
   alias Tymeslot.Integrations.Calendar.EventColour
   alias Tymeslot.Integrations.Calendar.EventTimeFormatter
@@ -112,7 +113,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.EventMapper do
     # The instance that created the event, not the hosted service, so a
     # self-hoster's attendees are pointed at their own site.
     Map.merge(body, %{
-      "source" => %{"title" => "Tymeslot", "url" => UrlBuilder.base_url()},
+      "source" => %{"title" => Brands.product_name(), "url" => UrlBuilder.base_url()},
       "extendedProperties" => Map.put(properties, "private", private)
     })
   end

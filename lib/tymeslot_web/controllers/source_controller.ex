@@ -2,6 +2,7 @@ defmodule TymeslotWeb.SourceController do
   use TymeslotWeb, :controller
 
   alias Tymeslot.Brands
+  alias Tymeslot.Licensing.SourceOffer
 
   @spec show(term(), term()) :: term()
   def show(conn, _params) do
@@ -10,23 +11,25 @@ defmodule TymeslotWeb.SourceController do
     colors = brand.colors || %{}
     canvas = colors["canvas"] || "#E4DDD2"
     text = colors["text"] || "#1C1B19"
-    url = System.get_env("SOURCE_OFFER_URL") || ""
+    product = html_escape(Brands.product_name(brand))
+    url = SourceOffer.url()
 
     link =
-      if url != "" and (brand.house_brand or not Brands.leak?(url)) do
-        ~s(<p><a href="#{html_escape(url)}">Corresponding source</a></p>)
+      if is_binary(url) and url != "" do
+        href = html_escape(url)
+        ~s(<p><a href="#{href}">#{href}</a></p>)
       else
         ""
       end
 
     html(conn, """
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="de">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="robots" content="noindex" />
-        <title>Source</title>
+        <title>Quellcode · #{product}</title>
         <style>
           body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #{canvas}; color: #{text}; }
           main { max-width: 38rem; padding: 3.5rem 1.4rem; }
@@ -35,8 +38,8 @@ defmodule TymeslotWeb.SourceController do
       </head>
       <body>
         <main>
-          <h1>Source</h1>
-          <p>This scheduling page is free software under the GNU AGPLv3. Anyone who receives it can ask the operator of this server for the corresponding source.</p>
+          <h1>Quellcode</h1>
+          <p>#{product} ist freie Software unter der GNU AGPLv3. Wer diese Seite nutzt, kann den zugehörigen Quellcode verlangen.</p>
           #{link}
         </main>
       </body>
@@ -46,6 +49,7 @@ defmodule TymeslotWeb.SourceController do
 
   defp html_escape(value) do
     value
+    |> to_string()
     |> String.replace("&", "&amp;")
     |> String.replace("\"", "&quot;")
     |> String.replace("<", "&lt;")

@@ -18,6 +18,8 @@ defmodule TymeslotWeb.Themes.Shared.Components.LegalLinks do
   use Phoenix.Component
   use Gettext, backend: TymeslotWeb.Gettext
 
+  alias Tymeslot.Licensing.SourceOffer
+
   attr :links, :map,
     required: true,
     doc: "`%{legal_notice_url:, privacy_policy_url:}`, either URL nil, or nil for none"
@@ -31,12 +33,15 @@ defmodule TymeslotWeb.Themes.Shared.Components.LegalLinks do
     assigns =
       assign(assigns,
         legal_notice_url: assigns.links && assigns.links[:legal_notice_url],
-        privacy_policy_url: assigns.links && assigns.links[:privacy_policy_url]
+        privacy_policy_url: assigns.links && assigns.links[:privacy_policy_url],
+        terms_url: assigns.links && assigns.links[:terms_url],
+        dpa_url: assigns.links && assigns.links[:dpa_url],
+        source_url: SourceOffer.url()
       )
 
     ~H"""
     <footer
-      :if={@legal_notice_url || @privacy_policy_url}
+      :if={@legal_notice_url || @privacy_policy_url || @terms_url || @dpa_url || @source_url}
       class="legal-links"
       data-testid="legal-links"
     >
@@ -57,6 +62,34 @@ defmodule TymeslotWeb.Themes.Shared.Components.LegalLinks do
         class="legal-links__link"
       >
         {dgettext("booking", "Privacy policy")}
+      </a>
+      <a
+        :if={@terms_url}
+        href={@terms_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="legal-links__link"
+      >
+        Terms
+      </a>
+      <a
+        :if={@dpa_url}
+        href={@dpa_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="legal-links__link"
+      >
+        Data processing agreement
+      </a>
+      <a
+        :if={@source_url}
+        href={@source_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="legal-links__link"
+        data-testid="source-offer"
+      >
+        Quellcode (AGPLv3)
       </a>
     </footer>
     """

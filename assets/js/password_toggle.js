@@ -67,8 +67,17 @@ const PasswordToggle = {
     // so this checklist cannot claim a different set to the one enforced.
     const rules = Array.from(list.querySelectorAll('[data-password-rule]'))
       .map((element) => {
+        if (element.dataset.passwordRule === 'max_bytes') {
+          const maxBytes = Number(element.dataset.passwordMaxBytes || 72);
+          return {
+            element,
+            test: (value) => new TextEncoder().encode(value).length <= maxBytes,
+          };
+        }
+
         try {
-          return { element, pattern: new RegExp(element.dataset.passwordPattern) };
+          const pattern = new RegExp(element.dataset.passwordPattern);
+          return { element, test: (value) => pattern.test(value) };
         } catch (error) {
           console.error('Unusable password rule pattern', element.dataset.passwordPattern, error);
           return null;
@@ -77,9 +86,7 @@ const PasswordToggle = {
       .filter(Boolean);
 
     input.addEventListener('input', () => {
-      rules.forEach(({ element, pattern }) =>
-        updateRequirement(element, pattern.test(input.value))
-      );
+      rules.forEach(({ element, test }) => updateRequirement(element, test(input.value)));
     });
   },
 };

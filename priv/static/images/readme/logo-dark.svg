@@ -37,12 +37,12 @@
     <circle cx="0" cy="10" r="5" fill="url(#logoFlow2)"/>
   </g>
   
-  <!-- Text: Tymeslot -->
+  <!-- Text: BookDesk24 -->
   <text x="165" y="110" 
         dominant-baseline="central"
         font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" 
         font-size="82" 
         font-weight="900" 
         fill="url(#textGrad)"
-        letter-spacing="-0.03em">Tymeslot</text>
+        letter-spacing="-0.03em">BookDesk24</text>
 </svg>

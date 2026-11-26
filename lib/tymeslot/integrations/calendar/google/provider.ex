@@ -52,6 +52,16 @@ defmodule Tymeslot.Integrations.Calendar.Google.Provider do
                            "https://www.googleapis.com/auth/calendar.events"
                          ])
 
+  # Listing calendars (`calendarList.list`). The broad calendar grant and
+  # `calendar.readonly` include this; a new connect asks only for the
+  # readonly calendar-list scope.
+  @calendar_list_scopes MapSet.new([
+                          "https://www.googleapis.com/auth/calendar",
+                          "https://www.googleapis.com/auth/calendar.readonly",
+                          "https://www.googleapis.com/auth/calendar.calendarlist",
+                          "https://www.googleapis.com/auth/calendar.calendarlist.readonly"
+                        ])
+
   @doc """
   Returns true when the integration's stored scope lacks any write-capable
   calendar scope. Read-only and absent scopes both qualify.
@@ -59,7 +69,7 @@ defmodule Tymeslot.Integrations.Calendar.Google.Provider do
   @spec needs_scope_upgrade?(term()) :: boolean()
   def needs_scope_upgrade?(%CalendarIntegrationSchema{oauth_scope: scope})
       when is_binary(scope) do
-    not has_calendar_write_scope?(scope)
+    not has_calendar_write_scope?(scope) or not has_calendar_list_scope?(scope)
   end
 
   def needs_scope_upgrade?(_integration), do: false
@@ -76,6 +86,17 @@ defmodule Tymeslot.Integrations.Calendar.Google.Provider do
   end
 
   def has_calendar_write_scope?(_scope), do: false
+
+  @doc """
+  Returns true when the scope string can list the account's calendars.
+  """
+  @spec has_calendar_list_scope?(String.t() | nil) :: boolean()
+  def has_calendar_list_scope?(scope) when is_binary(scope) do
+    granted = scope |> String.split(" ", trim: true) |> MapSet.new()
+    not MapSet.disjoint?(@calendar_list_scopes, granted)
+  end
+
+  def has_calendar_list_scope?(_scope), do: false
 
   # Required callbacks for OAuth base
 

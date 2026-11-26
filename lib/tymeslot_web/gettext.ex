@@ -25,6 +25,10 @@ defmodule TymeslotWeb.Gettext do
   to accent/bracket/pad. Every other locale delegates to `super/…`, so real
   translations are unaffected.
   """
-  use Gettext.Backend, otp_app: :tymeslot, split_module_by: [:locale, :domain]
+  use Gettext.Backend,
+    otp_app: :tymeslot,
+    split_module_by: [:locale, :domain],
+    interpolation: TymeslotWeb.Gettext.ProductScrub
+
   use TymeslotWeb.Gettext.PseudoFallback
 end

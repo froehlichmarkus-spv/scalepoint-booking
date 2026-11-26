@@ -8,16 +8,13 @@ defmodule Tymeslot.Auth.UserSchemaTest do
   alias Tymeslot.Auth.UserSchema
 
   describe "security validations" do
-    test "enforces strong password requirements" do
-      test_cases = [
+    test "enforces length and breached-password rules, not composition" do
+      rejected = [
         {"short", "Password must be at least 8 characters long"},
-        {"alllowercase1!", "Password must contain at least one uppercase letter"},
-        {"ALLUPPERCASE1!", "Password must contain at least one lowercase letter"},
-        {"NoNumbers!Ab", "Password must contain at least one number"},
-        {"NoSpecial1Ab", "Password must contain at least one special character"}
+        {"password", "This password has appeared in a data breach. Choose a different one."}
       ]
 
-      for {password, expected_error} <- test_cases do
+      for {password, expected_error} <- rejected do
         changeset =
           UserSchema.registration_changeset(%UserSchema{}, %{
             email: "test@example.com",
@@ -28,6 +25,15 @@ defmodule Tymeslot.Auth.UserSchemaTest do
         refute changeset.valid?
         assert expected_error in errors_on(changeset).password
       end
+
+      accepted =
+        UserSchema.registration_changeset(%UserSchema{}, %{
+          email: "plain@example.com",
+          password: "alllowercase1!",
+          password_confirmation: "alllowercase1!"
+        })
+
+      assert accepted.valid?
     end
 
     test "securely hashes passwords during registration" do

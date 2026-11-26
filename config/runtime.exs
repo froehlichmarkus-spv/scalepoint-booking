@@ -109,6 +109,38 @@ end
 booking_legal_link.("BOOKING_LEGAL_NOTICE_URL", :booking_legal_notice_url)
 booking_legal_link.("BOOKING_PRIVACY_POLICY_URL", :booking_privacy_policy_url)
 
+# House defaults for the public BookDesk24 site. A self-hosted install overrides
+# these with the env vars above, or sets ENFORCE_LEGAL_AGREEMENTS=false.
+# Tests keep the unset config from config/test.exs.
+if config_env() != :test do
+  growthos = "https://scalepoint-ventures.com/growthos/legal"
+
+  unless Application.get_env(:tymeslot, :booking_legal_notice_url) do
+    config :tymeslot, booking_legal_notice_url: growthos <> "/notice"
+  end
+
+  unless Application.get_env(:tymeslot, :booking_privacy_policy_url) do
+    config :tymeslot, booking_privacy_policy_url: growthos <> "/privacy"
+  end
+
+  config :tymeslot,
+    legal_terms_url: System.get_env("LEGAL_TERMS_URL") || growthos <> "/terms",
+    legal_privacy_url: System.get_env("LEGAL_PRIVACY_URL") || growthos <> "/privacy",
+    legal_dpa_url: System.get_env("LEGAL_DPA_URL") || growthos <> "/dpa"
+
+  enforce =
+    case System.get_env("ENFORCE_LEGAL_AGREEMENTS") do
+      value when value in ["false", "0", "no"] -> false
+      _other -> true
+    end
+
+  config :tymeslot, enforce_legal_agreements: enforce
+
+  config :tymeslot,
+         :breached_password_lookup,
+         Tymeslot.Security.BreachedPasswords.Hibp
+end
+
 if config_env() == :prod do
   # Set environment for runtime detection
   config :tymeslot, :environment, :prod
@@ -426,15 +458,30 @@ from_email =
 # (not currently set) — fall back to app name when sendmail addon is active
 from_name =
   System.get_env("EMAIL_FROM_NAME") ||
-    (System.get_env("CLOUDRON_MAIL_FROM") && "Scheduler") ||
-    if config_env() == :prod,
-      do: raise("environment variable EMAIL_FROM_NAME is missing"),
-      else: "Scheduler"
+    (System.get_env("CLOUDRON_MAIL_FROM") && "BookDesk24") ||
+    cond do
+      config_env() == :prod ->
+        raise "environment variable EMAIL_FROM_NAME is missing"
+
+      # The test suite still asserts the historical sender name.
+      config_env() == :test ->
+        "Scheduler"
+
+      true ->
+        "BookDesk24"
+    end
+
+support_email =
+  System.get_env("EMAIL_SUPPORT_ADDRESS") ||
+    if(config_env() == :dev,
+      do: "support@scalepoint-ventures.com",
+      else: from_email
+    )
 
 config :tymeslot, :email,
   from_name: from_name,
   from_email: from_email,
-  support_email: System.get_env("EMAIL_SUPPORT_ADDRESS") || from_email,
+  support_email: support_email,
   contact_recipient: System.get_env("EMAIL_CONTACT_RECIPIENT") || from_email,
   domain:
     System.get_env("PHX_HOST") ||
@@ -968,15 +1015,30 @@ free_calendar_providers =
     list -> list |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
   end
 
+trim_env = fn
+  value when is_binary(value) ->
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+
+  _missing ->
+    nil
+end
+
+billing_url = trim_env.(System.get_env("GROWTH_OS_BILLING_URL"))
+billing_api_key = trim_env.(System.get_env("GROWTH_OS_BILLING_API_KEY"))
+billing_webhook_secret = trim_env.(System.get_env("GROWTH_OS_BILLING_WEBHOOK_SECRET"))
+
 config :tymeslot, :plans,
   past_due_grace_days: 7,
   trial_days: 14,
   comped_user_emails: comped_emails,
   free_calendar_providers: free_calendar_providers,
   oauth_video_providers: [:google_meet, :zoom, :teams],
-  billing_url: System.get_env("GROWTH_OS_BILLING_URL"),
-  billing_api_key: System.get_env("GROWTH_OS_BILLING_API_KEY"),
-  webhook_secret: System.get_env("GROWTH_OS_BILLING_WEBHOOK_SECRET"),
+  billing_url: billing_url,
+  billing_api_key: billing_api_key,
+  webhook_secret: billing_webhook_secret,
   display_prices: %{
     monthly: %{
       label: "Pro monthly",
@@ -993,6 +1055,25 @@ config :tymeslot, :plans,
     }
   }
 
+# Keep this address aligned with Tymeslot.Licensing.SourceOffer.default_url/0.
+source_offer_url =
+  case System.get_env("SOURCE_OFFER_URL") do
+    nil ->
+      if config_env() == :test,
+        do: nil,
+        else: "https://github.com/froehlichmarkus-spv/scalepoint-booking"
+
+    "" ->
+      nil
+
+    url ->
+      String.trim(url)
+  end
+
+if is_binary(source_offer_url) and source_offer_url != "" do
+  config :tymeslot, :source_offer_url, source_offer_url
+end
+
 if ics_branding_url = System.get_env("ICS_BRANDING_URL") do
   trimmed = String.trim(ics_branding_url)
 
@@ -1008,7 +1089,15 @@ if plans_enabled?.() do
   config :tymeslot, :show_branding, true
   config :tymeslot, :user_registered_hook, Tymeslot.Plans.UserRegisteredHook
   config :tymeslot, :account_deletion_hook, Tymeslot.Plans.AccountDeletionHook
-  config :tymeslot, :billing_client, Tymeslot.Plans.BillingClient.HTTP
+
+  billing_client =
+    if is_binary(billing_url) and is_binary(billing_api_key) do
+      Tymeslot.Plans.BillingClient.HTTP
+    else
+      Tymeslot.Plans.BillingClient.Stub
+    end
+
+  config :tymeslot, :billing_client, billing_client
 
   config :tymeslot,
          :dashboard_additional_hooks,

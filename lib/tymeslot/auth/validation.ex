@@ -32,20 +32,27 @@ defmodule Tymeslot.Auth.Validation do
   @spec validate_new_password_input(password_reset_new()) ::
           {:ok, password_reset_new()} | {:error, %{atom() => String.t() | [String.t()]}}
   def validate_new_password_input(params) do
-    with {:ok, sanitized} <-
-           InputProcessor.validate_form(params, [
-             {"password", :password},
-             {"password_confirmation", :password}
-           ]),
-         :ok <-
-           PasswordValidator.validate_confirmation(
-             sanitized["password"],
-             sanitized["password_confirmation"]
-           ) do
-      {:ok, sanitized}
-    else
-      {:error, errors} when is_map(errors) -> {:error, errors}
-      {:error, msg} -> {:error, %{password_confirmation: msg}}
+    form =
+      InputProcessor.validate_form(params, [
+        {"password", :password},
+        {"password_confirmation", :password}
+      ])
+
+    confirmation =
+      PasswordValidator.validate_confirmation(params["password"], params["password_confirmation"])
+
+    case {form, confirmation} do
+      {{:ok, sanitized}, :ok} ->
+        {:ok, sanitized}
+
+      {{:ok, _sanitized}, {:error, message}} ->
+        {:error, %{password_confirmation: message}}
+
+      {{:error, errors}, :ok} when is_map(errors) ->
+        {:error, errors}
+
+      {{:error, errors}, {:error, message}} when is_map(errors) ->
+        {:error, Map.put_new(errors, :password_confirmation, message)}
     end
   end
 
@@ -53,7 +60,7 @@ defmodule Tymeslot.Auth.Validation do
   The message to show for errors from `validate_new_password_input/1`.
 
   The password validator's messages are already whole sentences naming their
-  own field ("Password must contain at least one special character"), and the
+  own field ("Password must be at least 8 characters long"), and the
   confirmation field is validated against the same rules, so it reports the
   same failure. Running that through the generic field-prefixing formatter
   produced "Password Password must contain… Password confirmation Password

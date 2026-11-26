@@ -46,6 +46,9 @@ defmodule Tymeslot.Plans.Workers.EntitlementResync do
         _unused9 = Plans.upsert_entitlement(payload)
         :ok
 
+      {:error, :not_found} ->
+        :ok
+
       {:error, _unused16} ->
         {:error, :retry_later}
     end

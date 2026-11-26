@@ -150,6 +150,29 @@ defmodule Tymeslot.Plans do
     |> tap(fn _unused15 -> invalidate(user_id) end)
   end
 
+  @doc "Stores the billing account id on the local row without changing the plan."
+  @spec store_billing_account_ref(integer(), term()) :: :ok
+  def store_billing_account_ref(user_id, ref)
+      when is_integer(user_id) and is_binary(ref) and ref != "" do
+    case Queries.get_entitlement(user_id) do
+      nil ->
+        :ok
+
+      %{billing_account_ref: ^ref} ->
+        :ok
+
+      row ->
+        row
+        |> Entitlement.changeset(%{billing_account_ref: ref})
+        |> Queries.update_entitlement!()
+
+        invalidate(user_id)
+        :ok
+    end
+  end
+
+  def store_billing_account_ref(_user_id, _ref), do: :ok
+
   @doc "Writes an entitlement when `source_version` is not older than the stored one."
   @spec upsert_entitlement(map()) :: {:ok, Entitlement.t()} | {:error, term()}
   def upsert_entitlement(attrs) when is_map(attrs) do

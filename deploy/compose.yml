@@ -62,7 +62,11 @@ services:
       BRAND_CONFIG_DIR: /etc/booking-brands
       BRAND_SEED: "true"
       SEED_NEUTRAL_TENANT: "false"
-      SOURCE_OFFER_URL: ${SOURCE_OFFER_URL:-}
+      SOURCE_OFFER_URL: ${SOURCE_OFFER_URL:-https://github.com/froehlichmarkus-spv/scalepoint-booking}
+      PLANS_ENABLED: ${PLANS_ENABLED:-true}
+      GROWTH_OS_BILLING_URL: ${GROWTH_OS_BILLING_URL:-}
+      GROWTH_OS_BILLING_API_KEY: ${GROWTH_OS_BILLING_API_KEY:-}
+      GROWTH_OS_BILLING_WEBHOOK_SECRET: ${GROWTH_OS_BILLING_WEBHOOK_SECRET:-}
       OUTREACH_WEBHOOK_URL: ${OUTREACH_WEBHOOK_URL:-}
       SPV_OWNER_PASSWORD: ${SPV_OWNER_PASSWORD:?set SPV_OWNER_PASSWORD}
       NEUTRAL_OWNER_PASSWORD: ${NEUTRAL_OWNER_PASSWORD:-}
@@ -72,6 +76,12 @@ services:
       - spv-booking_uploads:/app/data
     networks:
       - spv-booking_net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4000/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     restart: unless-stopped
 
 networks:

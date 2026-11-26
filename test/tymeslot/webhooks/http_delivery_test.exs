@@ -227,12 +227,12 @@ defmodule Tymeslot.Webhooks.HttpDeliveryTest do
   # ────────────────────────────────────────────────────────────────────────────
 
   describe "post/3 - redirect header sanitisation" do
-    test "strips X-Tymeslot-Token when redirect crosses to a different host" do
+    test "strips X-BookDesk24-Token when redirect crosses to a different host" do
       test_pid = self()
       token = "test-token-value"
 
       initial_headers = [
-        {"X-Tymeslot-Token", token},
+        {"X-BookDesk24-Token", token},
         {"Content-Type", "application/json"}
       ]
 
@@ -256,18 +256,52 @@ defmodule Tymeslot.Webhooks.HttpDeliveryTest do
       assert_received {:second_request_headers, second_headers}
 
       refute Enum.any?(second_headers, fn
-               {"X-Tymeslot-Token", _value} -> true
+               {"X-BookDesk24-Token", _value} -> true
                _other -> false
              end),
-             "X-Tymeslot-Token must not be forwarded to a different origin"
+             "X-BookDesk24-Token must not be forwarded to a different origin"
     end
 
-    test "preserves X-Tymeslot-Token when redirect stays on the same host" do
+    test "strips legacy token headers when a redirect crosses hosts" do
+      test_pid = self()
+
+      initial_headers = [
+        {"X-Tymeslot-Token", "legacy"},
+        {"X-the scheduler-Token", "older"},
+        {"X-the-scheduler-Token", "dashed"},
+        {"Content-Type", "application/json"}
+      ]
+
+      Tymeslot.HTTPClientMock
+      |> expect(:post, fn "https://example.com/webhook", _body, _headers, _opts ->
+        {:ok,
+         %Req.Response{
+           status: 302,
+           body: "",
+           headers: %{"location" => ["https://other.example.com/next"]}
+         }}
+      end)
+      |> expect(:get, fn "https://other.example.com/next", headers, _opts ->
+        send(test_pid, {:legacy_headers, headers})
+        {:ok, %Req.Response{status: 200, body: "OK"}}
+      end)
+
+      assert {:ok, 200, "OK"} =
+               HttpDelivery.post("https://example.com/webhook", "payload", initial_headers)
+
+      assert_received {:legacy_headers, second_headers}
+
+      for name <- ["X-Tymeslot-Token", "X-the scheduler-Token", "X-the-scheduler-Token"] do
+        refute List.keymember?(second_headers, name, 0), "#{name} leaked across origins"
+      end
+    end
+
+    test "preserves X-BookDesk24-Token when redirect stays on the same host" do
       test_pid = self()
       token = "same-origin-token"
 
       initial_headers = [
-        {"X-Tymeslot-Token", token},
+        {"X-BookDesk24-Token", token},
         {"Content-Type", "application/json"}
       ]
 
@@ -291,10 +325,10 @@ defmodule Tymeslot.Webhooks.HttpDeliveryTest do
       assert_received {:second_request_headers, second_headers}
 
       assert Enum.any?(second_headers, fn
-               {"X-Tymeslot-Token", _value} -> true
+               {"X-BookDesk24-Token", _value} -> true
                _other -> false
              end),
-             "X-Tymeslot-Token must be preserved for same-origin redirects"
+             "X-BookDesk24-Token must be preserved for same-origin redirects"
     end
   end
 
@@ -379,7 +413,7 @@ defmodule Tymeslot.Webhooks.HttpDeliveryTest do
       test_pid = self()
       token = "proto-relative-token"
 
-      initial_headers = [{"X-Tymeslot-Token", token}]
+      initial_headers = [{"X-BookDesk24-Token", token}]
 
       Tymeslot.HTTPClientMock
       |> expect(:post, fn "https://example.com/webhook", _body, _headers, _opts ->
@@ -402,10 +436,10 @@ defmodule Tymeslot.Webhooks.HttpDeliveryTest do
 
       # Cross-origin redirect — token must be stripped.
       refute Enum.any?(second_headers, fn
-               {"X-Tymeslot-Token", _value} -> true
+               {"X-BookDesk24-Token", _value} -> true
                _other -> false
              end),
-             "X-Tymeslot-Token must not be forwarded when a protocol-relative redirect crosses hosts"
+             "X-BookDesk24-Token must not be forwarded when a protocol-relative redirect crosses hosts"
     end
 
     test "resolves a protocol-relative Location using the original request scheme" do

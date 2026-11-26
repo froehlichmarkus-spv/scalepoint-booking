@@ -1,32 +1,38 @@
 defmodule Tymeslot.Plans.BillingClient.HTTP do
-  @moduledoc "Req-backed growth-os-billing client. Secrets stay in the server environment."
+  @moduledoc """
+  growth-os-billing client. Bearer auth is the BookDesk24 path. The API key
+  stays in the server environment. This module does not set Stripe tax.
+  """
 
   @behaviour Tymeslot.Plans.BillingClient
 
   alias Tymeslot.Infrastructure.HTTPClient
   alias Tymeslot.Plans
+  alias Tymeslot.Plans.ReturnUrls
 
   @impl Tymeslot.Plans.BillingClient
   def create_checkout(user, interval, urls) do
-    body = %{
-      "product" => "booking",
-      "price_lookup_key" => lookup_key(interval),
-      "external_user_id" => Plans.external_user_id(user.id),
-      "email" => user.email,
-      "success_url" => url_param(urls, :success),
-      "cancel_url" => url_param(urls, :cancel)
-    }
+    body =
+      %{
+        "product" => "booking",
+        "price_lookup_key" => lookup_key(interval),
+        "external_user_id" => Plans.external_user_id(user_id(user)),
+        "email" => field(user, :email),
+        "locale" => locale(user),
+        "success_url" => success_url(urls),
+        "cancel_url" => cancel_url(urls)
+      }
 
-    url_result(post("/v1/checkout-sessions", body))
+    session_result(post("/v1/checkout-sessions", body))
   end
 
   @impl Tymeslot.Plans.BillingClient
   def create_portal(user, return_url) do
-    url_result(
+    session_result(
       post("/v1/portal-sessions", %{
         "product" => "booking",
-        "external_user_id" => Plans.external_user_id(user.id),
-        "return_url" => return_url
+        "external_user_id" => Plans.external_user_id(user_id(user)),
+        "return_url" => portal_return_url(return_url)
       })
     )
   end
@@ -41,38 +47,79 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
 
     case request(:get, "/v1/entitlements?" <> query, "") do
       {:ok, body} -> {:ok, body}
+      {:error, {:http, 404}} -> {:error, :not_found}
       other -> other
     end
   end
 
   @impl Tymeslot.Plans.BillingClient
   def register_account(user) do
-    case post("/v1/accounts", %{
-           "product" => "booking",
-           "external_user_id" => Plans.external_user_id(user.id),
-           "email" => user.email,
-           "name" => Map.get(user, :name),
-           "trial" => true
-         }) do
-      {:ok, _unused13} -> :ok
+    body =
+      %{"product" => "booking", "external_user_id" => Plans.external_user_id(user_id(user))}
+      |> Map.put("email", field(user, :email))
+      |> Map.put("locale", locale(user))
+      |> Map.put("trial", true)
+      |> put_present("name", field(user, :name))
+      |> put_present("organisation_id", organisation_id(user))
+
+    case post("/v1/accounts", body) do
+      {:ok, response} -> {:ok, response}
+      {:error, {:http, 409}} -> :ok
       other -> other
     end
   end
 
   @impl Tymeslot.Plans.BillingClient
   def cancel(user_id, opts) do
-    external = URI.encode_www_form(Plans.external_user_id(user_id))
-    at_period_end = Keyword.get(List.wrap(opts), :at_period_end, false)
-    reason = Keyword.get(List.wrap(opts), :reason, "account_deleted")
+    external = Plans.external_user_id(user_id)
 
-    case post("/v1/accounts/" <> external <> "/cancel", %{
-           "reason" => reason,
-           "at_period_end" => at_period_end
-         }) do
-      {:ok, _unused13} -> :ok
+    body = %{
+      "product" => "booking",
+      "reason" => opt(opts, :reason, "account_deleted"),
+      "at_period_end" => opt(opts, :at_period_end, false)
+    }
+
+    case post("/v1/accounts/" <> external <> "/cancel", body) do
+      {:ok, _response} -> :ok
       {:error, {:http, 404}} -> :ok
       other -> other
     end
+  end
+
+  @doc "GET `{base}/healthz`. `:ok` only when the service answers 2xx."
+  @spec health() :: :ok | {:error, term()}
+  def health do
+    with {:ok, base, _key} <- credentials() do
+      url = String.trim_trailing(base, "/") <> "/healthz"
+
+      case http().request(:get, url, "", [{"accept", "application/json"}], timeout_opts()) do
+        {:ok, %{status: status}} when status in 200..299 -> :ok
+        {:ok, %{status: status}} -> {:error, {:http, status}}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp lookup_key(interval) when interval in ["year", "yearly"], do: "booking_pro_yearly"
+  defp lookup_key(_interval), do: "booking_pro_monthly"
+
+  defp success_url(urls) do
+    value = url_param(urls, :success)
+    if ReturnUrls.https?(value), do: value, else: ReturnUrls.checkout().success
+  end
+
+  defp cancel_url(urls) do
+    value = url_param(urls, :cancel)
+
+    if ReturnUrls.https?(value) and not String.contains?(value, "?") do
+      value
+    else
+      ReturnUrls.checkout().cancel
+    end
+  end
+
+  defp portal_return_url(url) do
+    if ReturnUrls.https?(url), do: url, else: ReturnUrls.portal()
   end
 
   defp url_param(urls, key) when is_map(urls) do
@@ -82,8 +129,7 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
     end
   end
 
-  defp lookup_key("year"), do: "booking_pro_yearly"
-  defp lookup_key(_unused19), do: "booking_pro_monthly"
+  defp url_param(_urls, _key), do: nil
 
   defp post(path, body), do: request(:post, path, Jason.encode!(body))
 
@@ -99,8 +145,8 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
 
       result =
         case method do
-          :get -> HTTPClient.get(url, headers)
-          :post -> HTTPClient.post(url, body, headers)
+          :get -> http().request(:get, url, "", headers, timeout_opts())
+          :post -> http().request(:post, url, body, headers, timeout_opts())
         end
 
       case result do
@@ -116,21 +162,43 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
     end
   end
 
-  defp url_result({:ok, %{"url" => url}}) when is_binary(url), do: {:ok, %{url: url}}
-  defp url_result({:ok, %{url: url}}) when is_binary(url), do: {:ok, %{url: url}}
-  defp url_result({:ok, _unused25}), do: {:error, :missing_url}
-  defp url_result(other), do: other
+  defp timeout_opts, do: [timeout: 5_000, receive_timeout: 5_000]
+
+  defp http do
+    Application.get_env(:tymeslot, :http_client_module, HTTPClient)
+  end
+
+  defp session_result({:ok, body}) when is_map(body) do
+    url = field(body, :url)
+    mode = field(body, :mode)
+
+    cond do
+      is_binary(url) and url != "" and is_binary(mode) ->
+        {:ok, %{url: url, mode: mode}}
+
+      is_binary(url) and url != "" ->
+        {:ok, %{url: url}}
+
+      mode == "noop" ->
+        {:ok, %{mode: "noop"}}
+
+      true ->
+        {:error, :missing_url}
+    end
+  end
+
+  defp session_result(other), do: other
 
   defp decode(body) when is_map(body), do: body
 
   defp decode(body) when is_binary(body) do
     case Jason.decode(body) do
       {:ok, map} -> map
-      _unused7 -> %{}
+      _invalid -> %{}
     end
   end
 
-  defp decode(_unused15), do: %{}
+  defp decode(_body), do: %{}
 
   defp credentials do
     plans = Application.get_env(:tymeslot, :plans, [])
@@ -143,4 +211,51 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
       {:error, :not_configured}
     end
   end
+
+  defp user_id(user) do
+    case field(user, :id) do
+      id when is_integer(id) and id > 0 ->
+        id
+
+      id when is_binary(id) ->
+        case Integer.parse(id) do
+          {parsed, ""} when parsed > 0 -> parsed
+          _invalid -> 0
+        end
+
+      _missing ->
+        0
+    end
+  end
+
+  defp locale(user) do
+    raw = user |> field(:locale) |> to_string()
+    if String.starts_with?(raw, "de"), do: "de", else: "en"
+  end
+
+  defp organisation_id(user) do
+    field(user, :organisation_id) || field(user, :organization_id)
+  end
+
+  defp field(map, key) when is_map(map) do
+    Map.get(map, key) || Map.get(map, Atom.to_string(key))
+  end
+
+  defp field(_map, _key), do: nil
+
+  defp put_present(map, _key, value) when value in [nil, ""], do: map
+  defp put_present(map, key, value) when is_binary(value), do: Map.put(map, key, value)
+  defp put_present(map, _key, _value), do: map
+
+  defp opt(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
+
+  defp opt(opts, key, default) when is_map(opts) do
+    cond do
+      Map.has_key?(opts, key) -> Map.get(opts, key)
+      Map.has_key?(opts, Atom.to_string(key)) -> Map.get(opts, Atom.to_string(key))
+      true -> default
+    end
+  end
+
+  defp opt(_opts, _key, default), do: default
 end

@@ -88,7 +88,7 @@ defmodule Tymeslot.Auth.Registration do
   # malformed form is still told what is wrong with it rather than answered
   # as a sign-up.
   defp validate_and_register(params, opts) do
-    with {:ok, validated_params} <- validate_input(params) do
+    with {:ok, validated_params} <- validate_input(params, opts) do
       case recipient_allowance(validated_params["email"], opts) do
         :ok ->
           register_validated(params, validated_params, opts)
@@ -183,10 +183,14 @@ defmodule Tymeslot.Auth.Registration do
     {"password", :password}
   ]
 
-  defp validate_input(params) do
+  defp validate_input(params, opts) do
     case InputProcessor.validate_form(params, @signup_field_spec) do
       {:ok, validated_params} ->
-        validate_terms(params, validated_params)
+        if via(opts) == :provisioning do
+          {:ok, validated_params}
+        else
+          validate_terms(params, validated_params)
+        end
 
       {:error, errors} ->
         AccountLogging.log_validation_failure("signup", params["email"], errors)

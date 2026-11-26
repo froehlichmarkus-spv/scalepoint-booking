@@ -1,0 +1,15 @@
+{
+  "name": "BookDesk24",
+  "short_name": "BookDesk24",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111E32",
+  "theme_color": "#469189",
+  "icons": [
+    {
+      "src": "/images/brand/scalepoint-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
