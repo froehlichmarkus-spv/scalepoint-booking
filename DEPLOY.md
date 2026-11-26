@@ -26,7 +26,7 @@ Lege auf dem Server `deploy/.env` an. Keine dieser Werte gehören ins Git.
 - `SOURCE_OFFER_URL` nur, wenn der Quellcode-Link nicht das öffentliche Repo sein soll. Sonst gilt `https://github.com/froehlichmarkus-spv/scalepoint-booking`. Der Alltag auf dem Server steht in `deploy/RUNBOOK.md`.
 - Google OAuth, erst wenn die App existiert:
   - Client-ID, Secret, und ein State-Secret in den Variablen, die die Anwendung dafür schon hat (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
-  - Scopes: `openid`, `email`, `https://www.googleapis.com/auth/calendar`, `https://www.googleapis.com/auth/meetings.space.created`
+  - Scopes: `openid`, `email`, `profile` for sign-in. Calendar and Meet connect add `https://www.googleapis.com/auth/calendar.events`, `https://www.googleapis.com/auth/calendar.calendarlist.readonly` and `https://www.googleapis.com/auth/meetings.space.created`. See `docs/google-oauth-scopes.md`.
   - Redirects: `https://book.scalepoint-ventures.com/auth/google/callback`, `/auth/google/calendar/callback`, `/auth/google/video/callback`
   - Testmodus mit Markus als Testnutzer funktioniert, Tokens laufen nach 7 Tagen ab. Die Produktiv-Freigabe des Kalender-Scopes ist ein eigener Antrag bei Google.
 - Zwei Kalender nach dem OAuth-Connect: `markus@scalepoint-ventures.com` zum Eintragen, `markus.froehlich@nenya.io` nur zur Konfliktprüfung.

@@ -12,12 +12,19 @@ defmodule Tymeslot.Integrations.Shared.GoogleConfig do
 
   alias Tymeslot.Integrations.Shared.OAuthConfig
 
+  # New connects ask for the two narrow calendar scopes. The broad
+  # `auth/calendar` grant is not requested anymore; tokens that already
+  # carry it keep working because it covers both of these.
   @scopes %{
     openid: "openid",
     email: "email",
-    calendar: "https://www.googleapis.com/auth/calendar",
+    profile: "profile",
+    calendar_events: "https://www.googleapis.com/auth/calendar.events",
+    calendar_list_readonly: "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
     meet: "https://www.googleapis.com/auth/meetings.space.created"
   }
+
+  @calendar_scopes [:calendar_events, :calendar_list_readonly]
 
   @doc "The client id; raises when it is not configured."
   @spec client_id!() :: String.t()
@@ -55,4 +62,14 @@ defmodule Tymeslot.Integrations.Shared.GoogleConfig do
   @spec scope(atom() | String.t()) :: String.t()
   def scope(name) when is_atom(name), do: Map.get(@scopes, name, to_string(name))
   def scope(scope) when is_binary(scope), do: scope
+
+  @doc """
+  Scopes a new Google Calendar or Meet connect requests, besides `openid`
+  and `email`, which the authorisation helper adds itself.
+
+  Sign-in keeps its own `openid email profile` string. This list is only
+  the calendar and Meet grant.
+  """
+  @spec calendar_scopes() :: [atom()]
+  def calendar_scopes, do: @calendar_scopes
 end

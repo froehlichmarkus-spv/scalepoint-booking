@@ -84,6 +84,13 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.ConnectionRow do
       </:icon>
       <:last_activity :if={@last_synced}>{@last_synced}</:last_activity>
       <:actions>
+        <p
+          :if={@integration.provider == "google" && Helpers.needs_scope_upgrade?(@integration)}
+          class="text-sm text-amber-900"
+          data-testid="google-scope-reconnect"
+        >
+          Google braucht eine neue Freigabe für deinen Kalender. Verbinde ihn erneut, dann läuft alles weiter.
+        </p>
         <.tooltip
           :let={tip}
           :if={@integration.provider == "google" && Helpers.needs_scope_upgrade?(@integration)}

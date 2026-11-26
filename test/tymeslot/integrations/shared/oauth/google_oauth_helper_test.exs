@@ -24,12 +24,20 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelperTest do
 
   describe "authorization_url/4" do
     test "generates valid Google OAuth URL" do
-      url = GoogleOAuthHelper.authorization_url(123, "http://localhost/callback", [:calendar])
+      url =
+        GoogleOAuthHelper.authorization_url(123, "http://localhost/callback", [
+          :calendar_events,
+          :calendar_list_readonly
+        ])
 
       assert url =~ "https://accounts.google.com/o/oauth2/v2/auth"
       assert url =~ "client_id=#{@client_id}"
       assert url =~ "redirect_uri=http%3A%2F%2Flocalhost%2Fcallback"
-      assert url =~ "scope=openid+email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar"
+
+      assert url =~
+               "scope=openid+email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.calendarlist.readonly"
+
+      assert url =~ "include_granted_scopes=true"
       assert url =~ "access_type=offline"
       assert url =~ "prompt=consent+select_account"
       assert url =~ "state="
@@ -57,18 +65,22 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelperTest do
     test "handles multiple scopes" do
       url =
         GoogleOAuthHelper.authorization_url(123, "http://localhost/callback", [
-          :calendar,
+          :calendar_events,
+          :calendar_list_readonly,
           :meet,
           "custom"
         ])
 
       assert url =~
-               "scope=openid+email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fmeetings.space.created+custom"
+               "scope=openid+email+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.calendarlist.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fmeetings.space.created+custom"
     end
 
     test "overrides options" do
       url =
-        GoogleOAuthHelper.authorization_url(123, "http://localhost/callback", [:calendar],
+        GoogleOAuthHelper.authorization_url(
+          123,
+          "http://localhost/callback",
+          [:calendar_events, :calendar_list_readonly],
           access_type: "online",
           prompt: "none"
         )
@@ -81,7 +93,10 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelperTest do
     # only ever sees the parameters it defines.
     test "forwards only Google's own parameters" do
       query =
-        GoogleOAuthHelper.authorization_url(123, "http://localhost/callback", [:calendar],
+        GoogleOAuthHelper.authorization_url(
+          123,
+          "http://localhost/callback",
+          [:calendar_events, :calendar_list_readonly],
           return_to: "/onboarding/connect_calendar",
           scopes: [:calendar, :meet],
           hd: "example.com",
@@ -233,7 +248,12 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelperTest do
 
     test "the authorisation URL carries the flow's challenge, and its state the nonce" do
       query =
-        GoogleOAuthHelper.authorization_url(123, "http://cb", [:calendar], @pkce)
+        GoogleOAuthHelper.authorization_url(
+          123,
+          "http://cb",
+          [:calendar_events, :calendar_list_readonly],
+          @pkce
+        )
         |> URI.parse()
         |> Map.fetch!(:query)
         |> URI.decode_query()

@@ -85,6 +85,6 @@ defmodule Tymeslot.Integrations.Calendar.Google.ApiStatus do
 
     String.contains?(msg, "insufficient") or
       String.contains?(msg, "forbidden") or
-      Enum.any?(reason_strings, &String.contains?(&1, "insufficientpermissions"))
+      Enum.any?(reason_strings, &String.contains?(&1, "insufficient"))
   end
 end

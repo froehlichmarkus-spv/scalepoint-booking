@@ -37,8 +37,8 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelper do
     - options: Additional OAuth options (access_type, prompt, etc.)
 
   ## Examples
-      authorization_url(123, "https://example.com/callback", [:calendar])
-      authorization_url(123, "https://example.com/callback", [:calendar, :meet])
+      authorization_url(123, "https://example.com/callback", [:calendar_events, :calendar_list_readonly])
+      authorization_url(123, "https://example.com/callback", [:calendar_events, :calendar_list_readonly, :meet])
       authorization_url(123, "https://example.com/callback", ["custom.scope"])
   """
   @spec authorization_url(integer(), String.t(), list(atom() | String.t()), keyword()) ::
@@ -65,7 +65,8 @@ defmodule Tymeslot.Integrations.Shared.OAuth.GoogleOAuthHelper do
       scope: scope_string,
       state: state,
       access_type: Keyword.get(options, :access_type, "offline"),
-      prompt: Keyword.get(options, :prompt, @default_prompt)
+      prompt: Keyword.get(options, :prompt, @default_prompt),
+      include_granted_scopes: "true"
     }
 
     # Only parameters Google defines are forwarded: the options also carry

@@ -264,7 +264,21 @@ defmodule Tymeslot.Integrations.Video.Providers.GoogleMeetProvider do
     error
   end
 
+  defp flag_on_unauthorized({:error, {:http_error, 403, message}} = error, config) do
+    if insufficient_scope?(message) do
+      flag_revoked_token(config)
+    end
+
+    error
+  end
+
   defp flag_on_unauthorized(result, _config), do: result
+
+  defp insufficient_scope?(message) when is_binary(message) do
+    String.contains?(String.downcase(message), "insufficient")
+  end
+
+  defp insufficient_scope?(_message), do: false
 
   # Ends the active conference on a space when a meeting is cancelled. The space
   # itself is not a calendar event and cannot be deleted via the API, but ending

@@ -437,7 +437,7 @@ defmodule Tymeslot.Integrations.VideoTest do
         )
 
       expect(Tymeslot.GoogleOAuthHelperMock, :authorization_url, fn _uid, _uri, scopes, opts ->
-        assert scopes == [:calendar, :meet]
+        assert scopes == [:calendar_events, :calendar_list_readonly, :meet]
         assert Keyword.get(opts, :integration_id) == integration.id
         assert Keyword.get(opts, :login_hint) == "someone@example.com"
         "https://accounts.google.com/o/oauth2/v2/auth?login_hint=someone@example.com"
