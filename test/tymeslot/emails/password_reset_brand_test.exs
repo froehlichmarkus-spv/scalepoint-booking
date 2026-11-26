@@ -76,7 +76,12 @@ defmodule Tymeslot.Emails.PasswordResetBrandTest do
     assert email.html_body =~ @reset_url
     assert email.text_body =~ @reset_url
     assert email.html_body =~ "ScalePoint Ventures"
-    body = String.replace(email.html_body, "bookdesk24-logo.png", "")
+
+    body =
+      email.html_body
+      |> String.replace("bookdesk24-logo.png", "")
+      |> String.replace(~s(alt="BookDesk24"), "")
+
     refute body =~ "BookDesk24"
     refute email.text_body =~ "BookDesk24"
   end
