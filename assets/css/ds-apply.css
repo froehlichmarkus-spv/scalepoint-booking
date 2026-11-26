@@ -113,6 +113,24 @@ body.gos .gos-alert {
   padding: var(--gos-space-3) var(--gos-space-4);
 }
 
+#session-expired .gos-modal {
+  display: grid;
+  gap: var(--gos-space-3);
+  padding: var(--gos-space-6);
+}
+
+.gos-auth-art .proof .gos-icon {
+  color: var(--gos-teal-ink);
+}
+
+.skeleton {
+  display: block;
+  height: 14px;
+  width: 70%;
+  border-radius: var(--gos-radius-sm);
+  background: color-mix(in srgb, var(--gos-text) 10%, var(--gos-surface));
+}
+
 body.gos .gos-msg--error {
   color: var(--gos-danger-ink);
   font-size: var(--gos-text-sm);

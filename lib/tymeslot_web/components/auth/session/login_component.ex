@@ -36,7 +36,10 @@ defmodule TymeslotWeb.Session.LoginComponent do
 
     ~H"""
     <%= if @password_auth_enabled do %>
-      <.auth_card_layout title={dgettext("auth", "Welcome Back!")}>
+      <.auth_card_layout
+        title={dgettext("auth", "Welcome Back!")}
+        preview={assigns[:auth_preview]}
+      >
         <:heading>
           <h2 class="text-xl font-bold text-tymeslot-900 mb-6 tracking-tight text-center">
             {dgettext("auth", "Log in to Tymeslot")}
@@ -133,7 +136,10 @@ defmodule TymeslotWeb.Session.LoginComponent do
         </:footer>
       </.auth_card_layout>
     <% else %>
-      <.auth_card_layout title={dgettext("auth", "Welcome Back!")}>
+      <.auth_card_layout
+        title={dgettext("auth", "Welcome Back!")}
+        preview={assigns[:auth_preview]}
+      >
         <:heading>
           <h2 class="text-xl font-bold text-tymeslot-900 mb-6 tracking-tight text-center">
             {dgettext("auth", "Log in to Tymeslot")}

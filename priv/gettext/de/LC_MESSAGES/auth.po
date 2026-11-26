@@ -32,11 +32,6 @@ msgstr "Du hast bereits ein Konto?"
 msgid "Back to Login"
 msgstr "Zur체ck zur Anmeldung"
 
-#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
-#, elixir-autogen, elixir-format
-msgid "Back to Website"
-msgstr "Zur체ck zur Website"
-
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #, elixir-autogen, elixir-format
 msgid "Check Your Email"
@@ -116,6 +111,7 @@ msgid "Failed to create session. Please try again."
 msgstr "Sitzung konnte nicht erstellt werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #, elixir-autogen, elixir-format
 msgid "Forgot password?"
 msgstr "Passwort vergessen?"
@@ -149,6 +145,7 @@ msgstr "Anmelden"
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#: lib/tymeslot_web/components/dashboard_layout.ex
 #, elixir-autogen, elixir-format
 msgid "Log in"
 msgstr "Anmelden"
@@ -800,3 +797,83 @@ msgstr "Gib deine E-Mail-Adresse ein. Du bekommst einen Link, um das Passwort f�
 #, elixir-autogen, elixir-format
 msgid "Sign in to your %{product} account to manage scheduling links, availability, and bookings."
 msgstr "Melde dich in deinem %{product}-Konto an, um Termine, Verf체gbarkeit und Buchungen zu verwalten."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "14-day trial, no card"
+msgstr "14 Tage testen, ohne Karte"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Ask an admin if you need a seat on this workspace."
+msgstr "Frag eine Admin-Person, wenn du einen Platz in diesem Workspace brauchst."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Ask an admin to turn on email or a provider."
+msgstr "Bitte eine Admin-Person, E-Mail oder einen Anbieter einzuschalten."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Booking pages that look like your work."
+msgstr "Buchungsseiten, die wie deine Arbeit aussehen."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Guests get the confirmation by email"
+msgstr "G채ste bekommen die Best채tigung per E-Mail"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "No sign-in method is switched on"
+msgstr "Keine Anmeldemethode ist eingeschaltet"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Nordlicht Analytics books an intro, a workshop and a follow-up from one page."
+msgstr "Nordlicht Analytics bucht Intro, Workshop und Folgegespr채ch 체ber eine Seite."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Privacy"
+msgstr "Datenschutz"
+
+#: lib/tymeslot_web/components/dashboard_layout.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in again to continue. What you typed stays on this page."
+msgstr "Melde dich erneut an, um weiterzumachen. Was du eingetippt hast, bleibt auf dieser Seite."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Terms"
+msgstr "Bedingungen"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Too many attempts"
+msgstr "Zu viele Versuche"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Try again in"
+msgstr "Versuch es erneut in"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "You don't have access to BookDesk24"
+msgstr "Du hast keinen Zugang zu BookDesk24"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Your calendar stays the source"
+msgstr "Dein Kalender bleibt die Quelle"
+
+#: lib/tymeslot_web/components/dashboard_layout.ex
+#, elixir-autogen, elixir-format
+msgid "Your session expired"
+msgstr "Deine Sitzung ist abgelaufen"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "or reset your password."
+msgstr "oder setze dein Passwort zur체ck."

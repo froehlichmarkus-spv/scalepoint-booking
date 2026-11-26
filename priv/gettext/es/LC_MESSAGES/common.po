@@ -331,6 +331,7 @@ msgid_plural "You can configure up to %{count} reminders"
 msgstr[0] "Puedes configurar hasta %{count} recordatorio"
 msgstr[1] "Puedes configurar hasta %{count} recordatorios"
 
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #: lib/tymeslot_web/components/core_components/feedback.ex
 #, elixir-autogen, elixir-format
 msgid "Loading"

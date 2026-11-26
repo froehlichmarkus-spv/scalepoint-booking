@@ -6,149 +6,126 @@ defmodule TymeslotWeb.Shared.Auth.LayoutComponents do
   use TymeslotWeb, :html
   use Gettext, backend: TymeslotWeb.Gettext
 
-  alias Tymeslot.Infrastructure.Config
-  alias TymeslotWeb.Components.Auth.AuthVideoConfig
-  import TymeslotWeb.Components.BackgroundMotionToggle, only: [background_motion_toggle: 1]
-
-  @spec auth_logo_header(map()) :: Phoenix.LiveView.Rendered.t()
-  defp auth_logo_header(assigns) do
-    assigns = assign_new(assigns, :subtitle, fn -> nil end)
-
-    ~H"""
-    <div class="flex flex-col items-center mb-8">
-      <div class="mb-4 transform hover:scale-105 transition-all duration-300">
-        <TymeslotWeb.Components.CoreComponents.Brand.logo mode={:full} img_class="h-10" />
-      </div>
-      <div class="text-center">
-        <h1 class="text-2xl font-black text-tymeslot-900 tracking-tight">
-          {@title}
-        </h1>
-        <%= if @subtitle do %>
-          <p class="mt-1.5 text-tymeslot-500 font-medium max-w-sm mx-auto text-sm">
-            {@subtitle}
-          </p>
-        <% end %>
-      </div>
-    </div>
-    """
-  end
-
-  @spec auth_back_link(map()) :: Phoenix.LiveView.Rendered.t()
-  defp auth_back_link(assigns) do
-    ~H"""
-    <%= if Config.logo_links_to_marketing?() do %>
-      <a
-        href={Config.site_home_path()}
-        class="hidden sm:flex absolute top-6 left-6 items-center px-6 py-3 text-base font-bold bg-linear-to-br from-turquoise-600 to-cyan-600 text-white rounded-token-2xl shadow-lg shadow-turquoise-500/20 hover:from-turquoise-700 hover:to-cyan-700 hover:-translate-y-1 hover:shadow-xl hover:shadow-turquoise-500/40 transition-glass duration-300 group z-50"
-      >
-        <.icon
-          name="hero-arrow-left-mini"
-          class="h-5 w-5 mr-2 transform group-hover:-translate-x-1 transition-transform duration-200"
-        />
-        {dgettext("auth", "Back to Website")}
-      </a>
-    <% end %>
-    """
-  end
-
   # `video: false` is for a page served by a plain controller, where no hook
   # mounts: the video would download and never play, and the motion toggle
   # would do nothing. It gets the static fallback gradient instead.
+  attr :title, :string, required: true
+  attr :subtitle, :string, default: nil
+  attr :video, :boolean, default: false
+  attr :preview, :string, default: nil
+  attr :lock_seconds, :integer, default: 900
+  slot :heading
+  slot :form
+  slot :social
+  slot :footer
+
   @spec auth_card_layout(map()) :: Phoenix.LiveView.Rendered.t()
   def auth_card_layout(assigns) do
-    assigns =
-      assigns
-      |> assign_new(:subtitle, fn -> nil end)
-      |> assign_new(:video, fn -> false end)
-
     ~H"""
-    <main
-      id="main"
-      data-m="booking"
-      class="min-h-screen relative overflow-hidden flex items-center justify-center p-4 pb-20 sm:p-6 sm:pt-24"
-    >
-      <%!-- Video Background --%>
-      <div :if={!@video} class="video-background-container fallback">
-        <div class="absolute inset-0 bg-linear-to-br from-turquoise-600 to-blue-600 opacity-20"></div>
-      </div>
-      <div
-        :if={@video}
-        class="video-background-container"
-        id="auth-video-container"
-        phx-hook="AuthVideo"
-      >
-        <div class="absolute inset-0 bg-linear-to-br from-turquoise-600 to-blue-600 opacity-20"></div>
-        <%= for {video_id, index} <- Enum.with_index(AuthVideoConfig.auth_video_ids(), 1) do %>
-          <video
-            class={"video-background-video #{if index == 1, do: "active", else: "inactive"}"}
-            autoplay={index == 1}
-            loop
-            muted
-            playsinline
-            preload="metadata"
-            poster={AuthVideoConfig.auth_video_poster()}
-            id={video_id}
-          >
-            <%= for source <- AuthVideoConfig.auth_video_sources() do %>
-              <source
-                src={source.src}
-                type={source.type}
-                {if source.media, do: [media: source.media], else: []}
-              />
-            <% end %>
-          </video>
-        <% end %>
-      </div>
-      <.background_motion_toggle :if={@video} />
-
-      <.auth_back_link />
-
-      <%!-- Content Overlay --%>
-      <div class="w-full max-w-[500px] relative z-10 animate-in fade-in zoom-in-95 duration-700">
-        <div class="auth-glass-card max-w-none">
-          <.auth_logo_header title={@title} subtitle={@subtitle} />
-
-          {if assigns[:heading], do: render_slot(@heading)}
-
-          <%!-- No flash group here: the `app` layout owns the only one, and
-          `AuthLive` renders through it like every other LiveView. --%>
-
-          <div class="space-y-6">
-            {render_slot(@form)}
-
-            <%= if assigns[:social] do %>
-              <div class="relative py-2">
-                <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div class="w-full border-t border-tymeslot-100"></div>
-                </div>
-                <div class="relative flex justify-center text-token-2xs font-black uppercase tracking-[0.2em]">
-                  <span class="bg-white px-4 text-tymeslot-500">
-                    {dgettext("auth", "Or continue with")}
-                  </span>
-                </div>
-              </div>
-              {render_slot(@social)}
-            <% end %>
+    <div class="gos-auth" data-m="booking" id="main" data-video={to_string(@video)}>
+      <aside class="gos-auth-art" aria-hidden="true">
+        <p class="mod-chip">
+          <.icon name="hero-calendar-days" class="gos-icon" /> BookDesk24
+        </p>
+        <div class="claim">
+          <h2>{dgettext("auth", "Booking pages that look like your work.")}</h2>
+          <p>
+            {dgettext(
+              "auth",
+              "Nordlicht Analytics books an intro, a workshop and a follow-up from one page."
+            )}
+          </p>
+          <ul class="proof">
+            <li>
+              <.icon name="hero-check" class="gos-icon" />
+              {dgettext("auth", "14-day trial, no card")}
+            </li>
+            <li>
+              <.icon name="hero-calendar-days" class="gos-icon" />
+              {dgettext("auth", "Your calendar stays the source")}
+            </li>
+            <li>
+              <.icon name="hero-envelope" class="gos-icon" />
+              {dgettext("auth", "Guests get the confirmation by email")}
+            </li>
+          </ul>
+        </div>
+      </aside>
+      <div class="gos-auth-main">
+        <div class="gos-auth-top">
+          {if @footer != [], do: render_slot(@footer)}
+        </div>
+        <div class="gos-auth-form">
+          <div class="head">
+            <h1>{@title}</h1>
+            <p :if={@subtitle} class="sub">{@subtitle}</p>
           </div>
-
-          <%= if assigns[:footer] do %>
-            <div class="mt-8 pt-6 border-t-2 border-tymeslot-50">
-              {render_slot(@footer)}
-            </div>
+          {if @heading != [], do: render_slot(@heading)}
+          <%= cond do %>
+            <% @preview == "skeleton" -> %>
+              <div class="gos-auth-status" role="status" aria-busy="true">
+                <span class="sr-only">{dgettext("common", "Loading")}</span>
+                <span class="skeleton skeleton-row__title"></span>
+                <span class="skeleton skeleton-row__line"></span>
+                <span class="skeleton skeleton-row__line"></span>
+              </div>
+            <% @preview == "empty" -> %>
+              <div class="gos-auth-status" role="status">
+                <h2>{dgettext("auth", "No sign-in method is switched on")}</h2>
+                <p class="sub">
+                  {dgettext("auth", "Ask an admin to turn on email or a provider.")}
+                </p>
+              </div>
+            <% @preview == "permission" -> %>
+              <div class="gos-auth-status" role="alert">
+                <h2>{dgettext("auth", "You don't have access to BookDesk24")}</h2>
+                <p class="sub">
+                  {dgettext("auth", "Ask an admin if you need a seat on this workspace.")}
+                </p>
+              </div>
+            <% @preview == "locked" -> %>
+              <div
+                class="gos-auth-status"
+                role="alert"
+                id="auth-lockout"
+                phx-hook="GosLock"
+                data-seconds={@lock_seconds}
+              >
+                <h2>{dgettext("auth", "Too many attempts")}</h2>
+                <p class="sub">
+                  {dgettext("auth", "Try again in")}
+                  <span data-lock-clock>15:00</span>
+                  {dgettext("auth", "or reset your password.")}
+                </p>
+                <button
+                  type="button"
+                  class="gos-btn gos-btn--secondary"
+                  phx-click="navigate_to"
+                  phx-value-to="reset_password"
+                >
+                  {dgettext("auth", "Forgot password?")}
+                </button>
+              </div>
+            <% true -> %>
+              <div class="space-y-6">
+                {render_slot(@form)}
+                <%= if @social != [] do %>
+                  <p class="sub">{dgettext("auth", "Or continue with")}</p>
+                  {render_slot(@social)}
+                <% end %>
+              </div>
           <% end %>
         </div>
-
-        <%!-- Phones have no room for the button above, so offer a quiet text link. --%>
-        <a
-          :if={Config.logo_links_to_marketing?()}
-          href={Config.site_home_path()}
-          class="sm:hidden mx-auto mt-4 flex w-fit items-center gap-1 rounded-token-full bg-white/80 px-3 py-1.5 text-sm font-semibold text-tymeslot-700 hover:bg-white transition-colors"
-        >
-          <.icon name="hero-arrow-left-mini" class="h-4 w-4" />
-          {dgettext("auth", "Back to Website")}
-        </a>
+        <div class="gos-auth-foot">
+          <a href={Application.get_env(:tymeslot, :legal_terms_url) || "/growthos/legal/terms"}>
+            {dgettext("auth", "Terms")}
+          </a>
+          <a href={Application.get_env(:tymeslot, :legal_privacy_url) || "/growthos/legal/privacy"}>
+            {dgettext("auth", "Privacy")}
+          </a>
+        </div>
       </div>
-    </main>
+    </div>
     """
   end
 

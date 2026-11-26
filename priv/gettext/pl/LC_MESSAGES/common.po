@@ -332,6 +332,7 @@ msgstr[0] "Możesz skonfigurować maksymalnie %{count} przypomnienie"
 msgstr[1] "Możesz skonfigurować maksymalnie %{count} przypomnienia"
 msgstr[2] "Możesz skonfigurować maksymalnie %{count} przypomnień"
 
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #: lib/tymeslot_web/components/core_components/feedback.ex
 #, elixir-autogen, elixir-format
 msgid "Loading"

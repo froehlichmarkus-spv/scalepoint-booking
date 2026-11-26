@@ -140,6 +140,27 @@ const GosModal = {
   },
 };
 
+const GosLock = {
+  mounted() {
+    let left = Number(this.el.dataset.seconds || 900);
+    const clock = this.el.querySelector("[data-lock-clock]");
+    const paint = () => {
+      const m = String(Math.floor(left / 60)).padStart(2, "0");
+      const s = String(left % 60).padStart(2, "0");
+      if (clock) clock.textContent = `${m}:${s}`;
+    };
+    paint();
+    this.timer = setInterval(() => {
+      left = Math.max(0, left - 1);
+      paint();
+      if (left === 0) clearInterval(this.timer);
+    }, 1000);
+  },
+  destroyed() {
+    clearInterval(this.timer);
+  },
+};
+
 const GosToast = {
   mounted() {
     this.el.setAttribute("role", "status");
@@ -147,4 +168,4 @@ const GosToast = {
   },
 };
 
-export { GosPassword, GosModal, GosToast };
+export { GosPassword, GosModal, GosToast, GosLock };

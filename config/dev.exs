@@ -8,6 +8,10 @@ config :tymeslot, environment: :dev
 # look-alike — un-wrapped literals show up plain. Never enabled outside dev.
 config :tymeslot, :pseudo_locale_enabled, true
 
+# Dev-only stills: `?preview=skeleton|empty|permission|locked` on auth,
+# `?preview=session` on the dashboard. Off outside dev.
+config :tymeslot, :state_preview, true
+
 # Configure upload directory for development
 config :tymeslot, :upload_directory, Path.expand("../uploads", __DIR__)
 

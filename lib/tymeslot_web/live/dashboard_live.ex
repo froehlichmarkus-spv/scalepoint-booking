@@ -97,6 +97,7 @@ defmodule TymeslotWeb.DashboardLive do
        agenda: nil,
        calendar_focus: nil,
        nav_expanded: false,
+       session_expired: false,
        viewport_fit: :cover
      )}
   end
@@ -138,6 +139,10 @@ defmodule TymeslotWeb.DashboardLive do
     ~p"/dashboard/integrations?#{query}"
   end
 
+  defp session_expired?(params) do
+    Application.get_env(:tymeslot, :state_preview, false) and params["preview"] == "session"
+  end
+
   defp handle_dashboard_params(params, socket) do
     action = socket.assigns.live_action
 
@@ -174,6 +179,7 @@ defmodule TymeslotWeb.DashboardLive do
       socket
       |> assign(:page_title, PageTitles.dashboard_title(action))
       |> assign(:params, params)
+      |> assign(:session_expired, session_expired?(params))
       |> TourEventHandlers.assign_tour_state(action)
 
     socket =
@@ -248,6 +254,7 @@ defmodule TymeslotWeb.DashboardLive do
       nav_rail_toggle={@live_action == :calendar}
       sidebar_extensions={@sidebar_extensions}
       unseen_announcements={@unseen_announcements}
+      session_expired={@session_expired}
     >
       <.live_component
         :if={@tour_active}

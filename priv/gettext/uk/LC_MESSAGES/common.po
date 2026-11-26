@@ -336,6 +336,7 @@ msgstr[0] "Ви можете налаштувати до %{count} нагадув
 msgstr[1] "Ви можете налаштувати до %{count} нагадувань"
 msgstr[2] "Ви можете налаштувати до %{count} нагадувань"
 
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #: lib/tymeslot_web/components/core_components/feedback.ex
 #, elixir-autogen, elixir-format
 msgid "Loading"

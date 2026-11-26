@@ -4,11 +4,11 @@ Stand: 26. Nov 2026. Branch `feat/bookdesk24-ds-v2`. Live-Shots in `after/`. Zie
 
 | Kriterium | Score | Warum |
 |---|---|---|
-| 1 Visual | 6 | Shell und Auth nutzen Geist, Navy und `data-m="booking"`. Die Übersicht behält den alten Verlaufsbanner und die alte Kartenanordnung. Auth ist eine Karte auf hellem Grund, nicht das Split-Layout mit Proof-Panel. |
+| 1 Visual | 7 | Auth ist das zweispaltige DS-Layout mit Claim und drei Belegen. Die Übersicht behält den Verlaufsbanner. |
 | 2 Consistency | 5 | Tokens und `gos.css` sind eingebunden. Hex bleibt in den Theme-CSS und in `tokens.phoenix.css` (Kopie, nicht von Hand geändert). Die meisten `hero-`-Icons ausserhalb von Shell und Auth sind noch da. Inter und DM Serif liegen weiter in `priv/static/fonts`. |
 | 3 Usability | 8 | Login, Signup, Passwort vergessen, Link gesendet, Verifizieren, Erfolg und der Login-Fehler sind erreichbar. Google/Microsoft nur, wenn ein Admin den Provider einschaltet. |
 | 4 Accessibility | 7 | Skip-Link, Fokus-Ring aus dem DS, lesbare Sidebar nach dem Kontrast-Fix. Kein neuer axe-Lauf in diesem Schritt. |
-| 5 States | 5 | Login-Fehler und Passwort-Erfolg sind geschossen. Skeleton, Empty, Permission, Magic Link, Lock mit Countdown und Session-expired-Modal fehlen. Magic Link gibt es im Stack nicht. |
+| 5 States | 7 | Auth hat Skeleton, Empty, Permission, Lock mit Countdown und das Session-Modal. Listen im Dashboard haben diese Zustände noch nicht vollständig. Magic Link gibt es nicht. |
 | 6 Microcopy | 7 | Kein formelles `Sie`/`Ihr`/`Ihnen` mehr als Anrede. 179 Treffer von `rg -i "\b(sie|ihr|ihnen)\b"` bleiben, alle dritte Person oder Platzhalter, Liste unten. Einzelne Imperative sind holprig („Hake ab“). |
 | 7 Mobile | 7 | Shots bei 390 für Shell und die Auth-Zustände. Das Bottom-Sheet der Buchungsseite ist dieser Schritt nicht. |
 | 8 Perceived performance | 7 | In diesem Schritt nicht neu gemessen. |
