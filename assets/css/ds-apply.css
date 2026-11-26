@@ -64,6 +64,19 @@ body.gos .dashboard-sidebar {
   color: var(--gos-text-2);
 }
 
+@media (max-width: 1023px) {
+  body.gos .dashboard-sidebar {
+    visibility: hidden;
+    box-shadow: none;
+    transition: transform 300ms ease, visibility 0s linear 300ms;
+  }
+
+  body.gos .dashboard-sidebar.dashboard-sidebar-open {
+    visibility: visible;
+    transition: transform 300ms ease, visibility 0s;
+  }
+}
+
 body.gos .dashboard-sidebar .dashboard-nav-link {
   color: var(--gos-text-2);
   background-image: none;
