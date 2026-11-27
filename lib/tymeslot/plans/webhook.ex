@@ -30,6 +30,39 @@ defmodule Tymeslot.Plans.Webhook do
 
   def verify(_unused14, _unused17, _unused20), do: {:error, :invalid_signature}
 
+  @doc """
+  Prefers `X-GOS-Timestamp` and `X-GOS-Signature`. Billing also sends
+  `X-Growth-OS-Signature: t=<unix>,v1=<hex>` for the same body.
+  """
+  @spec signature_headers(binary() | nil, binary() | nil, binary() | nil) ::
+          {binary() | nil, binary() | nil}
+  def signature_headers(timestamp, signature, _combined)
+      when is_binary(timestamp) and timestamp != "" and is_binary(signature) and signature != "" do
+    {timestamp, signature}
+  end
+
+  def signature_headers(_timestamp, _signature, combined) when is_binary(combined) do
+    parts =
+      combined
+      |> String.split(",", trim: true)
+      |> Enum.reduce(%{}, fn part, acc ->
+        case String.split(part, "=", parts: 2) do
+          [key, value] -> Map.put(acc, key, value)
+          _other -> acc
+        end
+      end)
+
+    case {parts["t"], parts["v1"]} do
+      {ts, hex} when is_binary(ts) and ts != "" and is_binary(hex) and hex != "" ->
+        {ts, "v1=" <> hex}
+
+      _missing ->
+        {nil, nil}
+    end
+  end
+
+  def signature_headers(_timestamp, _signature, _combined), do: {nil, nil}
+
   @spec process(binary()) :: {:ok, term()} | {:error, term()}
   def process(raw_body) do
     case Jason.decode(raw_body) do

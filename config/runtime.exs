@@ -1015,15 +1015,30 @@ free_calendar_providers =
     list -> list |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
   end
 
+trim_env = fn
+  value when is_binary(value) ->
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> trimmed
+    end
+
+  _missing ->
+    nil
+end
+
+billing_url = trim_env.(System.get_env("GROWTH_OS_BILLING_URL"))
+billing_api_key = trim_env.(System.get_env("GROWTH_OS_BILLING_API_KEY"))
+billing_webhook_secret = trim_env.(System.get_env("GROWTH_OS_BILLING_WEBHOOK_SECRET"))
+
 config :tymeslot, :plans,
   past_due_grace_days: 7,
   trial_days: 14,
   comped_user_emails: comped_emails,
   free_calendar_providers: free_calendar_providers,
   oauth_video_providers: [:google_meet, :zoom, :teams],
-  billing_url: System.get_env("GROWTH_OS_BILLING_URL"),
-  billing_api_key: System.get_env("GROWTH_OS_BILLING_API_KEY"),
-  webhook_secret: System.get_env("GROWTH_OS_BILLING_WEBHOOK_SECRET"),
+  billing_url: billing_url,
+  billing_api_key: billing_api_key,
+  webhook_secret: billing_webhook_secret,
   display_prices: %{
     monthly: %{
       label: "Pro monthly",
@@ -1074,7 +1089,15 @@ if plans_enabled?.() do
   config :tymeslot, :show_branding, true
   config :tymeslot, :user_registered_hook, Tymeslot.Plans.UserRegisteredHook
   config :tymeslot, :account_deletion_hook, Tymeslot.Plans.AccountDeletionHook
-  config :tymeslot, :billing_client, Tymeslot.Plans.BillingClient.Stub
+
+  billing_client =
+    if is_binary(billing_url) and is_binary(billing_api_key) do
+      Tymeslot.Plans.BillingClient.HTTP
+    else
+      Tymeslot.Plans.BillingClient.Stub
+    end
+
+  config :tymeslot, :billing_client, billing_client
 
   config :tymeslot,
          :dashboard_additional_hooks,

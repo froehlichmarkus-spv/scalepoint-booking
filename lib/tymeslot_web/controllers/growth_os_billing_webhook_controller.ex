@@ -15,8 +15,13 @@ defmodule TymeslotWeb.GrowthOsBillingWebhookController do
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, _params) do
     raw = conn.assigns[:raw_body] || ""
-    timestamp = header(conn, "x-gos-timestamp")
-    signature = header(conn, "x-gos-signature")
+
+    {timestamp, signature} =
+      Webhook.signature_headers(
+        header(conn, "x-gos-timestamp"),
+        header(conn, "x-gos-signature"),
+        header(conn, "x-growth-os-signature")
+      )
 
     case Webhook.verify(raw, timestamp, signature) do
       :ok ->

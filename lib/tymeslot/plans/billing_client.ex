@@ -8,11 +8,10 @@ defmodule Tymeslot.Plans.BillingClient do
   `/webhooks/growth-os-billing`.
   """
 
-  @callback create_checkout(map(), String.t(), map()) ::
-              {:ok, %{url: String.t()}} | {:error, term()}
-  @callback create_portal(map(), String.t()) :: {:ok, %{url: String.t()}} | {:error, term()}
+  @callback create_checkout(map(), String.t(), map()) :: {:ok, map()} | {:error, term()}
+  @callback create_portal(map(), String.t()) :: {:ok, map()} | {:error, term()}
   @callback get_entitlement(integer()) :: {:ok, map()} | {:error, term()}
-  @callback register_account(map()) :: :ok | {:error, term()}
+  @callback register_account(map()) :: :ok | {:ok, map()} | {:error, term()}
   @callback cancel(integer(), keyword() | map()) :: :ok | {:error, term()}
 
   @spec create_checkout(term(), term(), term()) :: term()

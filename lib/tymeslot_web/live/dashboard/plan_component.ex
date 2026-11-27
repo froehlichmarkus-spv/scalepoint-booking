@@ -9,7 +9,7 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
 
   alias Tymeslot.Plans
   alias Tymeslot.Plans.Billing
-  alias Tymeslot.Plans.BillingClient
+  alias Tymeslot.Plans.PortalLink
   alias TymeslotWeb.Live.Shared.Flash
 
   @impl Phoenix.LiveComponent
@@ -31,24 +31,26 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   @impl Phoenix.LiveComponent
   def handle_event("checkout", %{"interval" => interval}, socket) do
     user = socket.assigns.current_user
-    urls = %{success: success_url(), cancel: cancel_url()}
 
-    case BillingClient.create_checkout(user, interval, urls) do
-      {:ok, %{url: url}} ->
+    case Billing.checkout(user, interval, Billing.checkout_urls()) do
+      {:ok, %{url: url}} when is_binary(url) ->
         {:noreply, redirect(socket, external: url)}
 
+      {:ok, %{mode: "noop"}} ->
+        {:noreply, socket}
+
       {:error, _reason} ->
-        {:noreply, billing_unavailable(socket)}
+        report_billing_failure(socket)
     end
   end
 
   def handle_event("portal", _params, socket) do
-    case BillingClient.create_portal(socket.assigns.current_user, success_url()) do
-      {:ok, %{url: url}} ->
+    case signed_portal(socket) do
+      {:ok, url} ->
         {:noreply, redirect(socket, external: url)}
 
-      {:error, _reason} ->
-        {:noreply, billing_unavailable(socket)}
+      :fallback ->
+        open_portal_session(socket)
     end
   end
 
@@ -65,6 +67,9 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
             <p class="gos-plan-muted">{plan_line(assigns)}</p>
             <p :if={@checkout_success} class="gos-plan-muted" data-testid="checkout-pending">
               {dgettext("plans", "Activating your plan…")}
+            </p>
+            <p :if={@payment_failed} class="gos-plan-muted" data-testid="payment-failed">
+              {Billing.payment_failed_message()}
             </p>
             <p class="gos-plan-muted">
               {dgettext("plans", "Event types")}: {usage(@usage, :meeting_types, @limits)} · {dgettext(
@@ -144,12 +149,8 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     |> assign(:prices, prices)
     |> assign(:checkout_success, checkout_success?(socket.assigns))
     |> assign(:billing_unavailable, socket.assigns[:billing_unavailable] || false)
+    |> assign(:payment_failed, payment_failed?(socket.assigns))
     |> assign(:rows, comparison_rows())
-  end
-
-  defp billing_unavailable(socket) do
-    Flash.error(Billing.unavailable_message())
-    assign(socket, :billing_unavailable, true)
   end
 
   defp price_note("2 months free"), do: dgettext("plans", "2 months free")
@@ -158,6 +159,51 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
   defp checkout_success?(assigns) do
     params = assigns[:params] || %{}
     checkout_flag(params) == "success"
+  end
+
+  defp payment_failed?(assigns) do
+    params = assigns[:params] || %{}
+    billing_flag(params) == "payment_failed"
+  end
+
+  defp report_billing_failure(socket) do
+    _catalog = dgettext("plans", "Billing is unavailable. Try again in a moment.")
+    message = billing_failure_message()
+    Flash.error(message)
+    {:noreply, assign(socket, :billing_unavailable, true)}
+  end
+
+  defp billing_failure_message do
+    if Billing.healthy?() do
+      Billing.action_failed_message()
+    else
+      Billing.unavailable_message()
+    end
+  end
+
+  defp signed_portal(socket) do
+    entitlement = socket.assigns[:entitlement]
+
+    case entitlement && entitlement.billing_account_ref do
+      "acc_" <> _rest = ref ->
+        case PortalLink.build(ref) do
+          {:ok, url} -> {:ok, url}
+          _error -> :fallback
+        end
+
+      _missing ->
+        :fallback
+    end
+  end
+
+  defp open_portal_session(socket) do
+    case Billing.portal(socket.assigns.current_user, Billing.portal_return_url()) do
+      {:ok, %{url: url}} when is_binary(url) ->
+        {:noreply, redirect(socket, external: url)}
+
+      _error ->
+        report_billing_failure(socket)
+    end
   end
 
   defp plan_line(%{
@@ -191,17 +237,17 @@ defmodule TymeslotWeb.Dashboard.PlanComponent do
     ]
   end
 
-  defp checkout_flag(params) when is_list(params), do: Keyword.get(params, :checkout)
+  defp checkout_flag(params), do: param(params, :checkout)
+  defp billing_flag(params), do: param(params, :billing)
 
-  defp checkout_flag(params) when is_map(params) do
-    case Map.fetch(params, :checkout) do
+  defp param(params, key) when is_list(params), do: Keyword.get(params, key)
+
+  defp param(params, key) when is_map(params) do
+    case Map.fetch(params, key) do
       {:ok, value} -> value
-      :error -> Map.get(params, "checkout")
+      :error -> Map.get(params, Atom.to_string(key))
     end
   end
 
-  defp checkout_flag(_params), do: nil
-
-  defp success_url, do: "/dashboard/plan?checkout=success"
-  defp cancel_url, do: "/dashboard/plan?checkout=cancel"
+  defp param(_params, _key), do: nil
 end

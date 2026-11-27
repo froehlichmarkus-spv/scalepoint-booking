@@ -210,6 +210,68 @@ defmodule Tymeslot.PlansTest do
     assert kept.plan == "pro"
   end
 
+  test "webhook accepts the signature inside five minutes and rejects a replay" do
+    body = "{}"
+    now = System.system_time(:second)
+    fresh = signature(body, now)
+    assert Webhook.verify(body, Integer.to_string(now), fresh) == :ok
+
+    stale = now - 301
+
+    assert Webhook.verify(body, Integer.to_string(stale), signature(body, stale)) ==
+             {:error, :invalid_signature}
+
+    {ts, sig} = Webhook.signature_headers(nil, nil, "t=#{now},v1=#{hex(body, now)}")
+    assert Webhook.verify(body, ts, sig) == :ok
+  end
+
+  test "past_due after grace and canceled are free", %{user: user} do
+    past = DateTime.utc_now() |> DateTime.add(-3600, :second) |> DateTime.to_iso8601()
+
+    assert {:ok, _saved} =
+             Plans.upsert_entitlement(%{
+               "version" => 2,
+               "data" => %{
+                 "external_user_id" => "booking:#{user.id}",
+                 "plan" => "pro",
+                 "status" => "past_due",
+                 "grace_until" => past
+               }
+             })
+
+    Plans.invalidate(user.id)
+    assert Plans.effective_plan(user.id) == :free
+
+    future = DateTime.utc_now() |> DateTime.add(3600, :second) |> DateTime.to_iso8601()
+
+    assert {:ok, _kept} =
+             Plans.upsert_entitlement(%{
+               "version" => 3,
+               "data" => %{
+                 "external_user_id" => "booking:#{user.id}",
+                 "plan" => "pro",
+                 "status" => "past_due",
+                 "grace_until" => future
+               }
+             })
+
+    Plans.invalidate(user.id)
+    assert Plans.effective_plan(user.id) == :pro
+
+    assert {:ok, _canceled} =
+             Plans.upsert_entitlement(%{
+               "version" => 4,
+               "data" => %{
+                 "external_user_id" => "booking:#{user.id}",
+                 "plan" => "pro",
+                 "status" => "canceled"
+               }
+             })
+
+    Plans.invalidate(user.id)
+    assert Plans.effective_plan(user.id) == :free
+  end
+
   defp type_attrs(user, name),
     do: %{name: name, duration_minutes: 30, user_id: user.id}
 
@@ -231,7 +293,13 @@ defmodule Tymeslot.PlansTest do
 
   defp sign(body) do
     ts = timestamp()
+    {ts, signature(body, String.to_integer(ts))}
+  end
+
+  defp signature(body, ts), do: "v1=" <> hex(body, ts)
+
+  defp hex(body, ts) do
     mac = :crypto.mac(:hmac, :sha256, "test-webhook-secret", "#{ts}.#{body}")
-    {ts, "v1=" <> Base.encode16(mac, case: :lower)}
+    Base.encode16(mac, case: :lower)
   end
 end

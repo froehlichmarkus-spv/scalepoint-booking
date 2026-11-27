@@ -309,6 +309,8 @@ defmodule TymeslotWeb.Router do
       TymeslotWeb.Plugs.AdditionalDashboardPlugs
     ]
 
+    get "/welcome", WelcomeController, :show
+
     live_session :authenticated,
       session: {TymeslotWeb.Plugs.LocalePlug, :live_session_data, []},
       on_mount: {TymeslotWeb.Hooks.DashboardHooks, :dashboard} do
