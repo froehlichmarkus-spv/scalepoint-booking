@@ -767,24 +767,10 @@ msgstr "Vos réservations à venir seront supprimées de BookDesk24 avec votre c
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} hour"
-msgid_plural "%{count} hours"
-msgstr[0] "%{count} heure"
-msgstr[1] "%{count} heures"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
 msgid "%{count} minute"
 msgid_plural "%{count} minutes"
 msgstr[0] "%{count} minute"
 msgstr[1] "%{count} minutes"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
-msgid "%{count} second"
-msgid_plural "%{count} seconds"
-msgstr[0] "%{count} seconde"
-msgstr[1] "%{count} secondes"
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format

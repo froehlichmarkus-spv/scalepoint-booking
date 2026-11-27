@@ -767,27 +767,11 @@ msgstr "Ваші майбутні бронювання буде видалено
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} hour"
-msgid_plural "%{count} hours"
-msgstr[0] "%{count} година"
-msgstr[1] "%{count} години"
-msgstr[2] "%{count} годин"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
 msgid "%{count} minute"
 msgid_plural "%{count} minutes"
 msgstr[0] "%{count} хвилина"
 msgstr[1] "%{count} хвилини"
 msgstr[2] "%{count} хвилин"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
-msgid "%{count} second"
-msgid_plural "%{count} seconds"
-msgstr[0] "%{count} секунда"
-msgstr[1] "%{count} секунди"
-msgstr[2] "%{count} секунд"
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format

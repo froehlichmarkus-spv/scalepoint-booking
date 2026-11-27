@@ -182,10 +182,7 @@ defmodule Tymeslot.Emails.Shared.MailCards do
 
     location =
       if details[:location_type] || is_binary(Map.get(details, :location)) do
-        case Formatting.format_location(details) do
-          text when is_binary(text) -> text
-          _other -> nil
-        end
+        Formatting.format_location(details)
       end
 
     []

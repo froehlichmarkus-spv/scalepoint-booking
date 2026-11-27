@@ -767,22 +767,8 @@ msgstr ""
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} hour"
-msgid_plural "%{count} hours"
-msgstr[0] ""
-msgstr[1] ""
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
 msgid "%{count} minute"
 msgid_plural "%{count} minutes"
-msgstr[0] ""
-msgstr[1] ""
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
-msgid "%{count} second"
-msgid_plural "%{count} seconds"
 msgstr[0] ""
 msgstr[1] ""
 

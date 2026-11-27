@@ -767,24 +767,10 @@ msgstr "Seus próximos agendamentos serão excluídos do BookDesk24 junto com su
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} hour"
-msgid_plural "%{count} hours"
-msgstr[0] "%{count} hora"
-msgstr[1] "%{count} horas"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
 msgid "%{count} minute"
 msgid_plural "%{count} minutes"
 msgstr[0] "%{count} minuto"
 msgstr[1] "%{count} minutos"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
-msgid "%{count} second"
-msgid_plural "%{count} seconds"
-msgstr[0] "%{count} segundo"
-msgstr[1] "%{count} segundos"
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format

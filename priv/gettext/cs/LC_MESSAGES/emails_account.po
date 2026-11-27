@@ -767,27 +767,11 @@ msgstr "Vaše nadcházející rezervace budou ze služby BookDesk24 smazány spo
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
-msgid "%{count} hour"
-msgid_plural "%{count} hours"
-msgstr[0] "%{count} hodina"
-msgstr[1] "%{count} hodiny"
-msgstr[2] "%{count} hodin"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
 msgid "%{count} minute"
 msgid_plural "%{count} minutes"
 msgstr[0] "%{count} minuta"
 msgstr[1] "%{count} minuty"
 msgstr[2] "%{count} minut"
-
-#: lib/tymeslot/emails/shared/link_lifetime.ex
-#, elixir-autogen, elixir-format
-msgid "%{count} second"
-msgid_plural "%{count} seconds"
-msgstr[0] "%{count} sekunda"
-msgstr[1] "%{count} sekundy"
-msgstr[2] "%{count} sekund"
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
