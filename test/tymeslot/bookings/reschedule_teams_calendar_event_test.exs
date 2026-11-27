@@ -234,9 +234,10 @@ defmodule Tymeslot.Bookings.RescheduleTeamsCalendarEventTest do
   defp run_calendar_jobs(meeting) do
     stub_graph(meeting)
 
+    queued = all_enqueued(worker: CalendarEventWorker, queue: :calendar_events)
+
     jobs =
-      all_enqueued(worker: CalendarEventWorker, queue: :calendar_events)
-      |> Enum.sort_by(fn %{args: %{"action" => action}} ->
+      Enum.sort_by(queued, fn %{args: %{"action" => action}} ->
         case action do
           "update" -> 0
           "replace" -> 1
