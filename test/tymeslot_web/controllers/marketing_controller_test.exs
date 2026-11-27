@@ -1,6 +1,8 @@
 defmodule TymeslotWeb.MarketingControllerTest do
   use TymeslotWeb.ConnCase, async: true
 
+  @moduletag :marketing
+
   test "the public page shows the hero, the caption, and the real fee", %{conn: conn} do
     conn = get(conn, ~p"/bookdesk24")
     body = html_response(conn, 200)
