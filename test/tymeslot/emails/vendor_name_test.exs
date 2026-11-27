@@ -18,10 +18,10 @@ defmodule Tymeslot.Emails.VendorNameTest do
     EmailChangeNotification,
     EmailChangeVerification,
     EmailVerification,
+    MagicLink,
     NoPasswordToReset,
     PasswordReset,
     SignupAttemptNotice,
-    MagicLink,
     SocialSignupConfirmation
   }
 
