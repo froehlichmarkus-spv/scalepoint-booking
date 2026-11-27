@@ -197,14 +197,14 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
     </mjml>
     """
 
-    mjml
-    |> compile_mjml()
-    |> extract_body()
+    case compile_mjml(mjml) do
+      html when is_binary(html) -> extract_body(html)
+    end
   end
 
-  defp extract_body(html) do
+  defp extract_body(html) when is_binary(html) do
     case Regex.run(~r/<body[^>]*>(.*)<\/body>/s, html) do
-      [_all, inner] -> inner
+      [_all, inner] when is_binary(inner) -> inner
       _other -> html
     end
   end

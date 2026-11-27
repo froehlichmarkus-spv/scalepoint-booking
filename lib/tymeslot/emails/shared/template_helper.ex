@@ -51,7 +51,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
         stage_subtitle: "I'll see you on Tuesday at 15:00"
       )
   """
-  @spec build_organizer_details(organizer_source(), keyword()) :: organizer_details()
+  @spec build_organizer_details(organizer_source(), keyword()) :: map()
   def build_organizer_details(appointment_details, stage) do
     Stage.fetch_required!(stage, :intent)
     Stage.fetch_required!(stage, :eyebrow)
@@ -64,7 +64,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       organizer_user_id: Map.get(appointment_details, :organizer_user_id)
     }
 
-    details = Enum.reduce(stage, base, fn {k, v}, acc -> Map.put(acc, k, v) end)
+    details = Map.merge(base, Map.new(stage))
 
     if details[:card] == :slot do
       Map.put(

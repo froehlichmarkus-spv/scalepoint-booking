@@ -72,7 +72,7 @@ defmodule Tymeslot.Emails.Shared.MailCards do
       status: status,
       tone: tone,
       rows: slot_rows(details, locale),
-      note: if(clock == :owner, do: Formatting.booked_through(details))
+      note: owner_note(clock, details)
     }
   end
 
@@ -110,6 +110,9 @@ defmodule Tymeslot.Emails.Shared.MailCards do
   defp note(text) do
     ~s(<tr><td class="pcr mu" style="padding:0 18px 14px;font-family:#{@font};font-size:13px;line-height:19px;color:#4A5566">#{esc(text)}</td></tr>)
   end
+
+  defp owner_note(:owner, details), do: Formatting.booked_through(details)
+  defp owner_note(_clock, _details), do: nil
 
   defp slot_date(details, clock) do
     case slot_instant(details, clock) do
@@ -179,7 +182,10 @@ defmodule Tymeslot.Emails.Shared.MailCards do
 
     location =
       if details[:location_type] || is_binary(Map.get(details, :location)) do
-        Formatting.format_location(details)
+        case Formatting.format_location(details) do
+          text when is_binary(text) -> text
+          _other -> nil
+        end
       end
 
     []
