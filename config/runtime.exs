@@ -1031,6 +1031,11 @@ billing_url = trim_env.(System.get_env("GROWTH_OS_BILLING_URL"))
 billing_api_key = trim_env.(System.get_env("GROWTH_OS_BILLING_API_KEY"))
 billing_webhook_secret = trim_env.(System.get_env("GROWTH_OS_BILLING_WEBHOOK_SECRET"))
 
+# Test runs only: asks billing to put each new account on a Stripe test clock,
+# so dunning and trial ends can be fast-forwarded. Billing ignores it in live
+# mode and unless its own ALLOW_TEST_CLOCK_API is on.
+billing_test_clock = System.get_env("GROWTH_OS_BILLING_TEST_CLOCK") in ["true", "1", "yes"]
+
 config :tymeslot, :plans,
   past_due_grace_days: 7,
   trial_days: 14,
@@ -1040,6 +1045,7 @@ config :tymeslot, :plans,
   billing_url: billing_url,
   billing_api_key: billing_api_key,
   webhook_secret: billing_webhook_secret,
+  billing_test_clock: billing_test_clock,
   display_prices: %{
     monthly: %{
       label: "Pro monthly",
