@@ -44,13 +44,13 @@ Expected: `trial_started` count ≥ 1, `ALLOW_LIVE_MODE=false`, `ALLOW_TEST_CLOC
 
 ## 2. Merge
 
-PR: `feat/bookdesk24-automation-chain` into `main`, merge commit, keep the branch, only when Verify, Secret scan and Licensing are green. GitHub may require the async merge endpoint:
+PR #10 (`feat/bookdesk24-automation-chain`) into `main`, merge commit, keep the branch, only when Verify, Secret scan and Licensing are green. GitHub may require the async merge endpoint:
 
 ```sh
 R=froehlichmarkus-spv/scalepoint-booking
-gh pr view <PR> -R $R --json headRefOid,mergeable,statusCheckRollup
-gh pr ready <PR> -R $R
-gh api -X PUT repos/$R/pulls/<PR>/merge-async -f merge_method=merge -f merge_action=direct_merge -f sha=<head sha>
+gh pr view 10 -R $R --json headRefOid,mergeable,statusCheckRollup
+gh pr ready 10 -R $R
+gh api -X PUT repos/$R/pulls/10/merge-async -f merge_method=merge -f merge_action=direct_merge -f sha=<head sha>
 ```
 
 What the PR changes: checkout success URL is `/welcome?checkout=success`; bare `/welcome` (trial mail button) opens `/dashboard`; optional `GROWTH_OS_BILLING_TEST_CLOCK`; `PLANS_COMPED_EMAILS` in compose and env example; chain contract test `test/tymeslot_web/controllers/growth_os_billing_chain_test.exs`.
