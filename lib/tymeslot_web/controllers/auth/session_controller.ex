@@ -8,8 +8,8 @@ defmodule TymeslotWeb.SessionController do
 
   alias Tymeslot.Auth
   alias Tymeslot.Infrastructure.{Config, Logging.LogFormat}
-  alias Tymeslot.SignedToken
   alias Tymeslot.Security.RedirectPath
+  alias Tymeslot.SignedToken
   alias TymeslotWeb.EmailLinkConfirmHTML
   alias TymeslotWeb.Helpers.ClientIP
   alias TymeslotWeb.Plugs.ReturnTo
