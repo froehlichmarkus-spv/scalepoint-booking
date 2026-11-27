@@ -207,3 +207,8 @@ msgstr "2 Monate gratis"
 #, elixir-autogen, elixir-format
 msgid "Prices are net. VAT IDs for reverse charge are collected by billing."
 msgstr "Preise sind netto. USt-IdNr. für das Reverse-Charge-Verfahren erhebt die Abrechnung."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Billing is unavailable. Try again in a moment."
+msgstr "Die Abrechnung ist nicht erreichbar. Versuch es gleich noch einmal."

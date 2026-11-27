@@ -259,6 +259,7 @@ defmodule TymeslotWeb.Router do
     get "/auth/zoom/video/callback", VideoOAuthController, :zoom_callback
 
     # Session management routes
+    get "/auth/reset-sign-in/:token", SessionController, :sign_in_after_reset
     get "/auth/verify-complete/:token", SessionController, :confirm_verification
     post "/auth/verify-complete/:token", SessionController, :verify_and_login
   end

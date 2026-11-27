@@ -22,9 +22,14 @@ defmodule Tymeslot.Auth.AccountTokens do
 
   @type purpose :: :reset | :verification | :email_change | :invitation
 
+  # Reset links last 60 minutes and verification links 30. A magic sign-in
+  # link lasts 15 minutes; it is a signed token, not a row on the user.
+  # Email change and invitations keep their longer windows.
+  @magic_link_ttl 15 * 60
+
   @ttl_seconds %{
-    reset: 2 * 3600,
-    verification: 24 * 3600,
+    reset: 60 * 60,
+    verification: 30 * 60,
     email_change: 24 * 3600,
     invitation: 7 * 24 * 3600
   }
@@ -39,7 +44,8 @@ defmodule Tymeslot.Auth.AccountTokens do
   @doc """
   How long a token of `purpose` stays valid after it is issued, in seconds.
   """
-  @spec ttl_seconds(purpose()) :: pos_integer()
+  @spec ttl_seconds(purpose() | :magic_link) :: pos_integer()
+  def ttl_seconds(:magic_link), do: @magic_link_ttl
   def ttl_seconds(purpose), do: Map.fetch!(@ttl_seconds, purpose)
 
   @doc """

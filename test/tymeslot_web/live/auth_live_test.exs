@@ -219,7 +219,7 @@ defmodule TymeslotWeb.AuthLiveTest do
       |> form("#reset-password-form", %{"email" => user.email})
       |> render_submit()
 
-      assert render(view) =~ "Check Your Email"
+      assert render(view) =~ "Check your inbox"
     end
 
     test "password, social and unknown addresses see the same confirmation", %{conn: conn} do
@@ -243,7 +243,7 @@ defmodule TymeslotWeb.AuthLiveTest do
           |> render_submit()
 
           assert_patch(view, ~p"/auth/reset-password-sent")
-          assert render(view) =~ "Check Your Email"
+          assert render(view) =~ "Check your inbox"
 
           # The page and the flash the visitor sees, element for element.
           {view |> element("#auth-live") |> render(),
@@ -260,7 +260,7 @@ defmodule TymeslotWeb.AuthLiveTest do
       |> form("#reset-password-form", %{"email" => ""})
       |> render_submit()
 
-      refute render(view) =~ "Check Your Email"
+      refute render(view) =~ "Check your inbox"
       assert has_element?(view, "#reset-password-form")
     end
 
@@ -356,7 +356,7 @@ defmodule TymeslotWeb.AuthLiveTest do
     test "invalid token renders invalid_token state", %{conn: conn} do
       {:ok, _view, html} = live(conn, ~p"/auth/reset-password/nonexistent-token-abc")
 
-      assert html =~ "Link Expired or Invalid"
+      assert html =~ "Reset links work once, for 60 minutes."
     end
 
     test "expired token renders invalid_token state", %{conn: conn, user: user, token: token} do
@@ -369,20 +369,19 @@ defmodule TymeslotWeb.AuthLiveTest do
 
       {:ok, _view, html} = live(conn, ~p"/auth/reset-password/#{token}")
 
-      assert html =~ "Link Expired or Invalid"
+      assert html =~ "Reset links work once, for 60 minutes."
     end
 
     test "valid submission transitions to success state", %{conn: conn, token: token} do
       {:ok, view, _html} = live(conn, ~p"/auth/reset-password/#{token}")
 
-      view
-      |> form("#new-password-form", %{
-        "password" => "NewSecurePass123!",
-        "password_confirmation" => "NewSecurePass123!"
-      })
-      |> render_submit()
-
-      assert render(view) =~ "Password Reset Successfully"
+      assert {:error, {:redirect, %{to: "/auth/reset-sign-in/" <> _token}}} =
+               view
+               |> form("#new-password-form", %{
+                 "password" => "NewSecurePass123!",
+                 "password_confirmation" => "NewSecurePass123!"
+               })
+               |> render_submit()
     end
 
     test "submit_password_reset with nil reset_token surfaces 'Invalid reset token'", %{

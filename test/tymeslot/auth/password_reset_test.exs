@@ -176,7 +176,7 @@ defmodule Tymeslot.Auth.PasswordResetTest do
       user = insert(:user)
       token = Token.generate()
       {:ok, _result} = UserTokenQueries.set_reset_token(user, token)
-      set_reset_sent_at(user, -(2 * 3600 - 60))
+      set_reset_sent_at(user, -(60 * 60 - 60))
 
       assert {:ok, _user, _message} = PasswordReset.verify_token(token)
     end
@@ -185,7 +185,7 @@ defmodule Tymeslot.Auth.PasswordResetTest do
       user = insert(:user)
       token = Token.generate()
       {:ok, _result} = UserTokenQueries.set_reset_token(user, token)
-      set_reset_sent_at(user, -(2 * 3600 + 60))
+      set_reset_sent_at(user, -(60 * 60 + 60))
 
       assert {:error, :token_expired, _message} = PasswordReset.verify_token(token)
     end

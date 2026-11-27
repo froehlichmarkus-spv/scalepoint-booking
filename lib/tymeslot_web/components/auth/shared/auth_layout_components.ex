@@ -28,25 +28,25 @@ defmodule TymeslotWeb.Shared.Auth.LayoutComponents do
           <.icon name="hero-calendar-days" class="gos-icon" /> BookDesk24
         </p>
         <div class="claim">
-          <h2>{dgettext("auth", "Booking pages that look like your work.")}</h2>
+          <h2>{dgettext("auth", "From \"sounds interesting\" to a booked slot.")}</h2>
           <p>
             {dgettext(
               "auth",
-              "Nordlicht Analytics books an intro, a workshop and a follow-up from one page."
+              "Your booking link offers only real free slots and adds the video link."
             )}
           </p>
           <ul class="proof">
             <li>
               <.icon name="hero-check" class="gos-icon" />
-              {dgettext("auth", "14-day trial, no card")}
+              {dgettext("auth", "Hosted in the EU")}
             </li>
             <li>
-              <.icon name="hero-calendar-days" class="gos-icon" />
-              {dgettext("auth", "Your calendar stays the source")}
+              <.icon name="hero-shield-check" class="gos-icon" />
+              {dgettext("auth", "GDPR-ready")}
             </li>
             <li>
-              <.icon name="hero-envelope" class="gos-icon" />
-              {dgettext("auth", "Guests get the confirmation by email")}
+              <.icon name="hero-credit-card" class="gos-icon" />
+              {dgettext("auth", "No card for the trial")}
             </li>
           </ul>
         </div>
@@ -116,10 +116,16 @@ defmodule TymeslotWeb.Shared.Auth.LayoutComponents do
           <% end %>
         </div>
         <div class="gos-auth-foot">
-          <a href={Application.get_env(:tymeslot, :legal_terms_url) || "/growthos/legal/terms"}>
+          <a
+            class="gos-tap"
+            href={Application.get_env(:tymeslot, :legal_terms_url) || "/growthos/legal/terms"}
+          >
             {dgettext("auth", "Terms")}
           </a>
-          <a href={Application.get_env(:tymeslot, :legal_privacy_url) || "/growthos/legal/privacy"}>
+          <a
+            class="gos-tap"
+            href={Application.get_env(:tymeslot, :legal_privacy_url) || "/growthos/legal/privacy"}
+          >
             {dgettext("auth", "Privacy")}
           </a>
         </div>

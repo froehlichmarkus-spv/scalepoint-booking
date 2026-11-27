@@ -10,6 +10,15 @@ body.gos .gos-byline {
   white-space: nowrap;
 }
 
+body.gos .gos-tap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--gos-size-touch);
+  min-width: var(--gos-size-touch);
+  padding-inline: var(--gos-space-3);
+}
+
 body.gos .brand-nav .h-16 {
   height: auto;
   min-height: 3.5rem;

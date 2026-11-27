@@ -207,3 +207,8 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Prices are net. VAT IDs for reverse charge are collected by billing."
 msgstr ""
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Billing is unavailable. Try again in a moment."
+msgstr ""

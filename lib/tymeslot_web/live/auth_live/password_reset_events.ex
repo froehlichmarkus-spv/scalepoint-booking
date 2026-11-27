@@ -19,9 +19,10 @@ defmodule TymeslotWeb.AuthLive.PasswordResetEvents do
   use TymeslotWeb, :verified_routes
 
   import Phoenix.Component, only: [assign: 3]
-  import Phoenix.LiveView, only: [push_patch: 2, put_flash: 3]
+  import Phoenix.LiveView, only: [push_patch: 2, put_flash: 3, redirect: 2]
 
   alias Tymeslot.Auth
+  alias Tymeslot.SignedToken
   alias TymeslotWeb.AuthLive.{SecurityHelper, StateHelper}
   alias TymeslotWeb.Helpers.ClientIP
 
@@ -82,14 +83,9 @@ defmodule TymeslotWeb.AuthLive.PasswordResetEvents do
            params["password_confirmation"],
            ClientIP.request_opts(socket)
          ) do
-      {:ok, _user, message} ->
-        socket =
-          socket
-          |> StateHelper.transition_state(:password_reset_success, :reset_password_form)
-          |> put_flash(:success, message)
-          |> push_patch(to: ~p"/auth/password-reset-success")
-
-        {:noreply, socket}
+      {:ok, user, _message} ->
+        token = SignedToken.sign(:reset_sign_in, user.id)
+        {:noreply, redirect(socket, to: ~p"/auth/reset-sign-in/#{token}")}
 
       {:error, _reason, message} ->
         general_error(socket, message)
