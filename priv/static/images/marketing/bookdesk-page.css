@@ -1,0 +1,33 @@
+/* Page structure around the DS v2.7/v2.8 imagery sheets. */
+html{scroll-behavior:auto}
+body.gos{margin:0;background:#FBFAF7;color:#111E32;font-family:Geist,ui-sans-serif,system-ui,sans-serif;overflow-x:clip}
+.wrap{width:min(1120px,calc(100% - 48px));margin-inline:auto}
+.hero-x{min-height:100vh}
+.hx-text .display{letter-spacing:-.02em;font-weight:600;margin:0;color:#111E32}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:10px;font-weight:600;text-decoration:none;color:#111E32;background:#fff;box-shadow:inset 0 0 0 1px #D4D1CA}
+.btn-primary{background:#111E32;color:#fff;box-shadow:none}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#835000}
+.micro{margin:18px 0 0;color:#3C4656;font-size:14px}
+.mood{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:72px 0}
+.mood .img{position:relative;margin:0;border-radius:24px;overflow:hidden;min-height:420px}
+.mood .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sec{padding:72px 0}
+.sec-head .eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#0B6E66}
+.sec-head .h2,.mood .h2,.cx-text .h2{font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:-.02em;font-weight:600;margin:0}
+.facts{display:flex;gap:32px;align-items:baseline}
+.facts .k{font-size:3rem;font-weight:600;letter-spacing:-.03em;margin:0}
+.card-ui{padding:16px 16px 14px;color:#111E32}
+.card-ui strong{display:block;font-size:15px}
+.card-ui span{display:block;color:#3C4656;font-size:13px;margin-top:4px}
+.slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.slots i{font-style:normal;font-weight:600;font-size:12px;padding:6px 8px;border-radius:8px;background:#F6F5F2;border:1px solid #E7E5E0}
+.hx-label{position:absolute;font-size:12px;color:#5B6372}
+.on-dark{position:relative}
+.on-dark .aur{position:absolute;inset:0}
+.gos-band-inverse{margin:0}
+@media (max-width:860px){
+  .wrap{width:min(1120px,calc(100% - 32px))}
+  .mood{grid-template-columns:1fr;padding:48px 0}
+  .mood .img{min-height:0;aspect-ratio:4/3.4}
+}

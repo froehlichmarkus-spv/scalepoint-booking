@@ -337,6 +337,7 @@ msgstr "Authentifizierung fehlgeschlagen. Bitte versuche es erneut."
 msgid "Choose a New Password"
 msgstr "Wähle ein neues Passwort"
 
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Create an Account"
@@ -882,3 +883,13 @@ msgstr "Dein Buchungslink bietet nur echte freie Zeiten an und fügt den Videoli
 #, elixir-autogen, elixir-format
 msgid "You’re signed in."
 msgstr "Du bist angemeldet."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "14-day trial, no card"
+msgstr "14 Tage testen, ohne Karte"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Demo data · Nordlicht Analytics"
+msgstr "Demodaten · Nordlicht Analytics"

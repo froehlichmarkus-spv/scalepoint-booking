@@ -337,6 +337,7 @@ msgstr ""
 msgid "Choose a New Password"
 msgstr ""
 
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Create an Account"
@@ -881,4 +882,14 @@ msgstr ""
 #: lib/tymeslot_web/controllers/auth/session_controller.ex
 #, elixir-autogen, elixir-format
 msgid "You’re signed in."
+msgstr ""
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "14-day trial, no card"
+msgstr ""
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Demo data · Nordlicht Analytics"
 msgstr ""

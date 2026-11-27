@@ -337,6 +337,7 @@ msgstr "A autenticação falhou. Tente novamente."
 msgid "Choose a New Password"
 msgstr "Escolha uma nova senha"
 
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Create an Account"
@@ -882,3 +883,13 @@ msgstr "Your booking link offers only real free slots and adds the video link."
 #, elixir-autogen, elixir-format
 msgid "You’re signed in."
 msgstr "You’re signed in."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "14-day trial, no card"
+msgstr "14-day trial, no card"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Demo data · Nordlicht Analytics"
+msgstr "Demo data · Nordlicht Analytics"

@@ -929,3 +929,98 @@ msgstr "You can move or cancel the appointment from the confirmation email. Time
 #, elixir-autogen, elixir-format
 msgid "Quellcode (AGPLv3)"
 msgstr "Quellcode (AGPLv3)"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "A consultant in golden-hour light, before a call. Illustrative image, generated for ScalePoint. Not a customer."
+msgstr "A consultant in golden-hour light, before a call. Illustrative image, generated for ScalePoint. Not a customer."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "A time that is actually free."
+msgstr "A time that is actually free."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "After the last slot"
+msgstr "After the last slot"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Default platform fee. Paid bookings can add a fee later; the default is zero."
+msgstr "Default platform fee. Paid bookings can add a fee later; the default is zero."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Evening light after the last meeting. Illustrative image, generated for ScalePoint. Not a customer."
+msgstr "Evening light after the last meeting. Illustrative image, generated for ScalePoint. Not a customer."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Free slots"
+msgstr "Free slots"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Guests book a real open slot. The confirmation carries the time, the place, and the video link."
+msgstr "Guests book a real open slot. The confirmation carries the time, the place, and the video link."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Guests only see times you can keep. When the day is full, the page says so."
+msgstr "Guests only see times you can keep. When the day is full, the page says so."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "How it fits together"
+msgstr "How it fits together"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Illustrative image, generated for ScalePoint. Not a customer."
+msgstr "Illustrative image, generated for ScalePoint. Not a customer."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Intro with Lena Hartmann"
+msgstr "Intro with Lena Hartmann"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Monday"
+msgstr "Dziś"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "One page, one true slot."
+msgstr "One page, one true slot."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Open your booking page."
+msgstr "Open your booking page."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "See a booking page"
+msgstr "See a booking page"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "The day ends when the calendar does."
+msgstr "The day ends when the calendar does."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "The end of a workday at blue hour. Illustrative image, generated for ScalePoint. Not a customer."
+msgstr "The end of a workday at blue hour. Illustrative image, generated for ScalePoint. Not a customer."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "The guest picks a free time. You get the booking, and the video link is already on it."
+msgstr "The guest picks a free time. You get the booking, and the video link is already on it."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "You're booked"
+msgstr "You're booked"
