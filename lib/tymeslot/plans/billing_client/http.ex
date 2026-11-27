@@ -61,6 +61,7 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
       |> Map.put("trial", true)
       |> put_present("name", field(user, :name))
       |> put_present("organisation_id", organisation_id(user))
+      |> put_test_clock()
 
     case post("/v1/accounts", body) do
       {:ok, response} -> {:ok, response}
@@ -246,6 +247,17 @@ defmodule Tymeslot.Plans.BillingClient.HTTP do
   defp put_present(map, _key, value) when value in [nil, ""], do: map
   defp put_present(map, key, value) when is_binary(value), do: Map.put(map, key, value)
   defp put_present(map, _key, _value), do: map
+
+  # Only for end-to-end runs in Stripe test mode; billing ignores it in live mode.
+  defp put_test_clock(body) do
+    plans = Application.get_env(:tymeslot, :plans, [])
+
+    if Keyword.get(plans, :billing_test_clock) == true do
+      Map.put(body, "test_clock", true)
+    else
+      body
+    end
+  end
 
   defp opt(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
 

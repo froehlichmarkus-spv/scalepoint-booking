@@ -13,8 +13,20 @@ defmodule TymeslotWeb.WelcomeControllerTest do
       conn
       |> setup_session()
       |> log_in_user(user)
-      |> get("/welcome")
+      |> get("/welcome?checkout=success")
 
     assert redirected_to(conn) == "/dashboard/plan?checkout=success"
+  end
+
+  test "the trial mail link opens the dashboard without a checkout banner", %{conn: conn} do
+    user = insert(:user)
+
+    conn =
+      conn
+      |> setup_session()
+      |> log_in_user(user)
+      |> get("/welcome")
+
+    assert redirected_to(conn) == "/dashboard"
   end
 end

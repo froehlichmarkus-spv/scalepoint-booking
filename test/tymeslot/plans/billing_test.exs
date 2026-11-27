@@ -24,7 +24,7 @@ defmodule Tymeslot.Plans.BillingTest do
 
   test "checkout returns to the public welcome page and a query-free cancel url" do
     urls = Billing.checkout_urls()
-    assert urls.success == "https://book.scalepoint-ventures.com/welcome"
+    assert urls.success == "https://book.scalepoint-ventures.com/welcome?checkout=success"
     assert urls.cancel == "https://book.scalepoint-ventures.com/dashboard/plan"
     assert Billing.portal_return_url() == "https://book.scalepoint-ventures.com/dashboard/plan"
   end

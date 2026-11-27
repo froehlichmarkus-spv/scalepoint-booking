@@ -2,9 +2,10 @@ defmodule Tymeslot.Plans.ReturnUrls do
   @moduledoc """
   HTTPS return addresses growth-os-billing accepts for BookDesk24.
 
-  Checkout's success page is `/welcome`. The cancel address has no query
-  string, so billing can append `?billing=payment_failed` when a pro-rata
-  charge fails.
+  Checkout's success page is `/welcome?checkout=success`. A bare `/welcome`
+  is the link in billing's trial-started mail and opens the dashboard. The
+  cancel address has no query string, so billing can append
+  `?billing=payment_failed` when a pro-rata charge fails.
   """
 
   @public_base "https://book.scalepoint-ventures.com"
@@ -12,7 +13,7 @@ defmodule Tymeslot.Plans.ReturnUrls do
   @spec checkout() :: %{success: String.t(), cancel: String.t()}
   def checkout do
     base = public_base()
-    %{success: base <> "/welcome", cancel: base <> "/dashboard/plan"}
+    %{success: base <> "/welcome?checkout=success", cancel: base <> "/dashboard/plan"}
   end
 
   @spec portal() :: String.t()

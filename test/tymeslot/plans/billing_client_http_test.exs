@@ -45,7 +45,10 @@ defmodule Tymeslot.Plans.BillingClientHTTPTest do
       assert decoded["external_user_id"] == "booking:#{user.id}"
       assert decoded["email"] == user.email
       assert decoded["locale"] == "de"
-      assert decoded["success_url"] == "https://book.scalepoint-ventures.com/welcome"
+
+      assert decoded["success_url"] ==
+               "https://book.scalepoint-ventures.com/welcome?checkout=success"
+
       assert decoded["cancel_url"] == "https://book.scalepoint-ventures.com/dashboard/plan"
       refute String.contains?(decoded["cancel_url"], "?")
 
@@ -82,6 +85,7 @@ defmodule Tymeslot.Plans.BillingClientHTTPTest do
       assert decoded["name"] == "Ada"
       assert decoded["organisation_id"] == "org_1"
       assert decoded["email"] == user.email
+      refute Map.has_key?(decoded, "test_clock")
 
       {:ok,
        %{
@@ -229,5 +233,28 @@ defmodule Tymeslot.Plans.BillingClientHTTPTest do
 
   test "healthz that does not answer keeps the unavailable path" do
     refute Billing.healthy?()
+  end
+
+  test "register asks for a test clock only when the test-run flag is on" do
+    user = insert(:user)
+
+    with_config(:tymeslot,
+      plans: [
+        billing_url: "https://billing.test",
+        billing_api_key: "test-key",
+        webhook_secret: "unit-test-connect-secret",
+        past_due_grace_days: 7,
+        trial_days: 14,
+        billing_test_clock: true
+      ]
+    )
+
+    expect(Tymeslot.HTTPClientMock, :request, fn :post, url, body, _headers, _opts ->
+      assert url == "https://billing.test/v1/accounts"
+      assert Jason.decode!(body)["test_clock"] == true
+      {:ok, %{status: 409, body: %{}}}
+    end)
+
+    assert :ok = HTTP.register_account(%{id: user.id, email: user.email, locale: "en"})
   end
 end
