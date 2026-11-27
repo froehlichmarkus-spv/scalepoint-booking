@@ -7,7 +7,7 @@ defmodule TymeslotWeb.Themes.Quill.Theme do
 
   use TymeslotWeb.Themes.Core.Theme,
     live_view: TymeslotWeb.Themes.Quill.Scheduling.Live,
-    font: "inter",
+    font: "geist",
     preview_image: "/images/ui/theme-previews/quill-theme-preview.webp",
     description:
       dgettext_noop(

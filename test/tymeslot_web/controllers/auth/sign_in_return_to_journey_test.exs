@@ -91,7 +91,7 @@ defmodule TymeslotWeb.SignInReturnToJourneyTest do
       assert redirected_to(conn) == "/auth/login"
 
       assert Flash.get(conn.assigns.flash, :error) ==
-               "Ungültige E-Mail-Adresse oder ungültiges Passwort. Falls Sie sich kürzlich registriert haben, finden Sie den Bestätigungslink in Ihrem Posteingang."
+               "Ungültige E-Mail-Adresse oder ungültiges Passwort. Falls du dich kürzlich registriert hast, findest du den Bestätigungslink in deinem Posteingang."
 
       conn = password_sign_in(conn, host.email)
       assert redirected_to(conn) == link

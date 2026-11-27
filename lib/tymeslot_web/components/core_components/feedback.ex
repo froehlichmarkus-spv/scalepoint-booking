@@ -215,8 +215,9 @@ defmodule TymeslotWeb.Components.CoreComponents.Feedback do
   end
 
   @doc """
-  Renders a card holding a centred spinner, standing in for content that is
-  still loading. `label` is announced to screen readers.
+  Renders a card of skeleton rows, standing in for content that is still
+  loading. `label` is announced to screen readers. The rows keep the height
+  of a meeting card so the list does not jump when the data arrives.
   """
   attr :label, :string, default: nil, doc: "Screen reader text; defaults to \"Loading\""
   attr :class, :any, default: nil, doc: "Layout classes only"
@@ -225,11 +226,11 @@ defmodule TymeslotWeb.Components.CoreComponents.Feedback do
   @spec loading_card(map()) :: Phoenix.LiveView.Rendered.t()
   def loading_card(assigns) do
     ~H"""
-    <div class={["card-glass", @class]} role="status" {@rest}>
-      <div class="flex items-center justify-center py-12">
-        <.spinner class="h-8 w-8 text-turquoise-600" aria-hidden="true" />
-        <span class="sr-only">{@label || dgettext("common", "Loading")}</span>
-      </div>
+    <div class={["gos-skel", @class]} role="status" {@rest}>
+      <span class="sr-only">{@label || dgettext("common", "Loading")}</span>
+      <i></i>
+      <i></i>
+      <i></i>
     </div>
     """
   end

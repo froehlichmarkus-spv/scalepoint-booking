@@ -41,14 +41,16 @@ defmodule TymeslotWeb.Components.DashboardLayout do
     doc: "offer the control that switches the menu between full width and the rail"
 
   attr :unseen_announcements, :list, default: []
+  attr :session_expired, :boolean, default: false
   slot :inner_block, required: true
 
   @spec dashboard_layout(map()) :: Phoenix.LiveView.Rendered.t()
   def dashboard_layout(assigns) do
     ~H"""
     <div
-      class="flex flex-col h-dvh overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+      class="gos-shell flex flex-col h-dvh overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
       id="dashboard-root"
+      data-m="booking"
       data-calendar-focus={@focus && "true"}
       phx-hook="ClipboardCopy"
     >
@@ -61,6 +63,27 @@ defmodule TymeslotWeb.Components.DashboardLayout do
         current_user={@current_user}
       />
 
+      <div
+        :if={@session_expired}
+        id="session-expired"
+        class="gos-overlay"
+        phx-hook="GosModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="session-expired-title"
+      >
+        <div class="gos-modal">
+          <h2 id="session-expired-title">
+            {dgettext("auth", "Your session expired")}
+          </h2>
+          <p>
+            {dgettext("auth", "Sign in again to continue. What you typed stays on this page.")}
+          </p>
+          <a class="gos-btn gos-btn--primary" href={~p"/auth/login"}>
+            {dgettext("auth", "Log in")}
+          </a>
+        </div>
+      </div>
       <%!-- Top Navigation --%>
       <div class="shrink-0">
         <.top_navigation current_user={@current_user} profile={@profile} compact={@compact_nav} />
@@ -81,13 +104,14 @@ defmodule TymeslotWeb.Components.DashboardLayout do
 
         <%!-- Main Content Area --%>
         <div
-          id="dashboard-content-container"
+          id="main"
           class={[
             "flex-1 min-w-0 w-full lg:ml-0",
             if(@full_width, do: "flex flex-col overflow-hidden", else: "overflow-y-auto")
           ]}
           phx-hook="ScrollReset"
           data-action={@current_action}
+          data-dashboard-content
         >
           <.refused_calendar_notice
             names={Map.get(@integration_status, :refused_calendars, [])}

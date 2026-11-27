@@ -54,7 +54,8 @@ defmodule TymeslotWeb.AuthLive do
         client_ip: ClientIP.get_from_mount(socket),
         user_agent: ClientIP.get_user_agent_from_mount(socket),
         unverified_user: UserAuth.unverified_user_from_session(session),
-        pending_oauth_registration: session["pending_oauth_registration"]
+        pending_oauth_registration: session["pending_oauth_registration"],
+        auth_preview: nil
       )
 
     {:ok, socket}
@@ -69,6 +70,7 @@ defmodule TymeslotWeb.AuthLive do
       |> prefill_verification_email()
       |> StateHelper.clear_errors()
       |> PageMetaHelper.assign_page_meta()
+      |> assign_auth_preview(params)
 
     Logger.info("AuthLive: handle_params completed", current_state: socket.assigns.current_state)
 
@@ -205,5 +207,14 @@ defmodule TymeslotWeb.AuthLive do
       <% end %>
     </div>
     """
+  end
+
+  defp assign_auth_preview(socket, params) do
+    preview =
+      if Application.get_env(:tymeslot, :state_preview, false) do
+        params["preview"]
+      end
+
+    assign(socket, :auth_preview, preview)
   end
 end

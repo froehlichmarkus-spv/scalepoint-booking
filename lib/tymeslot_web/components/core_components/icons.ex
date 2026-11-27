@@ -39,15 +39,253 @@ defmodule TymeslotWeb.Components.CoreComponents.Icons do
 
   @spec icon(map()) :: Phoenix.LiveView.Rendered.t()
   def icon(assigns) do
-    case fetch(assigns.name) do
-      {:ok, icon} -> svg(assign(assigns, :icon, icon))
-      :error -> unknown(assigns)
+    case lucide_id(assigns.name) do
+      nil ->
+        case fetch(assigns.name) do
+          {:ok, icon} -> svg(assign(assigns, :icon, icon))
+          :error -> unknown(assigns)
+        end
+
+      id ->
+        lucide(assign(assigns, :sprite_id, id))
     end
+  end
+
+  @lucide_names %{
+    "hero-adjustments-horizontal" => "i-settings",
+    "hero-adjustments-vertical" => "i-settings",
+    "hero-arrow-down-mini" => "i-chevron-down",
+    "hero-arrow-down-tray" => "i-download",
+    "hero-arrow-left" => "i-chevron-left",
+    "hero-arrow-left-mini" => "i-chevron-left",
+    "hero-arrow-path" => "i-refresh-cw",
+    "hero-arrow-path-mini" => "i-refresh-cw",
+    "hero-arrow-right" => "i-chevron-right",
+    "hero-arrow-right-micro" => "i-chevron-right",
+    "hero-arrow-right-mini" => "i-chevron-right",
+    "hero-arrow-right-on-rectangle" => "i-chevron-right",
+    "hero-arrow-top-right-on-square" => "i-external-link",
+    "hero-arrow-top-right-on-square-mini" => "i-external-link",
+    "hero-arrow-trending-up" => "i-trending-up",
+    "hero-arrow-trending-up-mini" => "i-trending-up",
+    "hero-arrow-up-tray" => "i-upload",
+    "hero-arrow-up-tray-mini" => "i-upload",
+    "hero-arrows-pointing-in" => "i-minimize-2",
+    "hero-arrows-pointing-out" => "i-maximize-2",
+    "hero-arrows-pointing-out-mini" => "i-maximize-2",
+    "hero-arrows-right-left" => "i-arrow-left-right",
+    "hero-arrows-right-left-mini" => "i-arrow-left-right",
+    "hero-at-symbol" => "i-at-sign",
+    "hero-banknotes" => "i-credit-card",
+    "hero-banknotes-mini" => "i-credit-card",
+    "hero-bars-2" => "i-menu",
+    "hero-bars-3" => "i-menu",
+    "hero-bars-3-bottom-left" => "i-menu",
+    "hero-bars-4" => "i-menu",
+    "hero-beaker" => "i-flask-conical",
+    "hero-bell" => "i-bell",
+    "hero-bell-alert" => "i-triangle-alert",
+    "hero-bell-alert-mini" => "i-triangle-alert",
+    "hero-bell-mini" => "i-bell",
+    "hero-bolt" => "i-zap",
+    "hero-bolt-mini" => "i-zap",
+    "hero-book-open" => "i-book-open",
+    "hero-bug-ant" => "i-bug",
+    "hero-building-office" => "i-building-2",
+    "hero-building-office-2" => "i-building-2",
+    "hero-building-office-mini" => "i-building-2",
+    "hero-calendar" => "i-calendar",
+    "hero-calendar-date-range" => "i-calendar",
+    "hero-calendar-days" => "i-calendar",
+    "hero-calendar-days-mini" => "i-calendar",
+    "hero-calendar-mini" => "i-calendar",
+    "hero-camera" => "i-video",
+    "hero-card" => "i-credit-card",
+    "hero-chart-bar" => "i-chart-column",
+    "hero-chat-bubble-bottom-center-text" => "i-message-square",
+    "hero-chat-bubble-left" => "i-message-square",
+    "hero-chat-bubble-left-ellipsis" => "i-message-square",
+    "hero-chat-bubble-left-right" => "i-message-square",
+    "hero-check" => "i-check",
+    "hero-check-badge-mini" => "i-shield-check",
+    "hero-check-circle" => "i-check",
+    "hero-check-circle-mini" => "i-check",
+    "hero-check-circle-solid" => "i-check",
+    "hero-check-micro" => "i-check",
+    "hero-check-mini" => "i-check",
+    "hero-chevron-double-left" => "i-chevron-left",
+    "hero-chevron-double-right" => "i-chevron-right",
+    "hero-chevron-down" => "i-chevron-down",
+    "hero-chevron-down-mini" => "i-chevron-down",
+    "hero-chevron-left" => "i-chevron-left",
+    "hero-chevron-left-mini" => "i-chevron-left",
+    "hero-chevron-right" => "i-chevron-right",
+    "hero-chevron-right-mini" => "i-chevron-right",
+    "hero-chevron-up-mini" => "i-chevron-up",
+    "hero-clipboard" => "i-copy",
+    "hero-clipboard-document" => "i-copy",
+    "hero-clock" => "i-clock",
+    "hero-clock-mini" => "i-clock",
+    "hero-cloud-arrow-up" => "i-chevron-up",
+    "hero-code-bracket" => "i-command",
+    "hero-cog-6-tooth" => "i-settings",
+    "hero-computer-desktop" => "i-monitor",
+    "hero-credit-card" => "i-credit-card",
+    "hero-credit-card-micro" => "i-credit-card",
+    "hero-cube" => "i-box",
+    "hero-cup" => "i-coffee",
+    "hero-device-phone-mobile" => "i-phone",
+    "hero-document-duplicate" => "i-copy",
+    "hero-document-text" => "i-file-text",
+    "hero-ellipsis-horizontal" => "i-more-horizontal",
+    "hero-envelope" => "i-mail",
+    "hero-envelope-micro" => "i-mail",
+    "hero-envelope-mini" => "i-mail",
+    "hero-envelope-open" => "i-mail",
+    "hero-exclamation-circle" => "i-triangle-alert",
+    "hero-exclamation-circle-mini" => "i-triangle-alert",
+    "hero-exclamation-circle-solid" => "i-triangle-alert",
+    "hero-exclamation-triangle" => "i-triangle-alert",
+    "hero-exclamation-triangle-micro" => "i-triangle-alert",
+    "hero-exclamation-triangle-mini" => "i-triangle-alert",
+    "hero-eye" => "i-eye",
+    "hero-eye-mini" => "i-eye",
+    "hero-eye-slash" => "i-eye-off",
+    "hero-eye-slash-mini" => "i-eye-off",
+    "hero-face-smile" => "i-smile",
+    "hero-flag" => "i-globe",
+    "hero-gift" => "i-gift",
+    "hero-globe-alt" => "i-globe",
+    "hero-globe-alt-mini" => "i-globe",
+    "hero-globe-europe-africa" => "i-globe",
+    "hero-hand-raised" => "i-hand",
+    "hero-hand-raised-micro" => "i-hand",
+    "hero-hashtag" => "i-hash",
+    "hero-heart" => "i-heart",
+    "hero-home" => "i-layout-dashboard",
+    "hero-identification" => "i-id-card",
+    "hero-inbox-arrow-down" => "i-chevron-down",
+    "hero-inbox-stack" => "i-inbox",
+    "hero-information-circle" => "i-info",
+    "hero-information-circle-mini" => "i-info",
+    "hero-key" => "i-key-round",
+    "hero-language" => "i-globe",
+    "hero-light-bulb" => "i-lightbulb",
+    "hero-link" => "i-link-2",
+    "hero-link-mini" => "i-link-2",
+    "hero-link-slash" => "i-link-2",
+    "hero-list-bullet" => "i-list",
+    "hero-lock-closed" => "i-lock",
+    "hero-lock-closed-micro" => "i-lock",
+    "hero-lock-closed-mini" => "i-lock",
+    "hero-magnifying-glass" => "i-search",
+    "hero-map-pin" => "i-map-pin",
+    "hero-map-pin-micro" => "i-map-pin",
+    "hero-map-pin-mini" => "i-map-pin",
+    "hero-minus-circle" => "i-minus",
+    "hero-minus-mini" => "i-minus",
+    "hero-moon" => "i-moon",
+    "hero-no-symbol" => "i-x",
+    "hero-no-symbol-micro" => "i-x",
+    "hero-paint-brush" => "i-paintbrush",
+    "hero-paper-airplane" => "i-send",
+    "hero-pause" => "i-pause",
+    "hero-pause-circle-mini" => "i-pause",
+    "hero-pause-micro" => "i-pause",
+    "hero-pause-solid" => "i-pause",
+    "hero-pencil" => "i-pencil",
+    "hero-pencil-square" => "i-pencil",
+    "hero-pencil-square-mini" => "i-pencil",
+    "hero-phone" => "i-phone",
+    "hero-phone-mini" => "i-phone",
+    "hero-photo" => "i-image",
+    "hero-play" => "i-play",
+    "hero-play-circle" => "i-play",
+    "hero-play-solid" => "i-play",
+    "hero-plus" => "i-plus",
+    "hero-plus-circle" => "i-plus",
+    "hero-plus-mini" => "i-plus",
+    "hero-puzzle-piece" => "i-puzzle",
+    "hero-qr-code" => "i-command",
+    "hero-question-mark-circle" => "i-circle-help",
+    "hero-question-mark-circle-mini" => "i-circle-help",
+    "hero-question-mark-circle-solid" => "i-circle-help",
+    "hero-queue-list" => "i-rows-3",
+    "hero-rectangle-stack" => "i-layers",
+    "hero-rocket-launch" => "i-rocket",
+    "hero-shield-check" => "i-shield-check",
+    "hero-signal" => "i-signal",
+    "hero-sparkles" => "i-sparkles",
+    "hero-sparkles-mini" => "i-zap",
+    "hero-squares-2x2" => "i-layout-grid",
+    "hero-squares-2x2-mini" => "i-layout-grid",
+    "hero-squares-2x2-solid" => "i-layout-grid",
+    "hero-star" => "i-star",
+    "hero-sun" => "i-sun",
+    "hero-sun-mini" => "i-sun",
+    "hero-swatch" => "i-swatch-book",
+    "hero-swatch-mini" => "i-swatch-book",
+    "hero-tag" => "i-tag",
+    "hero-target" => "i-target",
+    "hero-ticket" => "i-ticket",
+    "hero-trash" => "i-trash-2",
+    "hero-trash-mini" => "i-trash-2",
+    "hero-user" => "i-user",
+    "hero-user-group" => "i-users",
+    "hero-user-group-micro" => "i-users",
+    "hero-user-group-mini" => "i-users",
+    "hero-user-micro" => "i-user",
+    "hero-user-mini" => "i-user",
+    "hero-user-minus" => "i-user",
+    "hero-user-plus" => "i-users",
+    "hero-users" => "i-users",
+    "hero-users-mini" => "i-users",
+    "hero-video-camera" => "i-video",
+    "hero-video-camera-mini" => "i-video",
+    "hero-view-columns" => "i-columns-3",
+    "hero-window" => "i-app-window",
+    "hero-wrench-screwdriver" => "i-wrench",
+    "hero-x-circle" => "i-x",
+    "hero-x-circle-mini" => "i-x",
+    "hero-x-circle-solid" => "i-x",
+    "hero-x-mark" => "i-x",
+    "hero-x-mark-micro" => "i-x",
+    "hero-x-mark-mini" => "i-x",
+    "hero-x-mark-solid" => "i-x"
+  }
+
+  defp lucide_id(name) when is_binary(name) do
+    cond do
+      Map.has_key?(@lucide_names, name) -> @lucide_names[name]
+      String.starts_with?(name, "hero-") -> "i-info"
+      true -> nil
+    end
+  end
+
+  defp lucide_id(_name), do: nil
+
+  attr :sprite_id, :string, required: true
+  attr :class, :any, default: nil
+  attr :style, :string, default: nil
+  attr :rest, :global
+
+  defp lucide(assigns) do
+    ~H"""
+    <svg
+      viewBox="0 0 24 24"
+      class={["gos-icon", @class]}
+      style={@style}
+      aria-hidden="true"
+      {@rest}
+    >
+      <use href={"/images/sprite.svg#" <> @sprite_id} />
+    </svg>
+    """
   end
 
   @doc "Whether `name` is an icon `<.icon>` can draw."
   @spec known?(String.t()) :: boolean()
-  def known?(name), do: fetch(name) != :error
+  def known?(name), do: lucide_id(name) != nil or fetch(name) != :error
 
   @doc """
   Draws an already fetched icon (`assigns.icon`, from an `IconSource` set) as

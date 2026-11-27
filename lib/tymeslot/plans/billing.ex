@@ -9,6 +9,8 @@ defmodule Tymeslot.Plans.Billing do
   events come back only to `POST /webhooks/growth-os-billing`.
   """
 
+  use Gettext, backend: TymeslotWeb.Gettext
+
   alias Tymeslot.Plans.BillingClient
   alias Tymeslot.Plans.BillingClient.HTTP
   alias Tymeslot.Plans.ReturnUrls
@@ -39,12 +41,18 @@ defmodule Tymeslot.Plans.Billing do
   @doc """
   Sentence shown while growth-os-billing is not connected.
 
-  Informal German, with the product name and the support address. It is not
-  a gettext entry: the catalogs on this branch stay identical to main.
+  Always the informal German catalog entry, with the product name and the
+  support address.
   """
   @spec unavailable_message() :: String.t()
   def unavailable_message do
-    "Die Abrechnung von BookDesk24 ist noch nicht da. Versuch es später noch einmal oder schreib an #{ErrorHTML.support_email()}."
+    Gettext.with_locale(TymeslotWeb.Gettext, "de", fn ->
+      dgettext(
+        "plans",
+        "BookDesk24 billing is not connected yet. Try again later or write to %{email}.",
+        email: ErrorHTML.support_email()
+      )
+    end)
   end
 
   @doc """

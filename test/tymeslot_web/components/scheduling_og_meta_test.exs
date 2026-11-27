@@ -74,7 +74,7 @@ defmodule TymeslotWeb.SchedulingOgMetaTest do
 
       # Title (shared with the browser tab) and description both follow the locale.
       assert html =~ ~s(<meta property="og:title" content="Termin mit Ada Lovelace")
-      assert html =~ "Vereinbaren Sie einen Termin mit Ada Lovelace."
+      assert html =~ "Vereinbare einen Termin mit Ada Lovelace."
     end
   end
 

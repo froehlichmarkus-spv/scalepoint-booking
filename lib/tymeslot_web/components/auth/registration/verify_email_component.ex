@@ -62,7 +62,7 @@ defmodule TymeslotWeb.Registration.VerifyEmailComponent do
       <p class="text-base text-tymeslot-600 font-medium max-w-md mx-auto leading-relaxed">
         {dgettext(
           "auth",
-          "We've just sent you a verification email! Please click the link in the email to confirm your address and finish setting up your account."
+          "We sent a verification link. It works once, for 30 minutes."
         )}
       </p>
       <%= if @email do %>

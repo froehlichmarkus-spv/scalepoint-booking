@@ -55,8 +55,8 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNoticeTest do
       html =
         AccountDeletionNotice.render(recipient, @at, "https://example.com/auth/login").html_body
 
-      assert text =~ "Ihr Tymeslot-Konto am 16. Oktober 2026 gelöscht"
-      assert text =~ "Ihre Gäste werden nicht benachrichtigt"
+      assert text =~ "dein Tymeslot-Konto am 16. Oktober 2026 gelöscht"
+      assert text =~ "Deine Gäste werden nicht benachrichtigt"
       assert html =~ "Am 16. Oktober 2026."
       assert html =~ "Zum Wiederherstellen anmelden"
       refute text =~ "%{date}"

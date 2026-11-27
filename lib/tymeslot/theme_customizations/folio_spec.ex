@@ -22,14 +22,14 @@ defmodule Tymeslot.ThemeCustomizations.FolioSpec do
   # In the order the onboarding wizard shows them: the four light schemes,
   # then the two dark ones.
   @schemes ~w(ivory sage harbour blush dusk ink)
-  @fonts ~w(classic literary editorial quiet)
+  @fonts ~w(geist classic literary editorial quiet)
   @covers ~w(elegant-still-life artistic-studio ocean-sunset rustic-farmhouse botanical studio-light paper-texture)
 
   @impl Spec
   def option_groups,
     do: [
       %{key: :palette, module: Palette, schemes: @schemes, seed_mode: :light},
-      %{key: :font, module: Font, presets: @fonts, default: "classic"},
+      %{key: :font, module: Font, presets: @fonts, default: "geist"},
       %{key: :radius, module: Radius, default: "soft"},
       %{key: :cover, module: Cover, presets: @covers, default: "elegant-still-life"}
     ]
@@ -38,7 +38,7 @@ defmodule Tymeslot.ThemeCustomizations.FolioSpec do
   def defaults,
     do: %{
       color_scheme: "ivory",
-      font: "classic",
+      font: "geist",
       radius: "soft",
       cover_value: "elegant-still-life"
     }

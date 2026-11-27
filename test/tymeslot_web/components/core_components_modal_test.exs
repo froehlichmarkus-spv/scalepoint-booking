@@ -78,7 +78,7 @@ defmodule TymeslotWeb.Components.CoreComponentsModalTest do
     assert html =~ ~s(aria-labelledby="a11y-modal-title")
     assert html =~ ~s(id="a11y-modal-title")
     # The overlay drives the JS focus trap / restore.
-    assert html =~ ~s(phx-hook="ModalFocusTrap")
+    assert html =~ ~s(phx-hook="GosModal")
   end
 
   test "modal without a header omits aria-labelledby" do

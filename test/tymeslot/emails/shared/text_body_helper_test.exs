@@ -41,7 +41,7 @@ defmodule Tymeslot.Emails.Shared.TextBodyHelperTest do
     test "writes the note in the recipient's language" do
       text = TextBodyHelper.format_meeting_details(details(%{}), "de")
 
-      assert text =~ "Die Adresse wird nach der Buchung mit Ihnen abgestimmt."
+      assert text =~ "Die Adresse wird nach der Buchung mit dir abgestimmt."
     end
   end
 

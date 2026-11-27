@@ -1,0 +1,321 @@
+/* BookDesk24 shell and auth on Growth OS tokens. No colour literals. */
+
+body.gos {
+  background: var(--gos-bg-sunken);
+  color: var(--gos-text);
+}
+
+body.gos .gos-wordmark,
+body.gos .gos-byline {
+  white-space: nowrap;
+}
+
+body.gos .gos-tap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--gos-size-touch);
+  min-width: var(--gos-size-touch);
+  padding-inline: var(--gos-space-3);
+}
+
+body.gos .brand-nav .h-16 {
+  height: auto;
+  min-height: 3.5rem;
+  overflow: visible;
+}
+
+body.gos .brand-nav img {
+  height: 2rem;
+  width: auto;
+}
+
+body.gos .action-button--danger,
+body.gos .gos-btn--danger {
+  background: var(--gos-danger-fill);
+  color: var(--gos-on-danger);
+}
+
+body.gos .action-button--danger:hover,
+body.gos .gos-btn--danger:hover {
+  background: var(--gos-danger-hover);
+  color: var(--gos-on-danger);
+}
+
+body.gos .action-button--success {
+  background: var(--gos-success-fill);
+  color: var(--gos-on-success);
+}
+
+body.gos .action-button--success:hover {
+  background: var(--gos-success-hover);
+  color: var(--gos-on-success);
+}
+
+@media (max-width: 640px) {
+  body.gos .gos-auth-form {
+    margin-top: var(--gos-space-4);
+    margin-bottom: 0;
+  }
+
+  body.gos button,
+  body.gos .gos-btn,
+  body.gos .action-button,
+  body.gos .folio-button,
+  body.gos .dashboard-nav-link,
+  body.gos input,
+  body.gos select,
+  body.gos textarea {
+    min-height: var(--gos-size-touch);
+  }
+}
+
+body.gos #dashboard-root {
+  background: var(--gos-bg-sunken);
+}
+
+body.gos #dashboard-top-nav {
+  background: color-mix(in srgb, var(--gos-surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  min-height: var(--gos-size-topbar);
+}
+
+body.gos .dashboard-sidebar {
+  background: var(--gos-bg-sunken);
+  color: var(--gos-text-2);
+}
+
+@media (max-width: 1023px) {
+  body.gos .dashboard-sidebar {
+    visibility: hidden;
+    box-shadow: none;
+    transition: transform 300ms ease, visibility 0s linear 300ms;
+  }
+
+  body.gos .dashboard-sidebar.dashboard-sidebar-open {
+    visibility: visible;
+    transition: transform 300ms ease, visibility 0s;
+  }
+}
+
+body.gos .dashboard-sidebar .dashboard-nav-link {
+  color: var(--gos-text-2);
+  background-image: none;
+}
+
+body.gos .dashboard-sidebar .dashboard-nav-link--active {
+  color: var(--gos-text);
+  background: var(--gos-surface);
+  border: 1px solid var(--gos-line);
+  box-shadow: var(--gos-shadow-xs);
+}
+
+body.gos .dashboard-sidebar .dashboard-nav-link--active .gos-icon {
+  color: var(--m-fill);
+}
+
+body.gos .dashboard-nav-section-title,
+body.gos .dashboard-sidebar .dashboard-nav-section-title,
+body.gos .dashboard-sidebar .gos-byline,
+body.gos .dashboard-sidebar .gos-suite-line {
+  color: var(--gos-text-3);
+}
+
+body.gos .gos-wordmark-accent {
+  color: var(--gos-booking-ink);
+}
+
+body.gos .text-tymeslot-400 {
+  color: var(--gos-text-2);
+}
+
+body.gos .text-green-600 {
+  color: var(--gos-success-ink);
+}
+
+body.gos .bg-turquoise-100 {
+  background: var(--gos-teal-soft);
+  color: var(--gos-teal-ink);
+}
+
+@media (min-width: 1024px) {
+  body.gos .dashboard-sidebar:not(.dashboard-sidebar--rail) {
+    width: var(--gos-size-sidebar);
+  }
+
+  body.gos [data-dashboard-content] {
+    margin: var(--gos-space-2);
+    background: var(--gos-surface);
+    border: 1px solid var(--gos-line);
+    border-radius: var(--gos-radius-lg);
+    box-shadow: var(--gos-shadow-xs);
+  }
+}
+
+body.gos .dashboard-nav-link[aria-current="page"] .gos-icon,
+body.gos .dashboard-nav-link.active .gos-icon {
+  color: var(--m-fill);
+}
+
+body.gos .action-button--primary,
+body.gos .btn-primary,
+body.gos .dashboard-nav-link.bg-linear-to-br {
+  background-color: var(--gos-primary);
+  background-image: none;
+  color: var(--gos-primary-ink);
+  border-color: transparent;
+  box-shadow: var(--gos-shadow-xs);
+}
+
+body.gos .action-button--secondary,
+body.gos .action-button--outline {
+  background: var(--gos-surface);
+  color: var(--gos-text);
+  border: 1px solid var(--gos-line-strong);
+}
+
+body.gos .action-button--ghost {
+  background: transparent;
+  color: var(--gos-text-2);
+}
+
+body.gos .action-button--danger {
+  background: var(--gos-danger-fill);
+  color: var(--gos-warm-0);
+}
+
+body.gos .gos-toast {
+  background: var(--gos-primary);
+  color: var(--gos-primary-ink);
+  border-color: transparent;
+}
+
+body.gos .auth-glass-card {
+  background: var(--gos-surface);
+  color: var(--gos-text);
+  border: 1px solid var(--gos-line);
+  border-radius: var(--gos-radius-xl);
+  box-shadow: var(--gos-shadow-md);
+}
+
+body.gos .video-background-container,
+body.gos .background-motion-toggle {
+  display: none;
+}
+
+body.gos main[data-m="booking"] {
+  background: var(--gos-bg);
+}
+
+body.gos .gos-alert {
+  background: var(--gos-danger-soft);
+  color: var(--gos-danger-ink);
+  border: 1px solid var(--gos-danger-line);
+  border-radius: var(--gos-radius-md);
+  padding: var(--gos-space-3) var(--gos-space-4);
+}
+
+#session-expired .gos-modal {
+  display: grid;
+  gap: var(--gos-space-3);
+  padding: var(--gos-space-6);
+}
+
+.gos-welcome {
+  background: var(--gos-primary);
+  color: var(--gos-primary-ink);
+  border-radius: var(--gos-radius-lg);
+  border-left: 3px solid var(--m-fill);
+  padding: var(--gos-space-4) var(--gos-space-6);
+}
+
+.gos-welcome__title {
+  font-size: var(--gos-page-title-size);
+  font-weight: 600;
+  letter-spacing: var(--gos-page-title-tracking);
+}
+
+.gos-welcome__sub,
+.gos-welcome__trial {
+  color: color-mix(in srgb, var(--gos-primary-ink) 82%, transparent);
+  margin-top: var(--gos-space-2);
+}
+
+body.gos [data-dashboard-content] .gos-plan {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  gap: var(--gos-space-4);
+}
+
+body.gos [data-dashboard-content] .gos-plan-card {
+  background: var(--gos-surface);
+  color: var(--gos-text);
+  border: 1px solid var(--gos-line);
+  border-radius: var(--gos-radius-xl);
+  padding: var(--gos-space-5);
+}
+
+body.gos [data-dashboard-content] .gos-plan-muted,
+body.gos [data-dashboard-content] .gos-plan-table {
+  color: var(--gos-text-2);
+  font-family: var(--gos-font-sans);
+}
+
+body.gos [data-dashboard-content] .gos-plan-table th,
+body.gos [data-dashboard-content] .gos-plan-table td {
+  padding: var(--gos-space-2) var(--gos-space-3);
+  border-bottom: 1px solid var(--gos-line);
+}
+
+body.gos .gos-skel {
+  display: grid;
+  gap: var(--gos-space-3);
+}
+
+body.gos .gos-skel i {
+  display: block;
+  height: var(--gos-space-16);
+  border-radius: var(--gos-radius-lg);
+  background: var(--gos-line);
+}
+
+body.gos .gos-alert {
+  margin: 0 0 var(--gos-space-4);
+  padding: var(--gos-space-3) var(--gos-space-4);
+  border: 1px solid var(--gos-danger-line);
+  border-left: 3px solid var(--gos-danger-ink);
+  border-radius: var(--gos-radius-md);
+  background: var(--gos-danger-soft);
+  color: var(--gos-danger-ink);
+  font-size: var(--gos-text-sm, 0.875rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.gos *,
+  body.gos *::before,
+  body.gos *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.gos-auth-art .proof .gos-icon {
+  color: var(--gos-teal-ink);
+}
+
+.skeleton {
+  display: block;
+  height: 14px;
+  width: 70%;
+  border-radius: var(--gos-radius-sm);
+  background: color-mix(in srgb, var(--gos-text) 10%, var(--gos-surface));
+}
+
+body.gos .gos-msg--error {
+  color: var(--gos-danger-ink);
+  font-size: var(--gos-text-sm);
+  min-height: 22px;
+}

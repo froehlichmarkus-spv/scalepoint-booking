@@ -14,7 +14,7 @@
    to that reflow. */
 :root {
   /* Typography - Font Family */
-  --theme-font-family: var(--font-stack-inter);
+  --theme-font-family: var(--font-stack-geist);
 
   /* Typography - Font Size Scale (fluid responsive using clamp()) */
   --theme-font-size-3xs: clamp(0.625rem, 1.0vw, 0.688rem);    /* ~10-11px - tiny labels */

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang={Gettext.get_locale(TymeslotWeb.Gettext)} data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>BookDesk24</title>
+    <link rel="stylesheet" href={~p"/images/marketing/imagery_v27.css"} />
+    <link rel="stylesheet" href={~p"/images/marketing/imagery_v28.css"} />
+    <link rel="stylesheet" href={~p"/images/marketing/gos-motion-rules.css"} />
+    <link rel="stylesheet" href={~p"/images/marketing/bookdesk-page.css"} />
+  </head>
+  <body class="gos">
+    <header class="hero-x">
+      <div class="aur aur-booking" aria-hidden="true">
+        <i class="a1"></i><i class="a2"></i><i class="a3"></i><i class="a4"></i>
+      </div>
+      <div class="wrap hx-grid">
+        <div class="hx-text">
+          <p class="pill">BookDesk24</p>
+          <h1 class="display">{dgettext("booking", "A time that is actually free.")}</h1>
+          <p class="lead">
+            {dgettext(
+              "booking",
+              "Guests book a real open slot. The confirmation carries the time, the place, and the video link."
+            )}
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href={~p"/auth/signup"}>
+              {dgettext("auth", "Create an Account")}
+            </a>
+            <a class="btn" href={~p"/nordlicht"}>{dgettext("booking", "See a booking page")}</a>
+          </div>
+          <p class="micro">{dgettext("auth", "14-day trial, no card")}</p>
+        </div>
+        <figure class="hx-comp">
+          <div class="hx-photo">
+            <img
+              src={~p"/images/marketing/booking-hero.jpg"}
+              width="2560"
+              height="1440"
+              alt={
+                dgettext(
+                  "booking",
+                  "A consultant in golden-hour light, before a call. Illustrative image, generated for ScalePoint. Not a customer."
+                )
+              }
+              fetchpriority="high"
+              decoding="async"
+              sizes="(max-width:960px) 100vw, 640px"
+            />
+            <p class="hx-cap">
+              {dgettext(
+                "booking",
+                "Illustrative image, generated for ScalePoint. Not a customer."
+              )}
+            </p>
+          </div>
+          <article
+            class="hx-card gos-float"
+            style="--x:0%;--y:8%;--w:52%;--mx:2%;--my:4%;--mw:66%"
+          >
+            <p class="pv-tag">{dgettext("booking", "You're booked")}</p>
+            <div class="card-ui">
+              <strong>{dgettext("booking", "Intro with Lena Hartmann")}</strong>
+              <span>2 Dec · 11:00</span>
+              <span>Nordlicht, Berlin</span>
+            </div>
+          </article>
+          <article
+            class="hx-card gos-float"
+            style="--x:46%;--y:54%;--w:50%;--mx:28%;--my:52%;--mw:68%"
+          >
+            <p class="pv-tag">{dgettext("booking", "Free slots")}</p>
+            <div class="card-ui">
+              <strong>2 Dec</strong>
+              <div class="slots" aria-hidden="true">
+                <i>09:00</i><i>11:00</i><i>14:00</i>
+              </div>
+            </div>
+          </article>
+          <p class="hx-label">{dgettext("auth", "Demo data · Nordlicht Analytics")}</p>
+        </figure>
+      </div>
+    </header>
+
+    <section class="wrap mood" data-gos-reveal>
+      <figure class="img">
+        <img
+          src={~p"/images/marketing/booking-section-evening.jpg"}
+          width="2304"
+          height="1728"
+          alt={
+            dgettext(
+              "booking",
+              "Evening light after the last meeting. Illustrative image, generated for ScalePoint. Not a customer."
+            )
+          }
+          loading="lazy"
+          decoding="async"
+          sizes="(max-width:640px) 150vw, (max-width:860px) 100vw, 900px"
+        />
+        <p class="hx-cap">
+          {dgettext("booking", "Illustrative image, generated for ScalePoint. Not a customer.")}
+        </p>
+      </figure>
+      <div class="txt sec-head">
+        <p class="eyebrow">{dgettext("booking", "After the last slot")}</p>
+        <h2 class="h2">{dgettext("booking", "The day ends when the calendar does.")}</h2>
+        <p class="lead">
+          {dgettext(
+            "booking",
+            "Guests only see times you can keep. When the day is full, the page says so."
+          )}
+        </p>
+      </div>
+    </section>
+
+    <section
+      class="on-dark aur-dark aur-booking gos-band-inverse gos-band-inverse--full"
+      data-mod="booking"
+    >
+      <div class="aur" aria-hidden="true">
+        <i class="a1"></i><i class="a2"></i><i class="a3"></i>
+      </div>
+      <div class="wrap sec-head" data-gos-reveal>
+        <p class="eyebrow">{dgettext("booking", "How it fits together")}</p>
+        <h2 class="h2">{dgettext("booking", "One page, one true slot.")}</h2>
+        <p class="lead">
+          {dgettext(
+            "booking",
+            "The guest picks a free time. You get the booking, and the video link is already on it."
+          )}
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap sec">
+      <div class="facts" data-gos-reveal data-gos-count>
+        <p class="k">0%</p>
+        <p>
+          {dgettext(
+            "booking",
+            "Default platform fee. Paid bookings can add a fee later; the default is zero."
+          )}
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap sec">
+      <div class="cta-x aur-dark aur-booking" data-gos-reveal>
+        <figure class="cx-photo">
+          <img
+            src={~p"/images/marketing/booking-cta.jpg"}
+            width="2560"
+            height="1440"
+            alt={
+              dgettext(
+                "booking",
+                "The end of a workday at blue hour. Illustrative image, generated for ScalePoint. Not a customer."
+              )
+            }
+            loading="lazy"
+            decoding="async"
+            sizes="(max-width:860px) 100vw, 960px"
+            style="--pos:30% 40%"
+          />
+          <p class="hx-cap">
+            {dgettext("booking", "Illustrative image, generated for ScalePoint. Not a customer.")}
+          </p>
+        </figure>
+        <div class="cx-text">
+          <h2 class="h2">{dgettext("booking", "Open your booking page.")}</h2>
+          <p class="lead">{dgettext("auth", "14-day trial, no card")}</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href={~p"/auth/signup"}>
+              {dgettext("auth", "Create an Account")}
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script src={~p"/images/marketing/gos-motion.js"} defer>
+    </script>
+  </body>
+</html>

@@ -31,7 +31,9 @@ defmodule Tymeslot.SignedTokenTest do
     booking_preview: "booking owner preview",
     cursor_page: "cursor-page:v1",
     slack_oauth_state: "slack_oauth_state",
-    stripe_connect_state: "stripe_connect_state"
+    stripe_connect_state: "stripe_connect_state",
+    magic_link: "magic link",
+    reset_sign_in: "reset sign in"
   }
 
   @lifetimes %{
@@ -41,7 +43,9 @@ defmodule Tymeslot.SignedTokenTest do
     booking_preview: 3600,
     cursor_page: :infinity,
     slack_oauth_state: 600,
-    stripe_connect_state: 86_400
+    stripe_connect_state: 86_400,
+    magic_link: 900,
+    reset_sign_in: 120
   }
 
   describe "purposes" do
@@ -93,6 +97,18 @@ defmodule Tymeslot.SignedTokenTest do
       token = Token.sign(Endpoint, "booking owner preview", "stale", signed_at: two_hours_ago)
 
       assert SignedToken.verify(:booking_preview, token) == {:error, :expired}
+    end
+
+    test "a magic link expires after 15 minutes and a reset handoff after 2" do
+      sixteen_minutes_ago = System.system_time(:second) - 16 * 60
+      stale = Token.sign(Endpoint, "magic link", 7, signed_at: sixteen_minutes_ago)
+
+      fresh =
+        Token.sign(Endpoint, "magic link", 7, signed_at: System.system_time(:second) - 14 * 60)
+
+      assert SignedToken.verify(:magic_link, stale) == {:error, :expired}
+      assert SignedToken.verify(:magic_link, fresh) == {:ok, 7}
+      assert SignedToken.max_age(:magic_link) == 15 * 60
     end
 
     test "a token just inside its lifetime still verifies" do

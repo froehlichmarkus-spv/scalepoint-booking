@@ -90,14 +90,16 @@ defmodule TymeslotWeb.Integration.AuthEmailJourneyTest do
 
     {:ok, form_view, _html} = live(build_conn(), link)
 
-    form_view
-    |> form("#new-password-form", %{
-      "password" => new_password,
-      "password_confirmation" => new_password
-    })
-    |> render_submit()
+    assert {:error, {:redirect, %{to: path}}} =
+             form_view
+             |> form("#new-password-form", %{
+               "password" => new_password,
+               "password_confirmation" => new_password
+             })
+             |> render_submit()
 
-    assert render(form_view) =~ "Password Reset Successfully"
+    assert path =~ "/auth/reset-sign-in/"
+    assert_logged_in(get(build_conn(), path))
 
     refused = log_in(user.email, @password)
     assert redirected_to(refused) == ~p"/auth/login"

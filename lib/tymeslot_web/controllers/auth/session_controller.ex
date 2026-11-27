@@ -7,9 +7,9 @@ defmodule TymeslotWeb.SessionController do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Tymeslot.Auth
-  alias Tymeslot.Infrastructure.Config
-  alias Tymeslot.Infrastructure.Logging.LogFormat
+  alias Tymeslot.Infrastructure.{Config, Logging.LogFormat}
   alias Tymeslot.Security.RedirectPath
+  alias Tymeslot.SignedToken
   alias TymeslotWeb.EmailLinkConfirmHTML
   alias TymeslotWeb.Helpers.ClientIP
   alias TymeslotWeb.Plugs.ReturnTo
@@ -159,6 +159,38 @@ defmodule TymeslotWeb.SessionController do
     |> redirect(to: ~p"/auth/login")
   end
 
+  @doc """
+  Signs the user in after a successful password reset.
+
+  The LiveView form has already changed the password and revoked the old
+  sessions. This request only opens the new one, from a token that lasts two
+  minutes.
+  """
+  @spec sign_in_after_reset(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def sign_in_after_reset(conn, %{"token" => token}) do
+    case SignedToken.verify(:reset_sign_in, token) do
+      {:ok, user_id} when is_integer(user_id) ->
+        case UserAuth.create_session(conn, %{id: user_id}) do
+          {:ok, updated_conn, _session} ->
+            updated_conn
+            |> put_flash(:info, dgettext("auth", "You’re signed in."))
+            |> redirect(to: get_success_redirect_path())
+
+          {:error, _reason, details} ->
+            Logger.error("Failed to create session after password reset", details: details)
+
+            conn
+            |> put_flash(:error, dgettext("auth", "Failed to create session. Please try again."))
+            |> redirect(to: ~p"/auth/login")
+        end
+
+      _rejected ->
+        conn
+        |> put_flash(:error, dgettext("auth", "Sign-in after reset expired. Please log in."))
+        |> redirect(to: ~p"/auth/login")
+    end
+  end
+
   # Shown when a verification link's token is no longer in the database: most
   # commonly because a newer verification email was requested (each request
   # rotates the token), but also for already-used or malformed links.
@@ -169,11 +201,11 @@ defmodule TymeslotWeb.SessionController do
     )
   end
 
-  # Shown when the token is still on record but its 24-hour validity window lapsed.
+  # Shown when the token is still on record but its 30-minute window lapsed.
   defp link_expired_message do
     dgettext(
       "auth",
-      "This verification link has expired. Please request a new verification email to continue."
+      "Verification links work once, for 30 minutes. Request a new one, it takes a few seconds."
     )
   end
 

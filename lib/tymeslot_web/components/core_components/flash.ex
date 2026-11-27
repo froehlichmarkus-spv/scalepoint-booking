@@ -49,7 +49,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Flash do
       phx-click={@close && JS.push("lv:clear-flash", value: %{key: @kind}) |> hide_flash(@id)}
       role="alert"
       class={[
-        "w-full sm:w-96 rounded-token-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden border-2",
+        "gos-toast w-full sm:w-96 rounded-token-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden border-2",
         "transition-all duration-300 hover:scale-[1.02] cursor-pointer",
         flash_variant(@kind)
       ]}

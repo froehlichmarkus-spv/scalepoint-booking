@@ -76,6 +76,7 @@
   margin: 0;
   font-weight: var(--font-weight-medium);
   color: var(--theme-text);
+  overflow-wrap: anywhere;
 }
 
 .folio-details strong {

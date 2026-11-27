@@ -90,11 +90,11 @@ defmodule TymeslotWeb.Components.CoreComponents.Modal do
     ~H"""
     <div
       id={@id}
-      class="modal-overlay"
+      class="modal-overlay gos-overlay"
       style={if @show, do: "display: flex;", else: "display: none;"}
       phx-window-keydown={@on_cancel}
       phx-key="escape"
-      phx-hook="ModalFocusTrap"
+      phx-hook="GosModal"
     >
       <div class="modal-container p-6">
         <div
@@ -104,7 +104,7 @@ defmodule TymeslotWeb.Components.CoreComponents.Modal do
               # Scrolling and the height cap belong to `.modal-content` in
               # modal.css; an `overflow-hidden` here would win over it and cut a
               # tall dialog off again.
-              "modal-content bg-white rounded-token-5xl shadow-2xl border-2 border-tymeslot-50 relative",
+              "modal-content gos-modal bg-white rounded-token-5xl shadow-2xl border-2 border-tymeslot-50 relative",
               modal_size_class(@size)
             ]
           }

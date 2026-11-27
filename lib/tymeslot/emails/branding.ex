@@ -73,10 +73,7 @@ defmodule Tymeslot.Emails.Branding do
         name
 
       _setting ->
-        case Brands.mail_identity() do
-          %{name: name} when is_binary(name) and name != "" -> name
-          _brand -> "BookDesk24"
-        end
+        Brands.product_name()
     end
   end
 

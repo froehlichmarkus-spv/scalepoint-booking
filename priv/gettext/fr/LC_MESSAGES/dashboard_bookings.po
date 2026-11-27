@@ -981,3 +981,8 @@ msgstr "Aucun remboursement n'est possible, car le paiement date de plus de 60 j
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "Aucun remboursement n'est possible, car le paiement fait l'objet d'un litige. Réglez d'abord le litige dans Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
+#, elixir-autogen, elixir-format
+msgid "Set up a meeting type"
+msgstr "Set up a meeting type"

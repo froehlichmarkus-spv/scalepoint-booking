@@ -14,22 +14,17 @@ msgstr ""
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "A payment is past due. Update billing to keep Pro."
-msgstr "Eine Zahlung ist überfällig. Aktualisieren Sie die Abrechnung, um Pro zu behalten."
+msgstr "Eine Zahlung ist überfällig. Aktualisiere die Abrechnung, um Pro zu behalten."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "Activating your plan…"
-msgstr "Ihr Tarif wird aktiviert…"
+msgstr "Dein Tarif wird aktiviert…"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "Always"
 msgstr "Immer"
-
-#: lib/tymeslot_web/live/dashboard/plan_component.ex
-#, elixir-autogen, elixir-format
-msgid "Billing is unavailable. Try again in a moment."
-msgstr "Die Abrechnung ist nicht erreichbar. Versuchen Sie es gleich noch einmal."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -84,7 +79,7 @@ msgstr "Abrechnung verwalten"
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "On your booking page"
-msgstr "Auf Ihrer Buchungsseite"
+msgstr "Auf deiner Buchungsseite"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -94,7 +89,7 @@ msgstr "Eine"
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "Only your oldest bookable event type is public. The others are paused, not deleted."
-msgstr "Nur Ihre älteste buchbare Terminart ist öffentlich. Die anderen sind pausiert, nicht gelöscht."
+msgstr "Nur deine älteste buchbare Terminart ist öffentlich. Die anderen sind pausiert, nicht gelöscht."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/card.ex
 #, elixir-autogen, elixir-format
@@ -123,11 +118,6 @@ msgstr "Bereitgestellt von BookDesk24"
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
-msgid "Prices are net. VAT IDs for reverse charge are collected by billing. No Stripe Tax."
-msgstr "Preise sind netto. USt-IdNr. für das Reverse-Charge-Verfahren erhebt die Abrechnung. Kein Stripe Tax."
-
-#: lib/tymeslot_web/live/dashboard/plan_component.ex
-#, elixir-autogen, elixir-format
 msgid "Pro monthly – %{price}"
 msgstr "Pro monatlich – %{price}"
 
@@ -149,18 +139,18 @@ msgstr "Erinnerungs-E-Mails gehören zu Pro."
 #: lib/tymeslot_web/components/shared/reminder_picker.ex
 #, elixir-autogen, elixir-format
 msgid "Reminder emails are part of Pro. You can still turn existing ones off."
-msgstr "Erinnerungs-E-Mails gehören zu Pro. Bestehende können Sie weiterhin abschalten."
+msgstr "Erinnerungs-E-Mails gehören zu Pro. Bestehende kannst du weiterhin abschalten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #: lib/tymeslot_web/live/dashboard/service_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "The Free plan includes 1 event type. Upgrade to Pro for unlimited event types."
-msgstr "Der Free-Tarif umfasst 1 Terminart. Wechseln Sie zu Pro für unbegrenzte Terminarten."
+msgstr "Der Free-Tarif umfasst 1 Terminart. Wechsle zu Pro für unbegrenzte Terminarten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/creation.ex
 #, elixir-autogen, elixir-format
 msgid "This needs BookDesk24 Pro."
-msgstr "Dafür brauchen Sie BookDesk24 Pro."
+msgstr "Dafür brauchst du BookDesk24 Pro."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
@@ -175,30 +165,50 @@ msgstr "Sichtbar bei Free: Bereitgestellt von %{product}"
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "You are on Free."
-msgstr "Sie nutzen Free."
+msgstr "Du nutzt Free."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "You are on Pro."
-msgstr "Sie nutzen Pro."
+msgstr "Du nutzt Pro."
 
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "You are using %{count} of 1 calendars. Upgrade or remove the extra ones. Existing calendars still block double bookings."
-msgstr "Sie nutzen %{count} von 1 Kalendern. Wechseln Sie den Tarif oder entfernen Sie die zusätzlichen. Bestehende Kalender verhindern weiterhin Doppelbuchungen."
+msgstr "Du nutzt %{count} von 1 Kalendern. Wechsle den Tarif oder entferne die zusätzlichen. Bestehende Kalender verhindern weiterhin Doppelbuchungen."
 
 #: lib/tymeslot_web/live/dashboard/plan_notice_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your Pro trial ends within 3 days."
-msgstr "Ihre Pro-Testphase endet innerhalb von 3 Tagen."
+msgstr "Deine Pro-Testphase endet innerhalb von 3 Tagen."
 
 #: lib/tymeslot_web/live/dashboard/plan_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your logo and accent"
-msgstr "Ihr Logo und Akzent"
+msgstr "Dein Logo und Akzent"
 
 #: lib/tymeslot_web/live/dashboard/theme_settings/asset_uploads.ex
 #: lib/tymeslot_web/live/dashboard/theme_settings/theme_customization_component.ex
 #, elixir-autogen, elixir-format
 msgid "Your logo and accent colour are part of Pro."
-msgstr "Ihr Logo und Ihre Akzentfarbe gehören zu Pro."
+msgstr "Dein Logo und deine Akzentfarbe gehören zu Pro."
+
+#: lib/tymeslot/plans/billing.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 billing is not connected yet. Try again later or write to %{email}."
+msgstr "Die Abrechnung von BookDesk24 ist noch nicht da. Versuch es später noch einmal oder schreib an %{email}."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "2 months free"
+msgstr "2 Monate gratis"
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Prices are net. VAT IDs for reverse charge are collected by billing."
+msgstr "Preise sind netto. USt-IdNr. für das Reverse-Charge-Verfahren erhebt die Abrechnung."
+
+#: lib/tymeslot_web/live/dashboard/plan_component.ex
+#, elixir-autogen, elixir-format
+msgid "Billing is unavailable. Try again in a moment."
+msgstr "Die Abrechnung ist nicht erreichbar. Versuch es gleich noch einmal."

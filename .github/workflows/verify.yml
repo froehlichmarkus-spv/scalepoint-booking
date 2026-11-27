@@ -2,7 +2,11 @@ name: Verify
 
 on:
   push:
-    branches: [main]
+    # feat/bookdesk24-ds-v2 is stacked and currently conflicts with its base,
+    # so GitHub cannot build a pull_request merge ref and does not dispatch
+    # pull_request. The same jobs still run on that branch's head. This does
+    # not remove or skip the pull_request trigger.
+    branches: [main, feat/bookdesk24-ds-v2]
   pull_request:
 
 jobs:

@@ -49,7 +49,7 @@ msgstr "Hallo %{name},"
 #: lib/tymeslot/emails/appointment_builder.ex
 #, elixir-autogen, elixir-format
 msgid "I'll send you a reminder %{label} before our appointment."
-msgstr "Ich sende Ihnen %{label} vor unserem Termin eine Erinnerung."
+msgstr "Ich sende dir %{label} vor unserem Termin eine Erinnerung."
 
 #: lib/tymeslot/emails/shared/text_body_helper.ex
 #, elixir-autogen, elixir-format
@@ -176,7 +176,7 @@ msgstr "auf diese E-Mail antworten"
 #: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
 msgid "Having trouble with the button? Copy and paste this link into your browser:"
-msgstr "Probleme mit dem Button? Kopieren Sie diesen Link in Ihren Browser:"
+msgstr "Probleme mit dem Button? Kopiere diesen Link in deinen Browser:"
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
@@ -193,7 +193,7 @@ msgstr "Telefonat"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "%{name} has invited you to an event."
-msgstr "%{name} hat Sie zu einem Termin eingeladen."
+msgstr "%{name} hat dich zu einem Termin eingeladen."
 
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
@@ -203,7 +203,7 @@ msgstr "Kalendereinladung – %{title} am %{date}"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "You're Invited"
-msgstr "Sie sind eingeladen"
+msgstr "Du bist eingeladen"
 
 #: lib/tymeslot/emails/shared/text_body_helper.ex
 #, elixir-autogen, elixir-format
@@ -334,8 +334,8 @@ msgstr "Videoanruf beitreten"
 #, elixir-autogen, elixir-format
 msgid "You'll receive %{count} reminder before the appointment."
 msgid_plural "You'll receive %{count} reminders before the appointment."
-msgstr[0] "Sie erhalten vor dem Termin %{count} Erinnerung."
-msgstr[1] "Sie erhalten vor dem Termin %{count} Erinnerungen."
+msgstr[0] "Du erhältst vor dem Termin %{count} Erinnerung."
+msgstr[1] "Du erhältst vor dem Termin %{count} Erinnerungen."
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
@@ -371,6 +371,7 @@ msgstr "Nachricht von %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} über %{brand}"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -426,12 +427,12 @@ msgstr "Single Sign-on"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "%{name} has cancelled a recurring event you were invited to. Every occurrence is cancelled."
-msgstr "%{name} hat einen wiederkehrenden Termin abgesagt, zu dem Sie eingeladen waren. Alle Termine der Serie sind abgesagt."
+msgstr "%{name} hat einen wiederkehrenden Termin abgesagt, zu dem du eingeladen waren. Alle Termine der Serie sind abgesagt."
 
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "%{name} has cancelled an event you were invited to."
-msgstr "%{name} hat einen Termin abgesagt, zu dem Sie eingeladen waren."
+msgstr "%{name} hat einen Termin abgesagt, zu dem du eingeladen waren."
 
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
@@ -486,7 +487,7 @@ msgstr "Die Adresse wird nach der Buchung abgestimmt."
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "The address will be arranged with you after booking."
-msgstr "Die Adresse wird nach der Buchung mit Ihnen abgestimmt."
+msgstr "Die Adresse wird nach der Buchung mit dir abgestimmt."
 
 #: lib/tymeslot/emails/appointment_builder.ex
 #, elixir-autogen, elixir-format
@@ -509,8 +510,8 @@ msgstr "Im Dashboard öffnen:"
 #, elixir-autogen, elixir-format
 msgid "Group session: you have one of %{count} spot."
 msgid_plural "Group session: you have one of %{count} spots."
-msgstr[0] "Gruppentermin: Sie haben einen von %{count} Plätzen."
-msgstr[1] "Gruppentermin: Sie haben einen von %{count} Plätzen."
+msgstr[0] "Gruppentermin: du hast einen von %{count} Plätzen."
+msgstr[1] "Gruppentermin: du hast einen von %{count} Plätzen."
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
@@ -540,7 +541,7 @@ msgstr "Gäste"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "%{name} has removed you from an event."
-msgstr "%{name} hat Sie aus einem Termin entfernt."
+msgstr "%{name} hat du aus einem Termin entfernt."
 
 #: lib/tymeslot/emails/shared/calendar_event_content.ex
 #: lib/tymeslot/emails/shared/meeting/description.ex
@@ -566,7 +567,7 @@ msgstr "Termin:"
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
 msgid "If the event is still in your calendar, you can delete it there."
-msgstr "Wenn der Termin noch in Ihrem Kalender steht, können Sie ihn dort löschen."
+msgstr "Wenn der Termin noch in deinem Kalender steht, kannst ihn dort löschen."
 
 #: lib/tymeslot/emails/templates/calendar_invitation.ex
 #, elixir-autogen, elixir-format
@@ -591,4 +592,24 @@ msgstr "Videoanruf:"
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
 msgid "Booked through your %{page} page"
-msgstr "Gebucht über Ihre Seite „%{page}“"
+msgstr "Gebucht über deine Seite „%{page}“"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Legal notice"
+msgstr "Impressum"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Privacy"
+msgstr "Datenschutz"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Reply to this email or write to support@scalepoint-ventures.com."
+msgstr "Antworte auf diese E-Mail oder schreib an support@scalepoint-ventures.com."
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Terms"
+msgstr "Bedingungen"

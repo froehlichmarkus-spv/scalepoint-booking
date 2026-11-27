@@ -991,3 +991,8 @@ msgstr "Повернення коштів неможливе, оскільки �
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "Повернення коштів неможливе, оскільки щодо платежу відкрито спір. Спершу врегулюйте його в Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
+#, elixir-autogen, elixir-format
+msgid "Set up a meeting type"
+msgstr "Set up a meeting type"

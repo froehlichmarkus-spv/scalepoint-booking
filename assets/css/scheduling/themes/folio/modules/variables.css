@@ -16,8 +16,8 @@
 :root {
   /* Typography: the classic pairing (Source Serif 4 over Inter) until the
      font option says otherwise. */
-  --theme-font-family: var(--font-stack-classic);
-  --theme-font-heading: var(--font-heading-classic);
+  --theme-font-family: var(--font-stack-geist);
+  --theme-font-heading: var(--font-heading-geist);
   --theme-font-size-3xs: 0.6875rem;
   --theme-font-size-2xs: 0.75rem;
   --theme-font-size-xs: 0.8125rem;

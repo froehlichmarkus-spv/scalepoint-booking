@@ -987,3 +987,8 @@ msgstr "Zwrot nie jest możliwy, ponieważ płatność jest starsza niż 60-dnio
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "Zwrot nie jest możliwy, ponieważ płatność jest przedmiotem sporu. Najpierw rozstrzygnij spór w Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
+#, elixir-autogen, elixir-format
+msgid "Set up a meeting type"
+msgstr "Set up a meeting type"

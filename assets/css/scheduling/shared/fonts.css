@@ -211,6 +211,10 @@
   --font-stack-system: var(--font-system-sans);
   --font-heading-system: var(--font-system-sans);
 
+  /* geist: the product face. inter, classic and editorial stay selectable. */
+  --font-stack-geist: "Geist", var(--font-system-sans);
+  --font-heading-geist: "Geist", var(--font-system-sans);
+
   /* inter: Inter throughout */
   --font-stack-inter: "Inter Variable", "Inter", var(--font-system-sans);
   --font-heading-inter: var(--font-stack-inter);

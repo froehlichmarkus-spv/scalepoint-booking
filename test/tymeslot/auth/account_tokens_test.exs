@@ -9,7 +9,7 @@ defmodule Tymeslot.Auth.AccountTokensTest do
 
   # Each purpose's lifetime, pinned where it is enforced: a token issued just
   # inside it resolves, one issued just outside it is rejected as expired.
-  @lifetimes [reset: 2 * 3600, verification: 24 * 3600, email_change: 24 * 3600]
+  @lifetimes [reset: 60 * 60, verification: 30 * 60, email_change: 24 * 3600]
 
   @issued_at_field %{
     reset: :reset_sent_at,
@@ -50,6 +50,12 @@ defmodule Tymeslot.Auth.AccountTokensTest do
         assert {:error, :invalid_token} = AccountTokens.fetch(unquote(purpose), old_token)
       end
     end
+  end
+
+  test "a magic sign-in link lasts 15 minutes" do
+    assert AccountTokens.ttl_seconds(:magic_link) == 15 * 60
+    assert AccountTokens.ttl_seconds(:reset) == 60 * 60
+    assert AccountTokens.ttl_seconds(:verification) == 30 * 60
   end
 
   describe "consume/3" do

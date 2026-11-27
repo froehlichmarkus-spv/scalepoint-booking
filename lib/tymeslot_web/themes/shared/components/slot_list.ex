@@ -124,14 +124,28 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
           <% @loading_slots -> %>
             <%= if @loading == [] do %>
               <div class="slot-list__loading">
-                <span>{dgettext("booking", "Loading available times...")}</span>
+                <span class="sr-only">{dgettext("booking", "Loading available times...")}</span>
+                <div class="slot-list__skeleton" aria-hidden="true">
+                  <span :for={_ <- 1..6} class="slot-list__skeleton-chip"></span>
+                </div>
               </div>
             <% else %>
               {render_slot(@loading)}
             <% end %>
           <% @calendar_error -> %>
             <%= if @error == [] do %>
-              <div class="slot-list__error">{@calendar_error}</div>
+              <div class="slot-list__error" role="alert">
+                <p>{@calendar_error}</p>
+                <button
+                  type="button"
+                  class="slot-list__retry"
+                  phx-click="select_date"
+                  phx-target={@target}
+                  phx-value-date={@selected_date}
+                >
+                  {dgettext("booking", "Try again")}
+                </button>
+              </div>
             <% else %>
               {render_slot(@error, @calendar_error)}
             <% end %>
@@ -251,6 +265,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.SlotList do
       phx-click="select_time"
       phx-value-time={@slot.time}
       phx-target={@target}
+      onclick="var root=this.closest('#slots-container'); if(root){root.querySelectorAll('.slot-list__slot--selected').forEach(function(el){el.classList.remove('slot-list__slot--selected')})} this.classList.add('slot-list__slot--selected')"
     >
       <span class="slot-list__time">
         {LocalizationHelpers.format_time_by_locale(CalendarHelpers.parse_slot_time(@slot.time))}

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./tokens.phoenix.css";
+@import "./gos.css";
 @import "../../brand/tokens.css";
 @import "./spv-bridge.css";
 
@@ -52,6 +54,9 @@
 
 /* Import reCAPTCHA styles */
 @import "./recaptcha.css";
+
+/* DS v2 shell and auth, after the component CSS so the tokens win. */
+@import "./ds-apply.css";
 
 /* ===========================================================================
    Tailwind v4 CSS-first configuration

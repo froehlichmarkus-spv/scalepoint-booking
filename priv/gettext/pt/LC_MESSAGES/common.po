@@ -73,21 +73,6 @@ msgstr "Conheça os navegadores modernos"
 
 #: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
-msgid "One lowercase letter"
-msgstr "Uma letra minúscula"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One number"
-msgstr "Um número"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One uppercase letter"
-msgstr "Uma letra maiúscula"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
 msgid "Password must contain:"
 msgstr "A senha deve conter:"
 
@@ -200,11 +185,6 @@ msgstr "Salvando alterações…"
 #, elixir-autogen, elixir-format
 msgid "At least %{count} characters"
 msgstr "Pelo menos %{count} caracteres"
-
-#: lib/tymeslot_web/components/core_components/forms.ex
-#, elixir-autogen, elixir-format
-msgid "One special character"
-msgstr "Um caractere especial"
 
 #: lib/tymeslot_web/components/core_components/navigation.ex
 #, elixir-autogen, elixir-format
@@ -351,6 +331,7 @@ msgid_plural "You can configure up to %{count} reminders"
 msgstr[0] "Você pode configurar até %{count} lembrete"
 msgstr[1] "Você pode configurar até %{count} lembretes"
 
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #: lib/tymeslot_web/components/core_components/feedback.ex
 #, elixir-autogen, elixir-format
 msgid "Loading"
@@ -421,3 +402,33 @@ msgstr "Adicione uma data"
 #, elixir-autogen, elixir-format
 msgid "Add a time"
 msgstr "Adicione uma hora"
+
+#: lib/tymeslot_web/components/layouts/root.html.heex
+#, elixir-autogen, elixir-format
+msgid "Skip to content"
+msgstr "Skip to content"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "At most 72 bytes"
+msgstr "At most 72 bytes"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One lowercase letter"
+msgstr "One lowercase letter"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One number"
+msgstr "One number"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One special character"
+msgstr "One special character"
+
+#: lib/tymeslot_web/components/core_components/forms.ex
+#, elixir-autogen, elixir-format
+msgid "One uppercase letter"
+msgstr "One uppercase letter"

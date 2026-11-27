@@ -79,12 +79,12 @@ msgstr "Domain hat eine ungültige Endung (.%{tld})"
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Domain has an invalid domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "Domain hat eine ungültige Endung (.%{tld}). Meinten Sie .%{suggestion}?"
+msgstr "Domain hat eine ungültige Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Domain has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "Domain hat eine unbekannte Endung (.%{tld}). Meinten Sie .%{suggestion}?"
+msgstr "Domain hat eine unbekannte Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
@@ -144,12 +144,12 @@ msgstr "E-Mail hat eine ungültige Endung (.%{tld})"
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Email has an invalid domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "E-Mail hat eine ungültige Endung (.%{tld}). Meinten Sie .%{suggestion}?"
+msgstr "E-Mail hat eine ungültige Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
 msgid "Email has an unrecognised domain ending (.%{tld}). Did you mean .%{suggestion}?"
-msgstr "E-Mail hat eine unbekannte Endung (.%{tld}). Meinten Sie .%{suggestion}?"
+msgstr "E-Mail hat eine unbekannte Endung (.%{tld}). Meintest du .%{suggestion}?"
 
 #: lib/tymeslot/security/field_validators/tld_list.ex
 #, elixir-autogen, elixir-format
@@ -174,7 +174,7 @@ msgstr "Der Teil vor dem @-Zeichen fehlt"
 #: lib/tymeslot/security/url_validation.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a full address starting with https://, for example https://example.com"
-msgstr "Geben Sie die vollständige Adresse mit https:// am Anfang ein, zum Beispiel https://example.com"
+msgstr "Gib die vollständige Adresse mit https:// am Anfang ein, zum Beispiel https://example.com"
 
 #: lib/tymeslot/security/field_validators/integration_name_validator.ex
 #, elixir-autogen, elixir-format
@@ -329,32 +329,32 @@ msgstr "Telefonnummer muss ein Text sein"
 #: lib/tymeslot/security/field_validators/note_ack_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Please acknowledge to continue"
-msgstr "Bitte bestätigen Sie, um fortzufahren"
+msgstr "Bitte bestätige, um fortzufahren"
 
 #: lib/tymeslot/security/field_validators/select_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Please choose an option"
-msgstr "Bitte wählen Sie eine Option"
+msgstr "Bitte wähle eine Option"
 
 #: lib/tymeslot/security/field_validators/multi_select_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Please choose at least %{min}"
-msgstr "Bitte wählen Sie mindestens %{min} aus"
+msgstr "Bitte wähle mindestens %{min} aus"
 
 #: lib/tymeslot/security/field_validators/multi_select_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Please choose at least one option"
-msgstr "Bitte wählen Sie mindestens eine Option"
+msgstr "Bitte wähle mindestens eine Option"
 
 #: lib/tymeslot/security/field_validators/multi_select_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Please choose at most %{max}"
-msgstr "Bitte wählen Sie höchstens %{max} aus"
+msgstr "Bitte wähle höchstens %{max} aus"
 
 #: lib/tymeslot/security/field_validators/select_validator.ex
 #, elixir-autogen, elixir-format
 msgid "Please choose one of the available options"
-msgstr "Bitte wählen Sie eine der verfügbaren Optionen"
+msgstr "Bitte wähle eine der verfügbaren Optionen"
 
 #: lib/tymeslot/security/url_validation.ex
 #, elixir-autogen, elixir-format
@@ -459,7 +459,7 @@ msgstr "URL muss ein Text sein"
 #: lib/tymeslot/security/url_validation.ex
 #, elixir-autogen, elixir-format
 msgid "Use HTTPS for non-local servers"
-msgstr "Verwenden Sie HTTPS für nicht lokale Server"
+msgstr "Verwende HTTPS für nicht lokale Server"
 
 #: lib/tymeslot/security/field_validators/username_validator.ex
 #, elixir-autogen, elixir-format
@@ -518,6 +518,7 @@ msgstr[0] "Das Passwort muss mindestens %{count} Zeichen lang sein"
 msgstr[1] "Das Passwort muss mindestens %{count} Zeichen lang sein"
 
 #: lib/tymeslot/security/field_validators/password_validator.ex
+#: lib/tymeslot_web/components/core_components/forms.ex
 #, elixir-autogen, elixir-format
 msgid "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte."
 msgstr "Das Passwort darf höchstens %{count} Byte lang sein. Buchstaben mit Akzent und Emojis zählen als mehr als ein Byte."

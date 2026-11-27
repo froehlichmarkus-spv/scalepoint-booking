@@ -40,8 +40,8 @@ defmodule Tymeslot.ThemeCustomizations.FolioSpecTest do
       assert palette.schemes == @schemes
       assert palette.seed_mode == :light
       refute palette[:follow_os]
-      assert font.presets == ~w(classic literary editorial quiet)
-      assert font.default == "classic"
+      assert font.presets == ~w(geist classic literary editorial quiet)
+      assert font.default == "geist"
       assert radius.default == "soft"
 
       assert cover.presets ==

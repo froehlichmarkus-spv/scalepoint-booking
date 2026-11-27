@@ -279,10 +279,18 @@ defmodule TymeslotWeb.Components.CoreComponents.Buttons do
   """
   @spec button_classes(atom(), atom()) :: [String.t() | nil]
   def button_classes(variant, size \\ :md) when variant in @variants and size in @sizes do
-    ["action-button", variant_class(variant), size_class(size)]
+    ["action-button", "gos-btn", gos_variant(variant), variant_class(variant), size_class(size)]
   end
 
   defp action_classes(variant, size, extra), do: button_classes(variant, size) ++ [extra]
+
+  defp gos_variant(:primary), do: "gos-btn--primary"
+  defp gos_variant(:secondary), do: "gos-btn--secondary"
+  defp gos_variant(:outline), do: "gos-btn--secondary"
+  defp gos_variant(:ghost), do: "gos-btn--ghost"
+  defp gos_variant(:danger), do: "gos-btn--danger"
+  defp gos_variant(:danger_soft), do: "gos-btn--danger"
+  defp gos_variant(_variant), do: nil
 
   defp variant_class(:danger_soft), do: "action-button--danger-soft"
   defp variant_class(:on_dark), do: "action-button--on-dark"

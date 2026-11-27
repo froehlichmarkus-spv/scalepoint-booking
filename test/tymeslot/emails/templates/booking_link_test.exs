@@ -44,7 +44,7 @@ defmodule Tymeslot.Emails.Templates.BookingLinkTest do
     test "renders in the user's locale" do
       user = %{id: 1, name: "Anna", email: "anna@example.com", locale: "de"}
 
-      assert BookingLink.render(user, @url).subject == "Ihr Buchungslink"
+      assert BookingLink.render(user, @url).subject == "Dein Buchungslink"
     end
 
     test "references the QR code by cid, never as a data URI" do

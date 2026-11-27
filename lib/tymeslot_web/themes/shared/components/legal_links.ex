@@ -70,7 +70,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.LegalLinks do
         rel="noopener noreferrer"
         class="legal-links__link"
       >
-        Terms
+        {dgettext("booking", "Terms")}
       </a>
       <a
         :if={@dpa_url}
@@ -79,7 +79,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.LegalLinks do
         rel="noopener noreferrer"
         class="legal-links__link"
       >
-        Data processing agreement
+        {dgettext("booking", "Data processing agreement")}
       </a>
       <a
         :if={@source_url}
@@ -89,7 +89,7 @@ defmodule TymeslotWeb.Themes.Shared.Components.LegalLinks do
         class="legal-links__link"
         data-testid="source-offer"
       >
-        Quellcode (AGPLv3)
+        {dgettext("booking", "Quellcode (AGPLv3)")}
       </a>
     </footer>
     """

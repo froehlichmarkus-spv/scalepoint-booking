@@ -1,0 +1,34 @@
+/* Extracted from design-system/css/gos.css for BookDesk24 DS v2.8 imagery round 3.
+   Global reduced-motion rule (line 230) plus .gos-band-inverse (R4) and v2.8 motion (R6).
+   Hero-card / caption-pill rules live in imagery_v28.css, not gos.css. */
+
+/* gos.css L230 */
+@media (prefers-reduced-motion:reduce){.gos-skel{animation:none}.gos *{animation-duration:0ms!important;transition-duration:0ms!important}}
+
+/* v2.7 · dark navy aurora band (IMAGERY.md §0 R4). Separate from the light .gos-band CTA panel; one per page. */
+.gos-band-inverse{position:relative;overflow:hidden;isolation:isolate;background:#0E1A2C;color:#C6D0DB;border-radius:var(--gos-radius-2xl);padding:72px 56px;--h1:var(--gos-aurora-teal,#2EC4B6);--h2:var(--gos-aurora-blue,#4C8DFF);--h3:var(--gos-aurora-violet,#8B5CF6)}
+.gos-band-inverse--full{border-radius:0}
+.gos-band-inverse::before{content:"";position:absolute;inset:-30% -10% auto -10%;height:70%;z-index:-1;pointer-events:none;filter:blur(80px);opacity:.75;
+ background:radial-gradient(40% 60% at 15% 40%,var(--h1),transparent 70%),radial-gradient(40% 60% at 85% 30%,var(--h3),transparent 70%)}
+.gos-band-inverse::after{content:"";position:absolute;left:-10%;right:-10%;top:58%;height:34%;transform:rotate(-6deg);z-index:-1;pointer-events:none;filter:blur(46px);opacity:.55;
+ background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--h1) 70%,transparent) 25%,color-mix(in srgb,var(--h2) 60%,transparent) 55%,color-mix(in srgb,var(--h3) 65%,transparent) 80%,transparent)}
+.gos-band-inverse h2,.gos-band-inverse .gos-h1,.gos-band-inverse .gos-h2{color:#FFFFFF}.gos-band-inverse p{color:#C6D0DB}.gos-band-inverse .gos-eyebrow{color:#7FD6CD}
+.gos-band-inverse[data-mod="outreach"]{--h1:#F26A21}.gos-band-inverse[data-mod="connect"]{--h1:#2F6BFF}.gos-band-inverse[data-mod="booking"]{--h1:#F2A40E}.gos-band-inverse[data-mod="crm"]{--h1:#7C4DEB}
+@media (max-width:640px){.gos-band-inverse{padding:44px 22px}}
+@media (forced-colors:active){.gos-band-inverse::before,.gos-band-inverse::after{display:none}}
+/* ===== v2.8.0 motion (IMAGERY.md §0 R6) · all off under prefers-reduced-motion ===== */
+@media (prefers-reduced-motion:no-preference){
+ .gos-band-inverse::before{animation:gos-drift 34s ease-in-out infinite alternate}
+ .gos-band-inverse::after{animation:gos-ribbon 38s ease-in-out infinite alternate}
+ @keyframes gos-drift{0%{translate:0 0;scale:1}50%{translate:4% -3%;scale:1.08}100%{translate:-3% 4%;scale:.96}}
+ @keyframes gos-ribbon{0%{translate:0 0;opacity:.9}100%{translate:-6% 5%;opacity:.6}}
+ @keyframes gos-float{from{translate:0 0}to{translate:0 -7px}}
+ .gos-float{animation:gos-float 7s ease-in-out infinite alternate}
+ .gos-rv{opacity:0;translate:0 22px;transition:opacity .75s cubic-bezier(.2,.7,.2,1),translate .75s cubic-bezier(.2,.7,.2,1)}
+ .gos-rv.is-in{opacity:1;translate:0 0}
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+ .gos-lift{transition:transform .32s cubic-bezier(.2,.7,.2,1),box-shadow .32s cubic-bezier(.2,.7,.2,1)}
+ .gos-lift:hover{transform:translateY(-4px);box-shadow:0 0 0 1px rgba(17,30,50,.06),0 22px 44px -22px rgba(17,30,50,.32)}
+}
+[data-gos-count]{font-variant-numeric:tabular-nums}

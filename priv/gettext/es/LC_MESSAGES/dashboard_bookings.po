@@ -981,3 +981,8 @@ msgstr "No se puede hacer ningún reembolso, ya que el pago tiene más de 60 dí
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "No se puede hacer ningún reembolso, ya que el pago está en disputa. Resuelve primero la disputa en Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
+#, elixir-autogen, elixir-format
+msgid "Set up a meeting type"
+msgstr "Set up a meeting type"

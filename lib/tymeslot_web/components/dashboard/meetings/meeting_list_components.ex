@@ -208,7 +208,13 @@ defmodule TymeslotWeb.Components.Dashboard.Meetings.MeetingListComponents do
       heading={:h2}
       title={no_meetings_title(@filter)}
       description={no_meetings_description(@filter)}
-    />
+    >
+      <:action>
+        <a href="/dashboard/meeting-settings" class="gos-btn gos-btn--primary">
+          {dgettext("dashboard_bookings", "Set up a meeting type")}
+        </a>
+      </:action>
+    </Feedback.empty_state>
     """
   end
 

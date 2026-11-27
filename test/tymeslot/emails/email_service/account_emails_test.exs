@@ -120,7 +120,7 @@ defmodule Tymeslot.Emails.EmailService.AccountEmailsTest do
       AccountEmails.send_email_change_verification(user, "anja.neu@example.com", "https://x/y")
 
       assert_receive {:email, email}, 1000
-      assert email.subject == "Bestätigen Sie Ihre neue E-Mail-Adresse"
+      assert email.subject == "Bestätige deine neue E-Mail-Adresse"
     end
   end
 
@@ -140,7 +140,7 @@ defmodule Tymeslot.Emails.EmailService.AccountEmailsTest do
       AuthEmails.send_email_verification(user, "https://x/verify")
 
       assert_receive {:email, email}, 1000
-      assert email.subject == "Bestätigen Sie Ihre E-Mail-Adresse"
+      assert email.subject == "Bestätige deine E-Mail-Adresse"
     end
 
     test "email verification falls back to English without a stored locale" do

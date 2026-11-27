@@ -53,8 +53,8 @@ defmodule TymeslotWeb.Plugs.ForgeryProtectionTest do
       |> log_in(user, %{"_csrf_token" => "stale-token"})
 
     assert Flash.get(conn.assigns.flash, :error) ==
-             "Ihre Sitzung hat sich geändert, seit diese Seite geöffnet wurde. " <>
-               "Bitte versuchen Sie es erneut."
+             "Deine Sitzung hat sich geändert, seit diese Seite geöffnet wurde. " <>
+               "Bitte versuche es erneut."
   end
 
   test "a request from another site is sent to the home page", %{conn: conn, user: user} do

@@ -9,11 +9,10 @@ existing string is drift and is being corrected.
 
 ## 1. REGISTER
 
-**Formal "Sie" / "Ihr" everywhere.** Booking flow, emails, dashboard, admin, marketing.
-No exceptions. Never "du".
+**Informal "du" everywhere.** Booking flow, emails, dashboard, admin, marketing.
+Capitalise "du" only at the start of a sentence. Never "Sie".
 
-Three informal leaks exist in `emails.po` and are BUGS being fixed separately. Do not
-copy them as precedent.
+Full legal texts keep their own register. Buttons use the imperative ("Termin erstellen").
 
 ---
 

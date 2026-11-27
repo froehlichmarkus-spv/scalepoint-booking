@@ -15,7 +15,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelperTest do
         )
 
       # Should use default preview text from system_layout
-      assert html =~ "Important notification from Tymeslot"
+      assert html =~ "Important notification from BookDesk24"
     end
 
     test "uses provided preview when not nil" do

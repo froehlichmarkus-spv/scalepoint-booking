@@ -981,3 +981,8 @@ msgstr "Non è possibile alcun rimborso, perché il pagamento risale a più di 6
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
 msgstr "Non è possibile alcun rimborso, perché il pagamento è oggetto di una contestazione. Risolvi prima la contestazione in Stripe."
+
+#: lib/tymeslot_web/components/dashboard/meetings/meeting_list_components.ex
+#, elixir-autogen, elixir-format
+msgid "Set up a meeting type"
+msgstr "Set up a meeting type"

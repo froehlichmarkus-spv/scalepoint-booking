@@ -3,6 +3,7 @@ defmodule TymeslotWeb.SessionControllerTest do
   @moduletag :auth
 
   alias Phoenix.Flash
+  alias Phoenix.Token
   alias Tymeslot.Auth.UserSessionQueries
   alias Tymeslot.Auth.UserTokenQueries
   alias Tymeslot.AuthTestHelpers
@@ -10,6 +11,8 @@ defmodule TymeslotWeb.SessionControllerTest do
   alias Tymeslot.Infrastructure.Config
   alias Tymeslot.Repo
   alias Tymeslot.Security.{Password, RateLimiter}
+  alias Tymeslot.SignedToken
+  alias TymeslotWeb.Endpoint
 
   describe "POST /auth/session" do
     setup do
@@ -456,8 +459,35 @@ defmodule TymeslotWeb.SessionControllerTest do
       conn = post(conn, ~p"/auth/verify-complete/expired_verification_token")
 
       assert redirected_to(conn) == "/auth/login"
-      assert Flash.get(conn.assigns.flash, :error) =~ "has expired"
+      assert Flash.get(conn.assigns.flash, :error) =~ "for 30 minutes"
       refute Repo.reload!(user).verified_at
+    end
+  end
+
+  describe "GET /auth/reset-sign-in/:token" do
+    test "opens a session after a successful reset", %{conn: conn} do
+      user = Factory.insert(:user, verified_at: DateTime.utc_now())
+      token = SignedToken.sign(:reset_sign_in, user.id)
+
+      conn = get(conn, ~p"/auth/reset-sign-in/#{token}")
+
+      assert redirected_to(conn) == "/dashboard"
+      assert get_session(conn, :user_token)
+      assert Flash.get(conn.assigns.flash, :info) =~ "signed in"
+    end
+
+    test "a handoff older than two minutes does not sign in", %{conn: conn} do
+      user = Factory.insert(:user, verified_at: DateTime.utc_now())
+
+      token =
+        Token.sign(Endpoint, "reset sign in", user.id,
+          signed_at: System.system_time(:second) - 180
+        )
+
+      conn = get(conn, ~p"/auth/reset-sign-in/#{token}")
+
+      assert redirected_to(conn) == "/auth/login"
+      refute get_session(conn, :user_token)
     end
   end
 end

@@ -116,7 +116,7 @@ msgstr[0] ""
 "%{count} із них повторюється в день, якого немає в деяких місяцях, тож Outlook перемістив би її на останній день місяця."
 msgstr[1] ""
 "%{count} із них повторюються в день, якого немає в деяких місяцях, тож Outlook перемістив би їх на останній день місяця."
-msgstr[2] ""
+msgstr[2] "%{count} of them repeat on a day some months don't have, which Outlook would move to the month's last day."
 "%{count} із них повторюються в день, якого немає в деяких місяцях, тож Outlook перемістив би їх на останній день місяця."
 
 #: lib/tymeslot_web/live/dashboard/ics_import_flow.ex

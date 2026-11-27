@@ -61,6 +61,4 @@ msgstr "„%{title}“ wiederholt sich. Welche Ereignisse sollen geändert werde
 #: lib/tymeslot_web/live/dashboard/calendar/series_scope_modal.ex
 #, elixir-autogen, elixir-format
 msgid "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
-msgstr "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details."
-"„%{title}“ wiederholt sich. Für welche Ereignisse sollen Ihre Änderungen "
-"gelten? Ihre Antwort gilt, bis Sie die Details schließen."
+msgstr "“%{title}” repeats. Which events should your changes apply to? Your answer holds until you close the details.„%{title}“ wiederholt sich. Für welche Ereignisse sollen deine Änderungen gelten? Deine Antwort gilt, bis du die Details schließen."

@@ -231,7 +231,7 @@ defmodule Tymeslot.Emails.Templates.CalendarInvitationTest do
     test "translates the subject and the invitation heading for every supported locale" do
       for {locale, subject_fragment, heading} <- [
             {"en", "Calendar Invitation", "You're Invited"},
-            {"de", "Kalendereinladung", "Sie sind eingeladen"},
+            {"de", "Kalendereinladung", "Du bist eingeladen"},
             {"uk", "Запрошення до календаря", "Вас запрошено"},
             {"fr", "Invitation :", "Vous avez reçu une invitation"},
             {"it", "Invito di calendario", "Hai ricevuto un invito"}

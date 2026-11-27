@@ -2,7 +2,9 @@ name: Secret scan
 
 on:
   push:
-    branches: [main]
+    # See verify.yml: a conflicting stacked pull request does not dispatch
+    # pull_request, so the same scan also runs on this branch's head.
+    branches: [main, feat/bookdesk24-ds-v2]
   pull_request:
 
 # The scan only reads the checkout; never hand it a writable token.

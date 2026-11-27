@@ -75,7 +75,7 @@ defmodule TymeslotWeb.Registration.SignupComponent do
             <div
               id="signup-password-toggle-container"
               data-password-container
-              phx-hook="PasswordToggle"
+              phx-hook="GosPassword"
             >
               <.input
                 id="password-input"

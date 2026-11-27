@@ -509,6 +509,20 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
       <p class="text-tymeslot-500 font-bold uppercase tracking-wider text-token-2xs">
         {dgettext("common", "Password must contain:")}
       </p>
+      <p
+        id="password-byte-error"
+        class="gos-msg gos-msg--error"
+        role="alert"
+        hidden
+        data-byte-error={
+          dgettext(
+            "errors_input",
+            "Password must be at most %{count} bytes long. Accented letters and emoji count as more than one byte.",
+            count: PasswordValidator.max_bytes()
+          )
+        }
+      >
+      </p>
       <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-2 sm:gap-x-4">
         <li
           :for={rule <- @rules}
@@ -539,9 +553,8 @@ defmodule TymeslotWeb.Components.CoreComponents.Forms do
   defp password_rule_label(:length),
     do: dgettext("common", "At least %{count} characters", count: PasswordValidator.min_length())
 
-  # Plain sentence: the catalogs stay on main, so this label is not a msgid.
   defp password_rule_label(:max_bytes),
-    do: "At most #{PasswordValidator.max_bytes()} bytes"
+    do: dgettext("common", "At most 72 bytes")
 
   defp password_rule_label(:lowercase), do: dgettext("common", "One lowercase letter")
   defp password_rule_label(:uppercase), do: dgettext("common", "One uppercase letter")

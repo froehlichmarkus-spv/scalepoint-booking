@@ -48,7 +48,7 @@
           {dgettext("errors", "The link may be broken, or the page may have moved.")}
         </p>
         <p class="mt-2 text-token-sm text-tymeslot-500">
-          If you need help, write to {support_email()}.
+          {dgettext("errors", "If you need help, write to %{email}.", email: support_email())}
         </p>
 
         <% _ = dgettext("errors", "Go to the scheduler") %>

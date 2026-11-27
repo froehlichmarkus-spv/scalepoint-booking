@@ -201,6 +201,7 @@ defmodule TymeslotWeb.Router do
     # Convenience redirects for mistyped auth slugs. Defined before the
     # `/:username` booking-page catch-all so they resolve here rather than as a
     # username lookup. See TymeslotWeb.AuthAliasController.
+    get "/bookdesk24", MarketingController, :show
     get "/login", AuthAliasController, :login
     get "/signin", AuthAliasController, :login
     get "/sign-in", AuthAliasController, :login
@@ -259,6 +260,7 @@ defmodule TymeslotWeb.Router do
     get "/auth/zoom/video/callback", VideoOAuthController, :zoom_callback
 
     # Session management routes
+    get "/auth/reset-sign-in/:token", SessionController, :sign_in_after_reset
     get "/auth/verify-complete/:token", SessionController, :confirm_verification
     post "/auth/verify-complete/:token", SessionController, :verify_and_login
   end

@@ -25,10 +25,10 @@ defmodule TymeslotWeb.Dashboard.Automation.PausedCardsTest do
     on_disconnect: "disconnect"
   }
 
-  @webhook_notice "Pausiert: Ihr Tarif umfasst keine Automatisierungen. " <>
+  @webhook_notice "Pausiert: dein Tarif umfasst keine Automatisierungen. " <>
                     "Nach einem Upgrade läuft der Webhook automatisch weiter."
 
-  @chat_notice "Pausiert: Ihr Tarif umfasst keine Automatisierungen. " <>
+  @chat_notice "Pausiert: dein Tarif umfasst keine Automatisierungen. " <>
                  "Nach einem Upgrade läuft die Integration automatisch weiter."
 
   setup do

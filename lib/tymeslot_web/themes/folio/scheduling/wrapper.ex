@@ -12,6 +12,7 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
   the `color-scheme` that form controls and scrollbars follow.
   """
   use Phoenix.Component
+  use Gettext, backend: TymeslotWeb.Gettext
 
   alias Tymeslot.Brands
   alias Tymeslot.ThemeCustomizations.Tokens
@@ -95,6 +96,12 @@ defmodule TymeslotWeb.Themes.Folio.Scheduling.Wrapper do
           owner_preview={@owner_preview}
           {Map.take(assigns, [:demo_mode])}
         />
+        <p class="room-trust">
+          {dgettext(
+            "booking",
+            "You can move or cancel the appointment from the confirmation email. Times follow your timezone."
+          )}
+        </p>
         <LegalLinks.footer links={@legal_links} />
         <p :if={Brands.powered_by(@brand)} class="room-powered">
           {Brands.powered_by(@brand)}

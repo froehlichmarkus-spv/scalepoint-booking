@@ -24,6 +24,7 @@ defmodule Tymeslot.ThemeCustomizations.Presets.Fonts do
   @type preset :: %{required(:name) => String.t()}
 
   @fonts %{
+    "geist" => %{name: "Geist"},
     "system" => %{name: dgettext_noop("dashboard_appearance", "System")},
     "inter" => %{name: "Inter"},
     "plex" => %{name: "IBM Plex Sans"},

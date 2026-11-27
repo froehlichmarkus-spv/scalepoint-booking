@@ -152,17 +152,17 @@ msgstr "Telefonat: der Buchende gibt seine Nummer an"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/venue_picker.ex
 #, elixir-autogen, elixir-format
 msgid "Pick one or more. With several, the booker chooses where to meet."
-msgstr "Wählen Sie einen oder mehrere. Bei mehreren entscheidet die buchende Person, wo Sie sich treffen."
+msgstr "Wähle einen oder mehrere. Bei mehreren entscheidet die buchende Person, wo du dich treffen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/location_editor_component.ex
 #, elixir-autogen, elixir-format
 msgid "Pick one or more. With several, the booker chooses which one the room is created on."
-msgstr "Wählen Sie einen oder mehrere. Bei mehreren entscheiden Buchende, bei welchem der Raum erstellt wird."
+msgstr "Wähle einen oder mehrere. Bei mehreren entscheiden Buchende, bei welchem der Raum erstellt wird."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/venue_picker.ex
 #, elixir-autogen, elixir-format
 msgid "Pick one. Group bookings meet in one place."
-msgstr "Wählen Sie einen. Gruppenbuchungen finden an einem Ort statt."
+msgstr "Wähle einen. Gruppenbuchungen finden an einem Ort statt."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/location_editor_component.ex
 #, elixir-autogen, elixir-format
@@ -227,7 +227,7 @@ msgstr "Was der Buchende in der Liste der Orte sieht."
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/locations_section.ex
 #, elixir-autogen, elixir-format
 msgid "Where this meeting is held. Add a second location and bookers will be asked to choose."
-msgstr "Wo dieser Termin stattfindet. Fügen Sie einen zweiten Ort hinzu, dann werden Buchende gebeten zu wählen."
+msgstr "Wo dieser Termin stattfindet. Füge einen zweiten Ort hinzu, dann werden Buchende gebeten zu wählen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/locations_section.ex
 #, elixir-autogen, elixir-format
@@ -237,17 +237,17 @@ msgstr "Wo dieses Meeting stattfindet. Gruppenbuchungen verwenden einen im Vorau
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/location_editor_component.ex
 #, elixir-autogen, elixir-format
 msgid "You call them. Leave this off to publish a number for them to call instead."
-msgstr "Sie rufen an. Lassen Sie dies aus, um stattdessen eine Nummer zum Anrufen anzugeben."
+msgstr "Du rufen an. Lass dies aus, um stattdessen eine Nummer zum Anrufen anzugeben."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/venue_picker.ex
 #, elixir-autogen, elixir-format
 msgid "You have no saved locations yet. Add one here, or leave this empty to arrange the address after booking."
-msgstr "Sie haben noch keine gespeicherten Orte. Fügen Sie hier einen hinzu oder lassen Sie das Feld leer, um die Adresse nach der Buchung abzustimmen."
+msgstr "Du hast noch keine gespeicherten Orte. Füge hier einen hinzu oder lass das Feld leer, um die Adresse nach der Buchung abzustimmen."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/venue_picker.ex
 #, elixir-autogen, elixir-format
 msgid "You have no saved locations yet. Add one here: group bookings need the address up front."
-msgstr "Sie haben noch keine gespeicherten Orte. Fügen Sie hier einen hinzu: Gruppenbuchungen brauchen die Adresse im Voraus."
+msgstr "Du hast noch keine gespeicherten Orte. Füge hier einen hinzu: Gruppenbuchungen brauchen die Adresse im Voraus."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/new_venue_component.ex
 #, elixir-autogen, elixir-format

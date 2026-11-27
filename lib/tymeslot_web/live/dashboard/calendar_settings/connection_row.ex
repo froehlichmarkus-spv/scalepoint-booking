@@ -89,7 +89,10 @@ defmodule TymeslotWeb.Dashboard.CalendarSettings.ConnectionRow do
           class="text-sm text-amber-900"
           data-testid="google-scope-reconnect"
         >
-          Google braucht eine neue Freigabe für deinen Kalender. Verbinde ihn erneut, dann läuft alles weiter.
+          {dgettext(
+            "dashboard_calendar_settings",
+            "Google needs a new permission for your calendar. Reconnect it, and everything keeps working."
+          )}
         </p>
         <.tooltip
           :let={tip}

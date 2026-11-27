@@ -32,16 +32,6 @@ msgstr "Уже маєте обліковий запис?"
 msgid "Back to Login"
 msgstr "Повернутися до входу"
 
-#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
-#, elixir-autogen, elixir-format
-msgid "Back to Website"
-msgstr "Повернутися на сайт"
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "Check Your Email"
-msgstr "Перевірте електронну пошту"
-
 #: lib/tymeslot_web/components/auth/registration/complete_registration_component.ex
 #, elixir-autogen, elixir-format
 msgid "Complete Registration"
@@ -69,11 +59,6 @@ msgstr "Створіть пароль"
 
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #, elixir-autogen, elixir-format
-msgid "Create a strong password for your account"
-msgstr "Створіть надійний пароль для свого облікового запису"
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
 msgid "Didn't receive the email?"
 msgstr "Не отримали лист?"
 
@@ -97,11 +82,6 @@ msgstr "Адреса електронної пошти"
 
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #, elixir-autogen, elixir-format
-msgid "Enter your email and we'll send you instructions to reset your password"
-msgstr "Введіть свою електронну пошту, і ми надішлемо вам інструкції для скидання пароля"
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
 msgid "Enter your new password"
 msgstr "Введіть новий пароль"
 
@@ -116,14 +96,10 @@ msgid "Failed to create session. Please try again."
 msgstr "Не вдалося створити сеанс. Спробуйте ще раз."
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
 #, elixir-autogen, elixir-format
 msgid "Forgot password?"
 msgstr "Забули пароль?"
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "Invalid Link"
-msgstr "Недійсне посилання"
 
 #: lib/tymeslot_web/live/auth_live/password_reset_events.ex
 #, elixir-autogen, elixir-format
@@ -136,11 +112,6 @@ msgid "Join Tymeslot"
 msgstr "Приєднуйтеся до Tymeslot"
 
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "Link Expired or Invalid"
-msgstr "Посилання недійсне або його термін дії минув"
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Log In"
@@ -149,6 +120,7 @@ msgstr "Увійти"
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#: lib/tymeslot_web/components/dashboard_layout.ex
 #, elixir-autogen, elixir-format
 msgid "Log in"
 msgstr "Увійти"
@@ -173,7 +145,7 @@ msgstr "Вхід…"
 msgid "New Password"
 msgstr "Новий пароль"
 
-#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#: lib/tymeslot_web/components/auth/shared/social_auth_buttons.ex
 #, elixir-autogen, elixir-format
 msgid "Or continue with"
 msgstr "Або продовжте через"
@@ -234,11 +206,6 @@ msgstr[2] "Повторне надсилання доступне через %{c
 msgid "Reset Password"
 msgstr "Скинути пароль"
 
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "Reset Your Password"
-msgstr "Скидання пароля"
-
 #: lib/tymeslot_web/components/auth/registration/complete_registration_component.ex
 #, elixir-autogen, elixir-format
 msgid "Return to login"
@@ -248,11 +215,6 @@ msgstr "Повернутися до входу"
 #, elixir-autogen, elixir-format
 msgid "Security validation failed. Please refresh the page."
 msgstr "Помилка перевірки безпеки. Оновіть сторінку."
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "Send Reset Instructions"
-msgstr "Надіслати інструкції для скидання"
 
 #: lib/tymeslot_web/components/auth/registration/verify_email_component.ex
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
@@ -264,11 +226,6 @@ msgstr "Надсилання…"
 #, elixir-autogen, elixir-format
 msgid "Sent to"
 msgstr "Надіслано на"
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "Set New Password"
-msgstr "Встановити новий пароль"
 
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #: lib/tymeslot_web/components/auth/session/login_component.ex
@@ -301,16 +258,6 @@ msgstr "Умови використання"
 msgid "Thank you for signing up! Let's finish setting up your account."
 msgstr "Дякуємо за реєстрацію! Завершімо налаштування вашого облікового запису."
 
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "The security link you followed is no longer valid. Please request a new one to continue."
-msgstr "Захищене посилання, за яким ви перейшли, більше недійсне. Запитайте нове, щоб продовжити."
-
-#: lib/tymeslot_web/controllers/auth/session_controller.ex
-#, elixir-autogen, elixir-format
-msgid "This verification link has expired. Please request a new verification email to continue."
-msgstr "Термін дії цього посилання для підтвердження минув. Запитайте новий лист для підтвердження, щоб продовжити."
-
 #: lib/tymeslot_web/controllers/auth/session_controller.ex
 #, elixir-autogen, elixir-format
 msgid "This verification link is no longer valid. If you've requested a newer verification email, please open the link in the most recent one."
@@ -340,16 +287,6 @@ msgstr "Підтвердьте електронну пошту"
 #, elixir-autogen, elixir-format
 msgid "Want to start over?"
 msgstr "Бажаєте почати спочатку?"
-
-#: lib/tymeslot_web/components/auth/registration/verify_email_component.ex
-#, elixir-autogen, elixir-format
-msgid "We've just sent you a verification email! Please click the link in the email to confirm your address and finish setting up your account."
-msgstr "Ми щойно надіслали вам лист для підтвердження! Перейдіть за посиланням у листі, щоб підтвердити свою адресу та завершити налаштування облікового запису."
-
-#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
-#, elixir-autogen, elixir-format
-msgid "We've sent password reset instructions to your email address. Please check your inbox and follow the link to reset your password."
-msgstr "Ми надіслали інструкції для скидання пароля на вашу електронну пошту. Перевірте поштову скриньку та перейдіть за посиланням, щоб скинути пароль."
 
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
@@ -401,16 +338,7 @@ msgstr "Помилка автентифікації. Спробуйте ще р�
 msgid "Choose a New Password"
 msgstr "Створіть новий пароль"
 
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Choose a strong new password for your Tymeslot account."
-msgstr "Створіть надійний новий пароль для свого облікового запису Tymeslot."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
-msgstr "Створіть обліковий запис Tymeslot і почніть ділитися своєю доступністю вже за кілька хвилин. Кредитна картка не потрібна."
-
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Create an Account"
@@ -425,11 +353,6 @@ msgstr "Для завершення реєстрації потрібно вка
 #, elixir-autogen, elixir-format
 msgid "Email address is required to complete registration. Please provide your email address."
 msgstr "Для завершення реєстрації потрібно вказати електронну адресу. Будь ласка, введіть її."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Enter your email to receive a password reset link for your Tymeslot account."
-msgstr "Введіть свою електронну адресу, щоб отримати посилання для скидання пароля до облікового запису Tymeslot."
 
 #: lib/tymeslot/auth/registration.ex
 #: lib/tymeslot_web/controllers/auth/helpers/controller_helpers.ex
@@ -456,11 +379,6 @@ msgstr "Введіть коректну електронну адресу."
 #, elixir-autogen, elixir-format
 msgid "Registration failed due to validation errors. Please check your information and try again."
 msgstr "Помилка реєстрації через некоректні дані. Перевірте введену інформацію та спробуйте ще раз."
-
-#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
-#, elixir-autogen, elixir-format
-msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
-msgstr "Увійдіть до свого облікового запису Tymeslot, щоб керувати посиланнями для бронювання, доступністю та бронюваннями."
 
 #: lib/tymeslot/auth/error_formatter.ex
 #, elixir-autogen, elixir-format
@@ -802,3 +720,178 @@ msgid_plural "Welcome back. Your account has been restored, but %{names} need re
 msgstr[0] "З поверненням. Ваш обліковий запис відновлено, але інтеграцію %{names} потрібно перепідключити. Доки ви її не перепідключите, ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань."
 msgstr[1] "З поверненням. Ваш обліковий запис відновлено, але інтеграції %{names} потрібно перепідключити. Доки ви їх не перепідключите, ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань."
 msgstr[2] "З поверненням. Ваш обліковий запис відновлено, але інтеграції %{names} потрібно перепідключити. Доки ви їх не перепідключите, ваша сторінка бронювання може не пропонувати слотів і не приймати бронювань."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Ask an admin if you need a seat on this workspace."
+msgstr "Ask an admin if you need a seat on this workspace."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Ask an admin to turn on email or a provider."
+msgstr "Ask an admin to turn on email or a provider."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "No sign-in method is switched on"
+msgstr "No sign-in method is switched on"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Privacy"
+msgstr "Політика конфіденційності"
+
+#: lib/tymeslot_web/components/dashboard_layout.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in again to continue. What you typed stays on this page."
+msgstr "Sign in again to continue. What you typed stays on this page."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Terms"
+msgstr "умови"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Too many attempts"
+msgstr "Забагато спроб. Спробуйте пізніше."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Try again in"
+msgstr "Спробувати ще раз"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "You don't have access to BookDesk24"
+msgstr "You don't have access to BookDesk24"
+
+#: lib/tymeslot_web/components/dashboard_layout.ex
+#, elixir-autogen, elixir-format
+msgid "Your session expired"
+msgstr "Термін дії вашого сеансу минув. Увійдіть у систему ще раз."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "or reset your password."
+msgstr "or reset your password."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Choose a strong new password for your Tymeslot account."
+msgstr "Choose a strong new password for your Tymeslot account."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+msgstr "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your email to receive a password reset link for your Tymeslot account."
+msgstr "Enter your email to receive a password reset link for your Tymeslot account."
+
+#: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+msgstr "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "Check your inbox"
+msgstr "Check your inbox"
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "Enter your work email. If it has an account, we'll send a reset link."
+msgstr "Enter your work email. If it has an account, we'll send a reset link."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "From \"sounds interesting\" to a booked slot."
+msgstr "From \"sounds interesting\" to a booked slot."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "GDPR-ready"
+msgstr "GDPR-ready"
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Hosted in the EU"
+msgstr "Hosted in the EU"
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "If an account exists, a reset link is on its way. It works once, for 60 minutes."
+msgstr "If an account exists, a reset link is on its way. It works once, for 60 minutes."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "No card for the trial"
+msgstr "No card for the trial"
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "Reset links work once, for 60 minutes. Request a new one, it takes a few seconds."
+msgstr "Reset links work once, for 60 minutes. Request a new one, it takes a few seconds."
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "Save and sign in"
+msgstr "Save and sign in"
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "Send reset link"
+msgstr "Send reset link"
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "Set a new password"
+msgstr "Встановити новий пароль"
+
+#: lib/tymeslot_web/controllers/auth/session_controller.ex
+#, elixir-autogen, elixir-format
+msgid "Sign-in after reset expired. Please log in."
+msgstr "Sign-in after reset expired. Please log in."
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "This link has expired"
+msgstr "Термін дії цього посилання минув. Запитайте нове"
+
+#: lib/tymeslot_web/controllers/auth/session_controller.ex
+#, elixir-autogen, elixir-format
+msgid "Verification links work once, for 30 minutes. Request a new one, it takes a few seconds."
+msgstr "Verification links work once, for 30 minutes. Request a new one, it takes a few seconds."
+
+#: lib/tymeslot_web/components/auth/registration/verify_email_component.ex
+#, elixir-autogen, elixir-format
+msgid "We sent a verification link. It works once, for 30 minutes."
+msgstr "We sent a verification link. It works once, for 30 minutes."
+
+#: lib/tymeslot_web/components/auth/session/password_reset_component.ex
+#, elixir-autogen, elixir-format
+msgid "You'll be signed in on this device; other sessions are signed out."
+msgstr "You'll be signed in on this device; other sessions are signed out."
+
+#: lib/tymeslot_web/components/auth/shared/auth_layout_components.ex
+#, elixir-autogen, elixir-format
+msgid "Your booking link offers only real free slots and adds the video link."
+msgstr "Your booking link offers only real free slots and adds the video link."
+
+#: lib/tymeslot_web/controllers/auth/session_controller.ex
+#, elixir-autogen, elixir-format
+msgid "You’re signed in."
+msgstr "You’re signed in."
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "14-day trial, no card"
+msgstr "14-day trial, no card"
+
+#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
+#, elixir-autogen, elixir-format
+msgid "Demo data · Nordlicht Analytics"
+msgstr "Demo data · Nordlicht Analytics"

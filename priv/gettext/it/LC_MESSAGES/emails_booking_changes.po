@@ -148,6 +148,7 @@ msgstr "DETTAGLI DELL'APPUNTAMENTO ANNULLATO:"
 msgid "CANCELLED SPOT:"
 msgstr "POSTO ANNULLATO:"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_cancellation.ex
 #: lib/tymeslot/emails/templates/seat_update_for_organizer.ex
 #, elixir-autogen, elixir-format

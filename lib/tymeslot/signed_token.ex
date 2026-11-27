@@ -22,6 +22,8 @@ defmodule Tymeslot.SignedToken do
           | :slack_oauth_state
           | :checkout_return
           | :stripe_connect_state
+          | :magic_link
+          | :reset_sign_in
 
   @purposes %{
     embed_session: [salt: "embed_session", max_age: 6 * 3600],
@@ -55,7 +57,13 @@ defmodule Tymeslot.SignedToken do
     # Far longer than Slack's: a host creating a new Stripe account fills in a
     # long form and may stop to find bank details. Single use is enforced by
     # the nonce on the connect_accounts row, not by this expiry.
-    stripe_connect_state: [salt: "stripe_connect_state", max_age: 24 * 3600]
+    stripe_connect_state: [salt: "stripe_connect_state", max_age: 24 * 3600],
+    # A passwordless sign-in link. Fifteen minutes, single use is the
+    # caller's job; this is only the lifetime.
+    magic_link: [salt: "magic link", max_age: 15 * 60],
+    # Hands a just-reset account from the LiveView form to the session
+    # controller. Short on purpose: it is not the reset link.
+    reset_sign_in: [salt: "reset sign in", max_age: 120]
   }
 
   @doc "Signs `payload` for `purpose`."

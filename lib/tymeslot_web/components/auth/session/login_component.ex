@@ -36,7 +36,10 @@ defmodule TymeslotWeb.Session.LoginComponent do
 
     ~H"""
     <%= if @password_auth_enabled do %>
-      <.auth_card_layout title={dgettext("auth", "Welcome Back!")}>
+      <.auth_card_layout
+        title={dgettext("auth", "Welcome Back!")}
+        preview={assigns[:auth_preview]}
+      >
         <:heading>
           <h2 class="text-xl font-bold text-tymeslot-900 mb-6 tracking-tight text-center">
             {dgettext("auth", "Log in to Tymeslot")}
@@ -66,7 +69,7 @@ defmodule TymeslotWeb.Session.LoginComponent do
               />
               <div
                 id="login-password-toggle-container"
-                phx-hook="PasswordToggle"
+                phx-hook="GosPassword"
                 data-password-container
               >
                 <.input
@@ -90,7 +93,7 @@ defmodule TymeslotWeb.Session.LoginComponent do
                   type="button"
                   phx-click="navigate_to"
                   phx-value-to="reset_password"
-                  class="btn-link bg-transparent"
+                  class="btn-link gos-tap bg-transparent"
                 >
                   {dgettext("auth", "Forgot password?")}
                 </button>
@@ -98,7 +101,7 @@ defmodule TymeslotWeb.Session.LoginComponent do
             </div>
 
             <%= if FormValidationHelpers.field_errors(@errors, :general) != [] do %>
-              <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div class="gos-alert mt-4" role="alert">
                 <%= for message <- FormValidationHelpers.field_errors(@errors, :general) do %>
                   <p class="text-sm text-red-600">{message}</p>
                 <% end %>
@@ -133,7 +136,10 @@ defmodule TymeslotWeb.Session.LoginComponent do
         </:footer>
       </.auth_card_layout>
     <% else %>
-      <.auth_card_layout title={dgettext("auth", "Welcome Back!")}>
+      <.auth_card_layout
+        title={dgettext("auth", "Welcome Back!")}
+        preview={assigns[:auth_preview]}
+      >
         <:heading>
           <h2 class="text-xl font-bold text-tymeslot-900 mb-6 tracking-tight text-center">
             {dgettext("auth", "Log in to Tymeslot")}

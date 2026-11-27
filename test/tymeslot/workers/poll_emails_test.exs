@@ -499,7 +499,7 @@ defmodule Tymeslot.Workers.PollEmailsTest do
 
       email = PollDeadlineReminder.render(poll, participant, "https://example.com/p/vote")
 
-      assert email.subject == "Erinnerung: Stimmen Sie über „Sprint Planning“ ab"
+      assert email.subject == "Erinnerung: Stimme über „Sprint Planning“ ab"
     end
   end
 end

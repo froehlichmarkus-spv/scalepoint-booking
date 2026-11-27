@@ -33,7 +33,10 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
     <.auth_card_layout
       title={dgettext("auth", "Reset Password")}
       subtitle={
-        dgettext("auth", "Enter your email and we'll send you instructions to reset your password")
+        dgettext(
+          "auth",
+          "Enter your work email. If it has an account, we'll send a reset link."
+        )
       }
     >
       <:form>
@@ -74,7 +77,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
               <.spinner class="-ml-1 mr-3 h-5 w-5 text-white" />
               {dgettext("auth", "Sending...")}
             <% else %>
-              {dgettext("auth", "Send Reset Instructions")}
+              {dgettext("auth", "Send reset link")}
             <% end %>
           </.auth_button>
         </.auth_form>
@@ -97,7 +100,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
   @spec forgot_password_confirm_page(map()) :: Phoenix.LiveView.Rendered.t()
   def forgot_password_confirm_page(assigns) do
     ~H"""
-    <.auth_card_layout title={dgettext("auth", "Check Your Email")}>
+    <.auth_card_layout title={dgettext("auth", "Check your inbox")}>
       <:form>
         <div class="text-center mb-8">
           <div class="mx-auto w-20 h-20 flex items-center justify-center rounded-2xl bg-turquoise-50 border-2 border-turquoise-100 shadow-xl shadow-turquoise-500/10 mb-6 transform hover:scale-105 transition-all duration-300">
@@ -106,7 +109,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
           <p class="text-base text-tymeslot-600 font-medium max-w-md mx-auto leading-relaxed">
             {dgettext(
               "auth",
-              "We've sent password reset instructions to your email address. Please check your inbox and follow the link to reset your password."
+              "If an account exists, a reset link is on its way. It works once, for 60 minutes."
             )}
           </p>
         </div>
@@ -140,8 +143,10 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
 
     ~H"""
     <.auth_card_layout
-      title={dgettext("auth", "Reset Your Password")}
-      subtitle={dgettext("auth", "Create a strong password for your account")}
+      title={dgettext("auth", "Set a new password")}
+      subtitle={
+        dgettext("auth", "You'll be signed in on this device; other sessions are signed out.")
+      }
     >
       <:form>
         <%= if error_message = Map.get(@flash, :error) || Map.get(@flash, "error") do %>
@@ -162,7 +167,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
           <div
             class="space-y-1.5"
             id="reset-password-toggle-container"
-            phx-hook="PasswordToggle"
+            phx-hook="GosPassword"
             data-password-container
           >
             <.input
@@ -186,7 +191,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
           <div
             class="space-y-1.5"
             id="reset-confirm-password-toggle-container"
-            phx-hook="PasswordToggle"
+            phx-hook="GosPassword"
             data-password-container
           >
             <.input
@@ -214,7 +219,7 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
 
           <div class="pt-2">
             <.auth_button type="submit">
-              {dgettext("auth", "Set New Password")}
+              {dgettext("auth", "Save and sign in")}
             </.auth_button>
           </div>
         </.auth_form>
@@ -267,19 +272,19 @@ defmodule TymeslotWeb.Session.PasswordResetComponent do
   @spec invalid_token(map()) :: Phoenix.LiveView.Rendered.t()
   def invalid_token(assigns) do
     ~H"""
-    <.auth_card_layout title={dgettext("auth", "Invalid Link")}>
+    <.auth_card_layout title={dgettext("auth", "This link has expired")}>
       <:form>
         <div class="text-center mb-8">
           <div class="mx-auto w-20 h-20 flex items-center justify-center rounded-2xl bg-red-50 border-2 border-red-100 shadow-xl shadow-red-500/10 mb-6 transform hover:scale-105 transition-all duration-300">
             <.icon name="hero-exclamation-circle" class="w-10 h-10 text-red-500" />
           </div>
           <h2 class="text-xl font-bold text-tymeslot-900 tracking-tight mb-3">
-            {dgettext("auth", "Link Expired or Invalid")}
+            {dgettext("auth", "This link has expired")}
           </h2>
           <p class="text-base text-tymeslot-600 font-medium max-w-md mx-auto leading-relaxed">
             {dgettext(
               "auth",
-              "The security link you followed is no longer valid. Please request a new one to continue."
+              "Reset links work once, for 60 minutes. Request a new one, it takes a few seconds."
             )}
           </p>
         </div>

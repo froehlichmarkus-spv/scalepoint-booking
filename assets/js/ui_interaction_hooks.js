@@ -160,14 +160,64 @@ export const ModalFocusTrap = {
 export const SidebarEscape = {
   mounted() {
     this.onKeydown = (e) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return;
-      if (!this.el.classList.contains('dashboard-sidebar-open')) return;
-      this.liveSocket.execJS(this.el, this.el.dataset.dismiss);
+      if (e.defaultPrevented) return;
+      if (e.key === 'Escape') {
+        if (!this.el.classList.contains('dashboard-sidebar-open')) return;
+        this.liveSocket.execJS(this.el, this.el.dataset.dismiss);
+        return;
+      }
+      if (e.key === 'Tab' && this.drawerOpen()) this.trap(e);
     };
     window.addEventListener('keydown', this.onKeydown);
+    this.onResize = () => this.syncDrawer();
+    window.addEventListener('resize', this.onResize);
+    this.observer = new MutationObserver(() => this.syncDrawer());
+    this.observer.observe(this.el, {attributes: true, attributeFilter: ['class']});
+    this.syncDrawer();
   },
 
   destroyed() {
     window.removeEventListener('keydown', this.onKeydown);
+    window.removeEventListener('resize', this.onResize);
+    this.observer?.disconnect();
+  },
+
+  mobile() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 1023px)').matches;
+  },
+
+  drawerOpen() {
+    return this.el.classList.contains('dashboard-sidebar-open');
+  },
+
+  // A closed phone drawer is inert and hidden from assistive tech. From the
+  // lg breakpoint the sidebar is the page, so it stays in the tab order.
+  syncDrawer() {
+    const closed = this.mobile() && !this.drawerOpen();
+    this.el.toggleAttribute('inert', closed);
+    this.el.setAttribute('aria-hidden', closed ? 'true' : 'false');
+    if (this.drawerOpen() && this.mobile()) {
+      const first = this.focusable()[0];
+      if (first) first.focus();
+    }
+  },
+
+  focusable() {
+    return [...this.el.querySelectorAll('a, button, input, select, textarea, [tabindex]')]
+      .filter((node) => !node.hasAttribute('disabled') && node.tabIndex !== -1);
+  },
+
+  trap(e) {
+    const nodes = this.focusable();
+    if (!nodes.length) return;
+    const first = nodes[0];
+    const last = nodes[nodes.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 };

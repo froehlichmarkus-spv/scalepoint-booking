@@ -168,7 +168,7 @@ defmodule Tymeslot.ThemeCustomizations.PresetsKindsTest do
   describe "Presets.Fonts" do
     test "holds the seven font choices, each with a name" do
       assert Enum.sort(Map.keys(Fonts.all())) ==
-               ~w(classic editorial inter literary plex quiet system)
+               ~w(classic editorial geist inter literary plex quiet system)
 
       assert Enum.reject(Map.values(Fonts.all()), &is_binary(&1.name)) == []
     end

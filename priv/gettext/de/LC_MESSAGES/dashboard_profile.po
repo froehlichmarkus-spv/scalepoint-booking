@@ -14,7 +14,7 @@ msgstr ""
 #: lib/tymeslot_web/components/dashboard/profile/delete_avatar_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Are you sure you want to delete your profile picture? This action cannot be undone."
-msgstr "Möchten Sie Ihr Profilbild wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+msgstr "Möchtest du dein Profilbild wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_form_component.ex
 #, elixir-autogen, elixir-format
@@ -39,7 +39,7 @@ msgstr "Grundlegende Informationen"
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Choose a unique username for your personal booking page."
-msgstr "Wählen Sie einen eindeutigen Nutzernamen für Ihre persönliche Buchungsseite."
+msgstr "Wähle einen eindeutigen Nutzernamen für deine persönliche Buchungsseite."
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_form_component.ex
 #, elixir-autogen, elixir-format
@@ -64,7 +64,7 @@ msgstr "Anzeigename"
 #: lib/tymeslot_web/live/dashboard/profile_settings/display_name_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Enter your full name"
-msgstr "Ihr vollständiger Name"
+msgstr "Dein vollständiger Name"
 
 #: lib/tymeslot_web/components/dashboard/profile/delete_avatar_modal.ex
 #, elixir-autogen, elixir-format
@@ -155,7 +155,7 @@ msgstr "Wird hochgeladen…"
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Username updated! Your booking page: %{url}"
-msgstr "Nutzername aktualisiert! Ihre Buchungsseite: %{url}"
+msgstr "Nutzername aktualisiert! Deine Buchungsseite: %{url}"
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_form_component.ex
 #, elixir-autogen, elixir-format
@@ -170,7 +170,7 @@ msgstr "Unbekannte Zeitzone"
 #: lib/tymeslot/profiles/usernames.ex
 #, elixir-autogen, elixir-format
 msgid "Too many username change attempts. Please try again later."
-msgstr "Zu viele Versuche, den Nutzernamen zu ändern. Bitte versuchen Sie es später erneut."
+msgstr "Zu viele Versuche, den Nutzernamen zu ändern. Bitte versuche es später erneut."
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/time_format_form_component.ex
 #, elixir-autogen, elixir-format
@@ -185,7 +185,7 @@ msgstr "24 Std."
 #: lib/tymeslot_web/live/dashboard/profile_settings/time_format_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Controls how times are shown on your dashboard and in the emails you receive. Your booking page follows each visitor's own language."
-msgstr "Legt fest, wie Uhrzeiten in Ihrem Dashboard und in den E-Mails angezeigt werden, die Sie erhalten. Ihre Buchungsseite richtet sich nach der Sprache der jeweiligen Besucher."
+msgstr "Legt fest, wie Uhrzeiten in deinem Dashboard und in den E-Mails angezeigt werden, die du erhältst. Deine Buchungsseite richtet sich nach der Sprache der jeweiligen Besucher."
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/time_format_form_component.ex
 #, elixir-autogen, elixir-format
@@ -242,7 +242,7 @@ msgstr "Links in bereits versendeten Bestätigungs- und Erinnerungs-E-Mails"
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_change_modal.ex
 #, elixir-autogen, elixir-format
 msgid "your booking page and every event link on it"
-msgstr "Ihre Buchungsseite und jeden Termin-Link darauf"
+msgstr "Deine Buchungsseite und jeden Termin-Link darauf"
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/username_form_component.ex
 #, elixir-autogen, elixir-format
@@ -257,12 +257,12 @@ msgstr "Dieser Nutzername ist reserviert"
 #: lib/tymeslot_web/live/dashboard/profile_settings/intro_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "A few sentences about you and how you work."
-msgstr "Ein paar Sätze über Sie und Ihre Arbeitsweise."
+msgstr "Ein paar Sätze über dich und deine Arbeitsweise."
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/intro_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "About You"
-msgstr "Über Sie"
+msgstr "Über du"
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/intro_form_component.ex
 #, elixir-autogen, elixir-format
@@ -287,7 +287,7 @@ msgstr "Überschrift"
 #: lib/tymeslot_web/live/dashboard/profile_settings/intro_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Shown on your booking page by themes that introduce you, such as Folio. Leave an empty line between paragraphs."
-msgstr "Wird auf Ihrer Buchungsseite von Designs angezeigt, die Sie vorstellen, etwa von Folio. Lassen Sie zwischen Absätzen eine Leerzeile."
+msgstr "Wird auf deiner Buchungsseite von Designs angezeigt, die du vorstellst, etwa von Folio. Lass zwischen Absätzen eine Leerzeile."
 
 #: lib/tymeslot_web/components/dashboard/profile/delete_avatar_modal.ex
 #, elixir-autogen, elixir-format
@@ -327,9 +327,9 @@ msgstr "Datenschutz"
 #: lib/tymeslot_web/live/dashboard/profile_settings/legal_links_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Shown in a small footer on your booking pages and on the pages guests open from your emails. Link the pages on your own website."
-msgstr "Erscheinen in einer kleinen Fußzeile auf Ihren Buchungsseiten und auf den Seiten, die Gäste aus Ihren E-Mails heraus öffnen. Verlinken Sie die entsprechenden Seiten Ihrer eigenen Website."
+msgstr "Erscheinen in einer kleinen Fußzeile auf deinen Buchungsseiten und auf den Seiten, die Gäste aus deinen E-Mails heraus öffnen. Verlinke die entsprechenden Seiten deiner eigenen Website."
 
 #: lib/tymeslot_web/live/dashboard/profile_settings/display_name_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "This name will appear to visitors when they book meetings with you."
-msgstr "Dieser Name wird Besuchern angezeigt, wenn sie Termine mit Ihnen buchen."
+msgstr "Dieser Name wird Besuchern angezeigt, wenn sie Termine mit dir buchen."

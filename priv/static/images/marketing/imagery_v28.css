@@ -1,0 +1,56 @@
+/* ===== DS v2.8: hero crispness ===== */
+.hx-text .display{line-height:1.02}
+.hx-text .lead{color:#2B3B51;font-size:1.1875rem;line-height:1.55;max-width:31rem}
+.hx-text .micro{font-weight:500}
+.hx-photo{box-shadow:0 0 0 1px rgba(17,30,50,.07),0 2px 4px rgba(17,30,50,.06),0 24px 48px -16px rgba(17,30,50,.22),0 60px 110px -40px rgba(17,30,50,.45)}
+.hx-photo::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);pointer-events:none;z-index:1}
+.hx-card{padding:5px;border-radius:18px;background:rgba(255,255,255,.96);
+ box-shadow:0 0 0 1px rgba(17,30,50,.07),0 1px 2px rgba(17,30,50,.08),0 10px 22px -8px rgba(17,30,50,.20),0 36px 70px -26px rgba(17,30,50,.42)}
+.hx-card picture,.hx-card img{border-radius:13px}
+.hx-card::before{left:20px;right:20px;top:0}
+.hx-card .pv-tag{top:-34px;font-weight:600;box-shadow:0 0 0 1px rgba(17,30,50,.08),0 6px 14px -6px rgba(17,30,50,.3)}
+/* caption pill: square-ish tag, solid, ringed, so no photo pixel sits under its box */
+.hx-cap{border-radius:8px;background:#fff;color:#33435A;font-weight:500;letter-spacing:.005em;padding:5px 9px;
+ box-shadow:0 0 0 1px rgba(17,30,50,.06),0 4px 10px -4px rgba(17,30,50,.25);backdrop-filter:none}
+@media (max-width:960px){.hx-card{padding:4px;border-radius:14px}.hx-card picture,.hx-card img{border-radius:10px}}
+@media (max-width:640px){.hx-text .lead{font-size:1.0625rem}.hx-cap{padding:4px 8px;border-radius:6px}}
+
+/* ===== DS v2.8: typography rhythm + section spacing ===== */
+.sec-head .eyebrow{margin-bottom:12px}
+.sec-head .h2{text-wrap:balance}
+.sec-head .lead{margin-top:14px;text-wrap:pretty}
+.mood .txt .h2{text-wrap:balance}
+.cx-text .h2{text-wrap:balance}
+.cx-text .lead{max-width:30rem}
+@media (max-width:640px){.cta-x{border-radius:24px}.cx-text{padding:28px 22px 30px}.cx-text .cta-row{flex-direction:column;align-items:stretch}.cx-text .cta-row .btn{width:100%}}
+.facts .k{font-variant-numeric:tabular-nums}
+
+/* ===== DS v2.8: motion (CSS-first; all of it off under prefers-reduced-motion) ===== */
+@media (prefers-reduced-motion:no-preference){
+ .hero-x .aur i,.aur-dark > .aur i{will-change:translate,scale;animation:gos-drift 34s ease-in-out infinite alternate}
+ .hero-x .aur .a2,.aur-dark > .aur .a2{animation-duration:41s;animation-delay:-12s}
+ .hero-x .aur .a3,.aur-dark > .aur .a3{animation-duration:29s;animation-delay:-6s;animation-direction:alternate-reverse}
+ .hero-x .aur .a4{animation-duration:46s;animation-delay:-20s}
+ .hero-x .aur::after,.aur-dark > .aur::after{animation:gos-ribbon 38s ease-in-out infinite alternate}
+ @keyframes gos-drift{0%{translate:0 0;scale:1}50%{translate:4% -3%;scale:1.08}100%{translate:-3% 4%;scale:.96}}
+ @keyframes gos-ribbon{0%{translate:0 0;opacity:.9}100%{translate:-6% 5%;opacity:.6}}
+ .hx-card{animation:gos-float 7s ease-in-out infinite alternate}
+ .hx-card + .hx-card{animation-duration:8.5s;animation-delay:-3s}
+ @keyframes gos-float{from{translate:0 0}to{translate:0 -7px}}
+ /* scroll reveal: only elements that start below the fold get .rv (set by JS), so nothing above the fold blinks */
+ .rv{opacity:0;translate:0 22px;transition:opacity .75s cubic-bezier(.2,.7,.2,1),translate .75s cubic-bezier(.2,.7,.2,1)}
+ .rv.in{opacity:1;translate:0 0}
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+ .btn:hover{transform:translateY(-1px)}
+ .btn-primary:hover,.btn-light:hover{box-shadow:0 10px 22px -10px rgba(14,26,44,.55)}
+ .card,.mod-card,.shot,.price{transition:transform .32s cubic-bezier(.2,.7,.2,1),box-shadow .32s cubic-bezier(.2,.7,.2,1)}
+ .card:hover,.mod-card:hover,.price:hover{transform:translateY(-4px);box-shadow:0 0 0 1px rgba(17,30,50,.06),0 22px 44px -22px rgba(17,30,50,.32)}
+ .hx-card{transition:scale .3s cubic-bezier(.2,.7,.2,1)}
+ .hx-card:hover{scale:1.025}
+}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1!important;translate:none!important}}
+/* v2.8 mobile: photo mood bands crop less (keeps faces, halves the pixels thrown away) */
+@media (max-width:640px){.mood .img:has(> picture),.mood .img:has(> .ph){aspect-ratio:4/3.4}}
+.hero-x .hx-comp{margin-bottom:46px}.hx-label{bottom:-44px}
+@media (max-width:960px){.hero-x .hx-comp{margin-bottom:84px}.hx-label{bottom:-78px}}

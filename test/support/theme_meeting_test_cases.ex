@@ -300,7 +300,7 @@ defmodule TymeslotWeb.ThemeMeetingTestCases do
   defp translated_cancel_confirmed_strings("de") do
     %{
       meeting_cancelled: "Termin abgesagt",
-      successfully_cancelled: "Ihr Termin wurde erfolgreich abgesagt.",
+      successfully_cancelled: "Dein Termin wurde erfolgreich abgesagt.",
       cancellation_emails_sent: "Die Absage-E-Mails wurden an alle Teilnehmer versendet."
     }
   end
@@ -308,8 +308,8 @@ defmodule TymeslotWeb.ThemeMeetingTestCases do
   defp translated_cancel_kept_strings("de") do
     %{
       meeting_confirmed: "Termin bestätigt",
-      still_scheduled: "Großartig! Ihr Termin findet weiterhin wie geplant statt.",
-      look_forward: "Wir freuen uns, Sie zur geplanten Zeit zu begrüßen.",
+      still_scheduled: "Großartig! Dein Termin findet weiterhin wie geplant statt.",
+      look_forward: "Wir freuen uns, dich zur geplanten Zeit zu begrüßen.",
       done: "Fertig"
     }
   end
@@ -317,7 +317,7 @@ defmodule TymeslotWeb.ThemeMeetingTestCases do
   defp translated_cancel_strings("de") do
     %{
       cancel_appointment: "Termin absagen",
-      are_you_sure: "Sind Sie sicher, dass Sie diesen Termin absagen möchten?",
+      are_you_sure: "Bist du sicher, dass du diesen Termin absagen möchtest?",
       cancellation_email_warning: "Eine Absage-E-Mail wird an alle Teilnehmer gesendet",
       yes_cancel: "Ja, Termin absagen",
       keep_meeting: "Termin beibehalten"
@@ -327,7 +327,7 @@ defmodule TymeslotWeb.ThemeMeetingTestCases do
   defp translated_reschedule_strings("de") do
     %{
       reschedule_appointment: "Termin verschieben",
-      select_new_time: "Wählen Sie eine neue Zeit für Ihren Termin"
+      select_new_time: "Wähle eine neue Zeit für deinen Termin"
     }
   end
 end

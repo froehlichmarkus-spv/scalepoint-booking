@@ -21,23 +21,23 @@
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--gos-warm-0) 30%, transparent);
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--gos-overlay);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #fff;
+  color: var(--gos-warm-0);
   cursor: pointer;
   transition: var(--transition-glass);
 }
 
 .background-motion-toggle:hover {
-  background: rgba(0, 0, 0, 0.65);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--gos-overlay-hover);
+  border-color: color-mix(in srgb, var(--gos-warm-0) 50%, transparent);
 }
 
 .background-motion-toggle:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--gos-warm-0);
   outline-offset: 2px;
 }
 

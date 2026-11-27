@@ -29,7 +29,7 @@ msgstr "Buchende zahlen vorab %{price} × die Anzahl der Termine."
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_section.ex
 #, elixir-autogen, elixir-format
 msgid "Bookers pick each session from your available times."
-msgstr "Buchende wählen jeden Termin aus Ihren verfügbaren Zeiten."
+msgstr "Buchende wählen jeden Termin aus deinen verfügbaren Zeiten."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_section.ex
 #, elixir-autogen, elixir-format
@@ -127,7 +127,7 @@ msgstr "Serie"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_section.ex
 #, elixir-autogen, elixir-format
 msgid "Series booking is paused: this meeting type books single sessions until you upgrade."
-msgstr "Die Serienbuchung ist pausiert: Dieser Termintyp bucht nur einzelne Termine, bis Sie upgraden."
+msgstr "Die Serienbuchung ist pausiert: Dieser Termintyp bucht nur einzelne Termine, bis du upgradest."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_section.ex
 #, elixir-autogen, elixir-format
@@ -147,17 +147,17 @@ msgstr "Bei aktivierter Serienbuchung gilt dies nur für den ersten Termin."
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_section.ex
 #, elixir-autogen, elixir-format
 msgid "Your booking window (%{days} days) applies to the first session only. Later sessions can be booked up to 12 months ahead."
-msgstr "Ihr Vorausbuchungszeitraum (%{days} Tage) gilt nur für den ersten Termin. Spätere Termine können bis zu 12 Monate im Voraus gebucht werden."
+msgstr "Dein Vorausbuchungszeitraum (%{days} Tage) gilt nur für den ersten Termin. Spätere Termine können bis zu 12 Monate im Voraus gebucht werden."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Your limit of %{limit} bookings per month is lower than the %{needed} sessions a series can book in one month, so some series won't fit."
-msgstr "Ihr Limit von %{limit} Buchungen pro Monat liegt unter den %{needed} Terminen, die eine Serie in einem Monat buchen kann, daher passen manche Serien nicht hinein."
+msgstr "Dein Limit von %{limit} Buchungen pro Monat liegt unter den %{needed} Terminen, die eine Serie in einem Monat buchen kann, daher passen manche Serien nicht hinein."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/meeting_type_form/series_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Your limit of %{limit} bookings per week is lower than the %{needed} sessions a series can book in one week, so some series won't fit."
-msgstr "Ihr Limit von %{limit} Buchungen pro Woche liegt unter den %{needed} Terminen, die eine Serie in einer Woche buchen kann, daher passen manche Serien nicht hinein."
+msgstr "Dein Limit von %{limit} Buchungen pro Woche liegt unter den %{needed} Terminen, die eine Serie in einer Woche buchen kann, daher passen manche Serien nicht hinein."
 
 #: lib/tymeslot_web/components/dashboard/meetings/series_modal.ex
 #, elixir-autogen, elixir-format
@@ -247,7 +247,7 @@ msgstr[1] "Anfrage von %{name} für alle %{count} Termine ablehnen?"
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "Enter a valid partial refund amount."
-msgstr "Bitte geben Sie einen gültigen Teilrückerstattungsbetrag ein."
+msgstr "Bitte gib einen gültigen Teilrückerstattungsbetrag ein."
 
 #: lib/tymeslot_web/components/dashboard/meetings/decline_request_modal.ex
 #, elixir-autogen, elixir-format
@@ -322,7 +322,7 @@ msgstr "Diese Serie wurde nicht gefunden."
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "The sessions could not be cancelled. Please try again."
-msgstr "Die Termine konnten nicht abgesagt werden. Bitte versuchen Sie es erneut."
+msgstr "Die Termine konnten nicht abgesagt werden. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/components/dashboard/meetings/cancel_series_modal.ex
 #, elixir-autogen, elixir-format
@@ -332,12 +332,12 @@ msgstr "Diese Aktion kann nicht rückgängig gemacht werden. Der Teilnehmer erh�
 #: lib/tymeslot_web/components/dashboard/meetings/series_modal.ex
 #, elixir-autogen, elixir-format
 msgid "This series is waiting for your answer. Approve or decline it from its card."
-msgstr "Diese Serie wartet auf Ihre Antwort. Nehmen Sie sie über ihre Karte an oder lehnen Sie sie dort ab."
+msgstr "Diese Serie wartet auf deine Antwort. Nimm sie über ihre Karte an oder lehnst sie dort ab."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "Tick the acknowledgement to cancel without refunding the attendee."
-msgstr "Aktivieren Sie das Kontrollkästchen, um ohne Rückerstattung an den Teilnehmer abzusagen."
+msgstr "Aktiviere das Kontrollkästchen, um ohne Rückerstattung an den Teilnehmer abzusagen."
 
 #: lib/tymeslot_web/components/dashboard/meetings/series_modal.ex
 #, elixir-autogen, elixir-format
@@ -379,22 +379,22 @@ msgstr "Gäste können nur zu Einzelbuchungen hinzugefügt werden, nicht zu eine
 #, elixir-autogen, elixir-format
 msgid "%{count} session cancelled. Refund of %{amount} is being processed. We'll email you if it fails."
 msgid_plural "%{count} sessions cancelled. Refund of %{amount} is being processed. We'll email you if it fails."
-msgstr[0] "%{count} Termin abgesagt. Die Rückerstattung von %{amount} wird bearbeitet. Schlägt sie fehl, erhalten Sie eine E-Mail von uns."
-msgstr[1] "%{count} Termine abgesagt. Die Rückerstattung von %{amount} wird bearbeitet. Schlägt sie fehl, erhalten Sie eine E-Mail von uns."
+msgstr[0] "%{count} Termin abgesagt. Die Rückerstattung von %{amount} wird bearbeitet. Schlägt sie fehl, erhaltest eine E-Mail von uns."
+msgstr[1] "%{count} Termine abgesagt. Die Rückerstattung von %{amount} wird bearbeitet. Schlägt sie fehl, erhaltest eine E-Mail von uns."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "%{count} session cancelled without a refund: the payment is older than the 60-day refund window. You can refund it from Stripe."
 msgid_plural "%{count} sessions cancelled without a refund: the payment is older than the 60-day refund window. You can refund it from Stripe."
-msgstr[0] "%{count} Termin ohne Rückerstattung abgesagt, da die Zahlung außerhalb der Erstattungsfrist von 60 Tagen liegt. Sie können sie in Stripe erstatten."
-msgstr[1] "%{count} Termine ohne Rückerstattung abgesagt, da die Zahlung außerhalb der Erstattungsfrist von 60 Tagen liegt. Sie können sie in Stripe erstatten."
+msgstr[0] "%{count} Termin ohne Rückerstattung abgesagt, da die Zahlung außerhalb der Erstattungsfrist von 60 Tagen liegt. Du kannst sie in Stripe erstatten."
+msgstr[1] "%{count} Termine ohne Rückerstattung abgesagt, da die Zahlung außerhalb der Erstattungsfrist von 60 Tagen liegt. Du kannst sie in Stripe erstatten."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "%{count} session cancelled without a refund: the payment is under dispute. Settle the dispute in Stripe first."
 msgid_plural "%{count} sessions cancelled without a refund: the payment is under dispute. Settle the dispute in Stripe first."
-msgstr[0] "%{count} Termin ohne Rückerstattung abgesagt, da die Zahlung angefochten wird. Klären Sie die Anfechtung zuerst in Stripe."
-msgstr[1] "%{count} Termine ohne Rückerstattung abgesagt, da die Zahlung angefochten wird. Klären Sie die Anfechtung zuerst in Stripe."
+msgstr[0] "%{count} Termin ohne Rückerstattung abgesagt, da die Zahlung angefochten wird. Kläre die Anfechtung zuerst in Stripe."
+msgstr[1] "%{count} Termine ohne Rückerstattung abgesagt, da die Zahlung angefochten wird. Kläre die Anfechtung zuerst in Stripe."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
@@ -406,12 +406,12 @@ msgstr[1] "%{count} Termine ohne Rückerstattung abgesagt, da die Serie nicht be
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is older than the 60-day refund window. You can refund it from Stripe."
-msgstr "Eine Rückerstattung ist nicht möglich, da die Zahlung außerhalb der Erstattungsfrist von 60 Tagen liegt. Sie können sie in Stripe erstatten."
+msgstr "Eine Rückerstattung ist nicht möglich, da die Zahlung außerhalb der Erstattungsfrist von 60 Tagen liegt. Du kannst sie in Stripe erstatten."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format
 msgid "No refund can be made: the payment is under dispute. Settle the dispute in Stripe first."
-msgstr "Eine Rückerstattung ist nicht möglich, da die Zahlung angefochten wird. Klären Sie die Anfechtung zuerst in Stripe."
+msgstr "Eine Rückerstattung ist nicht möglich, da die Zahlung angefochten wird. Kläre die Anfechtung zuerst in Stripe."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/series_actions.ex
 #, elixir-autogen, elixir-format

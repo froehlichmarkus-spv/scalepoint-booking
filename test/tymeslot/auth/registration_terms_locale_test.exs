@@ -29,6 +29,6 @@ defmodule Tymeslot.Auth.RegistrationTermsLocaleTest do
              end)
 
     assert message ==
-             "Bitte korrigieren Sie die folgenden Fehler: Die Nutzungsbedingungen müssen akzeptiert werden"
+             "Bitte korrigiere die folgenden Fehler: Die Nutzungsbedingungen müssen akzeptiert werden"
   end
 end

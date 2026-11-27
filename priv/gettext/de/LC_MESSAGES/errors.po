@@ -304,7 +304,7 @@ msgstr[1] "%{count} Stunden"
 #: lib/tymeslot/security/rate_limiter/helpers.ex
 #, elixir-autogen, elixir-format
 msgid "You've reached the limit of %{limit} %{action} per %{window}. Please try again in %{wait}."
-msgstr "Sie haben das Limit von %{limit} %{action} pro %{window} erreicht. Bitte versuchen Sie es in %{wait} erneut."
+msgstr "Du hast das Limit von %{limit} %{action} pro %{window} erreicht. Bitte versuche es in %{wait} erneut."
 
 #: lib/tymeslot/security/rate_limiter/helpers.ex
 #, elixir-autogen, elixir-format
@@ -330,12 +330,12 @@ msgstr[1] "%{count} Minuten"
 #: lib/tymeslot_web/helpers/image_upload_errors.ex
 #, elixir-autogen, elixir-format
 msgid "This image is too large (%{size} megapixels). Please upload an image of at most %{limit} megapixels."
-msgstr "Dieses Bild ist zu groß (%{size} Megapixel). Bitte laden Sie ein Bild mit höchstens %{limit} Megapixeln hoch."
+msgstr "Dieses Bild ist zu groß (%{size} Megapixel). Bitte ladest ein Bild mit höchstens %{limit} Megapixeln hoch."
 
 #: lib/tymeslot_web/helpers/image_upload_errors.ex
 #, elixir-autogen, elixir-format
 msgid "We are busy processing other uploads. Please try again in a moment."
-msgstr "Wir verarbeiten gerade andere Uploads. Bitte versuchen Sie es gleich noch einmal."
+msgstr "Wir verarbeiten gerade andere Uploads. Bitte versuche es gleich noch einmal."
 
 #: lib/tymeslot/meeting_types/group_validation.ex
 #, elixir-autogen, elixir-format
@@ -375,7 +375,7 @@ msgstr "Gruppenbuchungen können keine Zahlung erfordern"
 #: lib/tymeslot/meeting_types/meeting_type_schema.ex
 #, elixir-autogen, elixir-format
 msgid "You already have a meeting type with this name"
-msgstr "Sie haben bereits einen Termintyp mit diesem Namen"
+msgstr "Du hast bereits einen Termintyp mit diesem Namen"
 
 #: lib/tymeslot/meeting_types/lengths.ex
 #, elixir-autogen, elixir-format
@@ -709,7 +709,7 @@ msgstr "Mindestens ein Ereignis muss ausgewählt sein"
 #: lib/tymeslot_web/themes/shared/components/error_component.ex
 #, elixir-autogen, elixir-format
 msgid "If you are the organiser, please connect a calendar in your dashboard."
-msgstr "Falls Sie der Gastgeber sind: Bitte verknüpfen Sie einen Kalender in Ihrem Dashboard."
+msgstr "Falls du der Gastgeber sind: Bitte verknüpfst einen Kalender in deinem Dashboard."
 
 #: lib/tymeslot/theme_customizations/options/background.ex
 #, elixir-autogen, elixir-format
@@ -754,27 +754,27 @@ msgstr "muss ein gültiges vorgegebenes Video sein"
 #: lib/tymeslot_web/helpers/image_upload_errors.ex
 #, elixir-autogen, elixir-format
 msgid "The file could not be read. Please upload it again."
-msgstr "Die Datei konnte nicht gelesen werden. Bitte laden Sie sie erneut hoch."
+msgstr "Die Datei konnte nicht gelesen werden. Bitte ladest sie erneut hoch."
 
 #: lib/tymeslot_web/helpers/image_upload_errors.ex
 #, elixir-autogen, elixir-format
 msgid "This file is not an image we can read. Please upload a different image."
-msgstr "Diese Datei ist kein Bild, das wir lesen können. Bitte laden Sie ein anderes Bild hoch."
+msgstr "Diese Datei ist kein Bild, das wir lesen können. Bitte ladest ein anderes Bild hoch."
 
 #: lib/tymeslot_web/helpers/image_upload_errors.ex
 #, elixir-autogen, elixir-format
 msgid "This file is too large. Please upload a file of at most %{size} MB."
-msgstr "Diese Datei ist zu groß. Bitte laden Sie eine Datei mit höchstens %{size} MB hoch."
+msgstr "Diese Datei ist zu groß. Bitte ladest eine Datei mit höchstens %{size} MB hoch."
 
 #: lib/tymeslot_web/helpers/image_upload_errors.ex
 #, elixir-autogen, elixir-format
 msgid "This file type is not accepted. Please upload a JPG, PNG, GIF or WebP image."
-msgstr "Dieser Dateityp wird nicht akzeptiert. Bitte laden Sie ein JPG-, PNG-, GIF- oder WebP-Bild hoch."
+msgstr "Dieser Dateityp wird nicht akzeptiert. Bitte ladest ein JPG-, PNG-, GIF- oder WebP-Bild hoch."
 
 #: lib/tymeslot/meeting_types/payment_validation.ex
 #, elixir-autogen, elixir-format
 msgid "Prices cannot be set in your Stripe account's currency"
-msgstr "In der Währung Ihres Stripe-Kontos können keine Preise festgelegt werden"
+msgstr "In der Währung deines Stripe-Kontos können keine Preise festgelegt werden"
 
 #: lib/tymeslot/custom_fields/custom_fields.ex
 #: lib/tymeslot/custom_fields/validator.ex
@@ -815,27 +815,27 @@ msgstr "Terminverschiebungen"
 #: lib/tymeslot/meeting_types/fixed_dates.ex
 #, elixir-autogen, elixir-format
 msgid "cancel the planned dates before turning fixed dates off"
-msgstr "sagen Sie die geplanten Termine ab, bevor Sie feste Termine ausschalten"
+msgstr "sagst die geplanten Termine ab, bevor du feste Termine ausschalten"
 
 #: lib/tymeslot/meeting_types/fixed_dates.ex
 #, elixir-autogen, elixir-format
 msgid "remove the offered times before turning group bookings on"
-msgstr "entfernen Sie die angebotenen Zeiten, bevor Sie Gruppenbuchungen einschalten"
+msgstr "entfernst die angebotenen Zeiten, bevor du Gruppenbuchungen einschalten"
 
 #: lib/tymeslot/booking_pages/booking_page_schema.ex
 #, elixir-autogen, elixir-format
 msgid "Use 3 to 30 lowercase letters, numbers, hyphens or underscores, starting with a letter or number"
-msgstr "Verwenden Sie 3 bis 30 Kleinbuchstaben, Ziffern, Bindestriche oder Unterstriche, beginnend mit einem Buchstaben oder einer Ziffer"
+msgstr "Verwende 3 bis 30 Kleinbuchstaben, Ziffern, Bindestriche oder Unterstriche, beginnend mit einem Buchstaben oder einer Ziffer"
 
 #: lib/tymeslot/meeting_types/slugs.ex
 #, elixir-autogen, elixir-format
 msgid "is already the address of one of your booking pages"
-msgstr "ist bereits die Adresse einer Ihrer Buchungsseiten"
+msgstr "ist bereits die Adresse einer deiner Buchungsseiten"
 
 #: lib/tymeslot/booking_pages.ex
 #, elixir-autogen, elixir-format
 msgid "is already the address of one of your meeting types"
-msgstr "ist bereits die Adresse eines Ihrer Termintypen"
+msgstr "ist bereits die Adresse eines deiner Termintypen"
 
 #: lib/tymeslot/meeting_types/group_validation.ex
 #, elixir-autogen, elixir-format
@@ -890,7 +890,7 @@ msgstr "ist keine Übersetzungssprache"
 #: lib/tymeslot/meetings/unique_slot.ex
 #, elixir-autogen, elixir-format
 msgid "This time is no longer available. Please choose another time."
-msgstr "Diese Zeit ist nicht mehr verfügbar. Bitte wählen Sie eine andere."
+msgstr "Diese Zeit ist nicht mehr verfügbar. Bitte wähle eine andere."
 
 #: lib/tymeslot/meeting_types/email_verification_rule.ex
 #, elixir-autogen, elixir-format
@@ -900,7 +900,7 @@ msgstr "E-Mail-Bestätigung lässt sich nicht mit Zahlungen kombinieren"
 #: lib/tymeslot/meeting_types/meeting_type_schema.ex
 #, elixir-autogen, elixir-format
 msgid "would give a reserved booking link; choose another name or set a custom link"
-msgstr "ergäbe einen reservierten Buchungslink; wählen Sie einen anderen Namen oder legen Sie einen benutzerdefinierten Link fest"
+msgstr "ergäbe einen reservierten Buchungslink; wähle einen anderen Namen oder legst einen benutzerdefinierten Link fest"
 
 #: lib/tymeslot/meeting_types/series_settings.ex
 #, elixir-autogen, elixir-format
@@ -916,3 +916,28 @@ msgstr "Termintypen, bei denen Gäste ihre E-Mail-Adresse bestätigen, können n
 #, elixir-autogen, elixir-format
 msgid "Go to the scheduler"
 msgstr "Go to the scheduler"
+
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Error 500"
+msgstr "Fehler 500"
+
+#: lib/tymeslot_web/controllers/error_html.ex
+#, elixir-autogen, elixir-format
+msgid "Go to %{product}"
+msgstr "Weiter zu %{product}"
+
+#: lib/tymeslot_web/controllers/error_html/404.html.heex
+#, elixir-autogen, elixir-format
+msgid "If you need help, write to %{email}."
+msgstr "Wenn du Hilfe brauchst, schreib an %{email}."
+
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Please try again in a moment. If it keeps happening, write to %{email}."
+msgstr "Versuch es gleich noch einmal. Wenn es weiter passiert, schreib an %{email}."
+
+#: lib/tymeslot_web/controllers/error_html/500.html.heex
+#, elixir-autogen, elixir-format
+msgid "Something went wrong"
+msgstr "Etwas ist schiefgelaufen"

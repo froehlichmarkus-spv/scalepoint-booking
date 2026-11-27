@@ -409,7 +409,7 @@ defmodule Tymeslot.BookingSeries.NotificationsTest do
                "#{local.day}. #{month} #{local.year} um #{Calendar.strftime(local, "%H:%M")}"
     end
 
-    assert attendee.subject == "Ihre 2 Termine mit Grace Hopper sind gebucht"
+    assert attendee.subject == "Deine 2 Termine mit Grace Hopper sind gebucht"
     assert organizer.subject == "Ada Lovelace booked 2 sessions"
   end
 

@@ -453,7 +453,7 @@ defmodule Tymeslot.SlackTest do
     test "translates messages into the current locale" do
       Gettext.with_locale(TymeslotWeb.Gettext, "de", fn ->
         assert Slack.translate_error(:insufficient_plan) =~
-                 "Ihr Tarif enthält keine Slack-Benachrichtigungen"
+                 "Dein Tarif enthält keine Slack-Benachrichtigungen"
 
         assert Slack.translate_error("bogus_code") == "Slack-Fehler: bogus_code"
       end)

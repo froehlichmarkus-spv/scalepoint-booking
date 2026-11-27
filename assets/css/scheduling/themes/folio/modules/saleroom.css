@@ -2,20 +2,20 @@
    Two layouts share the mechanism: a dark sales room, and a light neutral page. */
 
 @font-face {
-  font-family: "DM Serif Display";
+  font-family: "Geist";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url("/fonts/dm-serif-display-latin-ext.woff2") format("woff2");
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 @font-face {
-  font-family: "DM Serif Display";
+  font-family: "Geist";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url("/fonts/dm-serif-display-latin.woff2") format("woff2");
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -28,7 +28,7 @@
   background: var(--room-canvas);
   color: var(--room-text);
   min-height: 100vh;
-  font-family: var(--room-body), Inter, system-ui, sans-serif;
+  font-family: var(--room-body), "Geist", system-ui, sans-serif;
 }
 
 .folio-page[data-layout] .folio-cover {
@@ -76,7 +76,7 @@
 
 .folio-page[data-layout] .folio-identity__name {
   color: var(--room-text);
-  font-family: var(--room-heading), Inter, sans-serif;
+  font-family: var(--room-heading), "Geist", sans-serif;
   font-weight: 400;
   font-size: clamp(2.4rem, 4vw, 3.5rem);
   letter-spacing: -0.03em;
@@ -125,7 +125,7 @@
 .room__hero {
   margin: 0;
   max-width: 22rem;
-  font-family: var(--room-heading), Inter, sans-serif;
+  font-family: var(--room-heading), "Geist", sans-serif;
   font-size: clamp(1.45rem, 2vw, 1.85rem);
   font-weight: 400;
   line-height: 1.2;
@@ -242,7 +242,7 @@
   background: var(--room-card);
   color: var(--room-card-text);
   --theme-text: var(--room-card-text);
-  --theme-text-secondary: var(--folio-room-ink-muted);
+  --theme-text-secondary: var(--gos-text-2);
   --theme-background: var(--room-card);
   --theme-surface: var(--room-card);
   --theme-canvas: var(--room-card);
@@ -254,7 +254,7 @@
 }
 
 .folio-page[data-layout="sales_room"] .journey--continuous > :not(.folio-masthead) {
-  --theme-text-secondary: var(--folio-room-ink-muted);
+  --theme-text-secondary: var(--gos-text-2);
 }
 
 .folio-page[data-layout="neutral"] .journey--continuous > :not(.folio-masthead) {
@@ -295,4 +295,43 @@
   .folio-page[data-layout] .folio-identity__name {
     font-size: 2.15rem;
   }
+}
+
+.folio-page[data-layout] .journey--continuous > .folio-outcome-page {
+  grid-column: 1 / span 2;
+  width: min(var(--folio-column), 100%);
+  justify-self: center;
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-masthead {
+  position: static;
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-portrait {
+  width: var(--folio-portrait-size-slim);
+  height: var(--folio-portrait-size-slim);
+  max-height: var(--folio-portrait-size-slim);
+  aspect-ratio: auto;
+  margin: 0;
+  border-radius: var(--radius-full);
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.folio-page[data-layout] .folio-outcome-page .folio-identity__name {
+  font-size: var(--theme-font-size-xl);
+}
+
+.folio-page[data-layout] .room-trust {
+  max-width: var(--folio-column);
+  margin: var(--space-md) auto 0;
+  padding: 0 var(--folio-gutter);
+  color: var(--gos-text-2);
+  font-size: var(--theme-font-size-sm);
 }

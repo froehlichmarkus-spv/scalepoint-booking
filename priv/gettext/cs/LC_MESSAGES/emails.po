@@ -377,6 +377,7 @@ msgstr "Zpráva od uživatele %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} prostřednictvím služby %{brand}"
 
+#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -601,3 +602,23 @@ msgstr "Videohovor:"
 #, elixir-autogen, elixir-format
 msgid "Booked through your %{page} page"
 msgstr "Rezervováno přes vaši stránku „%{page}“"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Legal notice"
+msgstr "Legal notice"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Privacy"
+msgstr "Privacy"
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Reply to this email or write to support@scalepoint-ventures.com."
+msgstr "Reply to this email or write to support@scalepoint-ventures.com."
+
+#: lib/tymeslot/emails/shared/ds_mail.ex
+#, elixir-autogen, elixir-format
+msgid "Terms"
+msgstr "Terms"

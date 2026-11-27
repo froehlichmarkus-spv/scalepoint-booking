@@ -173,12 +173,12 @@ defmodule TymeslotWeb.Components.CoreComponentsEmptyStateTest do
   end
 
   describe "loading_card/1" do
-    test "renders a spinner in a card, announced as loading" do
+    test "renders skeleton rows, announced as loading" do
       doc = LazyHTML.from_fragment(render_component(&Feedback.loading_card/1, %{}))
 
       status = LazyHTML.query(doc, "[role='status']")
-      assert class_of(status) =~ "card-glass"
-      assert count(doc, "[role='status'] svg.spinner[aria-hidden='true']") == 1
+      assert class_of(status) =~ "gos-skel"
+      assert count(doc, "[role='status'] i") == 3
       assert doc |> LazyHTML.query(".sr-only") |> LazyHTML.text() == "Loading"
     end
 
