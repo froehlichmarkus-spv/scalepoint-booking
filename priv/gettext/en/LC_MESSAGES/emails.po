@@ -580,6 +580,6 @@ msgstr ""
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
 #: lib/tymeslot/emails/shared/text_body_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Join meeting"
 msgstr ""

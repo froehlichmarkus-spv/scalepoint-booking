@@ -675,7 +675,7 @@ msgstr "Zwrócono"
 #: lib/tymeslot/emails/templates/booking_payment_refunded.ex
 #, elixir-autogen, elixir-format
 msgid "Total"
-msgstr ""
+msgstr "Suma"
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format

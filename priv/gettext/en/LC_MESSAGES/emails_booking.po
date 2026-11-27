@@ -730,6 +730,6 @@ msgid "The list is also attached as a CSV file for a spreadsheet."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "BookDesk24 platform fee: %{amount}"
 msgstr ""

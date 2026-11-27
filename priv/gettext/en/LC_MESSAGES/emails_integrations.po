@@ -500,48 +500,48 @@ msgid "Your calendar service could not be reached or did not answer properly, ev
 msgstr ""
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "%{provider} needs reconnecting before BookDesk24 can use it again."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Until then your booking page may not offer times or take bookings, because BookDesk24 will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you replace it. The reason is shown above. Until then your booking page may not offer times or take bookings, because BookDesk24 will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "BookDesk24 checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
 msgid_plural "BookDesk24 checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
 msgstr[0] ""
 msgstr[1] ""
 
 #: lib/tymeslot/emails/templates/calendar_sync_error.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in BookDesk24 and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "These calendars are no longer on your calendar server, so BookDesk24 has stopped using them:"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "“%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it."
 msgstr ""

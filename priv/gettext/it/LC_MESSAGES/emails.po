@@ -571,10 +571,10 @@ msgstr "Prenotato tramite la tua pagina «%{page}»"
 #: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
 msgid "Button not working? Paste this link into your browser:"
-msgstr ""
+msgstr "Il pulsante non funziona? Incolla questo link nel browser:"
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
 #: lib/tymeslot/emails/shared/text_body_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Join meeting"
 msgstr "Partecipa alla riunione"

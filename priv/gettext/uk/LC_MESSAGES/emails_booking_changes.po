@@ -675,7 +675,7 @@ msgstr "Повернуто"
 #: lib/tymeslot/emails/templates/booking_payment_refunded.ex
 #, elixir-autogen, elixir-format
 msgid "Total"
-msgstr ""
+msgstr "Разом"
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
 #, elixir-autogen, elixir-format

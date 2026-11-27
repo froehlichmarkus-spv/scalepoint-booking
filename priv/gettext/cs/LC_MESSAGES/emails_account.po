@@ -606,7 +606,7 @@ msgstr "Jak si nastavit nové heslo k účtu BookDesk24."
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
 msgid "Please verify your email address."
-msgstr ""
+msgstr "Ověřte prosím svou e-mailovou adresu."
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -769,67 +769,67 @@ msgstr "Vaše nadcházející rezervace budou ze služby BookDesk24 smazány spo
 #, elixir-autogen, elixir-format
 msgid "%{count} hour"
 msgid_plural "%{count} hours"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%{count} hodina"
+msgstr[1] "%{count} hodiny"
+msgstr[2] "%{count} hodin"
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
 msgid "%{count} minute"
 msgid_plural "%{count} minutes"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%{count} minuta"
+msgstr[1] "%{count} minuty"
+msgstr[2] "%{count} minut"
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
 msgid "%{count} second"
 msgid_plural "%{count} seconds"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%{count} sekunda"
+msgstr[1] "%{count} sekundy"
+msgstr[2] "%{count} sekund"
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
 msgid "%{once} If you didn't create an account, you can ignore this email."
-msgstr ""
+msgstr "%{once} Pokud jste účet nezakládali, můžete tento e-mail ignorovat."
 
 #: lib/tymeslot/emails/shared/link_lifetime.ex
 #, elixir-autogen, elixir-format
 msgid "It works once, for %{duration}."
-msgstr ""
+msgstr "Funguje jen jednou, po dobu %{duration}."
 
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "Save and sign in"
-msgstr ""
+msgstr "Uložit a přihlásit se"
 
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "Save and sign in:"
-msgstr ""
+msgstr "Uložit a přihlásit se:"
 
 #: lib/tymeslot/emails/templates/magic_link.ex
 #, elixir-autogen, elixir-format
 msgid "Sign in"
-msgstr ""
+msgstr "Přihlášení"
 
 #: lib/tymeslot/emails/templates/magic_link.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Sign in to BookDesk24"
 msgstr "Přihlásit se do BookDesk24u"
 
 #: lib/tymeslot/emails/templates/magic_link.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Sign in to BookDesk24:"
 msgstr "Přihlásit se do BookDesk24u:"
 
 #: lib/tymeslot/emails/templates/magic_link.ex
 #, elixir-autogen, elixir-format
 msgid "Use the button on this device to sign in. It works once."
-msgstr ""
+msgstr "Tlačítkem na tomto zařízení se přihlaste. Funguje jen jednou."
 
 #: lib/tymeslot/emails/templates/magic_link.ex
 #, elixir-autogen, elixir-format
 msgid "Your sign-in link"
-msgstr ""
+msgstr "Váš odkaz k přihlášení"

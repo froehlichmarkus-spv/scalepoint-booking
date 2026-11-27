@@ -103,7 +103,10 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       preheader: organizer_details[:preview] || organizer_details[:stage_subtitle],
       subtitle: organizer_details[:stage_subtitle],
       eyebrow: DsMail.booking_eyebrow(eyebrow),
-      body: MjmlEmail.compile_fragment(mjml_content),
+      body:
+        MjmlEmail.compile_fragment(
+          MjmlEmail.organizer_identity(organizer_details) <> mjml_content
+        ),
       slot: organizer_details[:slot],
       invoice: organizer_details[:invoice],
       organizer_user_id: organizer_details[:organizer_user_id],

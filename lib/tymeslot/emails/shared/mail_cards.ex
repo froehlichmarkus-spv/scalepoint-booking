@@ -24,7 +24,7 @@ defmodule Tymeslot.Emails.Shared.MailCards do
     rows = spec[:rows] || []
 
     html = """
-    <table role="presentation" class="pc" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFD" style="background:#F8FAFD;border:1px solid #DCE3EC;border-radius:12px;border-collapse:separate"><tr><td class="pcp" style="padding:16px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>#{date_cell(spec)}<td valign="middle" style="padding-left:14px;font-family:#{@font};font-size:13px;line-height:19px;font-weight:400;color:#4A5566" class="mu"><b class="tx" style="display:block;font-family:#{@font};font-size:16px;line-height:22px;font-weight:600;color:#111E32">#{esc(spec[:title])}</b>#{esc(spec[:sub])}</td>#{chip(spec[:status], spec[:tone] || :success)}</tr></table></td></tr>#{divider()}#{rows_html(rows)}</table>
+    <table role="presentation" class="pc" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F8FAFD" style="background:#F8FAFD;border:1px solid #DCE3EC;border-radius:12px;border-collapse:separate"><tr><td class="pcp" style="padding:16px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>#{date_cell(spec)}<td valign="middle" style="padding-left:14px;font-family:#{@font};font-size:13px;line-height:19px;font-weight:400;color:#4A5566" class="mu"><b class="tx" style="display:block;font-family:#{@font};font-size:16px;line-height:22px;font-weight:600;color:#111E32">#{esc(spec[:title])}</b>#{esc(spec[:sub])}</td>#{chip(spec[:status], spec[:tone] || :success)}</tr></table></td></tr>#{divider()}#{rows_html(rows)}#{note(spec[:note])}</table>
     """
 
     text =
@@ -33,6 +33,7 @@ defmodule Tymeslot.Emails.Shared.MailCards do
         spec[:sub]
         | Enum.map(rows, fn {k, v} -> "- #{k}: #{v}" end)
       ]
+      |> Kernel.++([spec[:note]])
       |> Enum.reject(&(&1 in [nil, ""]))
       |> Enum.join("\n")
 
@@ -70,7 +71,8 @@ defmodule Tymeslot.Emails.Shared.MailCards do
       sub: time_line(details, locale, clock),
       status: status,
       tone: tone,
-      rows: slot_rows(details, locale)
+      rows: slot_rows(details, locale),
+      note: if(clock == :owner, do: Formatting.booked_through(details))
     }
   end
 
@@ -175,7 +177,10 @@ defmodule Tymeslot.Emails.Shared.MailCards do
         _other -> nil
       end
 
-    location = Map.get(details, :location)
+    location =
+      if details[:location_type] || is_binary(Map.get(details, :location)) do
+        Formatting.format_location(details)
+      end
 
     []
     |> maybe_row(with_label(locale), Map.get(details, :organizer_name))

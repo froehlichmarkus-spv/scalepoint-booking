@@ -585,10 +585,10 @@ msgstr "Rezervováno přes vaši stránku „%{page}“"
 #: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
 msgid "Button not working? Paste this link into your browser:"
-msgstr ""
+msgstr "Tlačítko nefunguje? Vložte tento odkaz do prohlížeče:"
 
 #: lib/tymeslot/emails/shared/meeting/video_section.ex
 #: lib/tymeslot/emails/shared/text_body_helper.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Join meeting"
 msgstr "Připojit se ke schůzce"

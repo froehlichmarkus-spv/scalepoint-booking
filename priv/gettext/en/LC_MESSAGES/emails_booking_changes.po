@@ -664,7 +664,7 @@ msgid "No one else has confirmed a spot at the earlier time, so that meeting has
 msgstr ""
 
 #: lib/tymeslot/emails/templates/booking_payment_refunded.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Refund"
 msgstr ""
 
@@ -674,61 +674,61 @@ msgid "Total"
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Please review and update the booking in BookDesk24."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Please review the group meeting in BookDesk24."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "The group meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original time for every participant, and a group meeting cannot be moved for everyone at once."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "The meeting \"%{title}\" was deleted from your external calendar but is still active in BookDesk24."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "The meeting \"%{title}\" was deleted from your external calendar. BookDesk24 still has this booking on record - please review and cancel it here if the meeting is no longer taking place."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking - please review the details and update or cancel it accordingly."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking shown below."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "This group meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "This meeting was <strong>removed from your external calendar</strong> but is still active in BookDesk24. If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "This meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: BookDesk24 then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
 msgstr ""
 
 #: lib/tymeslot/emails/templates/external_booking_change.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "You changed when \"%{title}\" ends in your external calendar, so BookDesk24 updated the booking: it now ends at %{to} instead of %{from}."
 msgstr ""

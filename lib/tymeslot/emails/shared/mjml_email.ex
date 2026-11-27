@@ -438,6 +438,18 @@ defmodule Tymeslot.Emails.Shared.MjmlEmail do
     """
   end
 
+  @doc "The organiser's avatar and name, shown above a booking mail's body."
+  @spec organizer_identity(map()) :: String.t()
+  def organizer_identity(details) when is_map(details) do
+    name = details[:name] || ""
+
+    organizer_strip(
+      AvatarHelper.avatar_mjml(details[:avatar_url], name),
+      Sanitise.sanitize_for_email(name),
+      Sanitise.sanitize_for_email(details[:title] || "")
+    )
+  end
+
   defp organizer_strip(avatar, name, title) do
     """
     <mj-section
