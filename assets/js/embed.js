@@ -142,7 +142,7 @@
    */
   const failSafe = (msg) => {
     console.error('Tymeslot Error:', msg);
-    const containers = document.querySelectorAll('#tymeslot-booking, [data-tymeslot-inline]');
+    const containers = document.querySelectorAll('#bookdesk24-booking, #tymeslot-booking, [data-bookdesk24-inline], [data-tymeslot-inline]');
     containers.forEach(c => {
       if (typeof TymeslotBooking !== 'undefined' && TymeslotBooking.showError) {
         TymeslotBooking.showError(c);
@@ -692,10 +692,11 @@
    * Initialize inline embeds on page load
    */
   function initInlineEmbeds() {
-    const containers = document.querySelectorAll('#tymeslot-booking, [data-tymeslot-inline]');
+    const containers = document.querySelectorAll('#bookdesk24-booking, #tymeslot-booking, [data-bookdesk24-inline], [data-tymeslot-inline]');
     
     containers.forEach(container => {
-      const username = container.getAttribute('data-username') || 
+      const username = container.getAttribute('data-username') ||
+                      container.getAttribute('data-bookdesk24-inline') ||
                       container.getAttribute('data-tymeslot-inline');
       
       if (!validateUsername('initInlineEmbeds', username)) return;
@@ -815,7 +816,7 @@
       // div get matching popup sizing without repeating the value in JS.
       if (!options.maxWidth) {
         const inlineDiv = document.querySelector(
-          '#tymeslot-booking[data-max-width], [data-tymeslot-inline][data-max-width]'
+          '#bookdesk24-booking[data-max-width], #tymeslot-booking[data-max-width], [data-bookdesk24-inline][data-max-width], [data-tymeslot-inline][data-max-width]'
         );
         if (inlineDiv) {
           options = Object.assign({}, options, {
@@ -992,6 +993,9 @@
       ensureScrollable(container, wrapper);
     }
   };
+
+  // New embeds call BookDesk24. The previous global still works.
+  window.BookDesk24 = window.TymeslotBooking;
 
   /**
    * Initialize when DOM is ready

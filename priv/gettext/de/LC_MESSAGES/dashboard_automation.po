@@ -86,7 +86,7 @@ msgstr "Schließen"
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
 msgid "Configure in Tymeslot"
-msgstr "In Tymeslot konfigurieren"
+msgstr "In BookDesk24 konfigurieren"
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_form_component.ex
 #, elixir-autogen, elixir-format
@@ -96,7 +96,7 @@ msgstr "Konfiguriere die grundlegenden Informationen für deinen Webhook."
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
 msgid "Connect Tymeslot to n8n, Zapier, Make, or your custom automation workflows"
-msgstr "Verbinde Tymeslot mit n8n, Zapier, Make oder deinen eigenen Automatisierungs-Workflows"
+msgstr "Verbinde BookDesk24 mit n8n, Zapier, Make oder deinen eigenen Automatisierungs-Workflows"
 
 #: lib/tymeslot_web/live/dashboard/automation/helpers.ex
 #, elixir-autogen, elixir-format
@@ -408,7 +408,7 @@ msgstr "Verwende dies in deiner n8n/Zapier-Header-Verifizierung"
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format
 msgid "Verify the token in your automation tool to ensure requests are from Tymeslot."
-msgstr "Prüfe das Token in deinem Automatisierungstool, damit die Anfrage wirklich von Tymeslot kommt."
+msgstr "Prüfe das Token in deinem Automatisierungstool, damit die Anfrage wirklich von BookDesk24 kommt."
 
 #: lib/tymeslot_web/live/dashboard/automation/webhook_documentation.ex
 #, elixir-autogen, elixir-format

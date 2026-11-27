@@ -389,7 +389,7 @@ msgstr "Keine Telegram-Integrationen"
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "No channels available. Invite the Tymeslot bot to at least one channel in Slack, then click Refresh."
-msgstr "Keine Kanäle verfügbar. Lade den Tymeslot-Bot in Slack zu mindestens einem Kanal ein und klicke dann auf Aktualisieren."
+msgstr "Keine Kanäle verfügbar. Lade den BookDesk24-Bot in Slack zu mindestens einem Kanal ein und klicke dann auf Aktualisieren."
 
 #: lib/tymeslot_web/live/dashboard/automation/telegram_form_component.ex
 #, elixir-autogen, elixir-format
@@ -415,7 +415,7 @@ msgstr "Kanal auswählen"
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Pick a channel for Tymeslot to post booking notifications to."
-msgstr "Wähle einen Kanal, an den Tymeslot Buchungsbenachrichtigungen senden soll."
+msgstr "Wähle einen Kanal, an den BookDesk24 Buchungsbenachrichtigungen senden soll."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_card.ex
 #, elixir-autogen, elixir-format
@@ -671,7 +671,7 @@ msgstr "Um deine Chat-ID zu finden, schreibst %{bot} oder fügst deinen Bot zu e
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot will post booking notifications to this channel. Public channels appear automatically; for a private channel, invite the Tymeslot bot in Slack (%{command}), then click Refresh."
-msgstr "Tymeslot sendet Buchungsbenachrichtigungen an diesen Kanal. Öffentliche Kanäle erscheinen automatisch; für einen privaten Kanal ladest den Tymeslot-Bot in Slack ein (%{command}) und klicke dann auf Aktualisieren."
+msgstr "BookDesk24 sendet Buchungsbenachrichtigungen an diesen Kanal. Öffentliche Kanäle erscheinen automatisch; für einen privaten Kanal ladest den BookDesk24-Bot in Slack ein (%{command}) und klicke dann auf Aktualisieren."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
@@ -686,7 +686,7 @@ msgstr "Slack verbunden - wähle einen Kanal, um die Einrichtung abzuschließen.
 #: lib/tymeslot_web/live/dashboard/automation/slack_form_component.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot posts notifications to this URL. The destination channel is fixed by Slack when the webhook is created - see the full setup guide on %{guide}."
-msgstr "Tymeslot sendet Benachrichtigungen an diese URL. Der Zielkanal wird von Slack festgelegt, wenn der Webhook erstellt wird - die vollständige Einrichtungsanleitung findest auf %{guide}."
+msgstr "BookDesk24 sendet Benachrichtigungen an diese URL. Der Zielkanal wird von Slack festgelegt, wenn der Webhook erstellt wird - die vollständige Einrichtungsanleitung findest auf %{guide}."
 
 #: lib/tymeslot_web/live/dashboard/automation/slack_tab.ex
 #, elixir-autogen, elixir-format
@@ -801,7 +801,7 @@ msgstr "Die Slack-Integration konnte nicht gespeichert werden."
 #: lib/tymeslot/slack/error_messages.ex
 #, elixir-autogen, elixir-format
 msgid "Channel not accessible. If it's a private channel, invite the Tymeslot bot first."
-msgstr "Auf den Kanal kann nicht zugegriffen werden. Wenn es ein privater Kanal ist, ladest zuerst den Tymeslot-Bot ein."
+msgstr "Auf den Kanal kann nicht zugegriffen werden. Wenn es ein privater Kanal ist, ladest zuerst den BookDesk24-Bot ein."
 
 #: lib/tymeslot/slack/error_messages.ex
 #, elixir-autogen, elixir-format

@@ -752,7 +752,7 @@ msgstr "Dein Kalender muss erneut verbunden werden. Bitte verbinde ihn auf der S
 #: lib/tymeslot_web/live/dashboard/calendar/panel_calendar_field.ex
 #, elixir-autogen, elixir-format
 msgid "None (Tymeslot only)"
-msgstr "Keiner (nur Tymeslot)"
+msgstr "Keiner (nur BookDesk24)"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_guests_field.ex
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
@@ -860,7 +860,7 @@ msgstr "Farbe"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_new_guests.ex
 #, elixir-autogen, elixir-format
 msgid "Add a guest to send a Tymeslot meeting."
-msgstr "Füge einen Gast hinzu, um einen Tymeslot-Termin zu senden."
+msgstr "Füge einen Gast hinzu, um einen BookDesk24-Termin zu senden."
 
 #: lib/tymeslot_web/live/dashboard/calendar/transfer.ex
 #, elixir-autogen, elixir-format

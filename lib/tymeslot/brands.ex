@@ -401,13 +401,19 @@ defmodule Tymeslot.Brands do
   @spec scrub(term(), term()) :: term()
   def scrub(text, brand) when is_binary(text) do
     brand = brand || mail_identity()
-    text = replace_visible(text, @legacy_name, brand.name)
+    # House copy says BookDesk24. A tenant's own name replaces both the old
+    # product token and BookDesk24, so a white-label mail does not name either.
+    replacement = if brand.house_brand, do: product_name(brand), else: brand.name
+
+    text = replace_visible(text, @legacy_name, replacement)
 
     if brand.house_brand do
       text
     else
+      branded = replace_visible(text, "BookDesk24", brand.name)
+
       scrubbed =
-        Enum.reduce(@house_tokens, text, fn token, acc ->
+        Enum.reduce(@house_tokens, branded, fn token, acc ->
           replace_visible(acc, token, brand.name)
         end)
 

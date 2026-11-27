@@ -86,8 +86,8 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
       ])
 
     String.trim("""
-    <!-- Tymeslot Inline -->
-    <div id="tymeslot-booking" data-username="#{username}"#{attrs}></div>
+    <!-- BookDesk24 Inline -->
+    <div id="bookdesk24-booking" data-username="#{username}"#{attrs}></div>
     <script src="#{base_url}/embed.js" async></script>
     """)
   end
@@ -106,8 +106,8 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
     # and never sees a native dialog. With the script present the click opens
     # the modal instead.
     String.trim("""
-    <!-- Tymeslot Popup -->
-    <a href="#{href}" target="_blank" rel="noopener" onclick="if(window.TymeslotBooking){event.preventDefault();TymeslotBooking.open('#{username}'#{js_options})}">#{label}</a>
+    <!-- BookDesk24 Popup -->
+    <a href="#{href}" target="_blank" rel="noopener" onclick="if(window.BookDesk24){event.preventDefault();BookDesk24.open('#{username}'#{js_options})}">#{label}</a>
     <script src="#{base_url}/embed.js" async></script>
     """)
   end
@@ -131,13 +131,13 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.Helpers do
     js_options = build_js_options(options)
 
     String.trim("""
-    <!-- Tymeslot Floating Button -->
+    <!-- BookDesk24 Floating Button -->
     <script src="#{base_url}/embed.js" async></script>
     <script>
       (function() {
         var init = function() {
-          if (window.TymeslotBooking) {
-            TymeslotBooking.initFloating('#{username}'#{js_options});
+          if (window.BookDesk24) {
+            BookDesk24.initFloating('#{username}'#{js_options});
           } else {
             setTimeout(init, 100);
           }

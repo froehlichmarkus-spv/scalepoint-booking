@@ -98,7 +98,7 @@ msgstr "Erfolgreich mit %{provider} angemeldet."
 #: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
 #, elixir-autogen, elixir-format
 msgid "This %{provider} account already signs in to another Tymeslot account. Use a different one, or choose another way to sign in."
-msgstr "Dieses %{provider}-Konto wird bereits für die Anmeldung bei einem anderen Tymeslot-Konto verwendet. Verwende ein anderes oder wähle eine andere Anmeldemethode."
+msgstr "Dieses %{provider}-Konto wird bereits für die Anmeldung bei einem anderen BookDesk24-Konto verwendet. Verwende ein anderes oder wähle eine andere Anmeldemethode."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format
@@ -143,7 +143,7 @@ msgstr "Wir konnten den Link zum Abschließen der Registrierung gerade nicht sen
 #: lib/tymeslot_web/controllers/auth/oauth_controller/invitation_response.ex
 #, elixir-autogen, elixir-format
 msgid "Welcome to Tymeslot! You'll sign in with %{provider}."
-msgstr "Willkommen bei Tymeslot! Du melden sich künftig mit %{provider} an."
+msgstr "Willkommen bei BookDesk24! Du melden sich künftig mit %{provider} an."
 
 #: lib/tymeslot_web/controllers/auth/oauth_controller.ex
 #, elixir-autogen, elixir-format

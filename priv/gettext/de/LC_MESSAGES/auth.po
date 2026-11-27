@@ -109,7 +109,7 @@ msgstr "Ungültiges Token zum Zurücksetzen"
 #: lib/tymeslot_web/components/auth/registration/signup_component.ex
 #, elixir-autogen, elixir-format
 msgid "Join Tymeslot"
-msgstr "Bei Tymeslot registrieren"
+msgstr "Bei BookDesk24 registrieren"
 
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
@@ -128,7 +128,7 @@ msgstr "Anmelden"
 #: lib/tymeslot_web/components/auth/session/login_component.ex
 #, elixir-autogen, elixir-format
 msgid "Log in to Tymeslot"
-msgstr "Bei Tymeslot anmelden"
+msgstr "Bei BookDesk24 anmelden"
 
 #: lib/tymeslot_web/controllers/auth/session_controller.ex
 #, elixir-autogen, elixir-format
@@ -777,22 +777,22 @@ msgstr "oder setze dein Passwort zurück."
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Choose a strong new password for your Tymeslot account."
-msgstr "Wähle ein starkes neues Passwort für dein Tymeslot-Konto."
+msgstr "Wähle ein starkes neues Passwort für dein BookDesk24-Konto."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Create a Tymeslot account and start sharing your availability in minutes. No credit card required."
-msgstr "Leg ein Tymeslot-Konto an und teile deine Verfügbarkeit in wenigen Minuten. Keine Kreditkarte nötig."
+msgstr "Leg ein BookDesk24-Konto an und teile deine Verfügbarkeit in wenigen Minuten. Keine Kreditkarte nötig."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Enter your email to receive a password reset link for your Tymeslot account."
-msgstr "Gib deine E-Mail-Adresse ein. Du bekommst einen Link, um das Passwort für dein Tymeslot-Konto zurückzusetzen."
+msgstr "Gib deine E-Mail-Adresse ein. Du bekommst einen Link, um das Passwort für dein BookDesk24-Konto zurückzusetzen."
 
 #: lib/tymeslot_web/live/auth_live/page_meta_helper.ex
 #, elixir-autogen, elixir-format
 msgid "Sign in to your Tymeslot account to manage scheduling links, availability, and bookings."
-msgstr "Melde dich in deinem Tymeslot-Konto an, um Termine, Verfügbarkeit und Buchungen zu verwalten."
+msgstr "Melde dich in deinem BookDesk24-Konto an, um Termine, Verfügbarkeit und Buchungen zu verwalten."
 
 #: lib/tymeslot_web/components/auth/session/password_reset_component.ex
 #, elixir-autogen, elixir-format

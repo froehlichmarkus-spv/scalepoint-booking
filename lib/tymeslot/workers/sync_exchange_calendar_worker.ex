@@ -74,7 +74,7 @@ defmodule Tymeslot.Workers.SyncExchangeCalendarWorker do
   @no_mailbox "Exchange integration has no addressable mailbox"
   @server_refused "Exchange server refused the sync request"
   @server_error "Exchange server returned a server error; the next scheduled sync will retry"
-  @too_large "Exchange server returned more data than Tymeslot can process at once"
+  @too_large "Exchange server returned more data than BookDesk24 can process at once"
 
   @impl ExpectedJobOutcome
   def expected_outcome?(reason) when is_binary(reason) do

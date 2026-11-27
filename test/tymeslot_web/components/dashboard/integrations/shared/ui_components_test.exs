@@ -109,7 +109,11 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Shared.UIComponentsTest 
       {_html, doc} = render_header(guide_slug: "caldav-nextcloud")
 
       assert [link] = Floki.find(doc, "a")
-      assert Floki.attribute(link, "href") == ["https://tymeslot.app/docs/caldav-nextcloud"]
+
+      assert Floki.attribute(link, "href") == [
+               "https://scalepoint-ventures.com/growthos/caldav-nextcloud"
+             ]
+
       assert Floki.attribute(link, "target") == ["_blank"]
       assert Floki.attribute(link, "rel") == ["noopener noreferrer"]
       assert Floki.text(link) =~ "Setup guide"

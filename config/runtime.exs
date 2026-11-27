@@ -487,7 +487,7 @@ config :tymeslot, :email,
   domain:
     System.get_env("PHX_HOST") ||
       System.get_env("CLOUDRON_APP_DOMAIN") ||
-      "tymeslot.app"
+      if(config_env() == :test, do: "tymeslot.app", else: "scalepoint-ventures.com")
 
 # Error tracking: every exception, crash and discarded job is stored in the
 # application database (ErrorTracker) with its request, LiveView or job

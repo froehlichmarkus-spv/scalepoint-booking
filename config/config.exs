@@ -59,7 +59,7 @@ config :tymeslot,
   privacy_policy_url: nil,
   terms_and_conditions_url: nil,
   # Base URL for documentation articles. Self-hosted instances link to the public SaaS docs.
-  docs_article_base_url: "https://tymeslot.app/docs",
+  docs_article_base_url: "https://scalepoint-ventures.com/growthos",
 
   # --- Integration & Routing ---
   # The primary router to use for the application

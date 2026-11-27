@@ -12,7 +12,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.HelpersTest do
       assigns = %{username: "testuser", base_url: "https://tymeslot.com"}
       code = Helpers.embed_code("inline", assigns)
 
-      assert code =~ "id=\"tymeslot-booking\""
+      assert code =~ "id=\"bookdesk24-booking\""
       assert code =~ "data-username=\"testuser\""
       assert code =~ "src=\"https://tymeslot.com/embed.js\""
     end
@@ -46,7 +46,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.HelpersTest do
       code = Helpers.embed_code("popup", assigns)
 
       # Check for presence of parameters without assuming order
-      assert code =~ "TymeslotBooking.open('testuser', {"
+      assert code =~ "BookDesk24.open('testuser', {"
       assert code =~ "locale: 'fr'"
       assert code =~ "primaryColor: '#ff5733'"
       assert code =~ "theme: '1'"
@@ -63,7 +63,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.HelpersTest do
 
       code = Helpers.embed_code("floating", assigns)
 
-      assert code =~ "TymeslotBooking.initFloating('testuser', {"
+      assert code =~ "BookDesk24.initFloating('testuser', {"
       assert code =~ "locale: 'en'"
       assert code =~ "theme: '2'"
     end
@@ -126,10 +126,10 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.HelpersTest do
                  ~s(data-username="#{unquote(username)}")
 
         assert Helpers.embed_code("popup", assigns) =~
-                 "TymeslotBooking.open('#{unquote(username)}'"
+                 "BookDesk24.open('#{unquote(username)}'"
 
         assert Helpers.embed_code("floating", assigns) =~
-                 "TymeslotBooking.initFloating('#{unquote(username)}'"
+                 "BookDesk24.initFloating('#{unquote(username)}'"
       end
     end
 
@@ -352,7 +352,7 @@ defmodule TymeslotWeb.Live.Dashboard.EmbedSettings.HelpersTest do
       assert code =~ ~s(<a href="https://x.test/alice" target="_blank" rel="noopener")
 
       assert code =~
-               "if(window.TymeslotBooking){event.preventDefault();TymeslotBooking.open('alice'"
+               "if(window.BookDesk24){event.preventDefault();BookDesk24.open('alice'"
 
       refute code =~ "alert("
       refute code =~ "<button"

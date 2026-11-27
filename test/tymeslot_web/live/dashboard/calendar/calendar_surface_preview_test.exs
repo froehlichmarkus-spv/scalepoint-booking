@@ -116,7 +116,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfacePreviewTest do
     open(lv, "booking-#{meeting.id}")
 
     assert has_element?(lv, "#calendar-preview-title", "Anna Kowalski · Intro call")
-    assert has_element?(lv, "#calendar-preview", "Tymeslot booking")
+    assert has_element?(lv, "#calendar-preview", "BookDesk24 booking")
   end
 
   test "a booking with a calendar copy is drawn once, as the booking, naming the copy's calendar",
@@ -149,7 +149,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfacePreviewTest do
     assert_reply(lv, %{opened: false})
 
     open(lv, "booking-#{meeting.id}")
-    assert has_element?(lv, "#calendar-preview", "Tymeslot booking · Work")
+    assert has_element?(lv, "#calendar-preview", "BookDesk24 booking · Work")
   end
 
   test "an event waiting to sync says where it is waiting to go", %{

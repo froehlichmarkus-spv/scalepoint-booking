@@ -585,7 +585,7 @@ msgstr "Verwendet"
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format
 msgid "Each link books one appointment. Tymeslot sends no email: copy the link and send it yourself."
-msgstr "Mit jedem Link kann ein Termin gebucht werden. Tymeslot verschickt keine E-Mail: Kopiere den Link und sende ihn selbst."
+msgstr "Mit jedem Link kann ein Termin gebucht werden. BookDesk24 verschickt keine E-Mail: Kopiere den Link und sende ihn selbst."
 
 #: lib/tymeslot_web/live/dashboard/meeting_settings/invitations_component.ex
 #, elixir-autogen, elixir-format

@@ -12,7 +12,7 @@ defmodule Tymeslot.DocsTest do
   test "article_url composes the default base with the slug" do
     Application.delete_env(:tymeslot, :docs_article_base_url)
 
-    assert Docs.article_url("slack") == "https://tymeslot.app/docs/slack"
+    assert Docs.article_url("slack") == "https://scalepoint-ventures.com/growthos/slack"
   end
 
   test "article_url follows an operator-configured base" do

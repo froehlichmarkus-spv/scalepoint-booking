@@ -367,6 +367,6 @@ defmodule Tymeslot.Bookings.CreateAdHoc do
   end
 
   defp fallback_email do
-    Application.get_env(:tymeslot, :email)[:from_email] || "noreply@tymeslot.app"
+    Application.get_env(:tymeslot, :email)[:from_email] || "noreply@scalepoint-ventures.com"
   end
 end

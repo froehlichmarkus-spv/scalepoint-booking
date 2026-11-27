@@ -279,7 +279,7 @@ msgstr "Ganztägig"
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
 msgid "Booked through your Tymeslot page"
-msgstr "Über deine Tymeslot-Seite gebucht"
+msgstr "Über deine BookDesk24-Seite gebucht"
 
 #: lib/tymeslot_web/components/dashboard/appointments/appointment_details.ex
 #, elixir-autogen, elixir-format
