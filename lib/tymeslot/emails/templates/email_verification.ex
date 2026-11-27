@@ -7,7 +7,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
   alias Swoosh.Email
   alias Tymeslot.Emails.RecipientLocale
 
-  alias Tymeslot.Emails.Shared.{Buttons, Greeting, MjmlEmail, TemplateHelper, Text}
+  alias Tymeslot.Emails.Shared.{Buttons, Greeting, LinkLifetime, MjmlEmail, TemplateHelper, Text}
 
   # A first-contact email welcoming a new user in.
   @intent :confirmed
@@ -37,7 +37,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
 
     #{Buttons.action_button(@intent, dgettext("emails_account", "Confirm Email & Get Started"), verification_url, full_width: true, size: :large)}
 
-    #{Text.system_footer_note(dgettext("emails_account", "For your security, this link expires in 24 hours. If you didn't create an account, you can ignore this email."))}
+    #{Text.system_footer_note(expiry_note())}
 
     #{Text.divider(margin: "28px 0 16px 0")}
 
@@ -66,7 +66,17 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
     #{dgettext("emails_account", "Confirm Email & Get Started:")}
     #{verification_url}
 
-    #{dgettext("emails_account", "For your security, this link expires in 24 hours. If you didn't create an account, no further action is needed.")}
+    #{expiry_note()}
     """
+  end
+
+  # The minute count is AccountTokens.ttl_seconds(:verification). PR #7 sets
+  # that to 30 minutes; this sentence follows and does not name its own number.
+  defp expiry_note do
+    dgettext(
+      "emails_account",
+      "%{once} If you didn't create an account, you can ignore this email.",
+      once: LinkLifetime.once(:verification)
+    )
   end
 end

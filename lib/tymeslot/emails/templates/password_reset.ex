@@ -7,7 +7,7 @@ defmodule Tymeslot.Emails.Templates.PasswordReset do
   alias Swoosh.Email
   alias Tymeslot.Emails.RecipientLocale
 
-  alias Tymeslot.Emails.Shared.{Buttons, Greeting, MjmlEmail, TemplateHelper, Text}
+  alias Tymeslot.Emails.Shared.{Buttons, Greeting, LinkLifetime, MjmlEmail, TemplateHelper, Text}
 
   # A security-sensitive action that warrants the reader's attention.
   @intent :alert
@@ -35,9 +35,9 @@ defmodule Tymeslot.Emails.Templates.PasswordReset do
 
     #{Text.centered_text(dgettext("emails_account", "It happens to the best of us. Click the button below to choose a new password and pick up where you left off."), padding: "0 0 20px 0")}
 
-    #{Buttons.action_button(@intent, dgettext("emails_account", "Set New Password"), reset_url, full_width: true, size: :large)}
+    #{Buttons.action_button(@intent, dgettext("emails_account", "Save and sign in"), reset_url, full_width: true, size: :large)}
 
-    #{Text.system_footer_note(dgettext("emails_account", "This link is valid for the next 2 hours."))}
+    #{Text.system_footer_note(LinkLifetime.once(:reset))}
     #{Text.system_footer_note(dgettext("emails_account", "If you didn't request this change, your account is still secure - you can simply delete this email."))}
 
     #{Text.divider(margin: "28px 0 16px 0")}
@@ -54,7 +54,7 @@ defmodule Tymeslot.Emails.Templates.PasswordReset do
       stage_title: dgettext("emails_account", "Reset your password"),
       stage_subtitle: dgettext("emails_account", "A fresh password and you're back in."),
       layout: :password_reset,
-      cta_label: dgettext("emails_account", "Set New Password"),
+      cta_label: dgettext("emails_account", "Save and sign in"),
       cta_url: reset_url
     )
   end
@@ -67,10 +67,10 @@ defmodule Tymeslot.Emails.Templates.PasswordReset do
 
     #{dgettext("emails_account", "It happens to the best of us! Click the link below to choose a new password and regain access to your account.")}
 
-    #{dgettext("emails_account", "Set New Password:")}
+    #{dgettext("emails_account", "Save and sign in:")}
     #{reset_url}
 
-    #{dgettext("emails_account", "This link is valid for the next 2 hours.")}
+    #{LinkLifetime.once(:reset)}
 
     #{dgettext("emails_account", "If you didn't request this change, your account is still secure - you can simply delete this email.")}
     """

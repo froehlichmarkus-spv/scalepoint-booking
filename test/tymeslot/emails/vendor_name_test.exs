@@ -21,6 +21,7 @@ defmodule Tymeslot.Emails.VendorNameTest do
     NoPasswordToReset,
     PasswordReset,
     SignupAttemptNotice,
+    MagicLink,
     SocialSignupConfirmation
   }
 
@@ -64,6 +65,7 @@ defmodule Tymeslot.Emails.VendorNameTest do
       AccountDeletionNotice.render(person, @at, @url),
       AccountDeletionNotice.render(person, @at, nil),
       SocialSignupConfirmation.render(person, "github", @url),
+      MagicLink.render(person, @url),
       EmailChangeVerification.render(person, "new@example.com", @url),
       EmailChangeNotification.render(person, "new@example.com", @at),
       EmailChangeConfirmed.render(:old, person, "ada@example.com", "new@example.com", @at),

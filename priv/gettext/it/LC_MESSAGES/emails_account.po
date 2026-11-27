@@ -305,16 +305,6 @@ msgstr "Sicurezza"
 msgid "Security notification"
 msgstr "Avviso di sicurezza"
 
-#: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Set New Password"
-msgstr "Imposta una nuova password"
-
-#: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Set New Password:"
-msgstr "Imposta una nuova password:"
-
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Sign in instead of signing up."
@@ -361,11 +351,6 @@ msgstr "Questo è un avviso di sicurezza inviato per proteggere il tuo account. 
 #, elixir-autogen, elixir-format
 msgid "This link expires in 24 hours. Once confirmed, you'll sign in with your new email address."
 msgstr "Questo link scade tra 24 ore. Dopo la conferma, potrai accedere con il tuo nuovo indirizzo email."
-
-#: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format
-msgid "This link is valid for the next 2 hours."
-msgstr "Questo link è valido per le prossime 2 ore."
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
@@ -613,16 +598,6 @@ msgstr "Il tuo account è pronto e ti sta aspettando."
 msgid "Confirm your email"
 msgstr "Conferma la tua nuova email"
 
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't create an account, no further action is needed."
-msgstr "Per la tua sicurezza, questo link scadrà tra 24 ore. Se non hai effettuato tu la registrazione a BookDesk24, non devi fare nient'altro."
-
-#: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format
-msgid "For your security, this link expires in 24 hours. If you didn't create an account, you can ignore this email."
-msgstr "Per la tua sicurezza, questo link scadrà tra 24 ore. Se non hai effettuato tu la registrazione a BookDesk24, non devi fare nient'altro."
-
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "Instructions to reset your password."
@@ -789,3 +764,69 @@ msgstr "Le tue prenotazioni future sono state eliminate da BookDesk24. I tuoi os
 #, elixir-autogen, elixir-format
 msgid "Your upcoming bookings will be deleted from BookDesk24 with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
 msgstr "Le tue prenotazioni future verranno eliminate da BookDesk24 insieme al tuo account. I tuoi ospiti non verranno avvisati. Gli eventi del calendario e i link video già esistenti resteranno così come sono. Se una riunione non si terrà, contatta direttamente i tuoi ospiti."
+
+#: lib/tymeslot/emails/shared/link_lifetime.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} hour"
+msgid_plural "%{count} hours"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/tymeslot/emails/shared/link_lifetime.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} minute"
+msgid_plural "%{count} minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/tymeslot/emails/shared/link_lifetime.ex
+#, elixir-autogen, elixir-format
+msgid "%{count} second"
+msgid_plural "%{count} seconds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/tymeslot/emails/templates/email_verification.ex
+#, elixir-autogen, elixir-format
+msgid "%{once} If you didn't create an account, you can ignore this email."
+msgstr ""
+
+#: lib/tymeslot/emails/shared/link_lifetime.ex
+#, elixir-autogen, elixir-format
+msgid "It works once, for %{duration}."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/password_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Save and sign in"
+msgstr ""
+
+#: lib/tymeslot/emails/templates/password_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Save and sign in:"
+msgstr ""
+
+#: lib/tymeslot/emails/templates/magic_link.ex
+#, elixir-autogen, elixir-format
+msgid "Sign in"
+msgstr ""
+
+#: lib/tymeslot/emails/templates/magic_link.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Sign in to BookDesk24"
+msgstr "Accedi a BookDesk24"
+
+#: lib/tymeslot/emails/templates/magic_link.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Sign in to BookDesk24:"
+msgstr "Accedi a BookDesk24:"
+
+#: lib/tymeslot/emails/templates/magic_link.ex
+#, elixir-autogen, elixir-format
+msgid "Use the button on this device to sign in. It works once."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/magic_link.ex
+#, elixir-autogen, elixir-format
+msgid "Your sign-in link"
+msgstr ""
