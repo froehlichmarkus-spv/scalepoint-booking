@@ -70,11 +70,12 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmationGuestTest do
 
       email = AppointmentConfirmation.render(:guest, "greg@example.com", details)
 
-      assert email.html_body =~ "https://meet.example.com/room-123"
+      assert email.html_body =~ ~s(href="https://meet.example.com/room-123")
+      assert email.html_body =~ "<v:roundrect"
       assert email.html_body =~ "Join when you&#39;re ready"
-      assert email.html_body =~ "Join Meeting"
-      assert email.text_body =~ "https://meet.example.com/room-123"
-      assert email.text_body =~ "JOIN VIDEO MEETING"
+      assert email.html_body =~ "Join meeting"
+      refute Regex.replace(~r/href="[^"]*"/, email.html_body, "") =~ "meet.example.com"
+      assert email.text_body =~ "Join meeting\nhttps://meet.example.com/room-123"
     end
 
     # The participant URL is minted with the booker's name and email baked in;
@@ -132,8 +133,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmationGuestTest do
 
       email = AppointmentConfirmation.render(:guest, "greg@example.com", details)
 
-      refute email.html_body =~ "Join Meeting"
-      refute email.text_body =~ "JOIN VIDEO MEETING"
+      refute email.html_body =~ "Join meeting"
+      refute email.text_body =~ "Join meeting"
     end
 
     test "includes an ICS calendar attachment" do

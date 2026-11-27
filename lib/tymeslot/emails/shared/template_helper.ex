@@ -74,7 +74,8 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
           appointment_details,
           Gettext.get_locale(TymeslotWeb.Gettext),
           details[:eyebrow],
-          tone(details[:intent])
+          tone(details[:intent]),
+          details[:clock] || :attendee
         )
       )
     else

@@ -65,7 +65,7 @@ defmodule Tymeslot.Emails.Shared.TextBodyHelper do
     Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
       """
 
-      #{dgettext("emails", "JOIN VIDEO MEETING:")}
+      #{dgettext("emails", "Join meeting")}
       #{meeting_url}
       #{dgettext("emails", "The meeting room opens 5 minutes before your scheduled time.")}
       """

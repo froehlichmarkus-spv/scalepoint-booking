@@ -73,7 +73,10 @@ defmodule Tymeslot.Mailer.ProvidersTest do
       error = assert_raise(ArgumentError, fn -> Providers.fetch!("mailchimp") end)
 
       assert error.message =~ ~s(Unknown EMAIL_ADAPTER: "mailchimp")
-      assert error.message =~ "ahasend, local, logger, mailgun, postmark, resend, sendgrid, smtp, test"
+
+      assert error.message =~
+               "ahasend, local, logger, mailgun, postmark, resend, sendgrid, smtp, test"
+
       assert error.message =~ "EMAIL_ADAPTER=smtp"
     end
   end

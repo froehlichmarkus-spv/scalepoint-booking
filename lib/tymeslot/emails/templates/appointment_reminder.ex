@@ -35,9 +35,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       meeting_details = TemplateHelper.attendee_meeting_details(appointment_details, :attendee)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{MeetingComponents.time_alert_badge(@intent, appointment_details.time_until)}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.description_section(appointment_details)}
 
@@ -46,9 +46,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
       #{if attendee_video_url = JoinUrl.for(:attendee, appointment_details) do
-        MeetingComponents.video_meeting_section(@intent, attendee_video_url,
-        title: dgettext("emails_booking", "Join when you're ready"),
-        button_text: dgettext("emails_booking", "Join Meeting"))
+        MeetingComponents.video_meeting_section(@intent, attendee_video_url, title: dgettext("emails_booking", "Join when you're ready"))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Need to change plans?"), [%{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
@@ -58,7 +56,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           layout: :reminder,
           eyebrow: dgettext("emails_booking", "Reminder"),
           stage_title: dgettext("emails_booking", "Our meeting is coming up"),
@@ -99,20 +98,18 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       intro_copy = guest_intro(appointment_details, guest_name)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{MeetingComponents.time_alert_badge(@intent, appointment_details.time_until)}
 
       #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.description_section(appointment_details)}
 
       #{MeetingComponents.organizer_note_box(@intent, appointment_details[:organizer_note])}
 
       #{if guest_video_url do
-        MeetingComponents.video_meeting_section(@intent, guest_video_url,
-        title: dgettext("emails_booking", "Join when you're ready"),
-        button_text: dgettext("emails_booking", "Join Meeting"))
+        MeetingComponents.video_meeting_section(@intent, guest_video_url, title: dgettext("emails_booking", "Join when you're ready"))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Can you still make it?"), TemplateHelper.guest_answer_actions(appointment_details))}
@@ -122,7 +119,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           layout: :reminder,
           eyebrow: dgettext("emails_booking", "Reminder"),
           stage_title: dgettext("emails_booking", "The meeting is coming up"),
@@ -161,7 +159,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       meeting_details = TemplateHelper.organizer_meeting_details(appointment_details)
 
       mjml_content = """
-      #{MeetingComponents.meeting_details_table(meeting_details, organizer_locale(appointment_details))}
+      #{MeetingComponents.location_note_line(meeting_details)}
 
       #{MeetingComponents.description_section(appointment_details)}
 
@@ -172,9 +170,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
       #{MeetingComponents.attendee_message_box(@intent, appointment_details[:attendee_message])}
 
       #{if organizer_video_url = JoinUrl.for(:organizer, appointment_details) do
-        MeetingComponents.video_meeting_section(@intent, organizer_video_url,
-        title: dgettext("emails_booking", "Host video call"),
-        button_text: dgettext("emails_booking", "Start Meeting"))
+        MeetingComponents.video_meeting_section(@intent, organizer_video_url, title: dgettext("emails_booking", "Host video call"))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Quick actions"), organizer_actions(appointment_details))}
@@ -182,7 +178,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminder do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
+          clock: :owner,
           layout: :reminder,
           eyebrow: dgettext("emails_booking", "Starting soon"),
           stage_title: organizer_stage_title(appointment_details),

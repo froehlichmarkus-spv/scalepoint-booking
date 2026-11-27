@@ -11,20 +11,10 @@ msgstr ""
 "Language: pt\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: lib/tymeslot/emails/templates/email_change_notification.ex
-#, elixir-autogen, elixir-format
-msgid "A change was requested on your Tymeslot account."
-msgstr "Foi pedida uma mudança na sua conta do Tymeslot."
-
 #: lib/tymeslot/emails/templates/password_reset.ex
 #, elixir-autogen, elixir-format
 msgid "A fresh password and you're back in."
 msgstr "Uma senha nova e você está de volta."
-
-#: lib/tymeslot/emails/templates/email_change_notification.ex
-#, elixir-autogen, elixir-format
-msgid "A request has been made to change the email address on your Tymeslot account. We're letting you know so you can confirm it was you."
-msgstr "Foi feito um pedido para trocar o endereço de e-mail da sua conta do Tymeslot. Estamos avisando para você confirmar que foi você."
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -99,20 +89,10 @@ msgstr "Confirmar e-mail e começar"
 msgid "Confirm Email & Get Started:"
 msgstr "Confirmar e-mail e começar:"
 
-#: lib/tymeslot/emails/templates/email_change_verification.ex
-#, elixir-autogen, elixir-format
-msgid "Confirm the new email address on your Tymeslot account."
-msgstr "Confirme o novo endereço de e-mail da sua conta do Tymeslot."
-
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Confirm your email and your account is ready."
 msgstr "Confirme seu e-mail e sua conta fica pronta."
-
-#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
-#, elixir-autogen, elixir-format
-msgid "Confirm your email to finish signing up for Tymeslot."
-msgstr "Confirme seu e-mail para terminar seu cadastro no Tymeslot."
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
@@ -335,37 +315,10 @@ msgstr "Definir nova senha"
 msgid "Set New Password:"
 msgstr "Definir nova senha:"
 
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Sign In to Tymeslot"
-msgstr "Entrar no Tymeslot"
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Sign In to Tymeslot:"
-msgstr "Entrar no Tymeslot:"
-
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
 msgid "Sign in instead of signing up."
 msgstr "Entre em vez de criar uma conta."
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Someone asked to reset the password for your Tymeslot account, but your account signs in with %{provider}, so it has no password to reset. Use the button below and choose %{provider} to sign in."
-msgstr "Alguém pediu para redefinir a senha da sua conta do Tymeslot, mas sua conta entra com %{provider}, então não tem senha para redefinir. Use o botão abaixo e escolha %{provider} para entrar."
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new Tymeslot account with this email address, which already has an account. If it was you, sign in below, or reset your password if you can't remember it."
-msgstr "Alguém acabou de tentar criar uma nova conta no Tymeslot com este endereço de e-mail, que já tem uma conta. Se foi você, entre abaixo, ou redefina sua senha se não lembrar dela."
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new Tymeslot account with this email address, which already has an account. If it was you, sign in with %{provider} below."
-msgstr "Alguém acabou de tentar criar uma nova conta no Tymeslot com este endereço de e-mail, que já tem uma conta. Se foi você, entre com %{provider} abaixo."
 
 #: lib/tymeslot/emails/templates/signup_attempt_notice.ex
 #, elixir-autogen, elixir-format
@@ -403,11 +356,6 @@ msgstr "Esta é uma confirmação de mudanças feitas na sua conta. Se tiver dú
 #, elixir-autogen, elixir-format
 msgid "This is a security notification sent to protect your account. If you have concerns, please contact support immediately."
 msgstr "Este é um aviso de segurança enviado para proteger sua conta. Se tiver alguma preocupação, fale com o suporte imediatamente."
-
-#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
-#, elixir-autogen, elixir-format
-msgid "This link expires in 24 hours. If you didn't sign up for Tymeslot, you can ignore this email and no account will be created."
-msgstr "Este link expira em 24 horas. Se não foi você que se cadastrou no Tymeslot, pode ignorar este e-mail, e nenhuma conta vai ser criada."
 
 #: lib/tymeslot/emails/templates/email_change_verification.ex
 #, elixir-autogen, elixir-format
@@ -490,16 +438,6 @@ msgstr "O que você precisa saber"
 msgid "You already have an account"
 msgstr "Você já tem uma conta"
 
-#: lib/tymeslot/emails/templates/email_change_verification.ex
-#, elixir-autogen, elixir-format
-msgid "You asked to change the email address on your Tymeslot account to %{new_email}."
-msgstr "Você pediu para trocar o endereço de e-mail da sua conta do Tymeslot para %{new_email}."
-
-#: lib/tymeslot/emails/templates/email_change_verification.ex
-#, elixir-autogen, elixir-format
-msgid "You asked to change the email address on your Tymeslot account. Confirm the new address below to finish the switch."
-msgstr "Você pediu para trocar o endereço de e-mail da sua conta do Tymeslot. Confirme o novo endereço abaixo para terminar a troca."
-
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
 msgid "You may need to sign in again on other devices"
@@ -509,31 +447,6 @@ msgstr "Talvez você precise entrar de novo nos outros aparelhos"
 #, elixir-autogen, elixir-format
 msgid "You sign in with %{provider}."
 msgstr "Você entra com %{provider}."
-
-#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
-#, elixir-autogen, elixir-format
-msgid "You're signing up for Tymeslot with %{provider}. Confirm this email address to create your account and sign in."
-msgstr "Você está se cadastrando no Tymeslot com %{provider}. Confirme este endereço de e-mail para criar sua conta e entrar."
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account email address has been successfully changed."
-msgstr "O endereço de e-mail da sua conta do Tymeslot foi trocado."
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account email address has been successfully changed. This confirmation is being sent to your previous address so you know the switch happened."
-msgstr "O endereço de e-mail da sua conta do Tymeslot foi trocado. Esta confirmação está indo para seu endereço anterior para você saber que a troca aconteceu."
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account has no password to reset."
-msgstr "Sua conta do Tymeslot não tem senha para redefinir."
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot email address has been changed."
-msgstr "Seu endereço de e-mail do Tymeslot foi trocado."
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
@@ -562,23 +475,8 @@ msgstr "Exclusão da conta"
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
-msgid "As you asked, your Tymeslot account has been deleted, together with everything in it. This cannot be undone."
-msgstr "Conforme solicitado, sua conta do Tymeslot foi excluída, junto com tudo o que havia nela. Isso não pode ser desfeito."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "As you asked, your Tymeslot account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account."
-msgstr "Conforme solicitado, a exclusão da sua conta do Tymeslot está agendada para %{date}. Até lá, ela fica congelada: sua página de agendamento fica fora do ar e ninguém consegue agendar com você. Se mudar de ideia, entre antes dessa data e você poderá restaurar sua conta."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
 msgid "Everything in it is gone."
 msgstr "Tudo o que havia nela foi apagado."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "If you did not ask for this, contact whoever runs this Tymeslot service straight away."
-msgstr "Se você não pediu isso, entre em contato imediatamente com o responsável por este serviço do Tymeslot."
 
 #: lib/tymeslot/emails/templates/account_deletion_notice.ex
 #, elixir-autogen, elixir-format
@@ -610,30 +508,10 @@ msgstr "Sua conta foi excluída"
 msgid "Your account is scheduled for deletion"
 msgstr "A exclusão da sua conta foi agendada"
 
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your upcoming bookings have been deleted from Tymeslot. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
-msgstr "Seus próximos agendamentos foram excluídos do Tymeslot. Seus convidados não foram avisados. Os eventos de calendário e os links de vídeo que já existiam foram mantidos como estavam. Se uma reunião não for acontecer, avise você mesmo os seus convidados."
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your upcoming bookings will be deleted from Tymeslot with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
-msgstr "Seus próximos agendamentos serão excluídos do Tymeslot junto com sua conta. Seus convidados não serão avisados. Os eventos de calendário e os links de vídeo que já existem continuarão como estão. Se uma reunião não for acontecer, avise você mesmo os seus convidados."
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Someone just tried to create a new Tymeslot account with this email address. It belongs to an account that is scheduled for deletion on %{date}. If it was you, sign in before then to restore that account, or sign up again after that date."
-msgstr "Alguém acabou de tentar criar uma nova conta no Tymeslot com este endereço de e-mail. Ele pertence a uma conta com exclusão agendada para %{date}. Se foi você, entre antes disso para restaurar essa conta ou crie uma conta novamente depois dessa data."
-
 #: lib/tymeslot/emails/templates/social_signup_confirmation.ex
 #, elixir-autogen, elixir-format
 msgid "Confirm your email to finish signing up"
 msgstr "Confirme seu e-mail para terminar o cadastro"
-
-#: lib/tymeslot/emails/templates/email_change_confirmed.ex
-#, elixir-autogen, elixir-format
-msgid "Email Address Changed - Tymeslot Account"
-msgstr "Endereço de e-mail trocado - conta do Tymeslot"
 
 #: lib/tymeslot/emails/templates/email_change_confirmed.ex
 #, elixir-autogen, elixir-format
@@ -644,26 +522,6 @@ msgstr "Endereço de e-mail trocado"
 #, elixir-autogen, elixir-format
 msgid "Verify your email address"
 msgstr "Verifique seu endereço de e-mail"
-
-#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
-#, elixir-autogen, elixir-format
-msgid "You already have a Tymeslot account"
-msgstr "Você já tem uma conta no Tymeslot"
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account has been deleted"
-msgstr "Sua conta do Tymeslot foi excluída"
-
-#: lib/tymeslot/emails/templates/no_password_to_reset.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account has no password"
-msgstr "Sua conta do Tymeslot não tem senha"
-
-#: lib/tymeslot/emails/templates/account_deletion_notice.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account is scheduled for deletion"
-msgstr "A exclusão da sua conta do Tymeslot foi agendada"
 
 #: lib/tymeslot/emails/templates/email_change_notification.ex
 #, elixir-autogen, elixir-format
@@ -747,45 +605,187 @@ msgstr "Este link é válido por 7 dias."
 
 #: lib/tymeslot/emails/templates/account_invitation.ex
 #, elixir-autogen, elixir-format
-msgid "You're invited to Tymeslot"
-msgstr "Convite para o Tymeslot"
-
-#: lib/tymeslot/emails/templates/account_invitation.ex
-#, elixir-autogen, elixir-format
 msgid "Your account is ready and waiting."
 msgstr "Sua conta está pronta e esperando por você."
 
-#: lib/tymeslot/emails/templates/account_invitation.ex
-#, elixir-autogen, elixir-format
-msgid "An administrator has created a Tymeslot account for you. Accept the invitation to choose how you'll sign in and set up your booking page."
-msgstr "Um administrador criou uma conta do Tymeslot para você. Aceite o convite para escolher como vai entrar e configurar sua página de agendamento."
-
-#: lib/tymeslot/emails/templates/account_invitation.ex
-#, elixir-autogen, elixir-format
-msgid "Your Tymeslot account is ready. Accept the invitation to sign in."
-msgstr "Sua conta do Tymeslot está pronta. Aceite o convite para entrar."
-
 #: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Confirm your email"
 msgstr "Confirme seu novo e-mail"
 
 #: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "For your security, this link expires in 24 hours. If you didn't create an account, no further action is needed."
-msgstr "Por segurança, este link expira em 24 horas. Se não foi você que criou uma conta no Tymeslot, não precisa fazer nada."
+msgstr "Por segurança, este link expira em 24 horas. Se não foi você que criou uma conta no BookDesk24, não precisa fazer nada."
 
 #: lib/tymeslot/emails/templates/email_verification.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "For your security, this link expires in 24 hours. If you didn't create an account, you can ignore this email."
-msgstr "Por segurança, este link expira em 24 horas. Se não foi você que criou uma conta no Tymeslot, não precisa fazer nada."
+msgstr "Por segurança, este link expira em 24 horas. Se não foi você que criou uma conta no BookDesk24, não precisa fazer nada."
 
 #: lib/tymeslot/emails/templates/password_reset.ex
-#, elixir-autogen, elixir-format, fuzzy
+#, elixir-autogen, elixir-format
 msgid "Instructions to reset your password."
-msgstr "Instruções para redefinir sua senha do Tymeslot."
+msgstr "Instruções para redefinir sua senha do BookDesk24."
 
 #: lib/tymeslot/emails/templates/email_verification.ex
 #, elixir-autogen, elixir-format
 msgid "Please verify your email address."
 msgstr ""
+
+#: lib/tymeslot/emails/templates/email_change_notification.ex
+#, elixir-autogen, elixir-format
+msgid "A change was requested on your BookDesk24 account."
+msgstr "Foi pedida uma mudança na sua conta do BookDesk24."
+
+#: lib/tymeslot/emails/templates/email_change_notification.ex
+#, elixir-autogen, elixir-format
+msgid "A request has been made to change the email address on your BookDesk24 account. We're letting you know so you can confirm it was you."
+msgstr "Foi feito um pedido para trocar o endereço de e-mail da sua conta do BookDesk24. Estamos avisando para você confirmar que foi você."
+
+#: lib/tymeslot/emails/templates/account_invitation.ex
+#, elixir-autogen, elixir-format
+msgid "An administrator has created a BookDesk24 account for you. Accept the invitation to choose how you'll sign in and set up your booking page."
+msgstr "Um administrador criou uma conta do BookDesk24 para você. Aceite o convite para escolher como vai entrar e configurar sua página de agendamento."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "As you asked, your BookDesk24 account has been deleted, together with everything in it. This cannot be undone."
+msgstr "Conforme solicitado, sua conta do BookDesk24 foi excluída, junto com tudo o que havia nela. Isso não pode ser desfeito."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "As you asked, your BookDesk24 account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account."
+msgstr "Conforme solicitado, a exclusão da sua conta do BookDesk24 está agendada para %{date}. Até lá, ela fica congelada: sua página de agendamento fica fora do ar e ninguém consegue agendar com você. Se mudar de ideia, entre antes dessa data e você poderá restaurar sua conta."
+
+#: lib/tymeslot/emails/templates/email_change_verification.ex
+#, elixir-autogen, elixir-format
+msgid "Confirm the new email address on your BookDesk24 account."
+msgstr "Confirme o novo endereço de e-mail da sua conta do BookDesk24."
+
+#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
+#, elixir-autogen, elixir-format
+msgid "Confirm your email to finish signing up for BookDesk24."
+msgstr "Confirme seu e-mail para terminar seu cadastro no BookDesk24."
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Email Address Changed - BookDesk24 Account"
+msgstr "Endereço de e-mail trocado - conta do BookDesk24"
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "If you did not ask for this, contact whoever runs this BookDesk24 service straight away."
+msgstr "Se você não pediu isso, entre em contato imediatamente com o responsável por este serviço do BookDesk24."
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Sign In to BookDesk24"
+msgstr "Entrar no BookDesk24"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Sign In to BookDesk24:"
+msgstr "Entrar no BookDesk24:"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Someone asked to reset the password for your BookDesk24 account, but your account signs in with %{provider}, so it has no password to reset. Use the button below and choose %{provider} to sign in."
+msgstr "Alguém pediu para redefinir a senha da sua conta do BookDesk24, mas sua conta entra com %{provider}, então não tem senha para redefinir. Use o botão abaixo e escolha %{provider} para entrar."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Someone just tried to create a new BookDesk24 account with this email address, which already has an account. If it was you, sign in below, or reset your password if you can't remember it."
+msgstr "Alguém acabou de tentar criar uma nova conta no BookDesk24 com este endereço de e-mail, que já tem uma conta. Se foi você, entre abaixo, ou redefina sua senha se não lembrar dela."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Someone just tried to create a new BookDesk24 account with this email address, which already has an account. If it was you, sign in with %{provider} below."
+msgstr "Alguém acabou de tentar criar uma nova conta no BookDesk24 com este endereço de e-mail, que já tem uma conta. Se foi você, entre com %{provider} abaixo."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Someone just tried to create a new BookDesk24 account with this email address. It belongs to an account that is scheduled for deletion on %{date}. If it was you, sign in before then to restore that account, or sign up again after that date."
+msgstr "Alguém acabou de tentar criar uma nova conta no BookDesk24 com este endereço de e-mail. Ele pertence a uma conta com exclusão agendada para %{date}. Se foi você, entre antes disso para restaurar essa conta ou crie uma conta novamente depois dessa data."
+
+#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
+#, elixir-autogen, elixir-format
+msgid "This link expires in 24 hours. If you didn't sign up for BookDesk24, you can ignore this email and no account will be created."
+msgstr "Este link expira em 24 horas. Se não foi você que se cadastrou no BookDesk24, pode ignorar este e-mail, e nenhuma conta vai ser criada."
+
+#: lib/tymeslot/emails/templates/signup_attempt_notice.ex
+#, elixir-autogen, elixir-format
+msgid "You already have a BookDesk24 account"
+msgstr "Você já tem uma conta no BookDesk24"
+
+#: lib/tymeslot/emails/templates/email_change_verification.ex
+#, elixir-autogen, elixir-format
+msgid "You asked to change the email address on your BookDesk24 account to %{new_email}."
+msgstr "Você pediu para trocar o endereço de e-mail da sua conta do BookDesk24 para %{new_email}."
+
+#: lib/tymeslot/emails/templates/email_change_verification.ex
+#, elixir-autogen, elixir-format
+msgid "You asked to change the email address on your BookDesk24 account. Confirm the new address below to finish the switch."
+msgstr "Você pediu para trocar o endereço de e-mail da sua conta do BookDesk24. Confirme o novo endereço abaixo para terminar a troca."
+
+#: lib/tymeslot/emails/templates/account_invitation.ex
+#, elixir-autogen, elixir-format
+msgid "You're invited to BookDesk24"
+msgstr "Convite para o BookDesk24"
+
+#: lib/tymeslot/emails/templates/social_signup_confirmation.ex
+#, elixir-autogen, elixir-format
+msgid "You're signing up for BookDesk24 with %{provider}. Confirm this email address to create your account and sign in."
+msgstr "Você está se cadastrando no BookDesk24 com %{provider}. Confirme este endereço de e-mail para criar sua conta e entrar."
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account email address has been successfully changed."
+msgstr "O endereço de e-mail da sua conta do BookDesk24 foi trocado."
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account email address has been successfully changed. This confirmation is being sent to your previous address so you know the switch happened."
+msgstr "O endereço de e-mail da sua conta do BookDesk24 foi trocado. Esta confirmação está indo para seu endereço anterior para você saber que a troca aconteceu."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account has been deleted"
+msgstr "Sua conta do BookDesk24 foi excluída"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account has no password"
+msgstr "Sua conta do BookDesk24 não tem senha"
+
+#: lib/tymeslot/emails/templates/no_password_to_reset.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account has no password to reset."
+msgstr "Sua conta do BookDesk24 não tem senha para redefinir."
+
+#: lib/tymeslot/emails/templates/account_invitation.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account is ready. Accept the invitation to sign in."
+msgstr "Sua conta do BookDesk24 está pronta. Aceite o convite para entrar."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 account is scheduled for deletion"
+msgstr "A exclusão da sua conta do BookDesk24 foi agendada"
+
+#: lib/tymeslot/emails/templates/email_change_confirmed.ex
+#, elixir-autogen, elixir-format
+msgid "Your BookDesk24 email address has been changed."
+msgstr "Seu endereço de e-mail do BookDesk24 foi trocado."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your upcoming bookings have been deleted from BookDesk24. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
+msgstr "Seus próximos agendamentos foram excluídos do BookDesk24. Seus convidados não foram avisados. Os eventos de calendário e os links de vídeo que já existiam foram mantidos como estavam. Se uma reunião não for acontecer, avise você mesmo os seus convidados."
+
+#: lib/tymeslot/emails/templates/account_deletion_notice.ex
+#, elixir-autogen, elixir-format
+msgid "Your upcoming bookings will be deleted from BookDesk24 with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
+msgstr "Seus próximos agendamentos serão excluídos do BookDesk24 junto com sua conta. Seus convidados não serão avisados. Os eventos de calendário e os links de vídeo que já existem continuarão como estão. Se uma reunião não for acontecer, avise você mesmo os seus convidados."

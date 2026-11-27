@@ -325,7 +325,12 @@ defmodule Tymeslot.Brands do
   @spec footer_label() :: term()
   def footer_label do
     brand = mail_identity()
-    if is_binary(brand.footer) and brand.footer != "", do: brand.footer, else: brand.name
+
+    cond do
+      is_binary(brand.footer) and brand.footer != "" -> brand.footer
+      brand.house_brand -> product_name(brand)
+      true -> brand.name
+    end
   end
 
   @spec footer_href() :: term()

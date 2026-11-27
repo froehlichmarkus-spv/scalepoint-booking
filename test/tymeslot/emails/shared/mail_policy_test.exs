@@ -95,6 +95,25 @@ defmodule Tymeslot.Emails.Shared.MailPolicyTest do
     assert hd(emails).html_body =~ "class=\"pc\""
   end
 
+  test "the shell is built for Outlook: tables, bgcolor, and a VML button" do
+    html =
+      DsMail.document(%{
+        title: "You are booked",
+        eyebrow: "BookDesk24 · Confirmed",
+        body: "<p>Tuesday.</p>",
+        cta_label: "Join meeting",
+        cta_url: "https://book.scalepoint-ventures.com/m/1"
+      })
+
+    assert html =~ ~s(role="presentation")
+    assert html =~ "bgcolor="
+    assert html =~ "<!--[if mso]>"
+    assert html =~ "<v:roundrect"
+    assert html =~ "urn:schemas-microsoft-com:vml"
+    refute html =~ "display:flex"
+    refute html =~ "position:fixed"
+  end
+
   test "mail colours clear WCAG AA" do
     for {fg, bg, min} <- MailPolicy.contrast_pairs() do
       ratio = Colour.contrast_ratio(fg, bg)

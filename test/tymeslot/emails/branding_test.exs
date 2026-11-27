@@ -315,7 +315,7 @@ defmodule Tymeslot.Emails.BrandingTest do
 
       assert mjml =~ ~s(alt="Beaver Dental")
       assert mjml =~ "Jane Smith via Beaver Dental"
-      refute mjml =~ "via Tymeslot"
+      refute mjml =~ "via BookDesk24"
     end
 
     test "a configured accent reaches the rendered stage band" do
@@ -332,11 +332,12 @@ defmodule Tymeslot.Emails.BrandingTest do
       {:ok, _settings} =
         AppSettings.update(%{email_brand_name: "Beaver Dental", email_brand_accent: "#7c3aed"})
 
-      assert transactional_mjml() =~ "Tymeslot</a>"
+      assert transactional_mjml() =~ "BookDesk24</a>"
+      refute transactional_mjml() =~ "Beaver Dental</a>"
     end
 
     # Regression: the organiser strip is built by `TemplateHelper`, not by the
-    # layout, so it carried its own hardcoded "Tymeslot" fallback. Every
+    # layout, so it carried its own hardcoded "BookDesk24" fallback. Every
     # appointment email goes through that path, which meant the strip stayed
     # unbranded no matter what the instance had configured.
     test "the organiser strip title follows the brand name" do

@@ -24,12 +24,26 @@ defmodule MailPreview do
 
     for locale <- ["de", "en"] do
       details =
-        EmailTestHelpers.build_appointment_details(%{
-          attendee_locale: locale,
-          organizer_locale: locale,
-          attendee_name: "Mara",
-          organizer_name: "Lena"
-        })
+        EmailTestHelpers.build_appointment_details(
+          if locale == "de" do
+            %{
+              attendee_locale: "de",
+              organizer_locale: "de",
+              attendee_name: "Mara",
+              organizer_name: "Lena",
+              description: "Kurzes Kennenlernen zum Projekt.",
+              reminders_summary: "Ich schicke dir 30 Minuten vorher eine Erinnerung.",
+              organizer_contact_info: "Ruf mich an, wenn etwas dazwischenkommt."
+            }
+          else
+            %{
+              attendee_locale: "en",
+              organizer_locale: "en",
+              attendee_name: "Mara",
+              organizer_name: "Lena"
+            }
+          end
+        )
 
       user =
         EmailTestHelpers.build_user_data(%{
@@ -57,6 +71,14 @@ defmodule MailPreview do
         html = preview(email.html_body)
         write("#{name}-#{locale}-light.html", html)
         write("#{name}-#{locale}-dark.html", darken(html))
+
+        if name == "confirmation-guest" and locale == "de" do
+          sendable =
+            Path.expand("docs/product-standard/heads/booking/mail/confirmation-guest-de.html")
+
+          File.write!(sendable, email.html_body)
+          IO.puts("#{sendable} #{byte_size(email.html_body)} bytes")
+        end
       end
     end
   end

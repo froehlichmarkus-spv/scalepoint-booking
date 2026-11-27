@@ -54,11 +54,11 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       payment_receipt = PaymentBlocks.attendee_receipt(appointment_details)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
 
       #{if line = GroupSession.line(appointment_details), do: Text.centered_text(line, font_size: "14px", padding: "0 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.description_section(appointment_details)}
 
@@ -67,9 +67,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
       #{if attendee_video_url do
-        MeetingComponents.video_meeting_section(@intent, attendee_video_url,
-        title: dgettext("emails_booking", "Ready to join when it's time?"),
-        button_text: dgettext("emails_booking", "Join Video Meeting"))
+        MeetingComponents.video_meeting_section(@intent, attendee_video_url, title: dgettext("emails_booking", "Ready to join when it's time?"))
       end}
 
       #{if payment_receipt, do: PaymentBlocks.attendee_receipt_html(payment_receipt)}
@@ -87,7 +85,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           eyebrow: dgettext("emails_booking", "Confirmed"),
           stage_title: dgettext("emails_booking", "You're booked."),
           stage_subtitle:
@@ -140,18 +139,16 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       intro_copy = guest_intro(appointment_details, guest_name)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.description_section(appointment_details)}
 
       #{MeetingComponents.organizer_note_box(@intent, appointment_details[:organizer_note])}
 
       #{if guest_video_url do
-        MeetingComponents.video_meeting_section(@intent, guest_video_url,
-        title: dgettext("emails_booking", "Join when you're ready"),
-        button_text: dgettext("emails_booking", "Join Meeting"))
+        MeetingComponents.video_meeting_section(@intent, guest_video_url, title: dgettext("emails_booking", "Join when you're ready"))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Will you be there?"), TemplateHelper.guest_answer_actions(appointment_details), footer: dgettext("emails_booking", "You can change your response any time using the buttons above."))}
@@ -159,7 +156,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           eyebrow: dgettext("emails_booking", "You're invited"),
           stage_title: dgettext("emails_booking", "You've been added as a guest"),
           stage_subtitle:
@@ -208,18 +206,16 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       meeting_details = TemplateHelper.organizer_meeting_details(appointment_details)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{MeetingComponents.counterpart_section(@intent, appointment_details)}
 
       #{MeetingComponents.attendee_message_box(@intent, appointment_details[:attendee_message])}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, organizer_locale(appointment_details))}
 
       #{MeetingComponents.description_section(appointment_details)}
 
       #{if organizer_video_url do
-        MeetingComponents.video_meeting_section(@intent, organizer_video_url,
-        title: dgettext("emails_booking", "Host video call"),
-        button_text: dgettext("emails_booking", "Start Meeting"))
+        MeetingComponents.video_meeting_section(@intent, organizer_video_url, title: dgettext("emails_booking", "Host video call"))
       end}
 
       #{MeetingComponents.custom_answers_section(appointment_details)}
@@ -231,13 +227,13 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmation do
       organizer_details =
         TemplateHelper.build_organizer_details(
           appointment_details,
-          [intent: @intent, card: :slot] ++ organizer_stage(appointment_details)
+          [intent: @intent, card: :slot, clock: :owner] ++ organizer_stage(appointment_details)
         )
 
       html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
 
       # No ICS attachment for the organiser email. The organiser is the
-      # calendar owner — Tymeslot already writes the event straight to their
+      # calendar owner — BookDesk24 already writes the event straight to their
       # CalDAV/OAuth calendar. An iTIP `METHOD:REQUEST` attachment on top of
       # that causes iMIP-aware mail servers (Zimbra, Exchange, iCloud Mail)
       # to auto-import the ICS as if it were an external invitation,

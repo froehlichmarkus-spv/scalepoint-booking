@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Callouts do
   @moduledoc """
-  Tinted, intent-coloured callout blocks for Tymeslot emails.
+  Tinted, intent-coloured callout blocks for BookDesk24 emails.
 
   A callout is a semantic block that draws the eye: a left colour rail, a
   tinted surface, and bold ink that shares the intent's accent colour. Use

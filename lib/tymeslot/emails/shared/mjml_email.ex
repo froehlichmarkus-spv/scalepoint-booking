@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.MjmlEmail do
   @moduledoc """
-  Base MJML template for Tymeslot transactional emails.
+  Base MJML template for BookDesk24 transactional emails.
 
   ## Anatomy
 

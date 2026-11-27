@@ -47,7 +47,9 @@ defmodule Tymeslot.Emails.Shared.MjmlEmailTest do
 
       pairs = Enum.map(email.attachments, &{&1.filename, &1.cid, &1.content_type})
 
-      assert {"header-booking-light@2x.png", "header-booking-light@booking.scalepoint", "image/png"} in pairs
+      assert {"header-booking-light@2x.png", "header-booking-light@booking.scalepoint",
+              "image/png"} in pairs
+
       assert {"header-booking-dark@2x.png", "header-booking-dark@booking.scalepoint", "image/png"} in pairs
     end
 

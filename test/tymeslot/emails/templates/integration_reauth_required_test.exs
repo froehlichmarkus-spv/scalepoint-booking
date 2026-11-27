@@ -170,7 +170,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequiredTest do
       text =
         IntegrationReauthRequired.render(@user, integration(sync_error: nil), :video).text_body
 
-      assert text =~ "Zoom needs reconnecting before Tymeslot can use it again."
+      assert text =~ "Zoom needs reconnecting before BookDesk24 can use it again."
     end
 
     test "gives the same steps as the HTML part" do

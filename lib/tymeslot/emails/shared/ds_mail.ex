@@ -74,9 +74,7 @@ defmodule Tymeslot.Emails.Shared.DsMail do
       "unsub_url" => ""
     }
 
-    lang()
-    |> html(assigns)
-    |> MailPolicy.scrub_vendors()
+    html(lang(), assigns)
   end
 
   @doc "Plain-text twin of the shell, including the legal footer."
@@ -102,9 +100,7 @@ defmodule Tymeslot.Emails.Shared.DsMail do
       "unsub_url" => ""
     }
 
-    lang()
-    |> text(assigns)
-    |> MailPolicy.scrub_vendors()
+    text(lang(), assigns)
   end
 
   @doc "Plain-text legal footer appended when a template built its own text body."
@@ -119,9 +115,9 @@ defmodule Tymeslot.Emails.Shared.DsMail do
 
   def append_text_footer(text) when is_binary(text) do
     if String.contains?(text, @privacy_en) or String.contains?(text, @privacy_de) do
-      MailPolicy.scrub_vendors(text)
+      text
     else
-      MailPolicy.scrub_vendors(String.trim_trailing(text) <> "\n\n" <> text_footer())
+      String.trim_trailing(text) <> "\n\n" <> text_footer()
     end
   end
 

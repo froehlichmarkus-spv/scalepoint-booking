@@ -91,11 +91,6 @@ msgstr "Si le litige est clos en votre faveur, la réservation sera rapprochée 
 msgid "Meeting:"
 msgstr "Réunion :"
 
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
-msgstr "Dès que Stripe est satisfait, l’état de votre compte se met à jour automatiquement. Rien d’autre n’est nécessaire du côté de Tymeslot."
-
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -249,11 +244,6 @@ msgstr "Détails du remboursement"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
-msgstr "Remboursez le participant depuis vos paiements dans Tymeslot ou depuis votre tableau de bord Stripe, ou indiquez-lui la suite."
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
 msgstr "REMBOURSEMENT DE SÉRIE NON EFFECTUÉ"
 
@@ -301,3 +291,13 @@ msgstr "Que faire"
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
 msgstr "Vous avez annulé les séances restantes d’une série, mais le remboursement de %{amount} au participant n’a pas pu être effectué. Les séances restent annulées."
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr "Dès que Stripe est satisfait, l’état de votre compte se met à jour automatiquement. Rien d’autre n’est nécessaire du côté de BookDesk24."
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Remboursez le participant depuis vos paiements dans BookDesk24 ou depuis votre tableau de bord Stripe, ou indiquez-lui la suite."

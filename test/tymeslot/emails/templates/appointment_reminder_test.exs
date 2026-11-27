@@ -328,7 +328,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminderTest do
 
       email = AppointmentReminder.render(:organizer, "organizer@example.com", details)
 
-      assert email.html_body =~ "Start Meeting"
+      assert email.html_body =~ "Join meeting"
       assert email.text_body =~ "jwt=HOST-TOKEN"
     end
   end

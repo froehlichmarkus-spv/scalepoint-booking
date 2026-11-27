@@ -91,11 +91,6 @@ msgstr ""
 msgid "Meeting:"
 msgstr ""
 
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
-msgstr ""
-
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -249,11 +244,6 @@ msgstr ""
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
-msgstr ""
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
 msgstr ""
 
@@ -300,4 +290,14 @@ msgstr ""
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr ""
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
 msgstr ""

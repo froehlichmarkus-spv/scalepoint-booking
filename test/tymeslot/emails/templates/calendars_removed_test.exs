@@ -27,7 +27,7 @@ defmodule Tymeslot.Emails.Templates.CalendarsRemovedTest do
       assert email.subject == "“Projects” is no longer on your calendar server"
 
       assert html =~ "is no longer on your calendar server, so BookDesk24 has stopped using it."
-      assert text =~ "is no longer on your calendar server, so Tymeslot has stopped using it."
+      assert text =~ "is no longer on your calendar server, so BookDesk24 has stopped using it."
 
       for body <- [html, text] do
         assert body =~ "Projects"

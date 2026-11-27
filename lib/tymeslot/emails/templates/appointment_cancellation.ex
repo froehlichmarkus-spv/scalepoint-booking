@@ -50,9 +50,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
       meeting_details = TemplateHelper.attendee_meeting_details(appointment_details, :attendee)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(seat_given_up_intro(appointment_details, locale), padding: "8px 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{Text.centered_text(dgettext("emails_booking_changes", "Would you like to book another time?"), padding: "24px 0 10px 0")}
       #{Buttons.action_button(:confirmed, dgettext("emails_booking_changes", "Book Another Time"), booking_url(appointment_details), full_width: true)}
@@ -62,7 +62,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Spot cancelled"),
           stage_subtitle:
@@ -98,9 +99,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
       meeting_details = TemplateHelper.attendee_meeting_details(appointment_details, :attendee)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(dgettext("emails_booking_changes", "Hi %{name} - our appointment has been cancelled. I'm sorry for the inconvenience.", name: appointment_details.attendee_name), padding: "8px 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
@@ -113,7 +114,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Meeting cancelled"),
           stage_subtitle:
@@ -156,16 +158,17 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
       meeting_details = TemplateHelper.attendee_meeting_details(appointment_details, :guest)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(guest_intro(appointment_details, guest_name), padding: "8px 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{Text.system_footer_note(dgettext("emails_booking_changes", "You don't need to do anything. If you added the meeting to your calendar, the attached file marks it as cancelled there."))}
       """
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Meeting cancelled"),
           stage_subtitle:
@@ -203,9 +206,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
       meeting_details = TemplateHelper.organizer_meeting_details(appointment_details)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(organizer_cancelled_line(appointment_details), padding: "8px 0 16px 0")}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, organizer_locale(appointment_details))}
 
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
@@ -216,7 +219,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentCancellation do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
+          clock: :owner,
           eyebrow: dgettext("emails_booking_changes", "Cancelled"),
           stage_title: dgettext("emails_booking_changes", "Meeting cancelled"),
           stage_subtitle: organizer_stage_subtitle(appointment_details)

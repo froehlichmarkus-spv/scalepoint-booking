@@ -59,15 +59,15 @@ defmodule Tymeslot.Emails.Shared.MailCards do
   end
 
   @doc "A slot spec from an appointment payload."
-  @spec slot_spec(map(), String.t(), String.t(), atom()) :: map()
-  def slot_spec(details, locale, status, tone) do
-    date = slot_date(details)
+  @spec slot_spec(map(), String.t(), String.t(), atom(), :attendee | :owner) :: map()
+  def slot_spec(details, locale, status, tone, clock \\ :attendee) do
+    date = slot_date(details, clock)
 
     %{
       mon: month_abbr(date, locale),
       day: if(date, do: Integer.to_string(date.day), else: ""),
       title: Map.get(details, :meeting_type) || Map.get(details, :title) || "Booking",
-      sub: time_line(details, locale),
+      sub: time_line(details, locale, clock),
       status: status,
       tone: tone,
       rows: slot_rows(details, locale)
@@ -109,13 +109,22 @@ defmodule Tymeslot.Emails.Shared.MailCards do
     ~s(<tr><td class="pcr mu" style="padding:0 18px 14px;font-family:#{@font};font-size:13px;line-height:19px;color:#4A5566">#{esc(text)}</td></tr>)
   end
 
-  defp slot_date(details) do
-    case Map.get(details, :start_time_attendee_tz) || Map.get(details, :start_time_owner_tz) ||
-           Map.get(details, :date) do
+  defp slot_date(details, clock) do
+    case slot_instant(details, clock) do
       %DateTime{} = dt -> DateTime.to_date(dt)
       %Date{} = date -> date
       _other -> nil
     end
+  end
+
+  defp slot_instant(details, :owner) do
+    Map.get(details, :start_time_owner_tz) || Map.get(details, :start_time_attendee_tz) ||
+      Map.get(details, :date)
+  end
+
+  defp slot_instant(details, _attendee) do
+    Map.get(details, :start_time_attendee_tz) || Map.get(details, :start_time_owner_tz) ||
+      Map.get(details, :date)
   end
 
   defp month_abbr(nil, _locale), do: ""
@@ -128,10 +137,35 @@ defmodule Tymeslot.Emails.Shared.MailCards do
     date |> Calendar.strftime("%b") |> String.upcase()
   end
 
-  defp time_line(details, locale) do
-    start = Map.get(details, :start_time_attendee_tz) || Map.get(details, :start_time_owner_tz)
+  defp time_line(details, locale, clock) do
+    case slot_instant(details, clock) do
+      %DateTime{} = start ->
+        date = DateTime.to_date(start)
 
-    if match?(%DateTime{}, start), do: Formatting.format_datetime(start, locale)
+        clock_details = %{
+          start_time: start,
+          date: date,
+          duration: Map.get(details, :duration),
+          time_format: if(clock == :owner, do: Map.get(details, :organizer_time_format))
+        }
+
+        [
+          Formatting.format_weekday(date, locale),
+          Formatting.format_date(date, locale),
+          Formatting.format_meeting_time(clock_details, locale)
+        ]
+        |> Enum.reject(&is_nil/1)
+        |> Enum.join(" · ")
+
+      %Date{} = date ->
+        Enum.join(
+          [Formatting.format_weekday(date, locale), Formatting.format_date(date, locale)],
+          " · "
+        )
+
+      _other ->
+        nil
+    end
   end
 
   defp slot_rows(details, locale) do

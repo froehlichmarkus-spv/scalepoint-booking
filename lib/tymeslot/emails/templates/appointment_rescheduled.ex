@@ -63,20 +63,18 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       intro_copy = attendee_intro(appointment_details, locale)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
 
       #{if line = GroupSession.line(appointment_details), do: Text.centered_text(line, font_size: "14px", padding: "0 0 16px 0")}
 
       #{previous_time_callout(appointment_details, :attendee, locale)}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
       #{if attendee_video_url do
-        MeetingComponents.video_meeting_section(@intent, attendee_video_url,
-        title: attendee_video_title(appointment_details),
-        button_text: dgettext("emails_booking", "Join Video Meeting"))
+        MeetingComponents.video_meeting_section(@intent, attendee_video_url, title: attendee_video_title(appointment_details))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Does the new time not work?"), [%{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel Appointment"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
@@ -86,7 +84,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           layout: :reschedule,
           eyebrow: dgettext("emails_booking", "Rescheduled"),
           stage_title: attendee_stage_title(appointment_details),
@@ -124,16 +123,14 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       intro_copy = guest_intro(appointment_details, guest_name)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{Text.centered_text(intro_copy, padding: "8px 0 16px 0")}
 
       #{previous_time_callout(appointment_details, :attendee, locale)}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{if guest_video_url do
-        MeetingComponents.video_meeting_section(@intent, guest_video_url,
-        title: dgettext("emails_booking", "Same link, new time"),
-        button_text: dgettext("emails_booking", "Join Meeting"))
+        MeetingComponents.video_meeting_section(@intent, guest_video_url, title: dgettext("emails_booking", "Same link, new time"))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Will you be there at the new time?"), TemplateHelper.guest_answer_actions(appointment_details), footer: dgettext("emails_booking", "Your earlier response applied to the previous time, so please let us know again."))}
@@ -141,7 +138,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
           layout: :reschedule,
           eyebrow: dgettext("emails_booking", "Rescheduled"),
           stage_title: dgettext("emails_booking", "The meeting has moved."),
@@ -191,18 +189,16 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       meeting_details = TemplateHelper.organizer_meeting_details(appointment_details)
 
       mjml_content = """
+      #{MeetingComponents.location_note_line(meeting_details)}
       #{MeetingComponents.counterpart_section(@intent, appointment_details)}
 
       #{previous_time_callout(appointment_details, :organizer, locale)}
 
-      #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
       #{MeetingComponents.custom_answers_section(appointment_details)}
 
       #{if organizer_video_url do
-        MeetingComponents.video_meeting_section(@intent, organizer_video_url,
-        title: dgettext("emails_booking", "Host video call"),
-        button_text: dgettext("emails_booking", "Start Meeting"))
+        MeetingComponents.video_meeting_section(@intent, organizer_video_url, title: dgettext("emails_booking", "Host video call"))
       end}
 
       #{MeetingComponents.actions_section(@intent, dgettext("emails_booking", "Need to make changes?"), [%{text: dgettext("emails_booking", "Open in dashboard"), url: Map.get(appointment_details, :dashboard_url), style: :primary}, %{text: dgettext("emails_booking", "Reschedule"), url: Map.get(appointment_details, :reschedule_url), style: :secondary}, %{text: dgettext("emails_booking", "Cancel Appointment"), url: Map.get(appointment_details, :cancel_url), style: :danger}])}
@@ -212,7 +208,9 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
 
       organizer_details =
         TemplateHelper.build_organizer_details(appointment_details,
-          intent: @intent, card: :slot,
+          intent: @intent,
+          card: :slot,
+          clock: :owner,
           layout: :reschedule,
           eyebrow: dgettext("emails_booking", "Rescheduled"),
           stage_title: dgettext("emails_booking", "Meeting rescheduled"),
@@ -222,7 +220,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentRescheduled do
       html_body = TemplateHelper.compile_template(mjml_content, organizer_details)
 
       # No ICS attachment for the organiser, for the same reason confirmations
-      # omit it: Tymeslot writes the new time straight to the organiser's own
+      # omit it: BookDesk24 writes the new time straight to the organiser's own
       # calendar, and an iMIP-aware mail server would import the attachment on
       # top of that as a second event.
       MjmlEmail.base_email()

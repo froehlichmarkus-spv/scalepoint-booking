@@ -6,7 +6,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequired do
   Distinct from `Tymeslot.Emails.Templates.IntegrationUnhealthy`, which reports
   intermittent probe failures that may already have resolved themselves. This
   one is sent when the cause is known and permanent until the user acts: a
-  revoked grant, scopes that no longer cover what Tymeslot must do, rejected
+  revoked grant, scopes that no longer cover what BookDesk24 must do, rejected
   credentials, or a calendar setup with nothing left to sync into. Saying "may
   need attention" about a certainty would understate it.
 
@@ -97,7 +97,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequired do
     do:
       dgettext(
         "emails_integrations",
-        "%{provider} needs reconnecting before Tymeslot can use it again.",
+        "%{provider} needs reconnecting before BookDesk24 can use it again.",
         provider: provider
       )
 
@@ -148,7 +148,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequired do
     do:
       dgettext(
         "emails_integrations",
-        "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Until then your booking page may not offer times or take bookings, because Tymeslot will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected.",
+        "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Until then your booking page may not offer times or take bookings, because BookDesk24 will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected.",
         integration: name
       )
 
@@ -156,7 +156,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequired do
     do:
       dgettext(
         "emails_integrations",
-        "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected.",
+        "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected.",
         integration: name
       )
 
@@ -165,7 +165,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequired do
       happening:
         dgettext(
           "emails_integrations",
-          "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected.",
+          "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected.",
           integration: name
         ),
       steps: [
@@ -190,7 +190,7 @@ defmodule Tymeslot.Emails.Templates.IntegrationReauthRequired do
       happening:
         dgettext(
           "emails_integrations",
-          "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you replace it. The reason is shown above. Until then your booking page may not offer times or take bookings, because Tymeslot will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected.",
+          "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you replace it. The reason is shown above. Until then your booking page may not offer times or take bookings, because BookDesk24 will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected.",
           integration: name
         ),
       steps: [

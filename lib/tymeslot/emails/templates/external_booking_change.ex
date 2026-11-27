@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
   @moduledoc """
-  Email template notifying an organizer that one of their Tymeslot meetings was
+  Email template notifying an organizer that one of their BookDesk24 meetings was
   either deleted or rescheduled directly in their external calendar.
 
   Sent by `Tymeslot.Emails.EmailService.send_external_booking_change/3`.
@@ -81,7 +81,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
   @doc """
   Builds the email telling `organizer_email` that `meeting` now ends where they
   moved its end in their own calendar, and who was emailed the new end
-  (`notice`). Nothing is asked of them: Tymeslot followed their calendar.
+  (`notice`). Nothing is asked of them: BookDesk24 followed their calendar.
   """
   @spec render_end_followed(Meeting.t(), String.t(), end_notice(), String.t()) ::
           Swoosh.Email.t()
@@ -99,7 +99,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
       summary =
         dgettext(
           "emails_booking_changes",
-          "You changed when \"%{title}\" ends in your external calendar, so Tymeslot updated the booking: it now ends at %{to} instead of %{from}.",
+          "You changed when \"%{title}\" ends in your external calendar, so BookDesk24 updated the booking: it now ends at %{to} instead of %{from}.",
           title: Sanitise.sanitize_for_email(title),
           to: to,
           from: from
@@ -271,9 +271,9 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
   # meeting from the dashboard.
   defp stage_subtitle(meeting) do
     if Meeting.group?(meeting),
-      do: dgettext("emails_booking_changes", "Please review the group meeting in Tymeslot."),
+      do: dgettext("emails_booking_changes", "Please review the group meeting in BookDesk24."),
       else:
-        dgettext("emails_booking_changes", "Please review and update the booking in Tymeslot.")
+        dgettext("emails_booking_changes", "Please review and update the booking in BookDesk24.")
   end
 
   defp alert_parts(:deleted, meeting) do
@@ -283,7 +283,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
       :cancelled,
       dgettext(
         "emails_booking_changes",
-        "The meeting \"%{title}\" was deleted from your external calendar. Tymeslot still has this booking on record - please review and cancel it here if the meeting is no longer taking place.",
+        "The meeting \"%{title}\" was deleted from your external calendar. BookDesk24 still has this booking on record - please review and cancel it here if the meeting is no longer taking place.",
         title: title
       ),
       dgettext("emails_booking_changes", "Meeting Deleted in External Calendar")
@@ -304,13 +304,13 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     if Meeting.group?(meeting) do
       dgettext(
         "emails_booking_changes",
-        "The group meeting \"%{title}\" was rescheduled in your external calendar. Tymeslot still holds the original time for every participant, and a group meeting cannot be moved for everyone at once.",
+        "The group meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original time for every participant, and a group meeting cannot be moved for everyone at once.",
         title: title
       )
     else
       dgettext(
         "emails_booking_changes",
-        "The meeting \"%{title}\" was rescheduled in your external calendar. Tymeslot still holds the original booking - please review the details and update or cancel it accordingly.",
+        "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking - please review the details and update or cancel it accordingly.",
         title: title
       )
     end
@@ -321,7 +321,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     <mj-section padding="12px 0 0 0">
       <mj-column>
         <mj-text font-size="15px" color="#{Styles.ink_soft()}" line-height="1.6">
-          #{dgettext("emails_booking_changes", "This meeting was <strong>removed from your external calendar</strong> but is still active in Tymeslot. If the meeting is no longer happening, please cancel it in Tymeslot so the attendee is notified and the time slot is freed up.")}
+          #{dgettext("emails_booking_changes", "This meeting was <strong>removed from your external calendar</strong> but is still active in BookDesk24. If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up.")}
         </mj-text>
       </mj-column>
     </mj-section>
@@ -344,12 +344,12 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     if Meeting.group?(meeting) do
       dgettext(
         "emails_booking_changes",
-        "This group meeting was <strong>rescheduled in your external calendar</strong>. Tymeslot still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
+        "This group meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above, and its participants still expect it. To keep the original time, move the event back in your calendar. To change it, send the participants a reschedule request from your dashboard, or cancel the meeting there so every participant is notified."
       )
     else
       dgettext(
         "emails_booking_changes",
-        "This meeting was <strong>rescheduled in your external calendar</strong>. Tymeslot still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: Tymeslot then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
+        "This meeting was <strong>rescheduled in your external calendar</strong>. BookDesk24 still shows the original time above. To move the booking to the new time, open it in your dashboard and choose <strong>Move booking</strong>: BookDesk24 then reschedules its reminders and emails the attendee the new time. If <strong>Move booking</strong> is not offered there, send the attendee a reschedule request from your dashboard instead."
       )
     end
   end
@@ -366,7 +366,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     """
     #{dgettext("emails_booking_changes", "Meeting Deleted in External Calendar")}
 
-    #{dgettext("emails_booking_changes", "The meeting \"%{title}\" was deleted from your external calendar but is still active in Tymeslot.", title: meeting.title)}
+    #{dgettext("emails_booking_changes", "The meeting \"%{title}\" was deleted from your external calendar but is still active in BookDesk24.", title: meeting.title)}
 
     #{dgettext("emails_booking_changes", "MEETING DETAILS:")}
     #{dgettext("emails_booking_changes", "Date:")} #{Formatting.format_date(owner_time, locale)}
@@ -374,7 +374,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     #{dgettext("emails_booking_changes", "Duration:")} #{Formatting.format_duration(meeting.duration, locale)}
     #{dgettext("emails_booking_changes", "Location:")} #{place(meeting) || dgettext("emails_booking_changes", "Not specified")}
     #{custom_answers}
-    #{dgettext("emails_booking_changes", "If the meeting is no longer happening, please cancel it in Tymeslot so the attendee is notified and the time slot is freed up.")}
+    #{dgettext("emails_booking_changes", "If the meeting is no longer happening, please cancel it in BookDesk24 so the attendee is notified and the time slot is freed up.")}
 
     #{dgettext("emails_booking_changes", "View meeting:")}
     #{view_url}
@@ -391,7 +391,7 @@ defmodule Tymeslot.Emails.Templates.ExternalBookingChange do
     """
     #{dgettext("emails_booking_changes", "Meeting Rescheduled in External Calendar")}
 
-    #{dgettext("emails_booking_changes", "The meeting \"%{title}\" was rescheduled in your external calendar. Tymeslot still holds the original booking shown below.", title: meeting.title)}
+    #{dgettext("emails_booking_changes", "The meeting \"%{title}\" was rescheduled in your external calendar. BookDesk24 still holds the original booking shown below.", title: meeting.title)}
 
     #{dgettext("emails_booking_changes", "ORIGINAL BOOKING DETAILS:")}
     #{dgettext("emails_booking_changes", "Date:")} #{Formatting.format_date(owner_time, locale)}

@@ -159,7 +159,7 @@ defmodule Tymeslot.Emails.Shared.TextBodyHelperTest do
     test "lists a web join link" do
       text = TextBodyHelper.format_video_section("https://meet.example.com/room", "en")
 
-      assert text =~ "JOIN VIDEO MEETING:\nhttps://meet.example.com/room"
+      assert text =~ "Join meeting\nhttps://meet.example.com/room"
     end
 
     test "is empty for a bare room id, a mailto address or an unsafe link" do

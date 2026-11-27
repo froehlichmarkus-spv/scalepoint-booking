@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Stage do
   @moduledoc """
-  The **stage band** — Tymeslot's 2026 signature opening for every email.
+  The **stage band** — BookDesk24's 2026 signature opening for every email.
 
   A stage band is a full-width section coloured by an intent gradient. It carries
   three typographic elements:

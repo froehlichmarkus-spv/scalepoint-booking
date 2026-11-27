@@ -51,21 +51,6 @@ msgstr "Вітаю, %{name}!"
 msgid "I'll send you a reminder %{label} before our appointment."
 msgstr "Я надішлю нагадування за %{label} до початку зустрічі."
 
-#: lib/tymeslot/emails/shared/text_body_helper.ex
-#, elixir-autogen, elixir-format
-msgid "JOIN VIDEO MEETING:"
-msgstr "ПРИЄДНАТИСЯ ДО ВІДЕОЗУСТРІЧІ:"
-
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
-#, elixir-autogen, elixir-format
-msgid "Join Meeting"
-msgstr "Приєднатися до зустрічі"
-
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
-#, elixir-autogen, elixir-format
-msgid "Join Video Meeting"
-msgstr "Приєднатися до відеозустрічі"
-
 #: lib/tymeslot/emails/shared/meeting/hero.ex
 #, elixir-autogen, elixir-format
 msgid "Location"
@@ -597,8 +582,13 @@ msgstr "Відеодзвінок:"
 msgid "Booked through your %{page} page"
 msgstr "Заброньовано через вашу сторінку «%{page}»"
 
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
 #: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
 msgid "Button not working? Paste this link into your browser:"
 msgstr ""
+
+#: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/shared/text_body_helper.ex
+#, elixir-autogen, elixir-format, fuzzy
+msgid "Join meeting"
+msgstr "Приєднатися до зустрічі"

@@ -71,6 +71,7 @@ defmodule Tymeslot.Emails.Shared.DsMailTest do
 
     assert footer =~ DsMail.privacy_url()
     assert footer =~ DsMail.legal_line()
+
     assert MjmlEmail.header_cid("header-booking-dark@2x.png") ==
              "header-booking-dark@booking.scalepoint"
   end

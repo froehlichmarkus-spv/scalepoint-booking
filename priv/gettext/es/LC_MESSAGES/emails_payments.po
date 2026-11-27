@@ -91,11 +91,6 @@ msgstr "Si la disputa se resuelve a tu favor, la reserva se actualiza sola. Si l
 msgid "Meeting:"
 msgstr "Reunión:"
 
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
-msgstr "Cuando Stripe tenga lo que necesita, el estado de tu cuenta se actualiza automáticamente. En Tymeslot no hace falta nada más."
-
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -249,11 +244,6 @@ msgstr "Detalles del reembolso"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
-msgstr "Reembolsa al asistente desde tus pagos en Tymeslot o desde tu panel de Stripe, o avísale qué pasa ahora."
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
 msgstr "REEMBOLSO DE LA SERIE NO REALIZADO"
 
@@ -301,3 +291,13 @@ msgstr "Qué hacer"
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
 msgstr "Cancelaste las sesiones restantes de una serie, pero no se pudo reembolsar %{amount} al asistente. Las sesiones siguen canceladas."
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr "Cuando Stripe tenga lo que necesita, el estado de tu cuenta se actualiza automáticamente. En BookDesk24 no hace falta nada más."
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Reembolsa al asistente desde tus pagos en BookDesk24 o desde tu panel de Stripe, o avísale qué pasa ahora."

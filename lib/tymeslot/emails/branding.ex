@@ -202,7 +202,7 @@ defmodule Tymeslot.Emails.Branding do
 
   @doc """
   Bytes of the logo to attach to an email: the custom logo when one is
-  configured and readable, the stock Tymeslot logo otherwise, and `:error`
+  configured and readable, the stock BookDesk24 logo otherwise, and `:error`
   when neither can be read.
   """
   @spec logo_bytes() :: {:ok, binary()} | :error

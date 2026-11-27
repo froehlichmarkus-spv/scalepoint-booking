@@ -122,7 +122,7 @@ defmodule Tymeslot.Emails.Templates.SeriesConfirmation do
         )
 
       # No calendar file: the organiser's calendar holds each session as an
-      # event Tymeslot writes itself (see `AppointmentConfirmation`).
+      # event BookDesk24 writes itself (see `AppointmentConfirmation`).
       MjmlEmail.base_email()
       |> to({details.organizer_name, organizer_email})
       |> MjmlEmail.put_reply_to(details.attendee_name, details.attendee_email)

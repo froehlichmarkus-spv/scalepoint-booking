@@ -25,7 +25,7 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSectionTest do
       html = VideoSection.video_meeting_section(:confirmed, url)
 
       assert html =~ url
-      assert html =~ "Join Meeting"
+      assert html =~ "Join meeting"
     end
 
     test "supports different intents" do
@@ -36,7 +36,7 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSectionTest do
           html = VideoSection.video_meeting_section(intent, url)
 
           assert html =~ url
-          assert html =~ "Join Meeting"
+          assert html =~ "Join meeting"
 
           html
         end
@@ -64,9 +64,11 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSectionTest do
       for intent <- [:confirmed, :alert, :cancelled] do
         html = VideoSection.video_meeting_section(intent, url)
 
-        assert html =~ ~s(background-color="#111E32")
-        assert html =~ ~s(color="#FFFFFF")
-        assert html =~ "Button not working? Paste this link into your browser:"
+        assert html =~ ~s(fillcolor="#111E32")
+        assert html =~ "<v:roundrect"
+        assert html =~ ~s(color:#FFFFFF)
+        assert html =~ ~s(href="#{url}")
+        refute html =~ ">#{url}<"
       end
     end
 
@@ -74,8 +76,8 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSectionTest do
       url = "https://meet.example.com/room123"
       html = VideoSection.video_meeting_section(:confirmed, url)
 
-      assert html =~ ~s(background-color="#111E32")
-      assert html =~ ~s(color="#FFFFFF")
+      assert html =~ ~s(fillcolor="#111E32")
+      assert html =~ ~s(color:#FFFFFF)
       assert Colour.contrast_ratio("#FFFFFF", "#111E32") >= 4.5
     end
   end
