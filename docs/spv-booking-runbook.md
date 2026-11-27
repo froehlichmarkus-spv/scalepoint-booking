@@ -124,3 +124,24 @@ curl -fsS http://127.0.0.1:4473/healthcheck
 ```
 
 Sind URL und API-Key gesetzt, spricht die App mit `Tymeslot.Plans.BillingClient.HTTP`. Der Satz „Die Abrechnung von BookDesk24 ist noch nicht da“ erscheint nur, solange `GET /healthz` auf dem Billing-Host nicht mit 2xx antwortet. Webhooks kommen an `POST /webhooks/growth-os-billing`.
+
+## Transaktionsmail über Resend
+
+Die Anwendung bleibt auf SMTP, solange `RESEND_API_KEY` leer ist. Ein gesetzter Schlüssel in Produktion schaltet auf Resend um, auch wenn `EMAIL_ADAPTER` weiter `smtp` ist. Der Schlüssel darf nur senden. Die Anwendung ruft beim Start keine Domain-API auf.
+
+Absender, wenn `MAIL_FROM` leer ist und Compose den Standard einsetzt: `BookDesk24 <noreply@scalepoint-ventures.com>`. Antworten gehen an `support@scalepoint-ventures.com` (`MAIL_REPLY_TO`). Ein Mandant mit eigenem Absendernamen behält diesen Namen. Die Domain `scalepoint-ventures.com` muss in Resend schon verifiziert sein. Der reine Sendeschlüssel kann das nicht prüfen.
+
+Zustellung ist aus, solange `SEND_EMAILS` nicht `true` ist. Dann schreibt die Anwendung die Mail nur ins Log.
+
+Umschalten auf dem Server:
+
+```sh
+# In /opt/spv-booking/deploy/.env eintragen. Den Wert nicht ins Repo schreiben.
+# SEND_EMAILS=true
+# RESEND_API_KEY=<sending-access key>
+
+cd /opt/spv-booking/deploy
+docker compose -p spv-booking -f compose.yml up -d --no-build --force-recreate app
+```
+
+SMTP-Variablen können stehen bleiben. Ohne `RESEND_API_KEY` sendet der nächste Start wieder über SMTP. `MAIL_FROM` und `MAIL_REPLY_TO` leer lassen heißt: die in Compose hinterlegten Standards. Wer den bisherigen Absender behalten will, setzt `MAIL_FROM` ausdrücklich.

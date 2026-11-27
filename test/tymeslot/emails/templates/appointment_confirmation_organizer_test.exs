@@ -154,7 +154,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmationOrganizerTest do
 
       assert email.html_body =~ "https://meet.example.com/room-123?role=host"
       assert email.html_body =~ "Host video call"
-      assert email.html_body =~ "Start Meeting"
+      assert email.html_body =~ "Join meeting"
     end
 
     # The organiser is the host: they must receive the host-scoped join URL,
@@ -204,8 +204,8 @@ defmodule Tymeslot.Emails.Templates.AppointmentConfirmationOrganizerTest do
         AppointmentConfirmation.render(:organizer, "organizer@example.com", details)
 
       refute email.html_body =~ "Host video call"
-      refute email.html_body =~ "Start Meeting"
-      refute email.text_body =~ "JOIN VIDEO MEETING"
+      refute email.html_body =~ "Join meeting"
+      refute email.text_body =~ "Join meeting"
     end
 
     test "text body contains key information" do

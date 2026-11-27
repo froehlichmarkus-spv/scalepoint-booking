@@ -167,20 +167,6 @@ msgstr "Těším se na naši schůzku. Termín mám zapsaný v kalendáři a b
 #: lib/tymeslot/emails/templates/appointment_confirmation.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#: lib/tymeslot/emails/templates/meeting_end_changed.ex
-#, elixir-autogen, elixir-format
-msgid "Join Meeting"
-msgstr "Připojit se ke schůzce"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#, elixir-autogen, elixir-format
-msgid "Join Video Meeting"
-msgstr "Připojit se k videoschůzce"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_reminder.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Join when you're ready"
 msgstr "Připojte se, až budete chtít"
@@ -328,7 +314,6 @@ msgstr "Připojte se, až přijde čas"
 msgid "Reference: %{ref}"
 msgstr "Referenční číslo: %{ref}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
 msgid "Reminder"
@@ -352,7 +337,6 @@ msgstr "Naplánované připomínky"
 msgid "Reschedule"
 msgstr "Přesunout schůzku"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Rescheduled"
@@ -377,13 +361,6 @@ msgstr "Stejný odkaz, nový čas"
 #, elixir-autogen, elixir-format
 msgid "See you %{time_until}!"
 msgstr "Uvidíme se %{time_until}!"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_reminder.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#, elixir-autogen, elixir-format
-msgid "Start Meeting"
-msgstr "Zahájit schůzku"
 
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
@@ -419,11 +396,6 @@ msgstr "Schůzka s %{organizer}, na kterou vás pozval(a) %{booker}, byla přesu
 #, elixir-autogen, elixir-format
 msgid "The meeting with %{organizer} that %{booker} invited you to is coming up."
 msgstr "Blíží se schůzka s %{organizer}, na kterou vás pozval %{booker}."
-
-#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot platform fee: %{amount}"
-msgstr "Poplatek platformy Tymeslot: %{amount}"
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
@@ -758,3 +730,8 @@ msgstr "Registrace je uzavřena"
 #, elixir-autogen, elixir-format
 msgid "The list is also attached as a CSV file for a spreadsheet."
 msgstr "Seznam je přiložen také jako soubor CSV pro tabulkový procesor."
+
+#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 platform fee: %{amount}"
+msgstr "Poplatek platformy BookDesk24: %{amount}"

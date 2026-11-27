@@ -42,21 +42,27 @@ defmodule Tymeslot.Emails.Shared.MjmlEmailTest do
       assert email.from == {configured(:from_name), configured(:from_email)}
     end
 
-    test "attaches the logo with a Content-ID equal to its filename" do
-      # SendGrid derives content_id from the filename (ignoring `cid:`), and
-      # Mailgun drops `cid:` entirely and keys inline images by filename, so
-      # cid and filename must match for the logo to render on every provider.
+    test "attaches the suite header images as inline CID parts" do
       email = MjmlEmail.base_email()
 
-      assert [%Swoosh.Attachment{filename: filename, cid: cid}] = email.attachments
-      assert filename == cid
-      assert cid == MjmlEmail.logo_cid()
+      pairs = Enum.map(email.attachments, &{&1.filename, &1.cid, &1.content_type})
+
+      assert {"header-booking-light@2x.png", "header-booking-light@booking.scalepoint",
+              "image/png"} in pairs
+
+      assert {"header-booking-dark@2x.png", "header-booking-dark@booking.scalepoint", "image/png"} in pairs
     end
 
-    test "references the logo in the HTML body via cid:<filename>" do
+    test "sets the platform Reply-To when no other party is named" do
+      email = MjmlEmail.base_email()
+
+      assert email.reply_to == {"", configured(:reply_to)}
+    end
+
+    test "references the header image via its Content-ID" do
       mjml = MjmlEmail.logo_header()
 
-      assert mjml =~ "src=\"cid:#{MjmlEmail.logo_cid()}\""
+      assert mjml =~ "src=\"cid:#{MjmlEmail.header_cid("header-booking-light@2x.png")}\""
     end
   end
 
@@ -114,25 +120,25 @@ defmodule Tymeslot.Emails.Shared.MjmlEmailTest do
       assert email.from == {configured(:from_name), configured(:from_email)}
     end
 
-    test "leaves Reply-To unset when the address is nil" do
+    test "keeps the platform Reply-To when the address is nil" do
       email = MjmlEmail.put_reply_to(MjmlEmail.base_email(), "Jane Host", nil)
 
-      assert email.reply_to == nil
+      assert email.reply_to == {"", configured(:reply_to)}
     end
 
-    test "leaves Reply-To unset when the address is blank" do
+    test "keeps the platform Reply-To when the address is blank" do
       email = MjmlEmail.put_reply_to(MjmlEmail.base_email(), "Jane Host", "   ")
 
-      assert email.reply_to == nil
+      assert email.reply_to == {"", configured(:reply_to)}
     end
 
-    test "leaves Reply-To unset when the address is the instance sender, in any case" do
+    test "keeps the platform Reply-To when the address is the instance sender" do
       sender = configured(:from_email)
 
       email =
         MjmlEmail.put_reply_to(MjmlEmail.base_email(), "Instance", " #{String.upcase(sender)} ")
 
-      assert email.reply_to == nil
+      assert email.reply_to == {"", configured(:reply_to)}
     end
 
     # Swoosh stores a bare address as `{"", address}`, which adapters send

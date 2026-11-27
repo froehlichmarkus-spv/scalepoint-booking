@@ -226,7 +226,7 @@ defmodule Tymeslot.Emails.GroupSeatPayloadsTest do
       email = AppointmentCancellation.render(:organizer, "host@example.com", details)
 
       assert details.attendee_email == nil
-      assert email.reply_to == nil
+      assert email.reply_to == {"", Application.get_env(:tymeslot, :email)[:reply_to]}
     end
 
     test "a reminder carries no Reply-To", %{meeting: meeting} do
@@ -234,7 +234,7 @@ defmodule Tymeslot.Emails.GroupSeatPayloadsTest do
 
       email = AppointmentReminder.render(:organizer, "host@example.com", details)
 
-      assert email.reply_to == nil
+      assert email.reply_to == {"", Application.get_env(:tymeslot, :email)[:reply_to]}
     end
   end
 

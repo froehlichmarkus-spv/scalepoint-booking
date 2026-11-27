@@ -1,5 +1,7 @@
 defmodule TymeslotWeb.MarketingControllerTest do
   use TymeslotWeb.ConnCase, async: true
+  @moduletag :marketing
+  @moduletag :controllers
 
   @moduletag :marketing
 

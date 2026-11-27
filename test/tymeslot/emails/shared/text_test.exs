@@ -57,8 +57,7 @@ defmodule Tymeslot.Emails.Shared.TextTest do
     test "includes helpful text" do
       html = Text.troubleshooting_link("https://example.com/link")
 
-      assert html =~ "Having trouble with the button"
-      assert html =~ "Copy and paste this link"
+      assert html =~ "Button not working? Paste this link into your browser:"
     end
   end
 

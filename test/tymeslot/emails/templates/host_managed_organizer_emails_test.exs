@@ -51,7 +51,7 @@ defmodule Tymeslot.Emails.Templates.HostManagedOrganizerEmailsTest do
       refute body =~ meeting.uid
     end
 
-    assert email.reply_to == nil
+    assert email.reply_to == {"", Application.get_env(:tymeslot, :email)[:reply_to]}
     assert email.text_body =~ "ada@example.com"
     assert email.text_body =~ "bob@example.com"
   end

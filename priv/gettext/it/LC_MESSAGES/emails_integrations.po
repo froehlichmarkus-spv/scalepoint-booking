@@ -101,11 +101,6 @@ msgstr "Errore"
 msgid "Error Details"
 msgstr "Dettagli dell'errore"
 
-#: lib/tymeslot/emails/templates/calendar_sync_error.ex
-#, elixir-autogen, elixir-format
-msgid "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in Tymeslot and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar."
-msgstr "Non è stato possibile aggiungere questa riunione al tuo calendario. L'appuntamento è stato confermato correttamente su Tymeslot e sia tu sia il partecipante avete ricevuto le email di conferma. Dovrai però aggiungerlo manualmente al tuo calendario."
-
 #: lib/tymeslot/emails/templates/calendars_removed.ex
 #: lib/tymeslot/emails/templates/integration_paused.ex
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
@@ -221,18 +216,6 @@ msgstr "Apri le impostazioni del calendario"
 
 #: lib/tymeslot/emails/templates/calendars_removed.ex
 #, elixir-autogen, elixir-format
-msgid "These calendars are no longer on your calendar server, so Tymeslot has stopped using them:"
-msgstr "Questi calendari non sono più presenti sul tuo server di calendario, quindi Tymeslot ha smesso di usarli:"
-
-#: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
-msgid_plural "Tymeslot checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
-msgstr[0] "Tymeslot ha controllato %{integration} e il calendario indicato sopra non è più presente sul server. Di solito significa che è stato eliminato sul server o che non è più condiviso con te. Gli altri tuoi calendari su %{integration} non sono interessati."
-msgstr[1] "Tymeslot ha controllato %{integration} e i calendari indicati sopra non sono più presenti sul server. Di solito significa che sono stati eliminati sul server o che non sono più condivisi con te. Gli altri tuoi calendari su %{integration} non sono interessati."
-
-#: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format
 msgid "You get this email once each time a calendar disappears. The notice in your calendar settings stays until you dismiss it."
 msgstr "Quando un calendario scompare, ricevi una sola email in merito. L'avviso nelle impostazioni del calendario resta visibile finché non lo chiudi."
 
@@ -240,11 +223,6 @@ msgstr "Quando un calendario scompare, ricevi una sola email in merito. L'avviso
 #, elixir-autogen, elixir-format
 msgid "“%{calendar}” is no longer on your calendar server"
 msgstr "Il calendario «%{calendar}» non è più presente sul tuo server di calendario"
-
-#: lib/tymeslot/emails/templates/calendars_removed.ex
-#, elixir-autogen, elixir-format
-msgid "“%{calendar}” is no longer on your calendar server, so Tymeslot has stopped using it."
-msgstr "Il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi Tymeslot ha smesso di usarlo."
 
 #: lib/tymeslot/emails/templates/calendar_sync_error.ex
 #, elixir-autogen, elixir-format
@@ -260,11 +238,6 @@ msgstr "⚠️ Errore di sincronizzazione del calendario - è richiesto un inter
 #, elixir-autogen, elixir-format
 msgid "%{provider} calendar"
 msgstr "calendario %{provider}"
-
-#: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format
-msgid "%{provider} needs reconnecting before Tymeslot can use it again."
-msgstr "Tymeslot potrà usare di nuovo %{provider} solo dopo che lo avrai ricollegato."
 
 #: lib/tymeslot/emails/shared/integration_labels.ex
 #, elixir-autogen, elixir-format
@@ -428,16 +401,6 @@ msgstr "Questa notifica viene inviata quando un'integrazione richiede attenzione
 msgid "This notification is sent when an integration remains unhealthy for 48+ hours. It will not repeat for 30 days."
 msgstr "Questa notifica viene inviata quando un'integrazione continua a dare problemi per oltre 48 ore. Non verrà ripetuta per 30 giorni."
 
-#: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected."
-msgstr "Tymeslot non può più usare la tua integrazione %{integration} e non potrà farlo finché non la ricollegherai. Il motivo è indicato sopra. Le prenotazioni esistenti non ne risentono."
-
-#: lib/tymeslot/emails/templates/integration_reauth_required.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected."
-msgstr "Tymeslot non può più usare la tua integrazione %{integration} e non potrà farlo finché non la aggiornerai. Il motivo è indicato sopra. Le prenotazioni esistenti non ne risentono."
-
 #: lib/tymeslot/emails/templates/integration_unhealthy.ex
 #, elixir-autogen, elixir-format
 msgid "Visit your integration settings to test the connection"
@@ -538,10 +501,47 @@ msgstr "Il tuo servizio di calendario non era raggiungibile o non ha risposto co
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
 #, elixir-autogen, elixir-format
-msgid "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Until then your booking page may not offer times or take bookings, because Tymeslot will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
-msgstr "Tymeslot non può più usare la tua integrazione %{integration} e non potrà farlo finché non la ricollegherai. Il motivo è indicato sopra. Fino ad allora la tua pagina di prenotazione potrebbe non offrire fasce orarie né ricevere prenotazioni, perché Tymeslot non propone orari che non può verificare su questo calendario né registrare al suo interno. Le prenotazioni esistenti non ne risentono."
+msgid "%{provider} needs reconnecting before BookDesk24 can use it again."
+msgstr "BookDesk24 potrà usare di nuovo %{provider} solo dopo che lo avrai ricollegato."
 
 #: lib/tymeslot/emails/templates/integration_reauth_required.ex
 #, elixir-autogen, elixir-format
-msgid "Tymeslot can no longer use your %{integration} integration, and it will stay that way until you replace it. The reason is shown above. Until then your booking page may not offer times or take bookings, because Tymeslot will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
-msgstr "Tymeslot non può più usare la tua integrazione %{integration} e non potrà farlo finché non la sostituirai. Il motivo è indicato sopra. Fino ad allora la tua pagina di prenotazione potrebbe non offrire fasce orarie né ricevere prenotazioni, perché Tymeslot non propone orari che non può verificare su questo calendario né registrare al suo interno. Le prenotazioni esistenti non ne risentono."
+msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Until then your booking page may not offer times or take bookings, because BookDesk24 will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
+msgstr "BookDesk24 non può più usare la tua integrazione %{integration} e non potrà farlo finché non la ricollegherai. Il motivo è indicato sopra. Fino ad allora la tua pagina di prenotazione potrebbe non offrire fasce orarie né ricevere prenotazioni, perché BookDesk24 non propone orari che non può verificare su questo calendario né registrare al suo interno. Le prenotazioni esistenti non ne risentono."
+
+#: lib/tymeslot/emails/templates/integration_reauth_required.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you reconnect it. The reason is shown above. Your existing bookings are not affected."
+msgstr "BookDesk24 non può più usare la tua integrazione %{integration} e non potrà farlo finché non la ricollegherai. Il motivo è indicato sopra. Le prenotazioni esistenti non ne risentono."
+
+#: lib/tymeslot/emails/templates/integration_reauth_required.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you replace it. The reason is shown above. Until then your booking page may not offer times or take bookings, because BookDesk24 will not offer a time it cannot check against this calendar or book one into it. Your existing bookings are not affected."
+msgstr "BookDesk24 non può più usare la tua integrazione %{integration} e non potrà farlo finché non la sostituirai. Il motivo è indicato sopra. Fino ad allora la tua pagina di prenotazione potrebbe non offrire fasce orarie né ricevere prenotazioni, perché BookDesk24 non propone orari che non può verificare su questo calendario né registrare al suo interno. Le prenotazioni esistenti non ne risentono."
+
+#: lib/tymeslot/emails/templates/integration_reauth_required.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 can no longer use your %{integration} integration, and it will stay that way until you update it. The reason is shown above. Your existing bookings are not affected."
+msgstr "BookDesk24 non può più usare la tua integrazione %{integration} e non potrà farlo finché non la aggiornerai. Il motivo è indicato sopra. Le prenotazioni esistenti non ne risentono."
+
+#: lib/tymeslot/emails/templates/calendars_removed.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 checked %{integration} and the server no longer has the calendar listed above. This usually means it was deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
+msgid_plural "BookDesk24 checked %{integration} and the server no longer has the calendars listed above. This usually means they were deleted, or stopped being shared with you, on the server. Your other calendars on %{integration} are unaffected."
+msgstr[0] "BookDesk24 ha controllato %{integration} e il calendario indicato sopra non è più presente sul server. Di solito significa che è stato eliminato sul server o che non è più condiviso con te. Gli altri tuoi calendari su %{integration} non sono interessati."
+msgstr[1] "BookDesk24 ha controllato %{integration} e i calendari indicati sopra non sono più presenti sul server. Di solito significa che sono stati eliminati sul server o che non sono più condivisi con te. Gli altri tuoi calendari su %{integration} non sono interessati."
+
+#: lib/tymeslot/emails/templates/calendar_sync_error.ex
+#, elixir-autogen, elixir-format
+msgid "I was unable to add this meeting to your calendar. The appointment has been successfully confirmed in BookDesk24 and both you and the attendee have received confirmation emails. However, you'll need to manually add it to your calendar."
+msgstr "Non è stato possibile aggiungere questa riunione al tuo calendario. L'appuntamento è stato confermato correttamente su BookDesk24 e sia tu sia il partecipante avete ricevuto le email di conferma. Dovrai però aggiungerlo manualmente al tuo calendario."
+
+#: lib/tymeslot/emails/templates/calendars_removed.ex
+#, elixir-autogen, elixir-format
+msgid "These calendars are no longer on your calendar server, so BookDesk24 has stopped using them:"
+msgstr "Questi calendari non sono più presenti sul tuo server di calendario, quindi BookDesk24 ha smesso di usarli:"
+
+#: lib/tymeslot/emails/templates/calendars_removed.ex
+#, elixir-autogen, elixir-format
+msgid "“%{calendar}” is no longer on your calendar server, so BookDesk24 has stopped using it."
+msgstr "Il calendario «%{calendar}» non è più presente sul tuo server di calendario, quindi BookDesk24 ha smesso di usarlo."

@@ -41,10 +41,12 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminderTest do
       details = build_appointment_details()
       email = AppointmentReminder.render(:organizer, "organizer@example.com", details)
 
-      # The reminder points at an already-booked meeting, so it ships no ICS —
-      # the only attachment is the logo the template references inline.
-      assert [%Swoosh.Attachment{filename: "bookdesk24-logo.png", content_type: "image/png"}] =
-               email.attachments
+      # The reminder points at an already-booked meeting, so it ships no ICS.
+      # The header art travels as inline CID parts.
+      filenames = Enum.map(email.attachments, & &1.filename)
+      assert "header-booking-light@2x.png" in filenames
+      assert "header-booking-dark@2x.png" in filenames
+      refute Enum.any?(filenames, &String.ends_with?(&1, ".ics"))
     end
 
     test "includes both HTML and text bodies" do
@@ -160,8 +162,10 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminderTest do
       details = build_appointment_details()
       email = AppointmentReminder.render(:attendee, "attendee@example.com", details)
 
-      assert [%Swoosh.Attachment{filename: "bookdesk24-logo.png", content_type: "image/png"}] =
-               email.attachments
+      filenames = Enum.map(email.attachments, & &1.filename)
+      assert "header-booking-light@2x.png" in filenames
+      assert "header-booking-dark@2x.png" in filenames
+      refute Enum.any?(filenames, &String.ends_with?(&1, ".ics"))
     end
 
     test "includes both HTML and text bodies" do
@@ -324,7 +328,7 @@ defmodule Tymeslot.Emails.Templates.AppointmentReminderTest do
 
       email = AppointmentReminder.render(:organizer, "organizer@example.com", details)
 
-      assert email.html_body =~ "Start Meeting"
+      assert email.html_body =~ "Join meeting"
       assert email.text_body =~ "jwt=HOST-TOKEN"
     end
   end

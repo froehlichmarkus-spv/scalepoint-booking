@@ -8,10 +8,10 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
   as a key/value table so self-hosters and operators can copy the report
   verbatim into an issue tracker.
 
-  Always English, unlike the mail Tymeslot sends to users. It goes to the
+  Always English, unlike the mail BookDesk24 sends to users. It goes to the
   operator's configured alert address, not to a user with a stored locale,
   and its subject is a contract: inbox rules file and page on the
-  `[SEVERITY] Tymeslot:` prefix. Keeping operator mail untranslated is a
+  `[SEVERITY] BookDesk24:` prefix. Keeping operator mail untranslated is a
   deliberate decision, so the text below is plain English with no gettext.
   """
 
@@ -22,7 +22,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
 
   @doc """
   The alert email to the operator at `recipient`. Its subject is
-  `"[<SEVERITY>] Tymeslot: <category>"`, so an inbox rule can file or page on
+  `"[<SEVERITY>] BookDesk24: <category>"`, so an inbox rule can file or page on
   the severity; only an error carries the warning sign.
   """
   @spec render(
@@ -34,14 +34,14 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
         ) :: Email.t()
   def render(recipient, category, severity, message, metadata) do
     MjmlEmail.base_email()
-    |> Email.to({"Tymeslot Operator", recipient})
+    |> Email.to({"BookDesk24 Operator", recipient})
     |> Email.subject(subject(category, severity))
     |> Email.html_body(html_body(category, severity, message, metadata))
     |> Email.text_body(text_body(category, severity, message, metadata))
   end
 
-  defp subject(category, :error), do: "[ERROR] ⚠️ Tymeslot: #{category}"
-  defp subject(category, severity), do: "[#{severity_label(severity)}] Tymeslot: #{category}"
+  defp subject(category, :error), do: "[ERROR] ⚠️ BookDesk24: #{category}"
+  defp subject(category, severity), do: "[#{severity_label(severity)}] BookDesk24: #{category}"
 
   defp html_body(category, severity, message, metadata) do
     callout_intent = severity_to_intent(severity)
@@ -55,12 +55,12 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
 
     #{Text.divider()}
 
-    #{Text.system_footer_note("This is an automated alert from Tymeslot. If you are self-hosting and would like to help debug this issue, you can share the report above (redacting any sensitive values) via a GitHub issue at https://github.com/Tymeslot/tymeslot/issues.")}
+    #{Text.system_footer_note("This is an automated alert from BookDesk24. If you are self-hosting and would like to help debug this issue, you can share the report above (redacting any sensitive values) via a GitHub issue at https://book.scalepoint-ventures.com/issues.")}
     """
 
     TemplateHelper.compile_system_template(
       mjml_content,
-      "Tymeslot Admin Alert",
+      "BookDesk24 Admin Alert",
       "#{category}: #{message}",
       intent: @intent,
       eyebrow: "Admin",
@@ -71,7 +71,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
 
   defp text_body(category, severity, message, metadata) do
     """
-    TYMESLOT ADMIN ALERT
+    BOOKDESK24 ADMIN ALERT
 
     Category: #{category}
     Severity: #{severity}
@@ -82,9 +82,9 @@ defmodule Tymeslot.Emails.Templates.AdminAlert do
     #{metadata_text(metadata)}
 
     ---
-    This is an automated alert from Tymeslot.
+    This is an automated alert from BookDesk24.
     Self-hosters: to help debug this issue, please share the report above
-    (redacting any sensitive values) via https://github.com/Tymeslot/tymeslot/issues.
+    (redacting any sensitive values) via https://book.scalepoint-ventures.com/issues.
     """
   end
 

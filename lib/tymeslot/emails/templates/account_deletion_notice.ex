@@ -5,7 +5,7 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNotice do
   Two variants, chosen by `sign_in_url`: with a URL the deletion is scheduled
   and the owner can still sign in and restore the account before the date;
   with `nil` the account has been deleted. Both say plainly what happens to
-  bookings, because guests are not told: bookings are deleted from Tymeslot,
+  bookings, because guests are not told: bookings are deleted from BookDesk24,
   and calendar events and video links that already exist stay as they are.
   """
   use Gettext, backend: TymeslotWeb.Gettext
@@ -36,10 +36,10 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNotice do
     end)
   end
 
-  defp subject(nil), do: dgettext("emails_account", "Your Tymeslot account has been deleted")
+  defp subject(nil), do: dgettext("emails_account", "Your BookDesk24 account has been deleted")
 
   defp subject(_url),
-    do: dgettext("emails_account", "Your Tymeslot account is scheduled for deletion")
+    do: dgettext("emails_account", "Your BookDesk24 account is scheduled for deletion")
 
   defp html_body(user, scheduled_at, sign_in_url) do
     scheduled_at = Policy.local_date(scheduled_at, user[:timezone])
@@ -92,14 +92,14 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNotice do
   defp summary(_at, nil) do
     dgettext(
       "emails_account",
-      "As you asked, your Tymeslot account has been deleted, together with everything in it. This cannot be undone."
+      "As you asked, your BookDesk24 account has been deleted, together with everything in it. This cannot be undone."
     )
   end
 
   defp summary(at, _url) do
     dgettext(
       "emails_account",
-      "As you asked, your Tymeslot account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account.",
+      "As you asked, your BookDesk24 account is scheduled for deletion on %{date}. Until then it is frozen: your booking page is offline and nobody can book you. If you change your mind, sign in before that date and you can restore your account.",
       date: date(at)
     )
   end
@@ -107,14 +107,14 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNotice do
   defp bookings_note(nil) do
     dgettext(
       "emails_account",
-      "Your upcoming bookings have been deleted from Tymeslot. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
+      "Your upcoming bookings have been deleted from BookDesk24. Your guests were not notified. Calendar events and video links that already exist have been left as they are. If a meeting will not take place, please contact your guests yourself."
     )
   end
 
   defp bookings_note(_url) do
     dgettext(
       "emails_account",
-      "Your upcoming bookings will be deleted from Tymeslot with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
+      "Your upcoming bookings will be deleted from BookDesk24 with your account. Your guests will not be notified. Calendar events and video links that already exist will stay as they are. If a meeting will not take place, please contact your guests yourself."
     )
   end
 
@@ -140,7 +140,7 @@ defmodule Tymeslot.Emails.Templates.AccountDeletionNotice do
   defp footer(nil) do
     dgettext(
       "emails_account",
-      "If you did not ask for this, contact whoever runs this Tymeslot service straight away."
+      "If you did not ask for this, contact whoever runs this BookDesk24 service straight away."
     )
   end
 

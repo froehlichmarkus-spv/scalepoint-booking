@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Urls do
   @moduledoc """
-  App URL building helpers for Tymeslot emails.
+  App URL building helpers for BookDesk24 emails.
   """
 
   alias Tymeslot.Utils.UrlBuilder

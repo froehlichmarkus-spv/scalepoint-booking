@@ -91,11 +91,6 @@ msgstr "Якщо спір буде закрито на вашу користь, 
 msgid "Meeting:"
 msgstr "Зустріч:"
 
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
-msgstr "Щойно Stripe буде задоволений, стан вашого облікового запису оновиться автоматично. З боку Tymeslot більше нічого не потрібно."
-
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -249,11 +244,6 @@ msgstr "Деталі повернення коштів"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
-msgstr "Поверніть кошти учаснику через свої платежі в Tymeslot або через панель керування Stripe чи повідомте йому, що буде далі."
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
 msgstr "КОШТИ ЗА СЕРІЮ НЕ ПОВЕРНЕНО"
 
@@ -301,3 +291,13 @@ msgstr "Що зробити"
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
 msgstr "Ви скасували решту сесій серії, але повернути учаснику %{amount} не вдалося. Сесії залишаються скасованими."
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr "Щойно Stripe буде задоволений, стан вашого облікового запису оновиться автоматично. З боку BookDesk24 більше нічого не потрібно."
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Поверніть кошти учаснику через свої платежі в BookDesk24 або через панель керування Stripe чи повідомте йому, що буде далі."

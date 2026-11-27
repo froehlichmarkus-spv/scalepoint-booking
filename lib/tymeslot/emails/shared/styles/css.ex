@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Styles.CSS do
   @moduledoc """
-  Generates the MJML-embedded CSS for Tymeslot emails.
+  Generates the MJML-embedded CSS for BookDesk24 emails.
 
   Two public outputs:
 

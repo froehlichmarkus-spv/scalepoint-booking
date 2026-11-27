@@ -160,7 +160,7 @@ defmodule Tymeslot.Emails.Templates.SeriesRefundFailed do
     do:
       dgettext(
         "emails_payments",
-        "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
+        "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
       )
 
   defp details(context, amount) do

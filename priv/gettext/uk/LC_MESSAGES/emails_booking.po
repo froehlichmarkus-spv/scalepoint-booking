@@ -167,20 +167,6 @@ msgstr "З нетерпінням чекаю на нашу зустріч. Я в
 #: lib/tymeslot/emails/templates/appointment_confirmation.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#: lib/tymeslot/emails/templates/meeting_end_changed.ex
-#, elixir-autogen, elixir-format
-msgid "Join Meeting"
-msgstr "Приєднатися до зустрічі"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#, elixir-autogen, elixir-format
-msgid "Join Video Meeting"
-msgstr "Приєднатися до відеозустрічі"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_reminder.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Join when you're ready"
 msgstr "Приєднуйтесь, коли будете готові"
@@ -328,7 +314,6 @@ msgstr "Готові приєднатися, коли настане час?"
 msgid "Reference: %{ref}"
 msgstr "Код операції: %{ref}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
 msgid "Reminder"
@@ -352,7 +337,6 @@ msgstr "Заплановані нагадування"
 msgid "Reschedule"
 msgstr "Перенести"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Rescheduled"
@@ -377,13 +361,6 @@ msgstr "Те саме посилання, новий час"
 #, elixir-autogen, elixir-format
 msgid "See you %{time_until}!"
 msgstr "До зустрічі %{time_until}!"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_reminder.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#, elixir-autogen, elixir-format
-msgid "Start Meeting"
-msgstr "Розпочати зустріч"
 
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
@@ -419,11 +396,6 @@ msgstr "Зустріч з %{organizer}, на яку вас запросив(ла
 #, elixir-autogen, elixir-format
 msgid "The meeting with %{organizer} that %{booker} invited you to is coming up."
 msgstr "Наближається зустріч із %{organizer}, на яку вас запросив %{booker}."
-
-#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot platform fee: %{amount}"
-msgstr "Комісія платформи Tymeslot: %{amount}"
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
@@ -758,3 +730,8 @@ msgstr "Реєстрацію закрито"
 #, elixir-autogen, elixir-format
 msgid "The list is also attached as a CSV file for a spreadsheet."
 msgstr "Список також додано як файл CSV для електронної таблиці."
+
+#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 platform fee: %{amount}"
+msgstr "Комісія платформи BookDesk24: %{amount}"

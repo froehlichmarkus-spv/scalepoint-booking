@@ -1,0 +1,21 @@
+<%= assigns["title"] %>
+
+<%= assigns["body_text"] %>
+<%= if assigns["card"] do %>
+<%= assigns["card_text"] %>
+<% end %><%= if assigns["cta"] do %>
+<%= assigns["cta_label"] %>: <%= assigns["cta_url"] %>
+<% end %><%= if assigns["info"] do %>
+<%= assigns["info_title"] %>
+<%= assigns["info_body"] %>
+<% end %>
+Fragen? Antworte einfach auf diese Mail oder schreib an support@scalepoint-ventures.com.
+
+--
+<%= assigns["footer_reason"] %>
+<%= if assigns["powered_by"] do %>Powered by BookDesk24
+<% end %>ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finnland · Y-Tunnus 3620767-9
+Datenschutz: <%= assigns["privacy_url"] %>
+Impressum: <%= assigns["notice_url"] %>
+<%= if assigns["unsub"] do %>Abmelden: <%= assigns["unsub_url"] %>
+<% end %>

@@ -18,7 +18,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
 
   Always English, like `Tymeslot.Emails.Templates.AdminAlert`: it goes to the
   operator's configured alert address, not to a user with a stored locale,
-  and inbox rules file it by its `[SEVERITY] Tymeslot:` subject prefix. The
+  and inbox rules file it by its `[SEVERITY] BookDesk24:` subject prefix. The
   text below is plain English with no gettext, for the reason given in
   `Tymeslot.Emails.Templates.AdminAlert`.
   """
@@ -34,18 +34,18 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
   @spec render(String.t(), map()) :: Email.t()
   def render(recipient, digest) do
     MjmlEmail.base_email()
-    |> Email.to({"Tymeslot Operator", recipient})
+    |> Email.to({"BookDesk24 Operator", recipient})
     |> Email.subject(subject(digest))
     |> Email.html_body(html_body(digest))
     |> Email.text_body(text_body(digest))
   end
 
   defp subject(%{"kind" => "errors"} = digest) do
-    "[ERROR] Tymeslot: #{pluralise(total_alerts(digest), "more error alert")} this hour"
+    "[ERROR] BookDesk24: #{pluralise(total_alerts(digest), "more error alert")} this hour"
   end
 
   defp subject(digest) do
-    "[INFO] Tymeslot: daily digest (#{pluralise(total_alerts(digest), "alert")})"
+    "[INFO] BookDesk24: daily digest (#{pluralise(total_alerts(digest), "alert")})"
   end
 
   defp html_body(digest) do
@@ -69,7 +69,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
 
     TemplateHelper.compile_system_template(
       mjml_content,
-      "Tymeslot Admin Alert Digest",
+      "BookDesk24 Admin Alert Digest",
       subject(digest),
       intent: copy.intent,
       eyebrow: "Admin",
@@ -104,9 +104,9 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
         "#{pluralise(total_alerts(digest), "error alert")} held back after this hour's " <>
           "first ones, newest first",
       footer:
-        "Tymeslot emails the first few new or returning errors of an hour at once and " <>
+        "BookDesk24 emails the first few new or returning errors of an hour at once and " <>
           "collects the rest here, so a bad deploy sends one email rather than one per error.",
-      text_title: "TYMESLOT ERROR ALERT ROLL-UP",
+      text_title: "BOOKDESK24 ERROR ALERT ROLL-UP",
       stage_title: "Error alert roll-up",
       intent: :alert
     }
@@ -116,9 +116,9 @@ defmodule Tymeslot.Emails.Templates.AdminAlertDigest do
     %{
       headline: "#{pluralise(total_alerts(digest), "info alert")} since the last digest",
       footer:
-        "This is an automated daily digest from Tymeslot. Warnings and errors are emailed " <>
+        "This is an automated daily digest from BookDesk24. Warnings and errors are emailed " <>
           "as they happen; informational alerts are collected here.",
-      text_title: "TYMESLOT ADMIN ALERT DIGEST",
+      text_title: "BOOKDESK24 ADMIN ALERT DIGEST",
       stage_title: "Daily alert digest",
       intent: :confirmed
     }

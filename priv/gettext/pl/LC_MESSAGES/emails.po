@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: tymeslot\n"
+"Project-Id-Version: bookdesk24\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -46,21 +46,6 @@ msgstr "Cześć, %{name},"
 #, elixir-autogen, elixir-format
 msgid "I'll send you a reminder %{label} before our appointment."
 msgstr "Wyślę ci przypomnienie %{label} przed naszym spotkaniem."
-
-#: lib/tymeslot/emails/shared/text_body_helper.ex
-#, elixir-autogen, elixir-format
-msgid "JOIN VIDEO MEETING:"
-msgstr "DOŁĄCZ DO SPOTKANIA WIDEO:"
-
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
-#, elixir-autogen, elixir-format
-msgid "Join Meeting"
-msgstr "Dołącz do spotkania"
-
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
-#, elixir-autogen, elixir-format
-msgid "Join Video Meeting"
-msgstr "Dołącz do spotkania wideo"
 
 #: lib/tymeslot/emails/shared/meeting/hero.ex
 #, elixir-autogen, elixir-format
@@ -169,11 +154,6 @@ msgstr[2] "minut"
 #, elixir-autogen, elixir-format
 msgid "reply to this email"
 msgstr "Odpowiedz na tę wiadomość"
-
-#: lib/tymeslot/emails/shared/text.ex
-#, elixir-autogen, elixir-format
-msgid "Having trouble with the button? Copy and paste this link into your browser:"
-msgstr "Przycisk nie działa? Skopiuj i wklej ten link do przeglądarki:"
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
@@ -373,7 +353,6 @@ msgstr "Wiadomość od: %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} · %{brand}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -599,22 +578,13 @@ msgstr "Spotkanie wideo:"
 msgid "Booked through your %{page} page"
 msgstr "Zarezerwowano przez twoją stronę „%{page}”"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
+#: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
-msgid "Legal notice"
-msgstr "Legal notice"
+msgid "Button not working? Paste this link into your browser:"
+msgstr "Przycisk nie działa? Wklej ten link do przeglądarki:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
+#: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/shared/text_body_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Privacy"
-msgstr "Privacy"
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Reply to this email or write to support@scalepoint-ventures.com."
-msgstr "Reply to this email or write to support@scalepoint-ventures.com."
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Terms"
-msgstr "Terms"
+msgid "Join meeting"
+msgstr "Dołącz do spotkania"

@@ -26,6 +26,8 @@ defmodule Tymeslot.Emails.Shared.MeetingComponents do
     (`custom_answers_section/1`).
   """
 
+  alias Tymeslot.Emails.Shared.{Formatting, Text}
+
   alias Tymeslot.Emails.Shared.Meeting.{
     ActionsBar,
     Attendee,
@@ -54,4 +56,13 @@ defmodule Tymeslot.Emails.Shared.MeetingComponents do
   defdelegate description_text(details), to: Description, as: :text_section
 
   defdelegate custom_answers_section(appointment_details), to: CustomAnswers
+
+  @doc "The arranged-address sentence, or nothing when this meeting has none."
+  @spec location_note_line(map()) :: String.t()
+  def location_note_line(details) do
+    case Formatting.location_note(details) do
+      nil -> ""
+      note -> Text.centered_text(note, font_size: "14px", padding: "0 0 12px 0")
+    end
+  end
 end

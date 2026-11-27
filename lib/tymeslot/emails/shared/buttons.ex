@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Buttons do
   @moduledoc """
-  Primary call-to-action buttons for Tymeslot emails.
+  Primary call-to-action buttons for BookDesk24 emails.
 
   Pill-shaped, bold, single-CTA ethos. The button background comes from the
   caller-supplied `intent` — a button always matches the intent of the email
@@ -42,23 +42,22 @@ defmodule Tymeslot.Emails.Shared.Buttons do
     """
   end
 
-  defp button_markup(intent, text, safe_url, size, full_width, width) do
+  defp button_markup(_intent, text, safe_url, size, full_width, width) do
     safe_text = Sanitise.sanitize_for_email(text)
     css_class = if full_width, do: "mobile-button", else: ""
-    accent_deep = Styles.intent_accent_deep(intent)
 
     """
     <mj-button
       href="#{safe_url}"
-      background-color="#{accent_deep}"
-      color="#{Styles.button_text_color(accent_deep)}"
-      border-radius="#{Styles.button_radius()}"
+      background-color="#111E32"
+      color="#FFFFFF"
+      border-radius="10px"
       font-size="#{Styles.font_size(:md)}"
       inner-padding="#{Styles.button_padding(size)}"
       width="#{width}"
-      font-weight="700"
+      font-weight="600"
       letter-spacing="-0.01em"
-      css-class="#{css_class}">
+      css-class="btn #{css_class}">
       #{safe_text}
     </mj-button>
     """

@@ -8,14 +8,14 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
     test "goes to the operator, under a subject carrying the severity" do
       email = AdminAlert.render("ops@example.com", "Payments", :warning, "Payment failed", %{})
 
-      assert email.to == [{"Tymeslot Operator", "ops@example.com"}]
-      assert email.subject == "[WARNING] Tymeslot: Payments"
+      assert email.to == [{"BookDesk24 Operator", "ops@example.com"}]
+      assert email.subject == "[WARNING] BookDesk24: Payments"
     end
 
     test "marks an error with the warning sign" do
       email = AdminAlert.render("ops@example.com", "Payments", :error, "Payment failed", %{})
 
-      assert email.subject == "[ERROR] ⚠️ Tymeslot: Payments"
+      assert email.subject == "[ERROR] ⚠️ BookDesk24: Payments"
     end
 
     test "stays in English whatever the process locale" do
@@ -24,7 +24,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
           AdminAlert.render("ops@example.com", "General", :info, "Notice", %{})
         end)
 
-      assert email.text_body =~ "TYMESLOT ADMIN ALERT"
+      assert email.text_body =~ "BOOKDESK24 ADMIN ALERT"
       assert email.html_body =~ "No additional context"
     end
   end
@@ -55,7 +55,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
         AdminAlert.render("ops@example.com", "General", :warning, "Test alert", %{}).html_body
 
       assert html =~ "<!doctype html>"
-      assert html =~ "<title>Tymeslot Admin Alert</title>"
+      assert html =~ "<title>BookDesk24 Admin Alert</title>"
       assert html =~ "Test alert"
       assert String.ends_with?(String.trim(html), "</html>")
     end
@@ -158,7 +158,7 @@ defmodule Tymeslot.Emails.Templates.AdminAlertTest do
     test "opens with the standard header" do
       text = AdminAlert.render("ops@example.com", "General", :warning, "Test", %{}).text_body
 
-      assert text =~ "TYMESLOT ADMIN ALERT"
+      assert text =~ "BOOKDESK24 ADMIN ALERT"
       assert text =~ "Test"
     end
   end

@@ -46,21 +46,6 @@ msgstr "Ciao %{name},"
 msgid "I'll send you a reminder %{label} before our appointment."
 msgstr "Ti invierò un promemoria %{label} prima del nostro appuntamento."
 
-#: lib/tymeslot/emails/shared/text_body_helper.ex
-#, elixir-autogen, elixir-format
-msgid "JOIN VIDEO MEETING:"
-msgstr "PARTECIPA ALLA RIUNIONE VIDEO:"
-
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
-#, elixir-autogen, elixir-format
-msgid "Join Meeting"
-msgstr "Partecipa alla riunione"
-
-#: lib/tymeslot/emails/shared/meeting/video_section.ex
-#, elixir-autogen, elixir-format
-msgid "Join Video Meeting"
-msgstr "Partecipa alla riunione video"
-
 #: lib/tymeslot/emails/shared/meeting/hero.ex
 #, elixir-autogen, elixir-format
 msgid "Location"
@@ -167,11 +152,6 @@ msgstr[1] "minuti"
 #, elixir-autogen, elixir-format
 msgid "reply to this email"
 msgstr "rispondi a questa email"
-
-#: lib/tymeslot/emails/shared/text.ex
-#, elixir-autogen, elixir-format
-msgid "Having trouble with the button? Copy and paste this link into your browser:"
-msgstr "Hai problemi con il pulsante? Copia e incolla questo link nel tuo browser:"
 
 #: lib/tymeslot/emails/shared/formatting.ex
 #, elixir-autogen, elixir-format
@@ -366,7 +346,6 @@ msgstr "Messaggio da %{name}"
 msgid "%{name} via %{brand}"
 msgstr "%{name} tramite %{brand}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/shared/layouts.ex
 #, elixir-autogen, elixir-format
 msgid "Important notification from %{brand}"
@@ -589,22 +568,13 @@ msgstr "Videochiamata:"
 msgid "Booked through your %{page} page"
 msgstr "Prenotato tramite la tua pagina «%{page}»"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
+#: lib/tymeslot/emails/shared/text.ex
 #, elixir-autogen, elixir-format
-msgid "Legal notice"
-msgstr "Legal notice"
+msgid "Button not working? Paste this link into your browser:"
+msgstr "Il pulsante non funziona? Incolla questo link nel browser:"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
+#: lib/tymeslot/emails/shared/meeting/video_section.ex
+#: lib/tymeslot/emails/shared/text_body_helper.ex
 #, elixir-autogen, elixir-format
-msgid "Privacy"
-msgstr "Privacy"
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Reply to this email or write to support@scalepoint-ventures.com."
-msgstr "Reply to this email or write to support@scalepoint-ventures.com."
-
-#: lib/tymeslot/emails/shared/ds_mail.ex
-#, elixir-autogen, elixir-format
-msgid "Terms"
-msgstr "Terms"
+msgid "Join meeting"
+msgstr "Partecipa alla riunione"

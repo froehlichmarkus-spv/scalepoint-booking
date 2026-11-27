@@ -106,9 +106,7 @@ defmodule Tymeslot.Emails.Templates.MeetingEndChanged do
     #{MeetingComponents.meeting_details_table(meeting_details, locale)}
 
     #{if video_url do
-      MeetingComponents.video_meeting_section(@intent, video_url,
-      title: dgettext("emails_booking", "Same link, new end time"),
-      button_text: dgettext("emails_booking", "Join Meeting"))
+      MeetingComponents.video_meeting_section(@intent, video_url, title: dgettext("emails_booking", "Same link, new end time"))
     end}
     """
 

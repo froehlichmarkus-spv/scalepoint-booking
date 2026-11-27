@@ -15,7 +15,8 @@ defmodule Tymeslot.Emails.Templates.EmailVerificationTest do
 
       assert html =~ "<html"
       assert html =~ "</html>"
-      assert html =~ "Welcome to Tymeslot"
+      assert html =~ "Confirm your email"
+      refute html =~ "Tymeslot"
     end
 
     test "includes user name in greeting" do
@@ -83,7 +84,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerificationTest do
 
       html = EmailVerification.render(user, verification_url).html_body
 
-      assert html =~ "this link expires in 24 hours"
+      assert html =~ "It works once, for 30 minutes."
     end
 
     test "handles special characters in user name" do
@@ -109,7 +110,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerificationTest do
 
       assert text =~ "John Doe"
       assert text =~ verification_url
-      assert text =~ "24 hours"
+      assert text =~ "It works once, for 30 minutes."
     end
 
     test "uses a neutral greeting when name is nil, never the email address" do

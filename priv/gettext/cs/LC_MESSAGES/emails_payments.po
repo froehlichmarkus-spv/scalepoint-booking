@@ -91,11 +91,6 @@ msgstr "Pokud bude spor uzavřen ve váš prospěch, rezervace se automaticky vy
 msgid "Meeting:"
 msgstr "Schůzka:"
 
-#: lib/tymeslot/emails/templates/connect_account_restricted.ex
-#, elixir-autogen, elixir-format
-msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on Tymeslot's side."
-msgstr "Jakmile bude Stripe spokojen, stav vašeho účtu se aktualizuje automaticky. Ze strany Tymeslotu už není potřeba nic dalšího."
-
 #: lib/tymeslot/emails/templates/charge_dispute_opened.ex
 #: lib/tymeslot/emails/templates/connect_account_restricted.ex
 #, elixir-autogen, elixir-format
@@ -249,11 +244,6 @@ msgstr "Podrobnosti o vrácení platby"
 
 #: lib/tymeslot/emails/templates/series_refund_failed.ex
 #, elixir-autogen, elixir-format
-msgid "Refund the attendee from your payments in Tymeslot or from your Stripe dashboard, or let them know what happens next."
-msgstr "Vraťte účastníkovi peníze ve svých platbách v aplikaci Tymeslot nebo na nástěnce Stripe, případně mu dejte vědět, jak to bude dál."
-
-#: lib/tymeslot/emails/templates/series_refund_failed.ex
-#, elixir-autogen, elixir-format
 msgid "SERIES REFUND NOT MADE"
 msgstr "VRÁCENÍ PLATBY ZA SÉRII NEPROBĚHLO"
 
@@ -301,3 +291,13 @@ msgstr "Co dělat"
 #, elixir-autogen, elixir-format
 msgid "You cancelled the remaining sessions of a series, but the refund of %{amount} to the attendee could not be made. The sessions stay cancelled."
 msgstr "Po zrušení zbývajících termínů série se účastníkovi nepodařilo vrátit %{amount}. Termíny zůstávají zrušené."
+
+#: lib/tymeslot/emails/templates/connect_account_restricted.ex
+#, elixir-autogen, elixir-format
+msgid "Once Stripe is satisfied, your account state updates automatically. Nothing more is needed on BookDesk24's side."
+msgstr "Jakmile bude Stripe spokojen, stav vašeho účtu se aktualizuje automaticky. Ze strany BookDesk24u už není potřeba nic dalšího."
+
+#: lib/tymeslot/emails/templates/series_refund_failed.ex
+#, elixir-autogen, elixir-format
+msgid "Refund the attendee from your payments in BookDesk24 or from your Stripe dashboard, or let them know what happens next."
+msgstr "Vraťte účastníkovi peníze ve svých platbách v aplikaci BookDesk24 nebo na nástěnce Stripe, případně mu dejte vědět, jak to bude dál."

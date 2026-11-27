@@ -77,7 +77,7 @@ defmodule Tymeslot.Emails.EmailService.AccountEmailsTest do
       assert_receive {:email, new_mail}, 1000
 
       assert old_mail.to == [{"Anja Bauer", "anja.alt@example.com"}]
-      assert old_mail.subject == "E-Mail-Adresse geändert – Tymeslot-Konto"
+      assert old_mail.subject == "E-Mail-Adresse geändert – BookDesk24-Konto"
 
       assert new_mail.to == [{"Anja Bauer", "anja.neu@example.com"}]
       assert new_mail.subject == "E-Mail-Adresse erfolgreich geändert"

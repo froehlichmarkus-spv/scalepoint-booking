@@ -1,143 +1,187 @@
 defmodule Tymeslot.Emails.Shared.DsMail do
   @moduledoc """
-  The Growth OS email base (`design-system/email/base.html`) as the HTML
-  half of a message. Callers keep their own plain-text twin.
+  Growth OS mail base v3 for BookDesk24.
+
+  The HTML and plain-text shells are the module bases
+  `priv/email/booking/base.{de,en}.{html,txt}.eex`. Content slots are the
+  body, an optional slot or invoice card, one navy button, and the legal
+  footer. Header art is referenced by Content-ID.
   """
 
   alias Tymeslot.Emails.Branding
-  alias Tymeslot.Emails.Shared.Sanitise
+  alias Tymeslot.Emails.Shared.{MailCards, MailPolicy, Sanitise}
+  alias Tymeslot.Plans
 
   use Gettext, backend: TymeslotWeb.Gettext
 
-  @spec document(map()) :: String.t()
-  def document(fields) do
-    layout = fields[:layout] || :default
-    accent = accent(layout)
-    title = Sanitise.sanitize_for_email(fields[:title] || "")
-    preview = Sanitise.sanitize_for_email(fields[:preheader] || default_preview())
-    eyebrow = Sanitise.sanitize_for_email(fields[:eyebrow] || "")
-    body = fields[:body] || ""
-    cta = cta_html(fields[:cta_label], fields[:cta_url], accent)
-    info = info_html(fields[:info_title], fields[:facts] || fields[:info_body], accent)
-    banner = banner_html(layout, accent)
+  require EEx
 
-    """
-    <!doctype html><html lang="de"><head><meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
-    <title>#{title}</title></head>
-    <body class="bg" data-layout="#{layout}" style="margin:0;padding:0;background:#F3F2EE">
-    <div style="display:none;max-height:0;overflow:hidden">#{preview}</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F3F2EE"><tr><td align="center" style="padding:32px 12px">
-    <table role="presentation" class="card" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#FFFFFF;border:1px solid #E7E5E0;border-radius:16px">
-    <tr><td style="padding:0;background:#F3F2EE"><img src="#{header_src()}" width="600" height="120" alt="#{Sanitise.sanitize_for_email(Branding.brand_name())}" style="display:block;width:100%;max-width:600px;height:auto;border:0"></td></tr>
-    <tr><td class="pad" style="padding:32px 40px 8px">
-    <p class="eb" style="margin:0 0 10px;font:600 12px/16px Geist,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#{accent}">#{eyebrow}</p>
-    <h1 class="tx" style="margin:0 0 12px;font:600 26px/32px Geist,Arial,sans-serif;color:#111E32">#{title}</h1>
-    #{banner}
-    <div class="t2" style="margin:0 0 16px;font:400 15px/24px Geist,Arial,sans-serif;color:#3C4656">#{body}</div>
-    #{cta}#{info}
-    </td></tr>
-    <tr><td class="ft" style="padding:22px 40px 30px;font:400 12px/18px Geist,Arial,sans-serif;color:#5B6372">
-    #{footer()}
-    </td></tr></table></td></tr></table></body></html>
-    """
+  @root Path.expand("../../../../priv/email/booking", __DIR__)
+
+  EEx.function_from_file(:defp, :html_de, Path.join(@root, "base.de.html.eex"), [:assigns])
+  EEx.function_from_file(:defp, :html_en, Path.join(@root, "base.en.html.eex"), [:assigns])
+  EEx.function_from_file(:defp, :text_de, Path.join(@root, "base.de.txt.eex"), [:assigns])
+  EEx.function_from_file(:defp, :text_en, Path.join(@root, "base.en.txt.eex"), [:assigns])
+
+  # German and English share these paths. Only the link labels change.
+  @legal "https://scalepoint-ventures.com/growthos/legal"
+  @privacy_url @legal <> "/privacy"
+  @notice_url @legal <> "/notice"
+
+  @doc "Eyebrow: module label, then the template topic."
+  @spec booking_eyebrow(String.t() | nil) :: String.t()
+  def booking_eyebrow(topic) do
+    topic = topic |> to_string() |> String.trim()
+    if topic == "", do: "BookDesk24", else: "BookDesk24 · " <> topic
   end
 
-  @spec plain(map()) :: String.t()
-  def plain(fields) do
-    """
-    #{fields[:title]}
+  @doc "Privacy URL. German and English use the same Growth OS page."
+  @spec privacy_url() :: String.t()
+  def privacy_url, do: @privacy_url
 
-    #{fields[:body]}
+  @doc "Legal-notice URL. German and English use the same Growth OS page."
+  @spec notice_url() :: String.t()
+  def notice_url, do: @notice_url
 
-    #{fields[:cta_label]}: #{fields[:cta_url]}
+  @doc "Legal-entity line in the active language."
+  @spec legal_line() :: String.t()
+  def legal_line do
+    if lang() == "de" do
+      "ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finnland · Y-Tunnus 3620767-9"
+    else
+      "ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finland · Business ID 3620767-9"
+    end
+  end
 
-    #{Branding.brand_name()}
-    support@scalepoint-ventures.com
-    """
+  @doc "Renders the v3 shell."
+  @spec document(map()) :: String.t()
+  def document(fields) do
+    card = card(fields)
+    cta_url = MailPolicy.allowed_url(fields[:cta_url])
+    cta? = is_binary(fields[:cta_label]) and is_binary(cta_url)
+
+    assigns = %{
+      "subject" => esc(fields[:title]),
+      "preheader" => esc(fields[:preheader] || default_preview()),
+      "eyebrow" => esc(fields[:eyebrow] || "BookDesk24"),
+      "title" => esc(fields[:headline] || fields[:title]),
+      "body" => subtitle_html(fields[:subtitle]) <> (fields[:body] || ""),
+      "card" => card && card.html,
+      "cta" => cta?,
+      "cta_label" => esc(fields[:cta_label]),
+      "cta_url" => cta_url || "",
+      "cta_vml_width" => vml_width(fields[:cta_label]),
+      "info" => present?(fields[:info_title]) and present?(fields[:info_body]),
+      "info_title" => esc(fields[:info_title]),
+      "info_body" => esc(fields[:info_body]),
+      "footer_reason" => esc(fields[:footer_reason] || footer_reason()),
+      "powered_by" => powered_by?(fields[:organizer_user_id]),
+      "unsub" => false,
+      "unsub_url" => "",
+      "privacy_url" => @privacy_url,
+      "notice_url" => @notice_url
+    }
+
+    html(lang(), assigns)
+  end
+
+  @doc "Plain-text twin of the shell, including the legal footer."
+  @spec text_document(map()) :: String.t()
+  def text_document(fields) do
+    card = card(fields)
+    cta_url = MailPolicy.allowed_url(fields[:cta_url])
+
+    assigns = %{
+      "title" => fields[:headline] || fields[:title] || "",
+      "body_text" => fields[:body_text] || "",
+      "card" => card && true,
+      "card_text" => card && card.text,
+      "cta" => is_binary(fields[:cta_label]) and is_binary(cta_url),
+      "cta_label" => fields[:cta_label] || "",
+      "cta_url" => cta_url || "",
+      "info" => present?(fields[:info_title]),
+      "info_title" => fields[:info_title] || "",
+      "info_body" => fields[:info_body] || "",
+      "footer_reason" => fields[:footer_reason] || footer_reason(),
+      "powered_by" => powered_by?(fields[:organizer_user_id]),
+      "unsub" => false,
+      "unsub_url" => "",
+      "privacy_url" => @privacy_url,
+      "notice_url" => @notice_url
+    }
+
+    text(lang(), assigns)
+  end
+
+  @doc "Plain-text legal footer appended when a template built its own text body."
+  @spec text_footer() :: String.t()
+  def text_footer do
+    text_document(%{title: "", body_text: ""})
+  end
+
+  @doc "Appends the v3 footer unless a privacy URL is already present."
+  @spec append_text_footer(String.t() | nil) :: String.t() | nil
+  def append_text_footer(nil), do: nil
+
+  def append_text_footer(text) when is_binary(text) do
+    if String.contains?(text, @privacy_url) do
+      text
+    else
+      String.trim_trailing(text) <> "\n\n" <> text_footer()
+    end
+  end
+
+  defp html("de", assigns), do: html_de(assigns)
+  defp html(_lang, assigns), do: html_en(assigns)
+  defp text("de", assigns), do: text_de(assigns)
+  defp text(_lang, assigns), do: text_en(assigns)
+
+  defp card(%{slot: spec}) when is_map(spec), do: MailCards.slot(spec)
+  defp card(%{invoice: spec}) when is_map(spec), do: MailCards.invoice(spec)
+  defp card(_fields), do: nil
+
+  defp powered_by?(user_id) do
+    Plans.enabled?() and Plans.effective_plan(user_id) == :free
+  end
+
+  defp lang do
+    case Gettext.get_locale(TymeslotWeb.Gettext) do
+      "de" -> "de"
+      _other -> "en"
+    end
   end
 
   defp default_preview do
-    dgettext("emails", "Important notification from %{brand}", brand: Branding.brand_name())
+    if lang() == "de" do
+      "Eine Nachricht von #{Branding.brand_name()}"
+    else
+      "A message from #{Branding.brand_name()}"
+    end
   end
 
-  # Email clients ignore CSS variables, so these are the existing DS ink
-  # values (teal, booking, danger, navy), not new tokens.
-  defp accent(:confirmation), do: "#0B6E66"
-  defp accent(:reschedule), do: "#835000"
-  defp accent(:cancellation), do: "#B42318"
-  defp accent(:reminder), do: "#111E32"
-  defp accent(:password_reset), do: "#111E32"
-  defp accent(_layout), do: "#835000"
-
-  defp banner_html(:reschedule, accent),
-    do: band(accent, dgettext("emails_booking", "Rescheduled"))
-
-  defp banner_html(:cancellation, accent),
-    do: band(accent, dgettext("emails_booking_changes", "Cancelled"))
-
-  defp banner_html(:reminder, accent),
-    do: band(accent, dgettext("emails_booking", "Reminder"))
-
-  defp banner_html(:password_reset, accent),
-    do: band(accent, dgettext("emails_account", "This link is valid for the next 2 hours."))
-
-  defp banner_html(_layout, _accent), do: ""
-
-  defp band(accent, text) do
-    ~s(<p style="margin:0 0 16px;padding:12px 14px;background:#F6F5F2;border-left:3px solid #{accent};border-radius:10px;font:600 14px/20px Geist,Arial,sans-serif;color:#{accent}">#{Sanitise.sanitize_for_email(text)}</p>)
+  defp footer_reason do
+    if lang() == "de" do
+      "Du erhältst diese Mail zu einem Termin oder deinem Konto."
+    else
+      "You are receiving this email about a booking or your account."
+    end
   end
 
-  defp cta_html(nil, _url, _accent), do: ""
-  defp cta_html(_label, nil, _accent), do: ""
+  defp vml_width(nil), do: 220
 
-  defp cta_html(label, url, accent) do
-    label = Sanitise.sanitize_for_email(label)
-    url = Sanitise.sanitize_for_email(url)
-
-    ~s(<p style="margin:8px 0 22px"><a class="btn" href="#{url}" style="display:inline-block;background:#{accent};color:#FFFFFF;font:600 15px/46px Geist,Arial,sans-serif;text-decoration:none;padding:0 26px;border-radius:10px">#{label}</a></p>)
+  defp vml_width(label) do
+    width = round(String.length(to_string(label)) * 9.2 + 76)
+    width |> max(180) |> min(520)
   end
 
-  defp info_html(nil, _body, _accent), do: ""
-  defp info_html(_title, nil, _accent), do: ""
-  defp info_html(_title, [], _accent), do: ""
+  defp subtitle_html(nil), do: ""
+  defp subtitle_html(""), do: ""
 
-  defp info_html(title, rows, accent) when is_list(rows) do
-    body =
-      Enum.map_join(rows, "", fn {label, value} ->
-        """
-        <tr>
-        <td style="padding:8px 16px 8px 0;font:600 12px/18px Geist,Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#{accent};vertical-align:top;width:120px">#{Sanitise.sanitize_for_email(label)}</td>
-        <td style="padding:8px 0;font:500 15px/22px Geist,Arial,sans-serif;color:#111E32;vertical-align:top">#{Sanitise.sanitize_for_email(value)}</td>
-        </tr>
-        """
-      end)
-
-    """
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 18px;background:#F6F5F2;border:1px solid #E7E5E0;border-left:3px solid #{accent};border-radius:12px">
-    <tr><td colspan="2" style="padding:14px 16px 4px;font:600 12px/16px Geist,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#{accent}">#{Sanitise.sanitize_for_email(title)}</td></tr>
-    <tr><td colspan="2" style="padding:0 16px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">#{body}</table></td></tr>
-    </table>
-    """
+  defp subtitle_html(text) do
+    ~s(<p class="t2" style="margin:0 0 16px;font-family:Geist,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:26px;color:#3C4656">#{esc(text)}</p>)
   end
 
-  defp info_html(title, body, accent) when is_binary(body) do
-    ~s(<p style="background:#F6F5F2;border:1px solid #E7E5E0;border-left:3px solid #{accent};border-radius:12px;padding:14px 16px"><b style="color:#{accent}">#{Sanitise.sanitize_for_email(title)}</b><br>#{body}</p>)
-  end
-
-  defp header_src do
-    "/images/email/header-light@2x.png"
-  end
-
-  defp footer do
-    """
-    #{dgettext("emails", "Reply to this email or write to support@scalepoint-ventures.com.")}<br>
-    ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finland · Business ID 3620767-9<br>
-    <a href="https://scalepoint-ventures.com/growthos/legal/terms">#{dgettext("emails", "Terms")}</a>
-    · <a href="https://scalepoint-ventures.com/growthos/legal/privacy">#{dgettext("emails", "Privacy")}</a>
-    · <a href="https://scalepoint-ventures.com/growthos/legal/notice">#{dgettext("emails", "Legal notice")}</a>
-    """
-  end
+  defp present?(value), do: is_binary(value) and String.trim(value) != ""
+  defp esc(nil), do: ""
+  defp esc(value), do: Sanitise.sanitize_for_email(to_string(value))
 end

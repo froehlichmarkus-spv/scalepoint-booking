@@ -8,7 +8,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   """
 
   alias Tymeslot.Emails.Branding
-  alias Tymeslot.Emails.Shared.{Layouts, MjmlEmail, Stage}
+  alias Tymeslot.Emails.Shared.{DsMail, MailCards, MjmlEmail, Stage}
   alias Tymeslot.Emails.Shared.Styles.Tokens
 
   use Gettext, backend: TymeslotWeb.Gettext
@@ -51,7 +51,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
         stage_subtitle: "I'll see you on Tuesday at 15:00"
       )
   """
-  @spec build_organizer_details(organizer_source(), keyword()) :: organizer_details()
+  @spec build_organizer_details(organizer_source(), keyword()) :: map()
   def build_organizer_details(appointment_details, stage) do
     Stage.fetch_required!(stage, :intent)
     Stage.fetch_required!(stage, :eyebrow)
@@ -60,45 +60,59 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
       name: appointment_details.organizer_name,
       email: appointment_details.organizer_email,
       avatar_url: Map.get(appointment_details, :organizer_avatar_url),
-      title: appointment_details.organizer_title || Branding.brand_name()
+      title: appointment_details.organizer_title || Branding.brand_name(),
+      organizer_user_id: Map.get(appointment_details, :organizer_user_id)
     }
 
-    Enum.reduce(stage, base, fn {k, v}, acc -> Map.put(acc, k, v) end)
+    details = Map.merge(base, Map.new(stage))
+
+    if details[:card] == :slot do
+      Map.put(
+        details,
+        :slot,
+        MailCards.slot_spec(
+          appointment_details,
+          Gettext.get_locale(TymeslotWeb.Gettext),
+          details[:eyebrow],
+          tone(details[:intent]),
+          details[:clock] || :attendee
+        )
+      )
+    else
+      details
+    end
   end
+
+  defp tone(:cancelled), do: :danger
+  defp tone(:alert), do: :warning
+  defp tone(:confirmed), do: :success
+  defp tone(_intent), do: :neutral
 
   @doc "Compiles MJML content with organiser details into HTML."
-  @spec compile_template(String.t(), organizer_details()) :: String.t()
+  @spec compile_template(String.t(), map()) :: String.t()
   def compile_template(mjml_content, organizer_details) do
-    html =
-      mjml_content
-      |> Layouts.transactional_layout(organizer_details)
-      |> MjmlEmail.compile_mjml()
+    Stage.fetch_required!(organizer_details, :intent)
+    eyebrow = Stage.fetch_required!(organizer_details, :eyebrow)
 
-    layout =
-      Map.get(organizer_details, :layout) || layout_for(Map.get(organizer_details, :intent))
+    headline =
+      organizer_details[:stage_title] || organizer_details[:name] || Branding.brand_name()
 
-    stamp(html, layout)
-  end
-
-  defp layout_for(:cancelled), do: :cancellation
-  defp layout_for(:confirmed), do: :confirmation
-  defp layout_for(_intent), do: :default
-
-  # A one-line band so the five main mails read apart, without removing the
-  # links and cards the MJML body already carries. Mail clients need the
-  # colour inline; these are the DS ink values.
-  defp stamp(html, :confirmation), do: band(html, "confirmation", "#0B6E66", "Termin")
-  defp stamp(html, :reschedule), do: band(html, "reschedule", "#835000", "Neue Zeit")
-  defp stamp(html, :cancellation), do: band(html, "cancellation", "#B42318", "Abgesagt")
-  defp stamp(html, :reminder), do: band(html, "reminder", "#111E32", "Erinnerung")
-  defp stamp(html, :password_reset), do: band(html, "password-reset", "#111E32", "Passwort")
-  defp stamp(html, _layout), do: html
-
-  defp band(html, layout, colour, label) do
-    mark =
-      ~s(<div data-mail-layout="#{layout}" style="border-left:3px solid #{colour};padding:8px 12px;margin:12px 0;font:600 12px/16px Geist,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#{colour}">#{label}</div>)
-
-    Regex.replace(~r/(<body[^>]*>)/, html, "\\1#{mark}", global: false)
+    DsMail.document(%{
+      title: headline,
+      headline: headline,
+      preheader: organizer_details[:preview] || organizer_details[:stage_subtitle],
+      subtitle: organizer_details[:stage_subtitle],
+      eyebrow: DsMail.booking_eyebrow(eyebrow),
+      body:
+        MjmlEmail.compile_fragment(
+          MjmlEmail.organizer_identity(organizer_details) <> mjml_content
+        ),
+      slot: organizer_details[:slot],
+      invoice: organizer_details[:invoice],
+      organizer_user_id: organizer_details[:organizer_user_id],
+      cta_label: organizer_details[:cta_label],
+      cta_url: organizer_details[:cta_url]
+    })
   end
 
   @doc """
@@ -113,17 +127,19 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
     Stage.fetch_required!(stage, :intent)
     Stage.fetch_required!(stage, :eyebrow)
 
-    opts =
-      [title: title]
-      |> maybe_put(:preview, preview)
-      |> Keyword.merge(stage)
-
-    html =
-      mjml_content
-      |> Layouts.system_layout(opts)
-      |> MjmlEmail.compile_mjml()
-
-    stamp(html, opts[:layout] || :system)
+    DsMail.document(%{
+      title: title,
+      headline: stage[:stage_title] || title,
+      preheader: preview || stage[:stage_subtitle],
+      subtitle: stage[:stage_subtitle],
+      eyebrow: DsMail.booking_eyebrow(stage[:eyebrow]),
+      body: MjmlEmail.compile_fragment(mjml_content),
+      slot: stage[:slot],
+      invoice: stage[:invoice],
+      organizer_user_id: stage[:organizer_user_id],
+      cta_label: stage[:cta_label],
+      cta_url: stage[:cta_url]
+    })
   end
 
   @typedoc """
@@ -235,7 +251,4 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   @spec format_error_reason(any()) :: String.t()
   def format_error_reason(reason) when is_binary(reason), do: reason
   def format_error_reason(reason), do: inspect(reason)
-
-  defp maybe_put(opts, _key, nil), do: opts
-  defp maybe_put(opts, key, value), do: Keyword.put(opts, key, value)
 end

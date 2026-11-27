@@ -167,20 +167,6 @@ msgstr "ich freue mich auf unser Treffen. Der Termin ist fest in meinem Kalender
 #: lib/tymeslot/emails/templates/appointment_confirmation.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#: lib/tymeslot/emails/templates/meeting_end_changed.ex
-#, elixir-autogen, elixir-format
-msgid "Join Meeting"
-msgstr "Meeting beitreten"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#, elixir-autogen, elixir-format
-msgid "Join Video Meeting"
-msgstr "Video-Meeting beitreten"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_reminder.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Join when you're ready"
 msgstr "Trete dem Meeting bei, sobald du bereit sind"
@@ -328,7 +314,6 @@ msgstr "Bereit, pünktlich beizutreten?"
 msgid "Reference: %{ref}"
 msgstr "Referenz: %{ref}"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
 msgid "Reminder"
@@ -352,7 +337,6 @@ msgstr "Geplante Erinnerungen"
 msgid "Reschedule"
 msgstr "Verschieben"
 
-#: lib/tymeslot/emails/shared/ds_mail.ex
 #: lib/tymeslot/emails/templates/appointment_rescheduled.ex
 #, elixir-autogen, elixir-format
 msgid "Rescheduled"
@@ -377,13 +361,6 @@ msgstr "Gleicher Link, neue Zeit"
 #, elixir-autogen, elixir-format
 msgid "See you %{time_until}!"
 msgstr "Bis %{time_until}!"
-
-#: lib/tymeslot/emails/templates/appointment_confirmation.ex
-#: lib/tymeslot/emails/templates/appointment_reminder.ex
-#: lib/tymeslot/emails/templates/appointment_rescheduled.ex
-#, elixir-autogen, elixir-format
-msgid "Start Meeting"
-msgstr "Meeting starten"
 
 #: lib/tymeslot/emails/templates/appointment_reminder.ex
 #, elixir-autogen, elixir-format
@@ -419,11 +396,6 @@ msgstr "Der Termin mit %{organizer}, zu dem %{booker} du eingeladen hat, wurde a
 #, elixir-autogen, elixir-format
 msgid "The meeting with %{organizer} that %{booker} invited you to is coming up."
 msgstr "Der Termin mit %{organizer}, zu dem %{booker} du eingeladen hat, steht bevor."
-
-#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
-#, elixir-autogen, elixir-format
-msgid "Tymeslot platform fee: %{amount}"
-msgstr "Tymeslot-Plattformgebühr: %{amount}"
 
 #: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
 #, elixir-autogen, elixir-format
@@ -756,3 +728,8 @@ msgstr "Die Anmeldung ist geschlossen"
 #, elixir-autogen, elixir-format
 msgid "The list is also attached as a CSV file for a spreadsheet."
 msgstr "Die Liste hängt zusätzlich als CSV-Datei für eine Tabellenkalkulation an."
+
+#: lib/tymeslot/emails/templates/appointment_confirmation/payment_blocks.ex
+#, elixir-autogen, elixir-format
+msgid "BookDesk24 platform fee: %{amount}"
+msgstr "BookDesk24-Plattformgebühr: %{amount}"

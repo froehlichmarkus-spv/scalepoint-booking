@@ -28,11 +28,12 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSection do
   end
 
   defp join_section(intent, safe_url, opts) do
-    title = Keyword.get(opts, :title, dgettext("emails", "Join Video Meeting"))
-    button_text = Keyword.get(opts, :button_text, dgettext("emails", "Join Meeting"))
+    title = Keyword.get(opts, :title, dgettext("emails", "Video call"))
+    button_text = Keyword.get(opts, :button_text, dgettext("emails", "Join meeting"))
 
     safe_title = Sanitise.sanitize_for_email(title)
     safe_button_text = Sanitise.sanitize_for_email(button_text)
+    width = vml_width(button_text)
 
     tokens = Styles.intent(intent)
 
@@ -65,23 +66,32 @@ defmodule Tymeslot.Emails.Shared.Meeting.VideoSection do
         >
           #{safe_title}
         </mj-text>
-        <mj-button
-          href="#{safe_url}"
-          background-color="#{tokens.accent_deep}"
-          color="#{Styles.button_text_color(tokens.accent_deep)}"
-          font-weight="700"
-          font-size="15px"
-          align="left"
-          width="auto"
-          inner-padding="13px 24px"
-          border-radius="#{Styles.radius(:pill)}"
-          css-class="mobile-button"
-        >
-          #{safe_button_text}
-        </mj-button>
+        <mj-raw>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" bgcolor="#111E32" style="border-collapse:separate">
+            <tr>
+              <td align="center" bgcolor="#111E32" style="border-radius:10px;background:#111E32">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="#{safe_url}" style="height:48px;v-text-anchor:middle;width:#{width}px" arcsize="21%" stroke="f" fillcolor="#111E32">
+                  <w:anchorlock/>
+                  <center style="color:#FFFFFF;font-family:'Segoe UI',Arial,sans-serif;font-size:16px;font-weight:bold">#{safe_button_text}&nbsp;&rarr;</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="#{safe_url}" style="display:inline-block;background:#111E32;color:#FFFFFF;border:1px solid #111E32;font-family:'Segoe UI',Arial,sans-serif;font-size:16px;line-height:48px;font-weight:600;text-decoration:none;padding:0 28px;border-radius:10px;mso-hide:all">#{safe_button_text}&nbsp;&rarr;</a>
+                <!--<![endif]-->
+              </td>
+            </tr>
+          </table>
+        </mj-raw>
       </mj-column>
     </mj-section>
     """)
+  end
+
+  # Outlook sizes a VML button from this width. The HTML button sizes itself.
+  defp vml_width(label) do
+    guessed = round(String.length(to_string(label)) * 9.2 + 76)
+    guessed |> max(180) |> min(520)
   end
 
   @doc """

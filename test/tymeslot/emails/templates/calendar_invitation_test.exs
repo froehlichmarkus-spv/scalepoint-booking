@@ -123,7 +123,7 @@ defmodule Tymeslot.Emails.Templates.CalendarInvitationTest do
       assert email.html_body =~ ~s(href="#{url}")
       assert email.html_body =~ "Video Call"
       refute email.html_body =~ "TBD"
-      assert email.text_body =~ "JOIN VIDEO MEETING:\n#{url}"
+      assert email.text_body =~ "Join meeting\n#{url}"
       assert email.text_body =~ "Location: Video Call"
 
       [ics] = Enum.filter(email.attachments, &(&1.content_type == "text/calendar"))
@@ -139,7 +139,7 @@ defmodule Tymeslot.Emails.Templates.CalendarInvitationTest do
         )
 
       assert email.text_body =~ "Location: Conference Room B"
-      assert email.text_body =~ "JOIN VIDEO MEETING:"
+      assert email.text_body =~ "Join meeting"
     end
 
     test "the attachment states a description's join link once" do
@@ -175,7 +175,7 @@ defmodule Tymeslot.Emails.Templates.CalendarInvitationTest do
         )
 
       refute email.html_body =~ ~s(href="#{url}")
-      refute email.text_body =~ "JOIN VIDEO MEETING:"
+      refute email.text_body =~ "Join meeting"
     end
 
     test "handles nil description gracefully" do

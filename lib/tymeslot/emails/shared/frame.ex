@@ -1,6 +1,6 @@
 defmodule Tymeslot.Emails.Shared.Frame do
   @moduledoc """
-  The shared outer MJML scaffold for every Tymeslot email.
+  The shared outer MJML scaffold for every BookDesk24 email.
 
   Both the transactional layout (`MjmlEmail.base_mjml_template/2`) and the
   system layout (`Layouts.system_layout/2`) render the same outer shell —
