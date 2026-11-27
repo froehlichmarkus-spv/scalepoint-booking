@@ -81,13 +81,41 @@ defmodule Tymeslot.Emails.VendorNameTest do
   test "German and English HTML and text omit the forbidden names" do
     for locale <- ["de", "en"], email <- emails(locale) do
       for part <- [email.html_body, email.text_body, email.subject] do
-        down = String.downcase(part || "")
-
-        for name <- @forbidden do
-          refute String.contains?(down, String.downcase(name)),
-                 "#{locale} #{email.subject} contains #{name}"
-        end
+        refute_forbidden(part, "#{locale} #{email.subject}")
       end
+
+      for href <- hrefs(email.html_body) do
+        refute_forbidden(href, "#{locale} #{email.subject} href")
+      end
+    end
+  end
+
+  # The preview fixture's own links, with no URL override, must not carry the
+  # old product name into an href either.
+  test "the default booking fixture's hrefs omit the forbidden names" do
+    details = build_appointment_details(%{attendee_locale: "de", organizer_locale: "de"})
+    email = AppointmentConfirmation.render(:attendee, "mara@example.com", details)
+
+    assert hrefs(email.html_body) != []
+
+    for href <- hrefs(email.html_body) do
+      refute_forbidden(href, "default fixture href")
+      refute href =~ "tymeslot.example.com"
+    end
+  end
+
+  defp hrefs(html) do
+    ~r/href\s*=\s*"([^"]*)"/i
+    |> Regex.scan(html || "")
+    |> Enum.map(fn [_all, href] -> href end)
+  end
+
+  defp refute_forbidden(text, where) do
+    down = String.downcase(text || "")
+
+    for name <- @forbidden do
+      refute String.contains?(down, String.downcase(name)),
+             "#{where} contains #{name}"
     end
   end
 end

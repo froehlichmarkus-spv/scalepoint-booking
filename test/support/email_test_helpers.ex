@@ -56,7 +56,7 @@ defmodule Tymeslot.EmailTestHelpers do
   @spec build_appointment_details(map()) :: map()
   def build_appointment_details(overrides \\ %{}) do
     uid = Map.get(overrides, :uid, "test-uid-#{System.unique_integer([:positive])}")
-    base_url = "https://tymeslot.example.com"
+    base_url = "https://book.scalepoint-ventures.com"
 
     defaults = %{
       uid: uid,
@@ -134,7 +134,7 @@ defmodule Tymeslot.EmailTestHelpers do
             position: position,
             series_count: count,
             dashboard_url:
-              "https://tymeslot.example.com/dashboard/meetings?meeting=m-#{position}",
+              "https://book.scalepoint-ventures.com/dashboard/meetings?meeting=m-#{position}",
             video_pending: false
           })
         end)
@@ -164,7 +164,7 @@ defmodule Tymeslot.EmailTestHelpers do
         organizer_title: first.organizer_title,
         organizer_avatar_url: nil,
         organizer_locale: "en",
-        series_url: "https://tymeslot.example.com/johndoe/series/#{series_uid}",
+        series_url: "https://book.scalepoint-ventures.com/johndoe/series/#{series_uid}",
         total: nil
       },
       overrides
@@ -237,7 +237,7 @@ defmodule Tymeslot.EmailTestHelpers do
     defaults = %{
       token: token,
       email: "verify@example.com",
-      verification_url: "https://tymeslot.example.com/verify/#{token}"
+      verification_url: "https://book.scalepoint-ventures.com/verify/#{token}"
     }
 
     Map.merge(defaults, overrides)
@@ -253,7 +253,7 @@ defmodule Tymeslot.EmailTestHelpers do
     defaults = %{
       token: token,
       email: "reset@example.com",
-      reset_url: "https://tymeslot.example.com/password-reset/#{token}"
+      reset_url: "https://book.scalepoint-ventures.com/password-reset/#{token}"
     }
 
     Map.merge(defaults, overrides)
@@ -317,7 +317,7 @@ defmodule Tymeslot.EmailTestHelpers do
       token: token,
       old_email: "old@example.com",
       new_email: "new@example.com",
-      verification_url: "https://tymeslot.example.com/email-change/verify/#{token}"
+      verification_url: "https://book.scalepoint-ventures.com/email-change/verify/#{token}"
     }
 
     Map.merge(defaults, overrides)

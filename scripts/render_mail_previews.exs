@@ -27,6 +27,7 @@ defmodule MailPreview do
         EmailTestHelpers.build_appointment_details(
           if locale == "de" do
             %{
+              uid: "preview",
               attendee_locale: "de",
               organizer_locale: "de",
               attendee_name: "Mara",
@@ -37,6 +38,7 @@ defmodule MailPreview do
             }
           else
             %{
+              uid: "preview",
               attendee_locale: "en",
               organizer_locale: "en",
               attendee_name: "Mara",

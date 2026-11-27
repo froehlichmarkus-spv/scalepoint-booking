@@ -222,13 +222,32 @@ defmodule Tymeslot.Bookings.RescheduleTeamsCalendarEventTest do
              Reschedule.execute(meeting.uid, params, meeting.organizer_user_id)
   end
 
-  # Runs every calendar job the reschedule set off, in queue order, against
-  # the real calendar client and Outlook API, with Graph answering over a
-  # mocked HTTP client that reports each request to the test. A delete also
-  # reports which event the booking pointed at when it was sent.
+  # Runs every calendar job the reschedule set off, against the real calendar
+  # client and Outlook API, with Graph answering over a mocked HTTP client.
+  #
+  # `Oban.drain_queue/1` fetches the update and the replacement together and
+  # marks both executing. The replacement then sees the update as an earlier
+  # write still in flight, snoozes, and the drain counts that as success
+  # without a Graph POST. Under a loaded CI run that is the whole failure.
+  # Performing each job in order, the way `perform_job/2` builds a job that
+  # was never left executing, does the write instead of waiting.
   defp run_calendar_jobs(meeting) do
     stub_graph(meeting)
-    assert %{failure: 0, discard: 0} = Oban.drain_queue(queue: :calendar_events)
+
+    jobs =
+      all_enqueued(worker: CalendarEventWorker, queue: :calendar_events)
+      |> Enum.sort_by(fn %{args: %{"action" => action}} ->
+        case action do
+          "update" -> 0
+          "replace" -> 1
+          "delete" -> 2
+          _other -> 3
+        end
+      end)
+
+    for %{args: args} <- jobs do
+      assert :ok = perform_job(CalendarEventWorker, args)
+    end
   end
 
   defp stub_graph(meeting) do
