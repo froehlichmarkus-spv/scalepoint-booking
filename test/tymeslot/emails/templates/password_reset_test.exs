@@ -62,7 +62,7 @@ defmodule Tymeslot.Emails.Templates.PasswordResetTest do
 
       html = PasswordReset.render(user, reset_url).html_body
 
-      assert html =~ "It works once, for 2 hours."
+      assert html =~ "It works once, for 60 minutes."
     end
 
     test "includes security notice" do
@@ -85,7 +85,7 @@ defmodule Tymeslot.Emails.Templates.PasswordResetTest do
 
       assert text =~ "Alice Johnson"
       assert text =~ reset_url
-      assert text =~ "It works once, for 2 hours."
+      assert text =~ "It works once, for 60 minutes."
       assert text =~ "Save and sign in"
     end
 

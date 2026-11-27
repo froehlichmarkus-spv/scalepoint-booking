@@ -3,9 +3,8 @@ defmodule Tymeslot.Emails.Templates.MagicLink do
   The one-time sign-in link.
 
   Nothing delivers this yet: the app does not issue a magic-link token.
-  The copy is here so the mailed sentence matches DS v2.9. The lifetime is
-  `Tymeslot.Emails.Shared.LinkLifetime` (`:magic_link`), which points at the
-  token attribute PR #7 still has to add.
+  The copy matches DS v2.9. The lifetime is
+  `Tymeslot.Auth.AccountTokens.ttl_seconds(:magic_link)`.
   """
 
   use Gettext, backend: TymeslotWeb.Gettext

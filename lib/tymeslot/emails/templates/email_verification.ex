@@ -70,8 +70,7 @@ defmodule Tymeslot.Emails.Templates.EmailVerification do
     """
   end
 
-  # The minute count is AccountTokens.ttl_seconds(:verification). PR #7 sets
-  # that to 30 minutes; this sentence follows and does not name its own number.
+  # The minute count is AccountTokens.ttl_seconds(:verification).
   defp expiry_note do
     dgettext(
       "emails_account",
