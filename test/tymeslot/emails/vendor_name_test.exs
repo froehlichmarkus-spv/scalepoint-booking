@@ -131,6 +131,27 @@ defmodule Tymeslot.Emails.VendorNameTest do
     end
   end
 
+  test "English and German catalogues and templates omit the old product name" do
+    root = Path.expand("../../../", __DIR__)
+
+    for path <- Path.wildcard(Path.join(root, "priv/gettext/{en,de}/**/*.po")) do
+      for text <- msgstr_values(File.read!(path)) do
+        refute String.contains?(String.downcase(text), "tymeslot"),
+               "#{Path.relative_to(path, root)} msgstr still names Tymeslot"
+      end
+    end
+
+    for path <- Path.wildcard(Path.join(root, "lib/**/*.{heex,eex}")) do
+      visible =
+        path
+        |> File.read!()
+        |> String.replace(~r/\bTymeslot(Web)?\.[A-Za-z0-9_\.]*/, "")
+
+      refute visible =~ ~r/\bTymeslot\b/,
+             "#{Path.relative_to(path, root)} still shows Tymeslot"
+    end
+  end
+
   # The preview fixture's own links, with no URL override, must not carry the
   # old product name into an href either.
   test "the default booking fixture's hrefs omit the forbidden names" do
@@ -142,6 +163,38 @@ defmodule Tymeslot.Emails.VendorNameTest do
     for href <- hrefs(email.html_body) do
       refute_forbidden(href, "default fixture href")
       refute href =~ "tymeslot.example.com"
+    end
+  end
+
+  defp msgstr_values(contents) do
+    contents
+    |> String.split("\n")
+    |> Enum.reduce({nil, []}, fn line, {state, acc} ->
+      cond do
+        String.starts_with?(line, "msgid") ->
+          {"msgid", acc}
+
+        String.starts_with?(line, "msgstr") ->
+          {"msgstr", [quoted_po(line) | acc]}
+
+        String.starts_with?(line, "\"") and state == "msgstr" ->
+          {"msgstr", [quoted_po(line) | acc]}
+
+        String.starts_with?(line, "#") ->
+          {nil, acc}
+
+        true ->
+          {state, acc}
+      end
+    end)
+    |> elem(1)
+    |> Enum.reject(&(&1 == ""))
+  end
+
+  defp quoted_po(line) do
+    case Regex.run(~r/"(.*)"\s*$/, line) do
+      [_line, inner] -> inner
+      _no_quote -> ""
     end
   end
 

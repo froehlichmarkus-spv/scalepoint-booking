@@ -118,12 +118,12 @@ msgstr "Stripe trennen"
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "Disconnect your Stripe account from Tymeslot. Existing payments remain visible. New paid bookings will fail until you reconnect."
-msgstr "Trenne dein Stripe-Konto von Tymeslot. Bestehende Zahlungen bleiben sichtbar. Neue kostenpflichtige Buchungen schlagen fehl, bis du erneut verbinden."
+msgstr "Trenne dein Stripe-Konto von BookDesk24. Bestehende Zahlungen bleiben sichtbar. Neue kostenpflichtige Buchungen schlagen fehl, bis du erneut verbinden."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/disconnect_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Disconnect your Stripe account from Tymeslot? Existing payments remain visible, but new paid bookings will fail until you reconnect."
-msgstr "Dein Stripe-Konto von Tymeslot trennen? Bestehende Zahlungen bleiben sichtbar, aber neue kostenpflichtige Buchungen schlagen fehl, bis du erneut verbinden."
+msgstr "Dein Stripe-Konto von BookDesk24 trennen? Bestehende Zahlungen bleiben sichtbar, aber neue kostenpflichtige Buchungen schlagen fehl, bis du erneut verbinden."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings/status_card.ex
 #, elixir-autogen, elixir-format
@@ -316,7 +316,7 @@ msgstr "Stripe prüft dein Konto. Der Zahlungseinzug wird nach der Genehmigung a
 #: lib/tymeslot_web/live/dashboard/payments_settings/refund_modal.ex
 #, elixir-autogen, elixir-format
 msgid "The attendee receives the full amount you refund. Tymeslot's platform fee is reversed proportionally; Stripe processing fees on the original charge stay with you."
-msgstr "Der Teilnehmer erhält den vollen von dir erstatteten Betrag. Die Plattformgebühr von Tymeslot wird anteilig zurückerstattet; die Stripe-Bearbeitungsgebühren für die ursprüngliche Zahlung verbleiben bei dir."
+msgstr "Der Teilnehmer erhält den vollen von dir erstatteten Betrag. Die Plattformgebühr von BookDesk24 wird anteilig zurückerstattet; die Stripe-Bearbeitungsgebühren für die ursprüngliche Zahlung verbleiben bei dir."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -326,7 +326,7 @@ msgstr "Diese Buchung wurde noch nicht bezahlt und kann daher nicht erstattet we
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
 msgid "This payment can no longer be refunded from Tymeslot. Refunds older than 60 days must be processed in your Stripe dashboard."
-msgstr "Diese Zahlung kann nicht mehr über Tymeslot erstattet werden. Rückerstattungen, die älter als 60 Tage sind, müssen in deinem Stripe-Dashboard bearbeitet werden."
+msgstr "Diese Zahlung kann nicht mehr über BookDesk24 erstattet werden. Rückerstattungen, die älter als 60 Tage sind, müssen in deinem Stripe-Dashboard bearbeitet werden."
 
 #: lib/tymeslot_web/live/dashboard/payments_settings_component.ex
 #, elixir-autogen, elixir-format
@@ -502,12 +502,12 @@ msgstr "Stripe-Zahlungen sind auf diesem Server nicht vollständig eingerichtet.
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
 msgid "That Stripe account is already connected to another Tymeslot account."
-msgstr "Dieses Stripe-Konto ist bereits mit einem anderen Tymeslot-Konto verbunden."
+msgstr "Dieses Stripe-Konto ist bereits mit einem anderen BookDesk24-Konto verbunden."
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format
 msgid "That Stripe account uses a currency Tymeslot doesn't support for payments yet."
-msgstr "Dieses Stripe-Konto verwendet eine Währung, die Tymeslot für Zahlungen noch nicht unterstützt."
+msgstr "Dieses Stripe-Konto verwendet eine Währung, die BookDesk24 für Zahlungen noch nicht unterstützt."
 
 #: lib/tymeslot_web/controllers/dashboard/payments_controller.ex
 #, elixir-autogen, elixir-format

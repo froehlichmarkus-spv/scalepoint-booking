@@ -16,9 +16,9 @@ defmodule TymeslotWeb.AdminLive.Components.SupportBox do
   use TymeslotWeb, :html
   use Gettext, backend: TymeslotWeb.Gettext
 
-  @repo_url "https://github.com/Tymeslot/tymeslot"
-  @sponsor_url "https://github.com/sponsors/Tymeslot"
-  @new_issue_url "https://github.com/Tymeslot/tymeslot/issues/new"
+  @repo_url "mailto:support@scalepoint-ventures.com"
+  @sponsor_url "mailto:support@scalepoint-ventures.com"
+  @new_issue_url "mailto:support@scalepoint-ventures.com"
 
   attr :alerts_ready, :boolean,
     required: true,

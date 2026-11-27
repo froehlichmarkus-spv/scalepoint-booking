@@ -9,7 +9,7 @@ defmodule Tymeslot.Docs do
   read and normalised.
   """
 
-  @default_base_url "https://tymeslot.app/docs"
+  @default_base_url "https://scalepoint-ventures.com/growthos"
 
   @doc "The full URL of the docs article `slug`."
   @spec article_url(String.t()) :: String.t()

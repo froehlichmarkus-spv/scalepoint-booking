@@ -829,12 +829,12 @@ msgstr "Diese Buchung kann nicht mehr auf die Zeit im Kalender verschoben werden
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot is still updating your calendar for this booking. Please try again in a moment."
-msgstr "Tymeslot aktualisiert gerade deinen Kalender für diese Buchung. Bitte versuche es in einem Moment erneut."
+msgstr "BookDesk24 aktualisiert gerade deinen Kalender für diese Buchung. Bitte versuche es in einem Moment erneut."
 
 #: lib/tymeslot_web/components/dashboard/meetings/calendar_move_modal.ex
 #, elixir-autogen, elixir-format
 msgid "Your calendar now has this meeting at %{time}. Tymeslot will move the booking there, reschedule its reminders and email %{attendee_name} and any guests the new time."
-msgstr "In deinem Kalender liegt dieser Termin jetzt auf %{time}. Tymeslot verschiebt die Buchung dorthin, plant die Erinnerungen neu und informiert %{attendee_name} sowie alle Gäste per E-Mail über den neuen Zeitpunkt."
+msgstr "In deinem Kalender liegt dieser Termin jetzt auf %{time}. BookDesk24 verschiebt die Buchung dorthin, plant die Erinnerungen neu und informiert %{attendee_name} sowie alle Gäste per E-Mail über den neuen Zeitpunkt."
 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
@@ -844,7 +844,7 @@ msgstr "Der Termin wurde in deinem Kalender erneut verschoben. Prüfe den neuen 
 #: lib/tymeslot_web/live/dashboard/bookings_management/calendar_move.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot could not move this booking. Please try again."
-msgstr "Tymeslot konnte diese Buchung nicht verschieben. Bitte versuche es erneut."
+msgstr "BookDesk24 konnte diese Buchung nicht verschieben. Bitte versuche es erneut."
 
 #: lib/tymeslot_web/components/dashboard/meetings/host_move_modal.ex
 #, elixir-autogen, elixir-format

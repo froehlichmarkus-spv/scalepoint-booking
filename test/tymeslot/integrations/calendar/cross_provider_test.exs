@@ -43,7 +43,7 @@ defmodule Tymeslot.Integrations.Calendar.CrossProviderTest do
     nextcloud: {:error, :timeout},
     radicale:
       {:error,
-       "Radicale did not respond in time. If the server is only reachable from your organisation's network or over a VPN, Tymeslot cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes."}
+       "Radicale did not respond in time. If the server is only reachable from your organisation's network or over a VPN, BookDesk24 cannot connect to it: ask your administrator to make its calendar address reachable from the internet. Otherwise the server may be busy, so try again in a few minutes."}
   }
 
   # The private-address refusal reads the same from every provider, whatever

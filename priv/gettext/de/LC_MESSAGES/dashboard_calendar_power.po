@@ -450,7 +450,7 @@ msgstr "24-Stunden-Format verwenden"
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting_fields.ex
 #, elixir-autogen, elixir-format
 msgid "Send as a Tymeslot meeting"
-msgstr "Als Tymeslot-Termin senden"
+msgstr "Als BookDesk24-Termin senden"
 
 #: lib/tymeslot_web/live/dashboard/calendar/panel_meeting.ex
 #, elixir-autogen, elixir-format

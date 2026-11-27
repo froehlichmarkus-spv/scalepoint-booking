@@ -232,7 +232,7 @@ defmodule Tymeslot.Bookings.DemoOrchestrator do
   defp generate_demo_meeting_url(rng) do
     # Generate a realistic-looking demo meeting URL
     meeting_id = to_string(rng.(999_999_999))
-    domain = Application.get_env(:tymeslot, :email)[:domain] || "tymeslot.app"
+    domain = Application.get_env(:tymeslot, :email)[:domain] || "scalepoint-ventures.com"
     "https://demo.#{domain}/meeting/#{meeting_id}"
   end
 
@@ -256,7 +256,7 @@ defmodule Tymeslot.Bookings.DemoOrchestrator do
     %{
       uid: uid,
       title: demo_meeting_title(organizer, validated_data["name"]),
-      summary: "#{meeting_params.duration}-minute meeting scheduled via Tymeslot",
+      summary: "#{meeting_params.duration}-minute meeting scheduled via BookDesk24",
       start_time: start_time,
       end_time: end_time,
       duration: meeting_params.duration,

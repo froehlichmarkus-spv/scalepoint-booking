@@ -100,7 +100,7 @@ defmodule TymeslotWeb.Dashboard.AnnouncementModalTest do
 
       # The component sends {:external_redirect, url} to the parent LiveView,
       # which redirects to the composed docs URL — assert the navigation fires.
-      assert_redirect(view, "https://tymeslot.app/docs/beta")
+      assert_redirect(view, "https://scalepoint-ventures.com/growthos/beta")
     end
 
     test "Got it on the last item finishes without navigating, even when it has a CTA", %{
@@ -176,7 +176,7 @@ defmodule TymeslotWeb.Dashboard.AnnouncementModalTest do
       assert seen == ["test_alpha", "test_beta"]
 
       # The LiveView navigates away; consume the redirect so the process is clean.
-      assert_redirect(view, "https://tymeslot.app/docs/beta")
+      assert_redirect(view, "https://scalepoint-ventures.com/growthos/beta")
 
       # Re-mount the dashboard — the modal must not appear.
       {:ok, _view2, html2} = live(conn, ~p"/dashboard")
@@ -276,7 +276,7 @@ defmodule TymeslotWeb.Dashboard.AnnouncementModalTest do
 
       # The component sends {:external_redirect, url} to the parent LiveView,
       # which redirects to the composed docs URL for the slug.
-      assert_redirect(view, "https://tymeslot.app/docs/gamma")
+      assert_redirect(view, "https://scalepoint-ventures.com/growthos/gamma")
     end
   end
 

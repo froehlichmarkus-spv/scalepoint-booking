@@ -89,7 +89,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceTreatAsTest do
     assert has_element?(
              lv,
              "#calendar-preview-treat-as",
-             "Affects Tymeslot bookings only. Your calendar doesn't change."
+             "Affects BookDesk24 bookings only. Your calendar doesn't change."
            )
 
     refute has_element?(lv, "#calendar-preview-busy")

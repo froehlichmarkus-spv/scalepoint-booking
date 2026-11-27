@@ -86,7 +86,7 @@ msgstr "Nimm sich 30 Sekunden Zeit, um zu erfahren, wo du was finden."
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
 msgid "Welcome to your Tymeslot dashboard"
-msgstr "Willkommen in deinem Tymeslot-Dashboard"
+msgstr "Willkommen in deinem BookDesk24-Dashboard"
 
 #: lib/tymeslot/onboarding/dashboard_tour.ex
 #, elixir-autogen, elixir-format
@@ -146,7 +146,7 @@ msgstr "Per Jitsi, kMeet oder Nextcloud Talk treffen"
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
 msgid "Three more video providers join Zoom, Google Meet, Teams and MiroTalk in the integrations picker. Point Tymeslot at your own Jitsi or Nextcloud and every booking gets a room of its own: a Talk conversation keeps its lobby shut until the meeting starts, moves when you reschedule and is deleted when you cancel. kMeet needs no setup at all."
-msgstr "Drei weitere Videoanbieter stehen jetzt neben Zoom, Google Meet, Teams und MiroTalk in der Integrationsauswahl. Verweise Tymeslot auf dein eigenes Jitsi oder Nextcloud, und jede Buchung bekommt einen eigenen Raum: Ein Talk-Gespräch hält seinen Warteraum geschlossen, bis der Termin beginnt, wandert mit, wenn du verschiebst, und wird gelöscht, wenn du absagst. kMeet braucht überhaupt keine Einrichtung."
+msgstr "Drei weitere Videoanbieter stehen jetzt neben Zoom, Google Meet, Teams und MiroTalk in der Integrationsauswahl. Verweise BookDesk24 auf dein eigenes Jitsi oder Nextcloud, und jede Buchung bekommt einen eigenen Raum: Ein Talk-Gespräch hält seinen Warteraum geschlossen, bis der Termin beginnt, wandert mit, wenn du verschiebst, und wird gelöscht, wenn du absagst. kMeet braucht überhaupt keine Einrichtung."
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
@@ -191,12 +191,12 @@ msgstr "Eine Umfrage kann offen sein, sodass jeder mit dem Link per E-Mail einen
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot now speaks Spanish"
-msgstr "Tymeslot spricht jetzt Spanisch"
+msgstr "BookDesk24 spricht jetzt Spanisch"
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format
 msgid "Your dashboard, booking pages and every email are now available in Spanish. Tymeslot follows your browser's language, or you can choose one yourself in Account Settings. People who book you see booking pages and confirmations in their own language too."
-msgstr "Dein Dashboard, deine Buchungsseiten und alle E-Mails gibt es jetzt auch auf Spanisch. Tymeslot folgt der Sprache deines Browsers, oder du wählst selbst eine in den Kontoeinstellungen. Wer bei dir bucht, sieht Buchungsseiten und Bestätigungen ebenfalls in der eigenen Sprache."
+msgstr "Dein Dashboard, deine Buchungsseiten und alle E-Mails gibt es jetzt auch auf Spanisch. BookDesk24 folgt der Sprache deines Browsers, oder du wählst selbst eine in den Kontoeinstellungen. Wer bei dir bucht, sieht Buchungsseiten und Bestätigungen ebenfalls in der eigenen Sprache."
 
 #: lib/tymeslot/announcements/catalog.ex
 #, elixir-autogen, elixir-format

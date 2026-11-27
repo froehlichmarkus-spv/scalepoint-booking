@@ -59,11 +59,11 @@ defmodule TymeslotWeb.Components.Dashboard.Integrations.Calendar.CaldavFamilyCon
         assert [href] =
                  Floki.attribute(
                    doc,
-                   "a[target='_blank'][href$='/docs/#{unquote(slug)}']",
+                   "a[target='_blank'][href$='/growthos/#{unquote(slug)}']",
                    "href"
                  )
 
-        assert href =~ "/docs/#{unquote(slug)}"
+        assert href =~ "/growthos/#{unquote(slug)}"
 
         assert [_field] =
                  Floki.find(

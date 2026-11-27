@@ -394,7 +394,7 @@ defmodule TymeslotWeb.Components.SiteComponents do
               {dgettext("common", "Beautiful, on-brand meeting scheduling. No ads, no tracking.")}
             </p>
             <a
-              href="https://github.com/tymeslot/tymeslot"
+              href="https://scalepoint-ventures.com"
               target="_blank"
               rel="noopener noreferrer"
               data-analytics-event="github_cta_clicked"

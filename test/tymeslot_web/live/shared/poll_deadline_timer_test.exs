@@ -19,9 +19,12 @@ defmodule TymeslotWeb.Live.Shared.PollDeadlineTimerTest do
   defp in_ms(ms), do: DateTime.add(DateTime.utc_now(), ms, :millisecond)
 
   test "fires at the deadline with the poll's id" do
-    poll = open_poll(in_ms(50))
+    # One clock reading: a second utc_now() on a busy runner can land after
+    # a 50ms deadline and leave the timer unarmed.
+    now = DateTime.utc_now()
+    poll = open_poll(DateTime.add(now, 50, :millisecond))
 
-    assert %PollDeadlineTimer{} = PollDeadlineTimer.sync(nil, [poll], DateTime.utc_now())
+    assert %PollDeadlineTimer{} = PollDeadlineTimer.sync(nil, [poll], now)
 
     poll_id = poll.id
     assert_receive {:poll_deadline_reached, ^poll_id}, 1_000

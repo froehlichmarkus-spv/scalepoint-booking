@@ -2,7 +2,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingNoCalendarTest do
   @moduledoc """
   The side panel's New event state for an organiser with no calendar to
   write to: a Tymeslot meeting can still be booked, kept in Tymeslot alone
-  (its calendar is "None (Tymeslot only)"), while a plain event cannot be
+  (its calendar is "None (BookDesk24 only)"), while a plain event cannot be
   created and a note says why.
   """
 
@@ -60,7 +60,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceMeetingNoCalendarTest do
 
     render_change(new_form(lv), %{"meeting" => "true"})
 
-    assert has_element?(lv, "#calendar-panel-calendar-none", "None (Tymeslot only)")
+    assert has_element?(lv, "#calendar-panel-calendar-none", "None (BookDesk24 only)")
     assert has_element?(lv, "#calendar-panel-create:not([disabled])")
 
     render_submit(new_form(lv), %{"intent" => "create", "guest_name" => "Ada Lovelace"})

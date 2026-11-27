@@ -265,7 +265,7 @@ defmodule Tymeslot.Telegram.MessageBuilderTest do
     test "returns a test message" do
       msg = MessageBuilder.build_test_message()
       assert msg =~ "Test"
-      assert msg =~ "Tymeslot"
+      assert msg =~ "BookDesk24"
     end
   end
 

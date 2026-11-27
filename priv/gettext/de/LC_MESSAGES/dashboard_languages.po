@@ -398,7 +398,7 @@ msgstr "Übersetzung eingeben (%{language})"
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
 #, elixir-autogen, elixir-format
 msgid "Invitees can choose any language Tymeslot supports. Turn this off to choose the languages yourself."
-msgstr "Gäste können jede Sprache wählen, die Tymeslot unterstützt. Schalte das aus, um die Sprachen selbst festzulegen."
+msgstr "Gäste können jede Sprache wählen, die BookDesk24 unterstützt. Schalte das aus, um die Sprachen selbst festzulegen."
 
 #: lib/tymeslot_web/live/dashboard/languages/settings_tab.ex
 #, elixir-autogen, elixir-format

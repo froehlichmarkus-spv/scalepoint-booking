@@ -7,16 +7,16 @@ defmodule TymeslotWeb.GettextProductScrubTest do
 
   alias Tymeslot.Brands
 
-  test "the default test brand keeps the upstream name the suite asserts" do
+  test "the house brand shows BookDesk24 instead of the old product name" do
     Brands.bind(nil)
 
     assert dgettext("onboarding", "Welcome to your Tymeslot dashboard") ==
-             "Welcome to your Tymeslot dashboard"
+             "Welcome to your BookDesk24 dashboard"
   end
 
-  test "a bound tenant name replaces the upstream product name" do
+  test "a tenant name replaces the old product name" do
     brand = Brands.neutral_default()
-    Brands.bind(%{brand | name: "Acme", house_brand: true, product_name: nil})
+    Brands.bind(%{brand | name: "Acme", house_brand: false, product_name: nil})
 
     assert dgettext("onboarding", "Welcome to your Tymeslot dashboard") ==
              "Welcome to your Acme dashboard"

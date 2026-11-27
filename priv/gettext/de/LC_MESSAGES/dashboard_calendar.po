@@ -684,7 +684,7 @@ msgstr "Dieser Kalender blockiert keine Buchungen"
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
 msgid "This calendar doesn't take repeat rules from Tymeslot."
-msgstr "Dieser Kalender übernimmt keine Wiederholungsregeln von Tymeslot."
+msgstr "Dieser Kalender übernimmt keine Wiederholungsregeln von BookDesk24."
 
 #: lib/tymeslot_web/live/dashboard/calendar_edit_messages.ex
 #, elixir-autogen, elixir-format
@@ -714,7 +714,7 @@ msgstr "Zu spät zum Rückgängigmachen: „%{title}“ wurde bereits gelöscht.
 #: lib/tymeslot_web/live/dashboard/calendar/preview.ex
 #, elixir-autogen, elixir-format
 msgid "Tymeslot booking"
-msgstr "Tymeslot-Buchung"
+msgstr "BookDesk24-Buchung"
 
 #: lib/tymeslot_web/live/dashboard/calendar/toast.ex
 #, elixir-autogen, elixir-format

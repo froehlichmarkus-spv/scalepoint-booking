@@ -120,7 +120,7 @@ defmodule Tymeslot.MeetingPayments.Workers.DeauthorizeConnectAccount do
     )
 
     AdminAlerts.report(:connect_revocation_failed,
-      summary: "Tymeslot's access to a Stripe account could not be revoked",
+      summary: "BookDesk24's access to a Stripe account could not be revoked",
       reason: reason,
       context: %{stripe_account_id: stripe_account_id, oban_job_id: job.id}
     )

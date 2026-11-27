@@ -242,7 +242,7 @@ msgstr "Nutzername ist erforderlich"
 #: lib/tymeslot_web/live/onboarding_live/navigation_handlers.ex
 #, elixir-autogen, elixir-format
 msgid "Welcome to Tymeslot! Your account is now set up."
-msgstr "Willkommen bei Tymeslot! Dein Konto ist jetzt eingerichtet."
+msgstr "Willkommen bei BookDesk24! Dein Konto ist jetzt eingerichtet."
 
 #: lib/tymeslot_web/live/onboarding_live/profile_step.ex
 #, elixir-autogen, elixir-format

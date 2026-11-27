@@ -150,7 +150,7 @@ defmodule TymeslotWeb.Dashboard.Calendar.CalendarSurfaceImportTest do
       assert has_element?(
                lv,
                "#calendar-import",
-               "Connect a calendar Tymeslot can write to before importing events."
+               "Connect a calendar BookDesk24 can write to before importing events."
              )
 
       refute has_element?(lv, "#calendar-import-choose")

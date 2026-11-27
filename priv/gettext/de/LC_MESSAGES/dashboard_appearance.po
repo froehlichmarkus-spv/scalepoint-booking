@@ -238,7 +238,7 @@ msgstr "Zu viele Änderungen - wird in Kürze gespeichert…"
 #: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
 #, elixir-autogen, elixir-format
 msgid "Turn this off to go back to the built-in text, which is translated into every language Tymeslot supports. Your own wording is discarded."
-msgstr "Schalte dies aus, um zum vorgegebenen Text zurückzukehren, der in jede von Tymeslot unterstützte Sprache übersetzt ist. Dein eigener Text wird dabei verworfen."
+msgstr "Schalte dies aus, um zum vorgegebenen Text zurückzukehren, der in jede von BookDesk24 unterstützte Sprache übersetzt ist. Dein eigener Text wird dabei verworfen."
 
 #: lib/tymeslot_web/live/dashboard/theme_settings/booking_text_form.ex
 #, elixir-autogen, elixir-format
