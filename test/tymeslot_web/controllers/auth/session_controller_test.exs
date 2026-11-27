@@ -3,6 +3,7 @@ defmodule TymeslotWeb.SessionControllerTest do
   @moduletag :auth
 
   alias Phoenix.Flash
+  alias Phoenix.Token
   alias Tymeslot.Auth.UserSessionQueries
   alias Tymeslot.Auth.UserTokenQueries
   alias Tymeslot.AuthTestHelpers
@@ -11,6 +12,7 @@ defmodule TymeslotWeb.SessionControllerTest do
   alias Tymeslot.Repo
   alias Tymeslot.Security.{Password, RateLimiter}
   alias Tymeslot.SignedToken
+  alias TymeslotWeb.Endpoint
 
   describe "POST /auth/session" do
     setup do
@@ -478,7 +480,7 @@ defmodule TymeslotWeb.SessionControllerTest do
       user = Factory.insert(:user, verified_at: DateTime.utc_now())
 
       token =
-        Phoenix.Token.sign(TymeslotWeb.Endpoint, "reset sign in", user.id,
+        Token.sign(Endpoint, "reset sign in", user.id,
           signed_at: System.system_time(:second) - 180
         )
 
