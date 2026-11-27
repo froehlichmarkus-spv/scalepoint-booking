@@ -983,11 +983,6 @@ msgstr "Intro with Lena Hartmann"
 
 #: lib/tymeslot_web/controllers/marketing_html/show.html.heex
 #, elixir-autogen, elixir-format
-msgid "Monday"
-msgstr "Aujourd'hui"
-
-#: lib/tymeslot_web/controllers/marketing_html/show.html.heex
-#, elixir-autogen, elixir-format
 msgid "One page, one true slot."
 msgstr "One page, one true slot."
 
