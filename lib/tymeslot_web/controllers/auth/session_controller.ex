@@ -7,9 +7,8 @@ defmodule TymeslotWeb.SessionController do
   use Gettext, backend: TymeslotWeb.Gettext
 
   alias Tymeslot.Auth
-  alias Tymeslot.Infrastructure.Config
+  alias Tymeslot.Infrastructure.{Config, Logging.LogFormat}
   alias Tymeslot.SignedToken
-  alias Tymeslot.Infrastructure.Logging.LogFormat
   alias Tymeslot.Security.RedirectPath
   alias TymeslotWeb.EmailLinkConfirmHTML
   alias TymeslotWeb.Helpers.ClientIP
