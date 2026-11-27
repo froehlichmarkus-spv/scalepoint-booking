@@ -89,7 +89,7 @@ defmodule Tymeslot.Emails.Shared.TemplateHelper do
   defp tone(_intent), do: :neutral
 
   @doc "Compiles MJML content with organiser details into HTML."
-  @spec compile_template(String.t(), organizer_details()) :: String.t()
+  @spec compile_template(String.t(), map()) :: String.t()
   def compile_template(mjml_content, organizer_details) do
     Stage.fetch_required!(organizer_details, :intent)
     eyebrow = Stage.fetch_required!(organizer_details, :eyebrow)
