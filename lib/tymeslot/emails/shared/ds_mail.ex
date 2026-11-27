@@ -23,8 +23,10 @@ defmodule Tymeslot.Emails.Shared.DsMail do
   EEx.function_from_file(:defp, :text_de, Path.join(@root, "base.de.txt.eex"), [:assigns])
   EEx.function_from_file(:defp, :text_en, Path.join(@root, "base.en.txt.eex"), [:assigns])
 
-  @privacy_en "https://scalepoint-ventures.com/en/privacy"
-  @privacy_de "https://scalepoint-ventures.com/de/datenschutz"
+  # German and English share these paths. Only the link labels change.
+  @legal "https://scalepoint-ventures.com/growthos/legal"
+  @privacy_url @legal <> "/privacy"
+  @notice_url @legal <> "/notice"
 
   @doc "Eyebrow: module label, then the template topic."
   @spec booking_eyebrow(String.t() | nil) :: String.t()
@@ -33,9 +35,13 @@ defmodule Tymeslot.Emails.Shared.DsMail do
     if topic == "", do: "BookDesk24", else: "BookDesk24 · " <> topic
   end
 
-  @doc "Privacy URL for the active language."
+  @doc "Privacy URL. German and English use the same Growth OS page."
   @spec privacy_url() :: String.t()
-  def privacy_url, do: if(lang() == "de", do: @privacy_de, else: @privacy_en)
+  def privacy_url, do: @privacy_url
+
+  @doc "Legal-notice URL. German and English use the same Growth OS page."
+  @spec notice_url() :: String.t()
+  def notice_url, do: @notice_url
 
   @doc "Legal-entity line in the active language."
   @spec legal_line() :: String.t()
@@ -71,7 +77,9 @@ defmodule Tymeslot.Emails.Shared.DsMail do
       "footer_reason" => esc(fields[:footer_reason] || footer_reason()),
       "powered_by" => powered_by?(fields[:organizer_user_id]),
       "unsub" => false,
-      "unsub_url" => ""
+      "unsub_url" => "",
+      "privacy_url" => @privacy_url,
+      "notice_url" => @notice_url
     }
 
     html(lang(), assigns)
@@ -97,7 +105,9 @@ defmodule Tymeslot.Emails.Shared.DsMail do
       "footer_reason" => fields[:footer_reason] || footer_reason(),
       "powered_by" => powered_by?(fields[:organizer_user_id]),
       "unsub" => false,
-      "unsub_url" => ""
+      "unsub_url" => "",
+      "privacy_url" => @privacy_url,
+      "notice_url" => @notice_url
     }
 
     text(lang(), assigns)
@@ -114,7 +124,7 @@ defmodule Tymeslot.Emails.Shared.DsMail do
   def append_text_footer(nil), do: nil
 
   def append_text_footer(text) when is_binary(text) do
-    if String.contains?(text, @privacy_en) or String.contains?(text, @privacy_de) do
+    if String.contains?(text, @privacy_url) do
       text
     else
       String.trim_trailing(text) <> "\n\n" <> text_footer()

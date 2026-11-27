@@ -26,9 +26,22 @@ defmodule Tymeslot.Emails.Shared.DsMailTest do
     assert html =~ "cid:header-booking-dark@booking.scalepoint"
     assert html =~ "BOOKING · CONFIRMED"
     assert html =~ "#111E32"
-    assert html =~ "https://scalepoint-ventures.com/en/privacy"
-    assert html =~ "https://scalepoint-ventures.com/en/legal-notice"
+    assert html =~ DsMail.privacy_url()
+    assert html =~ DsMail.notice_url()
+
+    assert String.starts_with?(
+             DsMail.privacy_url(),
+             "https://scalepoint-ventures.com/growthos/legal/"
+           )
+
+    assert String.starts_with?(
+             DsMail.notice_url(),
+             "https://scalepoint-ventures.com/growthos/legal/"
+           )
+
     refute html =~ "/growthos/legal/terms"
+    refute html =~ "/en/privacy"
+    refute html =~ "/de/datenschutz"
     assert html =~ "ScalePoint Ventures Oy"
     assert html =~ "Button not working? Paste this link into your browser:"
     assert html =~ "prefers-color-scheme:dark"

@@ -7,6 +7,8 @@ defmodule Tymeslot.Emails.VendorNameTest do
   use Tymeslot.DataCase, async: true
   @moduletag :emails
 
+  alias Tymeslot.Emails.Shared.DsMail
+
   alias Tymeslot.Emails.Templates.{
     AccountDeletionNotice,
     AccountInvitation,
@@ -29,6 +31,8 @@ defmodule Tymeslot.Emails.VendorNameTest do
 
   @forbidden ~w(Tymeslot SalesBlink FUTUREBLINK HeyLeads ScreamX IPRoyal ElevenLabs Twenty) ++
                ["TypeSafe AI"]
+
+  @legal "https://scalepoint-ventures.com/growthos/legal/"
 
   @url "https://book.scalepoint-ventures.com/auth/link"
   @at ~U[2026-10-16 09:00:00Z]
@@ -90,6 +94,43 @@ defmodule Tymeslot.Emails.VendorNameTest do
     end
   end
 
+  test "legal hrefs start with the growthos legal pages" do
+    for locale <- ["de", "en"], email <- emails(locale) do
+      where = "#{locale} #{email.subject}"
+      legal = email.html_body |> hrefs() |> Enum.filter(&legal_href?/1)
+
+      assert legal != [], "no legal href in #{where}"
+
+      for href <- legal do
+        assert String.starts_with?(href, @legal), "#{where} #{href}"
+      end
+
+      assert email.html_body =~ @legal <> "privacy"
+      assert email.html_body =~ @legal <> "notice"
+      refute email.html_body =~ "/de/datenschutz"
+      refute email.html_body =~ "/de/impressum"
+      refute email.html_body =~ "/en/privacy"
+      refute email.html_body =~ "/en/legal-notice"
+
+      # The mailer appends this footer at deliver time, in the recipient's locale.
+      text =
+        Gettext.with_locale(TymeslotWeb.Gettext, locale, fn ->
+          DsMail.append_text_footer(email.text_body)
+        end)
+
+      text_legal = text_urls(text)
+      assert text_legal != [], "no legal URL in #{where} text"
+
+      for url <- text_legal do
+        assert String.starts_with?(url, @legal), "#{where} text #{url}"
+      end
+
+      label = if locale == "de", do: "Datenschutz:", else: "Privacy:"
+      assert text =~ label
+      assert text =~ @legal <> "notice"
+    end
+  end
+
   # The preview fixture's own links, with no URL override, must not carry the
   # old product name into an href either.
   test "the default booking fixture's hrefs omit the forbidden names" do
@@ -108,6 +149,16 @@ defmodule Tymeslot.Emails.VendorNameTest do
     ~r/href\s*=\s*"([^"]*)"/i
     |> Regex.scan(html || "")
     |> Enum.map(fn [_all, href] -> href end)
+  end
+
+  defp legal_href?(href) do
+    String.starts_with?(href, "https://scalepoint-ventures.com/")
+  end
+
+  defp text_urls(text) do
+    ~r/https:\/\/scalepoint-ventures\.com\/\S+/
+    |> Regex.scan(text || "")
+    |> Enum.map(fn [url] -> String.trim_trailing(url, ".,)") end)
   end
 
   defp refute_forbidden(text, where) do

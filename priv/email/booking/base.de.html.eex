@@ -68,7 +68,7 @@ u + #body a{color:inherit;text-decoration:underline}
 <p style="margin:0 0 10px"><%= assigns["footer_reason"] %></p>
 <%= if assigns["powered_by"] do %><p style="margin:0 0 10px">Powered by BookDesk24</p><% end %>
 <p style="margin:0 0 10px">ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finnland · Y-Tunnus 3620767-9</p>
-<p style="margin:0"><a class="lk" href="https://scalepoint-ventures.com/de/datenschutz" style="color:#0B6E66;text-decoration:underline">Datenschutz</a> &nbsp;·&nbsp; <a class="lk" href="https://scalepoint-ventures.com/de/impressum" style="color:#0B6E66;text-decoration:underline">Impressum</a><%= if assigns["unsub"] do %> &nbsp;·&nbsp; <a class="lk" href="<%= assigns["unsub_url"] %>" style="color:#0B6E66;text-decoration:underline">Abmelden</a><% end %></p>
+<p style="margin:0"><a class="lk" href="<%= assigns["privacy_url"] %>" style="color:#0B6E66;text-decoration:underline">Datenschutz</a> &nbsp;·&nbsp; <a class="lk" href="<%= assigns["notice_url"] %>" style="color:#0B6E66;text-decoration:underline">Impressum</a><%= if assigns["unsub"] do %> &nbsp;·&nbsp; <a class="lk" href="<%= assigns["unsub_url"] %>" style="color:#0B6E66;text-decoration:underline">Abmelden</a><% end %></p>
 </td></tr></table>
 <!--[if mso]></td></tr></table><![endif]-->
 </td></tr></table>

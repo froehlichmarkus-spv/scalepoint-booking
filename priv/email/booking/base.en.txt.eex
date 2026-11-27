@@ -15,7 +15,7 @@ Questions? Reply to this email or write to support@scalepoint-ventures.com.
 <%= assigns["footer_reason"] %>
 <%= if assigns["powered_by"] do %>Powered by BookDesk24
 <% end %>ScalePoint Ventures Oy · Almavägen 26, 65610 Mustasaari, Finland · Business ID 3620767-9
-Privacy: https://scalepoint-ventures.com/en/privacy
-Legal notice: https://scalepoint-ventures.com/en/legal-notice
+Privacy: <%= assigns["privacy_url"] %>
+Legal notice: <%= assigns["notice_url"] %>
 <%= if assigns["unsub"] do %>Unsubscribe: <%= assigns["unsub_url"] %>
 <% end %>
